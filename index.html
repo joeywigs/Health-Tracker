@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Health Tracker</title>
+  
+  <!-- iPhone -->
+  <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/joeywigs/Health-Tracker/refs/heads/main/habit%20icon.png">
+
+  
+  <!-- iOS Web App Settings -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Habits">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      padding: 20px;
+      padding-bottom: 40px;
+      font-size: 72px;
+      transition: background-color 0.3s ease;
+    }
+    
+    body.past-date {
+      background: #0f0f0f;
+    }
+    
+    .header {
+      background: #2a2a2a;
+      padding: 32px;
+      border-radius: 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .title {
+      font-size: 70px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+    }
+    
+    .subtitle {
+      font-size: 52.5px;
+      font-weight: 600;
+      color: #999;
+      margin-top: 8px;
+    }
+    
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .date-btn {
+      width: 100px;
+      height: 100px;
+      border: none;
+      background: #52b788;
+      color: #1a1a1a;
+      border-radius: 24px;
+      font-size: 48px;
+      font-weight: bold;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .date-btn:active {
+      background: #40916c;
+    }
+    
+    .date-display {
+      flex: 1;
+      text-align: center;
+      font-size: 44px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+    
+    .section {
+      background: #2a2a2a;
+      padding: 32px;
+      border-radius: 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      transition: background-color 0.3s ease;
+    }
+    
+    .section.completed {
+      background: #1b4332;
+    }
+    
+    .section.incomplete {
+      background: #5c2828;
+    }
+    
+    /* Section-specific accent colors */
+    #todosSection .section-header { color: #e76f51; }
+    #sleepSection .section-header { color: #a393eb; }
+    #greysHabitsSection .section-header { color: #f4a261; }
+    #movementSection .section-header { color: #4d9de0; }
+    #nutritionSection .section-header { color: #52b788; }
+    #waterSection .section-header { color: #4cc9f0; }
+    #mentalHabitsSection .section-header { color: #f48c06; }
+    #meditationSection .section-header { color: #d4a373; }
+    #reflectionsSection .section-header { color: #9d4edd; }
+    #storiesSection .section-header { color: #ff6b9d; }
+    #carlySection .section-header { color: #ffbe0b; }
+    #bodyDataSection .section-header { color: #06ffa5; }
+    
+    .section-header {
+      font-size: 59px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .section-header.collapsible::after {
+      content: '▼';
+      font-size: 45px;
+      transition: transform 0.3s;
+    }
+    
+    .section-header.collapsed::after {
+      transform: rotate(-90deg);
+    }
+    
+    .section-content {
+      max-height: 5000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .section-content.collapsed {
+      max-height: 0;
+    }
+    
+    .field-group {
+      margin-bottom: 28px;
+    }
+    
+    .field-label {
+      display: block;
+      font-size: 54px;
+      font-weight: 600;
+      color: #999;
+      margin-bottom: 16px;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 24px;
+      font-size: 36px;
+      border: 3px solid #444;
+      border-radius: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      min-height: 120px;
+      box-sizing: border-box;
+    }
+    
+    .input-field:focus {
+      outline: none;
+      border-color: #81c995;
+    }
+    
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      padding: 32px;
+      margin-bottom: 16px;
+      border: 3px solid #3a3a3a;
+      border-radius: 24px;
+      cursor: pointer;
+      user-select: none;
+      min-height: 120px;
+      background: #1a1a1a;
+    }
+    
+    .checkbox-field:active {
+      background: #2a2a2a;
+    }
+    
+    .checkbox-field.checked {
+      border-color: #52b788;
+      background: #1b4332;
+    }
+    
+    .checkbox-field input[type="checkbox"] {
+      display: none;
+    }
+    
+    .checkbox-field label {
+      flex: 1;
+      font-size: 36px;
+      cursor: pointer;
+      color: #e0e0e0;
+    }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .body-data-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .body-data-cell {
+      display: flex;
+      flex-direction: column;
+      padding: 32px;
+      border: 3px solid #3a3a3a;
+      border-radius: 24px;
+      background: #1a1a1a;
+      min-height: 140px;
+      justify-content: center;
+    }
+    
+    .body-data-label {
+      font-size: 32px;
+      font-weight: 600;
+      color: #999;
+      margin-bottom: 16px;
+    }
+    
+    .body-data-input {
+      width: 100%;
+      padding: 20px;
+      font-size: 56px;
+      border: none;
+      border-radius: 16px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      text-align: center;
+    }
+    
+    .body-data-input:focus {
+      outline: none;
+      background: #1a1a1a;
+    }
+    
+    .body-data-percent {
+      font-size: 56px;
+      font-weight: 700;
+      color: #52b788;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .water-counter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      padding: 32px;
+    }
+    
+    .water-counter-btn {
+      width: 120px;
+      height: 120px;
+      font-size: 56px;
+      background: #4cc9f0;
+      color: white;
+      border: none;
+      border-radius: 28px;
+      cursor: pointer;
+      font-weight: bold;
+      line-height: 1;
+    }
+    
+    .water-counter-btn:active {
+      background: #3aa8d0;
+    }
+    
+    .water-counter-value {
+      font-size: 56px;
+      font-weight: 700;
+      color: #4cc9f0;
+      min-width: 180px;
+      text-align: center;
+      padding: 32px;
+      background: #1a1a1a;
+      border-radius: 24px;
+      border: 3px solid #3a3a3a;
+    }
+    
+    .meal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .snack-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .inhaler-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .item-list {
+      margin-top: 16px;
+    }
+    
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 32px;
+      background: #1a1a1a;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      min-height: 120px;
+      border: 2px solid #3a3a3a;
+    }
+    
+    .item-text {
+      flex: 1;
+      font-size: 42px;
+      color: #e0e0e0;
+    }
+    
+    .btn {
+      padding: 32px 40px;
+      font-size: 64px;
+      font-weight: 600;
+      border: none;
+      border-radius: 24px;
+      cursor: pointer;
+      min-height: 140px;
+    }
+    
+    .btn-primary {
+      background: #52b788;
+      color: #1a1a1a;
+      width: 100%;
+      padding: 40px;
+      font-size: 72px;
+      min-height: 160px;
+    }
+    
+    .btn-secondary {
+      background: #4d9de0;
+      color: #1a1a1a;
+      width: 100%;
+    }
+    
+    .btn-smaller {
+      font-size: 48px;
+    }
+    
+    .btn-danger {
+      background: #3a3a3a;
+      color: #e0e0e0;
+      padding: 16px 32px;
+      font-size: 64px;
+      font-weight: bold;
+      min-width: 100px;
+      height: 100px;
+      line-height: 1;
+      flex-shrink: 0;
+      border-radius: 20px;
+    }
+    
+    .btn:active {
+      opacity: 0.8;
+    }
+    
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    
+    .test-btn {
+      position: fixed;
+      bottom: 180px;
+      right: 20px;
+      padding: 12px 16px;
+      font-size: 16px;
+      background: #ddd;
+      color: #666;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0.5;
+      z-index: 999;
+    }
+    
+    .test-btn:active {
+      opacity: 0.8;
+    }
+    
+    .status-message {
+      padding: 12px 20px;
+      border-radius: 20px;
+      text-align: right;
+      font-weight: 600;
+      font-size: 24px;
+      display: none;
+      max-width: 300px;
+      background: #2a2a2a;
+    }
+    
+    .refresh-btn {
+      width: 60px;
+      height: 60px;
+      border: none;
+      background: #52b788;
+      color: #1a1a1a;
+      border-radius: 50%;
+      font-size: 48px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+    }
+    
+    .refresh-btn:active {
+      background: #40916c;
+      transform: rotate(180deg);
+      transition: transform 0.3s;
+    }
+    
+    .status-message.success {
+      background: #2a2a2a;
+      color: #52b788;
+      border: none;
+    }
+    
+    .status-message.error {
+      background: #2a2a2a;
+      color: #e63946;
+      border: none;
+    }
+    
+    .status-message.loading {
+      background: #2a2a2a;
+      color: #4d9de0;
+      border: none;
+    }
+    
+    textarea.input-field {
+      min-height: 300px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .calc-field {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 32px;
+      background: #f5f5f5;
+      border-radius: 12px;
+      margin-bottom: 28px;
+    }
+    
+    .calc-label {
+      font-size: 60px;
+      font-weight: 600;
+      color: #999;
+    }
+    
+    .calc-value {
+      font-size: 68px;
+      font-weight: 700;
+      color: #52b788;
+      margin-left: auto;
+    }
+    
+    .average-display {
+      font-size: 19px;
+      color: #666;
+      margin-top: 8px;
+      padding-left: 4px;
+    }
+    
+    .phase-progress {
+      width: 100%;
+      height: 24px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 40px;
+    }
+    
+    .phase-progress-bar {
+      height: 100%;
+      background: #4d9de0;
+      transition: width 0.3s ease;
+    }
+    
+    /* Desktop Layout - Fit everything on one screen */
+    @media (min-width: 1024px) {
+      body {
+        font-size: 16px;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        padding-bottom: 20px;
+      }
+      
+      .header {
+        padding: 16px;
+      }
+      
+      .title {
+        font-size: 28px;
+      }
+      
+      .date-display {
+        font-size: 20px;
+      }
+      
+      .date-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+      }
+      
+      .refresh-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 24px;
+      }
+      
+      .section {
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      
+      .section-header {
+        font-size: 22px;
+        margin-bottom: 12px;
+      }
+      
+      .section-header.collapsible::after {
+        font-size: 18px;
+      }
+      
+      .field-label {
+        font-size: 16px;
+        margin-bottom: 6px;
+      }
+      
+      .input-field {
+        padding: 8px;
+        font-size: 16px;
+      }
+      
+      .checkbox-field {
+        padding: 12px;
+        min-height: 50px;
+        margin-bottom: 8px;
+      }
+      
+      .checkbox-field label {
+        font-size: 16px;
+      }
+      
+      .item-text {
+        font-size: 16px;
+      }
+      
+      .item {
+        padding: 12px;
+        min-height: 50px;
+        margin-bottom: 8px;
+      }
+      
+      .btn {
+        padding: 12px 16px;
+        font-size: 16px;
+        min-height: 48px;
+      }
+      
+      .btn-primary {
+        padding: 16px;
+        font-size: 18px;
+        min-height: 60px;
+      }
+      
+      .btn-danger {
+        padding: 8px 12px;
+        font-size: 18px;
+        min-width: 40px;
+        height: 40px;
+      }
+      
+      .calc-field {
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      
+      .calc-label {
+        font-size: 16px;
+      }
+      
+      .calc-value {
+        font-size: 18px;
+      }
+      
+      .average-display {
+        font-size: 11px;
+        margin-top: 4px;
+      }
+      
+      .counter-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 40px;
+      }
+      
+      .counter-value {
+        font-size: 48px;
+        min-width: 80px;
+      }
+      
+      .water-counter {
+        padding: 16px;
+        gap: 16px;
+      }
+      
+      textarea.input-field {
+        min-height: 100px;
+      }
+      
+      
+      .field-group {
+        margin-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <img src="https://i.imgur.com/ACLnzvO.png" 
+           style="width: 80px; height: 80px; border-radius: 12px;" 
+           alt="Habit Tracker Icon">
+      <div>
+        <div class="title">Habit Tracker</div>
+        <div class="subtitle">Phase 1</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <div id="statusMessage" class="status-message"></div>
+      <button type="button" id="refreshBtn" class="refresh-btn">↻</button>
+    </div>
+  </div>
+  
+  <div class="header">
+    <div class="date-nav">
+      <button class="date-btn" id="prevBtn">←</button>
+      <div style="flex: 1; text-align: center;">
+        <div class="date-display" id="dateDisplay"></div>
+        <div class="average-display" id="phaseInfo" style="margin-top: 4px;"></div>
+      </div>
+      <button class="date-btn" id="nextBtn">→</button>
+    </div>
+    <div class="phase-progress">
+      <div class="phase-progress-bar" id="phaseProgressBar"></div>
+    </div>
+  </div>
+
+  <form id="healthForm">
+    <!-- To-Do's -->
+    <div class="section" id="todosSection">
+      <div class="section-header collapsible collapsed" id="todosHeader">To-Do's (0)</div>
+      <div class="section-content collapsed">
+        <div class="field-group">
+          <label class="field-label">Important Tasks</label>
+          <div id="honeyDoList" class="item-list"></div>
+          <button type="button" class="btn btn-secondary" id="addHoneyDoBtn">+ Add Task</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sleep -->
+    <div class="section" id="sleepSection">
+      <div class="section-header">Hours of Sleep</div>
+      <div class="section-content">
+        <div class="field-group">
+          <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24">
+          <div class="average-display">7-day avg: <span id="avgSleep">--</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grey's Habits -->
+    <div class="section" id="greysHabitsSection">
+      <div class="section-header">Grey's Habits</div>
+      <div class="section-content">
+        <div class="grid-3">
+          <div class="checkbox-field">
+            <input type="checkbox" id="inhalerMorning">
+            <label for="inhalerMorning">Inhaler Morning</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="inhalerEvening">
+            <label for="inhalerEvening">Inhaler Evening</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="multiplication">
+            <label for="multiplication">5 min Multiplication</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Movement -->
+    <div class="section" id="movementSection">
+      <div class="section-header">Movement</div>
+      <div class="section-content">
+        <div class="grid-2">
+          <div class="field-group">
+            <label class="field-label">Carol Bike</label>
+            <div class="checkbox-field">
+              <input type="checkbox" id="rehit">
+              <label for="rehit">REHIT 2x10</label>
+            </div>
+            <div class="average-display">REHIT Sessions this week: <span id="rehitWeek">--</span></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Steps</label>
+            <input type="number" inputmode="numeric" class="input-field" id="steps">
+            <div class="average-display">7-day avg: <span id="avgSteps">--</span></div>
+          </div>
+        </div>
+        <div id="rehitFields" style="display: none;">
+          <div class="grid-2">
+            <div class="field-group">
+              <label class="field-label">Fitness Score</label>
+              <input type="number" inputmode="numeric" class="input-field" id="fitnessScore" step="0.1">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Calories</label>
+              <input type="number" inputmode="numeric" class="input-field" id="calories">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field-group">
+              <label class="field-label">Peak Watts</label>
+              <input type="number" inputmode="numeric" class="input-field" id="peakWatts">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Watt Seconds</label>
+              <input type="number" inputmode="numeric" class="input-field" id="wattSeconds">
+            </div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Movement Breaks</label>
+          <div id="movementList" class="item-list"></div>
+          <button type="button" class="btn btn-secondary btn-smaller" id="addMovementBtn">+ Add Movement Break</button>
+          <div class="average-display" style="margin-top: 12px;">
+            Avg. Movements per Day: <span id="avgMovements">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nutrition -->
+    <div class="section" id="nutritionSection">
+      <div class="section-header">Nutrition</div>
+      <div class="section-content">
+        <label class="field-label">Supplements</label>
+        <div class="nutrition-grid">
+          <div class="checkbox-field">
+            <input type="checkbox" id="creatine">
+            <label for="creatine">Creatine Chews</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="vitaminD">
+            <label for="vitaminD">Vitamin D</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="no2">
+            <label for="no2">NO2</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="psyllium">
+            <label for="psyllium">Psyllium Husk</label>
+          </div>
+        </div>
+        
+        <div class="field-group" style="margin-top: 20px;">
+          <label class="field-label">Meals</label>
+          <div class="meal-grid">
+            <div class="checkbox-field">
+              <input type="checkbox" id="breakfast">
+              <label for="breakfast">Breakfast</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="lunch">
+              <label for="lunch">Lunch</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="dinner">
+              <label for="dinner">Dinner</label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="field-group">
+          <label class="field-label">Snacks & Alcohol</label>
+          <div class="grid-3">
+            <div class="checkbox-field">
+              <input type="checkbox" id="daySnacks">
+              <label for="daySnacks">Healthy Day Snacks</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="nightSnacks">
+              <label for="nightSnacks">Healthy Night Snacks</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="noAlcohol">
+              <label for="noAlcohol">No Alcohol</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Water -->
+    <div class="section" id="waterSection">
+      <div class="section-header">Water</div>
+      <div class="section-content">
+        <div class="water-counter">
+          <button type="button" class="water-counter-btn" id="waterMinus">−</button>
+          <div class="water-counter-value" id="waterCount">0</div>
+          <button type="button" class="water-counter-btn" id="waterPlus">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reading Sessions -->
+    <div class="section" id="mentalHabitsSection">
+      <div class="section-header collapsible collapsed">Reading Sessions</div>
+      <div class="section-content collapsed">
+        <div class="field-group">
+          <div id="readingList" class="item-list"></div>
+          <button type="button" class="btn btn-secondary btn-smaller" id="addReadingBtn">+ Add Reading</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meditation -->
+    <div class="section" id="meditationSection">
+      <div class="section-header">Meditation</div>
+      <div class="section-content">
+        <div class="checkbox-field">
+          <input type="checkbox" id="meditation">
+          <label for="meditation">Meditated Today</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reflections -->
+    <div class="section" id="reflectionsSection">
+      <div class="section-header collapsible collapsed">Reflections</div>
+      <div class="section-content collapsed">
+        <textarea class="input-field" id="reflections" placeholder="Write your reflections..."></textarea>
+      </div>
+    </div>
+
+    <!-- Grey & Sloane Stories -->
+    <div class="section" id="storiesSection">
+      <div class="section-header collapsible collapsed">Grey & Sloane Stories</div>
+      <div class="section-content collapsed">
+        <textarea class="input-field" id="stories" placeholder="Write stories about Grey & Sloane..."></textarea>
+      </div>
+    </div>
+
+    <!-- Carly -->
+    <div class="section" id="carlySection">
+      <div class="section-header collapsible collapsed">Carly</div>
+      <div class="section-content collapsed">
+        <textarea class="input-field" id="carly" placeholder="Write about Carly..."></textarea>
+      </div>
+    </div>
+
+    <!-- Body Data -->
+    <div class="section" id="bodyDataSection">
+      <div class="section-header collapsible collapsed">Body</div>
+      <div class="section-content collapsed">
+        <div class="field-group">
+          <label class="field-label">Weight (lbs)</label>
+          <input type="number" inputmode="numeric" class="body-data-input" id="weight" step="0.1" style="background: #1a1a1a; border-radius: 20px; padding: 24px;">
+        </div>
+        
+        <!-- Lean Mass Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Lean Mass (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="leanMass" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Lean Mass %</label>
+            <div class="body-data-percent" id="leanMassPercent">--</div>
+          </div>
+        </div>
+        
+        <!-- Body Fat Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Body Fat (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="bodyFat" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Body Fat %</label>
+            <div class="body-data-percent" id="bodyFatPercent">--</div>
+          </div>
+        </div>
+        
+        <!-- Bone Mass Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Bone Mass (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="boneMass" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Bone Mass %</label>
+            <div class="body-data-percent" id="boneMassPercent">--</div>
+          </div>
+        </div>
+        
+        <!-- Water Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Water (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="water" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Water %</label>
+            <div class="body-data-percent" id="waterPercent">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    let currentDate = new Date();
+    let movements = [];
+    let readings = [];
+    let honeyDos = [];
+    let currentAverages = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateDateDisplay();
+      loadDataForCurrentDate();
+      setupEventListeners();
+      setupCollapsibleSections();
+      setupBodyCalculations();
+      setupInputZoomFix();
+      setupTextAreaAutoSave();
+    });
+
+    // Auto-save for text areas (reflections, stories, carly)
+    function setupTextAreaAutoSave() {
+      const textAreas = ['reflections', 'stories', 'carly'];
+      textAreas.forEach(id => {
+        const textarea = document.getElementById(id);
+        let saveTimeout;
+        
+        textarea.addEventListener('blur', function() {
+          // Save when user leaves the textarea
+          saveData();
+        });
+        
+        // Optional: Also save after 2 seconds of no typing
+        textarea.addEventListener('input', function() {
+          clearTimeout(saveTimeout);
+          saveTimeout = setTimeout(() => {
+            saveData();
+          }, 2000);
+        });
+      });
+    }
+
+    // Fix iOS zoom issue - reset viewport when keyboard closes
+    function setupInputZoomFix() {
+      const inputs = document.querySelectorAll('input, textarea');
+      inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+          // Reset viewport when input loses focus (keyboard closes)
+          setTimeout(() => {
+            // Force scroll to top
+            window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+            
+            // Reset viewport zoom
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+              viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+            }
+          }, 100);
+        });
+      });
+    }
+
+    function setupEventListeners() {
+      document.getElementById('prevBtn').addEventListener('click', () => changeDate(-1));
+      document.getElementById('nextBtn').addEventListener('click', () => changeDate(1));
+      document.getElementById('refreshBtn').addEventListener('click', refreshData);
+      document.getElementById('addMovementBtn').addEventListener('click', addMovement);
+      document.getElementById('addReadingBtn').addEventListener('click', addReading);
+      document.getElementById('addHoneyDoBtn').addEventListener('click', addHoneyDo);
+      document.getElementById('waterPlus').addEventListener('click', incrementWater);
+      document.getElementById('waterMinus').addEventListener('click', decrementWater);
+      
+      // Add change listeners to all inputs and checkboxes to track changes
+      document.querySelectorAll('input, textarea').forEach(element => {
+        element.addEventListener('change', () => {
+          markDataChanged();
+          // Small delay to ensure all values are updated
+          setTimeout(checkSectionCompletion, 10);
+        });
+        element.addEventListener('input', () => {
+          markDataChanged();
+          // Don't check completion on every keystroke, only on change
+        });
+      });
+      
+      // REHIT checkbox toggles visibility of related fields
+      document.getElementById('rehit').addEventListener('change', function() {
+        const rehitFields = document.getElementById('rehitFields');
+        rehitFields.style.display = this.checked ? 'block' : 'none';
+      });
+      
+      // Setup checkbox interactions - click anywhere to toggle
+      document.querySelectorAll('.checkbox-field').forEach(field => {
+        const checkbox = field.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          // Update visual state when checkbox changes
+          checkbox.addEventListener('change', function() {
+            field.classList.toggle('checked', this.checked);
+          });
+          
+          // Click anywhere on the field to toggle
+          field.addEventListener('click', function(e) {
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change'));
+            field.classList.toggle('checked', checkbox.checked);
+          });
+        }
+      });
+    }
+
+    function incrementWater() {
+      waterCount++;
+      document.getElementById('waterCount').textContent = waterCount;
+      markDataChanged();
+      checkSectionCompletion();
+    }
+    
+    function decrementWater() {
+      if (waterCount > 0) {
+        waterCount--;
+        document.getElementById('waterCount').textContent = waterCount;
+        markDataChanged();
+        checkSectionCompletion();
+      }
+    }
+    
+    function updateWaterDisplay() {
+      document.getElementById('waterCount').textContent = waterCount;
+    }
+    
+    function calculateSleepDuration() {
+      const bedtime = document.getElementById('bedtime').value;
+      const wakeTime = document.getElementById('wakeTime').value;
+      
+      if (!bedtime || !wakeTime) {
+        document.getElementById('sleepDuration').textContent = '-- hrs -- min';
+        return;
+      }
+      
+      // Parse times
+      const [bedHour, bedMin] = bedtime.split(':').map(Number);
+      const [wakeHour, wakeMin] = wakeTime.split(':').map(Number);
+      
+      // Convert to minutes since midnight
+      let bedMinutes = bedHour * 60 + bedMin;
+      let wakeMinutes = wakeHour * 60 + wakeMin;
+      
+      // If wake time is earlier, it means next day
+      if (wakeMinutes <= bedMinutes) {
+        wakeMinutes += 24 * 60;
+      }
+      
+      // Calculate difference
+      const totalMinutes = wakeMinutes - bedMinutes;
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      
+    }
+
+    function markDataChanged() {
+      dataChanged = true;
+      triggerAutoSave();
+    }
+
+    function markDataUnchanged() {
+      dataChanged = false;
+      // Clear any pending auto-save
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = null;
+      }
+    }
+
+    function testConnection() {
+      console.log('Testing connection...');
+      showStatus('Testing connection...', 'loading');
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          console.log('Connection test result:', result);
+          showStatus('✓ Connection works! ' + result.message, 'success');
+          setTimeout(hideStatus, 3000);
+        })
+        .withFailureHandler(function(error) {
+          console.error('Connection test failed:', error);
+          showStatus('✗ Connection failed: ' + error.message, 'error');
+        })
+        .testConnection();
+    }
+
+    function setupCollapsibleSections() {
+      document.querySelectorAll('.section-header.collapsible').forEach(header => {
+        header.addEventListener('click', function() {
+          this.classList.toggle('collapsed');
+          const content = this.nextElementSibling;
+          content.classList.toggle('collapsed');
+        });
+      });
+    }
+
+    function setupBodyCalculations() {
+      const fields = ['weight', 'leanMass', 'bodyFat', 'boneMass', 'water'];
+      fields.forEach(id => {
+        const field = document.getElementById(id);
+        field.addEventListener('input', calculatePercentages);
+        field.addEventListener('input', checkAndRemoveBodyDataAsterisk);
+      });
+    }
+
+    function calculatePercentages() {
+      const weight = parseFloat(document.getElementById('weight').value) || 0;
+      
+      if (weight > 0) {
+        const leanMass = parseFloat(document.getElementById('leanMass').value) || 0;
+        const bodyFat = parseFloat(document.getElementById('bodyFat').value) || 0;
+        const boneMass = parseFloat(document.getElementById('boneMass').value) || 0;
+        const water = parseFloat(document.getElementById('water').value) || 0;
+        
+        document.getElementById('leanMassPercent').textContent = 
+          leanMass > 0 ? ((leanMass / weight) * 100).toFixed(1) : '--';
+        document.getElementById('bodyFatPercent').textContent = 
+          bodyFat > 0 ? ((bodyFat / weight) * 100).toFixed(1) : '--';
+        document.getElementById('boneMassPercent').textContent = 
+          boneMass > 0 ? ((boneMass / weight) * 100).toFixed(1) : '--';
+        document.getElementById('waterPercent').textContent = 
+          water > 0 ? ((water / weight) * 100).toFixed(1) : '--';
+      } else {
+        document.getElementById('leanMassPercent').textContent = '--';
+        document.getElementById('bodyFatPercent').textContent = '--';
+        document.getElementById('boneMassPercent').textContent = '--';
+        document.getElementById('waterPercent').textContent = '--';
+      }
+    }
+
+    function changeDate(days) {
+      currentDate.setDate(currentDate.getDate() + days);
+      updateDateDisplay();
+      clearCompletionStates();
+      loadDataForCurrentDate();
+    }
+
+    function clearCompletionStates() {
+      // Remove all completion states when changing dates
+      document.getElementById('todosSection').classList.remove('completed');
+      document.getElementById('sleepSection').classList.remove('completed');
+      document.getElementById('greysHabitsSection').classList.remove('completed');
+      document.getElementById('movementSection').classList.remove('completed');
+      document.getElementById('nutritionSection').classList.remove('completed');
+      document.getElementById('waterSection').classList.remove('completed');
+      document.getElementById('mentalHabitsSection').classList.remove('completed');
+      document.getElementById('bodyDataSection').classList.remove('incomplete');
+    }
+
+    function refreshData() {
+      showStatus('Refreshing...', 'loading');
+      loadDataForCurrentDate();
+    }
+
+    function updateDateDisplay() {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('dateDisplay').textContent = 
+        currentDate.toLocaleDateString('en-US', options);
+      
+      // Move Body Data section on Tuesday
+      updateBodyDataHeader();
+      
+      // Update background color if not today
+      updateBackgroundForDate();
+      
+      // Update phase info
+      updatePhaseInfo();
+    }
+
+    function updateBackgroundForDate() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const current = new Date(currentDate);
+      current.setHours(0, 0, 0, 0);
+      
+      if (current.getTime() !== today.getTime()) {
+        document.body.classList.add('past-date');
+      } else {
+        document.body.classList.remove('past-date');
+      }
+    }
+
+    function updateBodyDataHeader() {
+      // Move Body section above To-Do's on Tuesday
+      const isTuesday = currentDate.getDay() === 2;
+      const bodyDataSection = document.getElementById('bodyDataSection');
+      const todosSection = document.getElementById('todosSection');
+      const form = bodyDataSection.parentNode;
+      
+      if (isTuesday) {
+        // Move Body before To-Do's (at the top)
+        if (todosSection && bodyDataSection.compareDocumentPosition(todosSection) & Node.DOCUMENT_POSITION_FOLLOWING) {
+          // Body is already before todos, do nothing
+        } else {
+          form.insertBefore(bodyDataSection, todosSection);
+        }
+      } else {
+        // Move Body to end of form (before closing tag)
+        if (bodyDataSection !== form.lastElementChild) {
+          form.appendChild(bodyDataSection);
+        }
+      }
+    }
+
+    function checkAndRemoveBodyDataAsterisk() {
+      // Check if body data has been changed - if so, remove asterisk
+      const weight = parseFloat(document.getElementById('weight').value);
+      
+      if (weight && weight > 0) {
+        const sections = document.querySelectorAll('.section-header');
+        sections.forEach(header => {
+          if (header.textContent.includes('Body Data')) {
+            const firstNode = header.childNodes[0];
+            if (firstNode.textContent.includes('*')) {
+              firstNode.textContent = 'Body Data';
+            }
+          }
+        });
+      }
+    }
+
+    function formatDateForAPI(date) {
+      const d = date || currentDate;
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+      const year = String(d.getFullYear()).slice(-2);
+      return `${month}/${day}/${year}`;
+    }
+
+    function loadDataForCurrentDate() {
+      const dateStr = formatDateForAPI();
+      console.log('=== LOAD DATA START ===');
+      console.log('Current Date object:', currentDate);
+      console.log('Formatted date string being sent:', dateStr);
+      console.log('Date string type:', typeof dateStr);
+      console.log('Date string length:', dateStr.length);
+      showStatus('Loading...', 'loading');
+      
+      google.script.run
+        .withSuccessHandler(function(data) {
+          console.log('=== DATA RECEIVED ===');
+          console.log('Raw data:', data);
+          console.log('Data type:', typeof data);
+          console.log('Data is null?', data === null);
+          console.log('Data is undefined?', data === undefined);
+          console.log('Data.daily:', data ? data.daily : 'N/A');
+          
+          // Check if backend returned an error object
+          if (data && data.error) {
+            console.error('=== BACKEND ERROR ===');
+            console.error('Error message:', data.message);
+            console.error('Error details:', data.toString);
+            console.error('Stack:', data.stack);
+            showStatus('Backend error: ' + data.message, 'error');
+            return;
+          }
+          
+          populateForm(data);
+          markDataUnchanged(); // Disable save button after loading
+          hideStatus();
+        })
+        .withFailureHandler(function(error) {
+          console.log('=== ERROR ===');
+          showStatus('Error loading data: ' + error.message, 'error');
+          console.error('Load error:', error);
+        })
+        .loadDataForDate(dateStr);
+    }
+
+    function populateForm(data) {
+      // Clear form first
+      document.getElementById('healthForm').reset();
+      document.querySelectorAll('.checkbox-field').forEach(f => f.classList.remove('checked'));
+      movements = [];
+      readings = [];
+      
+      if (!data || !data.daily) {
+        // No data for current date - load body data from previous day
+        loadBodyDataFromPreviousDay();
+        renderMovements();
+        renderReadings();
+        calculatePercentages();
+        return;
+      }
+      
+      const d = data.daily;
+      
+      // Debug: Log all available fields
+      console.log('=== DAILY DATA FIELDS ===');
+      console.log('Available fields:', Object.keys(d));
+      console.log('Full daily object:', d);
+      
+      // Sleep
+      if (d['Hours of Sleep']) document.getElementById('sleepHours').value = d['Hours of Sleep'];
+      
+      // Checkboxes
+      setCheckbox('inhalerMorning', d['Grey\'s Inhaler Morning'] || d['Inhaler Morning']);
+      setCheckbox('inhalerEvening', d['Grey\'s Inhaler Evening'] || d['Inhaler Evening']);
+      setCheckbox('multiplication', d['5 min Multiplication']);
+      setCheckbox('rehit', d['REHIT 2x10'] || d['REHIT']);
+      setCheckbox('creatine', d['Creatine Chews'] || d['Creatine']);
+      setCheckbox('vitaminD', d['Vitamin D']);
+      setCheckbox('no2', d['NO2']);
+      setCheckbox('psyllium', d['Psyllium Husk'] || d['Psyllium']);
+      setCheckbox('breakfast', d['Breakfast']);
+      setCheckbox('lunch', d['Lunch']);
+      setCheckbox('dinner', d['Dinner']);
+      setCheckbox('daySnacks', d['Healthy Day Snacks'] || d['Day Snacks']);
+      setCheckbox('nightSnacks', d['Healthy Night Snacks'] || d['Night Snacks']);
+      setCheckbox('noAlcohol', d['No Alcohol']);
+      
+      // Load water count
+      waterCount = parseInt(d['Water']) || 0;
+      updateWaterDisplay();
+      
+      setCheckbox('meditation', d['Meditation']);
+      
+      // Numbers
+      if (d['Fitness Score']) document.getElementById('fitnessScore').value = d['Fitness Score'];
+      if (d['Calories']) document.getElementById('calories').value = d['Calories'];
+      if (d['Peak Watts']) document.getElementById('peakWatts').value = d['Peak Watts'];
+      if (d['Watt Seconds']) document.getElementById('wattSeconds').value = d['Watt Seconds'];
+      if (d['Steps']) document.getElementById('steps').value = d['Steps'];
+      if (d['Weight (lbs)'] || d['Weight']) {
+        const weightValue = d['Weight (lbs)'] || d['Weight'];
+        document.getElementById('weight').value = weightValue;
+      }
+      if (d['Lean Mass (lbs)'] || d['Lean Mass']) document.getElementById('leanMass').value = d['Lean Mass (lbs)'] || d['Lean Mass'];
+      if (d['Body Fat (lbs)'] || d['Body Fat']) document.getElementById('bodyFat').value = d['Body Fat (lbs)'] || d['Body Fat'];
+      if (d['Bone Mass (lbs)'] || d['Bone Mass']) document.getElementById('boneMass').value = d['Bone Mass (lbs)'] || d['Bone Mass'];
+      if (d['Water (lbs)'] || d['Water']) document.getElementById('water').value = d['Water (lbs)'] || d['Water'];
+      
+      // If no body data exists for this date, load from previous day
+      if (!d['Weight (lbs)'] && !d['Weight']) {
+        console.log('No body data for this date, loading from previous day');
+        loadBodyDataFromPreviousDay();
+      } else {
+        calculatePercentages();
+      }
+      
+      // Movements and readings - normalize property names
+      movements = (data.movements || []).map(m => ({
+        duration: m.duration || m['duration (min)'] || m['Duration'] || m['Duration (min)'],
+        type: m.type || m['Type']
+      }));
+      readings = (data.readings || []).map(r => ({
+        duration: r.duration || r['duration (min)'] || r['Duration'] || r['Duration (min)'],
+        book: r.book || r['Book']
+      }));
+      honeyDos = data.honeyDos || [];
+      
+      // Set last book title from most recent reading
+      if (readings.length > 0) {
+        const lastReading = readings[readings.length - 1];
+        lastBookTitle = lastReading.book || lastReading['Book'] || '';
+      }
+      
+      console.log('Loaded movements:', movements);
+      console.log('Loaded readings:', readings);
+      console.log('Loaded honey-dos:', honeyDos);
+      console.log('Last book title:', lastBookTitle);
+      
+      if (movements.length > 0) {
+        console.log('First movement keys:', Object.keys(movements[0]));
+        console.log('First movement:', movements[0]);
+      }
+      
+      if (readings.length > 0) {
+        console.log('First reading keys:', Object.keys(readings[0]));
+        console.log('First reading:', readings[0]);
+      }
+      
+      // Text areas
+      document.getElementById('reflections').value = data.reflections || '';
+      document.getElementById('stories').value = data.stories || '';
+      document.getElementById('carly').value = data.carly || '';
+      
+      renderMovements();
+      renderReadings();
+      renderHoneyDos();
+      calculatePercentages();
+      updateAverages(data.averages);
+      checkSectionCompletion();
+    }
+
+    function updateAverages(averages) {
+      currentAverages = averages; // Store globally for checkSectionCompletion
+      
+      if (averages) {
+        // Sleep average
+        if (averages.sleep !== null && averages.sleep !== undefined) {
+          document.getElementById('avgSleep').textContent = averages.sleep.toFixed(2);
+        } else {
+          document.getElementById('avgSleep').textContent = '--';
+        }
+        
+        // Steps average
+        if (averages.steps !== null && averages.steps !== undefined) {
+          document.getElementById('avgSteps').textContent = averages.steps.toLocaleString();
+        } else {
+          document.getElementById('avgSteps').textContent = '--';
+        }
+        
+        // Movement average
+        if (averages.movements !== null && averages.movements !== undefined) {
+          document.getElementById('avgMovements').textContent = averages.movements;
+        } else {
+          document.getElementById('avgMovements').textContent = '--';
+        }
+        
+        // REHIT count this week
+        document.getElementById('rehitWeek').textContent = averages.rehitWeek || 0;
+      } else {
+        document.getElementById('avgSleep').textContent = '--';
+        document.getElementById('avgSteps').textContent = '--';
+        document.getElementById('avgMovements').textContent = '--';
+        document.getElementById('rehitWeek').textContent = '--';
+      }
+    }
+
+    function updatePhaseInfo() {
+      const startDate = new Date('2026-01-19T00:00:00'); // Phase 1 start
+      const current = new Date(currentDate);
+      current.setHours(0, 0, 0, 0);
+      
+      const daysSinceStart = Math.floor((current - startDate) / (1000 * 60 * 60 * 24));
+      const phase = Math.floor(daysSinceStart / 21) + 1;
+      const daysIntoPhase = daysSinceStart % 21;
+      const progress = (daysIntoPhase / 21) * 100;
+      
+      console.log('Phase calc:', { daysSinceStart, phase, daysIntoPhase, progress });
+      
+      // Update subtitle with phase number
+      const subtitleEl = document.querySelector('.subtitle');
+      if (subtitleEl) {
+        subtitleEl.textContent = `Phase ${phase}`;
+      }
+      
+      // Update phase info text
+      document.getElementById('phaseInfo').textContent = `Day ${daysIntoPhase + 1} of 21`;
+      
+      // Update progress bar
+      document.getElementById('phaseProgressBar').style.width = `${progress}%`;
+    }
+
+    function checkSectionCompletion() {
+      // To-Do's: Green if no open tasks
+      const openTodos = honeyDos.filter(h => !h.completed && !h['Completed']).length;
+      document.getElementById('todosSection').classList.toggle('completed', openTodos === 0);
+      
+      // Sleep: Green if >= 7 hours
+      const sleepHours = parseFloat(document.getElementById('sleepHours').value) || 0;
+      document.getElementById('sleepSection').classList.toggle('completed', sleepHours >= 7);
+      
+      // Grey's Habits: Green if all 3 are checked
+      const inhalerMorning = document.getElementById('inhalerMorning').checked;
+      const inhalerEvening = document.getElementById('inhalerEvening').checked;
+      const multiplication = document.getElementById('multiplication').checked;
+      document.getElementById('greysHabitsSection').classList.toggle('completed', 
+        inhalerMorning && inhalerEvening && multiplication);
+      
+      // Movement: Green if REHIT sessions this week >= 3 AND avg movements per day >= 2
+      const rehitThisWeek = currentAverages?.rehitWeek || 0;
+      const avgMovements = parseFloat(currentAverages?.movements) || 0;
+      document.getElementById('movementSection').classList.toggle('completed', 
+        rehitThisWeek >= 3 && avgMovements >= 2);
+      
+      // Nutrition: Green if all supplements + 2 meals + both snacks
+      const creatine = document.getElementById('creatine').checked;
+      const vitaminD = document.getElementById('vitaminD').checked;
+      const no2 = document.getElementById('no2').checked;
+      const psyllium = document.getElementById('psyllium').checked;
+      const allSupplements = creatine && vitaminD && no2 && psyllium;
+      
+      const breakfast = document.getElementById('breakfast').checked;
+      const lunch = document.getElementById('lunch').checked;
+      const dinner = document.getElementById('dinner').checked;
+      const mealCount = (breakfast ? 1 : 0) + (lunch ? 1 : 0) + (dinner ? 1 : 0);
+      
+      const daySnacks = document.getElementById('daySnacks').checked;
+      const nightSnacks = document.getElementById('nightSnacks').checked;
+      const bothSnacks = daySnacks && nightSnacks;
+      
+      document.getElementById('nutritionSection').classList.toggle('completed', 
+        allSupplements && mealCount >= 2 && bothSnacks);
+      
+      // Water: Green if >= 4
+      document.getElementById('waterSection').classList.toggle('completed', waterCount >= 4);
+      
+      // Mental Habits: Green if 10+ minutes of reading
+      const totalReadingMinutes = readings.reduce((sum, r) => {
+        const duration = r.duration || r['duration (min)'] || 0;
+        return sum + parseInt(duration);
+      }, 0);
+      document.getElementById('mentalHabitsSection').classList.toggle('completed', totalReadingMinutes >= 10);
+    }
+
+    function loadBodyDataFromPreviousDay() {
+      // Get previous day's date
+      const prevDate = new Date(currentDate);
+      prevDate.setDate(prevDate.getDate() - 1);
+      const prevDateStr = formatDateForAPI(prevDate);
+      
+      console.log('Loading body data from previous day:', prevDateStr);
+      
+      google.script.run
+        .withSuccessHandler(function(data) {
+          console.log('Previous day data received:', data);
+          if (data && data.daily) {
+            const d = data.daily;
+            console.log('Previous day daily data:', d);
+            // Only populate body data fields - check all possible field names
+            const weight = d['Weight (lbs)'] || d['Weight'];
+            const leanMass = d['Lean Mass (lbs)'] || d['Lean Mass'];
+            const bodyFat = d['Body Fat (lbs)'] || d['Body Fat'];
+            const boneMass = d['Bone Mass (lbs)'] || d['Bone Mass'];
+            const water = d['Water (lbs)'] || d['Water'];
+            
+            console.log('Body data values:', { weight, leanMass, bodyFat, boneMass, water });
+            
+            if (weight) document.getElementById('weight').value = weight;
+            if (leanMass) document.getElementById('leanMass').value = leanMass;
+            if (bodyFat) document.getElementById('bodyFat').value = bodyFat;
+            if (boneMass) document.getElementById('boneMass').value = boneMass;
+            if (water) document.getElementById('water').value = water;
+            
+            calculatePercentages();
+            console.log('Body data populated from previous day');
+          } else {
+            console.log('No previous day data available');
+          }
+        })
+        .withFailureHandler(function(error) {
+          console.log('Error loading previous day data:', error);
+        })
+        .loadDataForDate(prevDateStr);
+    }
+
+    function setCheckbox(id, value) {
+      const checkbox = document.getElementById(id);
+      if (checkbox && value === true) {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change')); // Trigger change event for REHIT
+        checkbox.closest('.checkbox-field').classList.add('checked');
+      }
+    }
+
+    function addMovement() {
+      const duration = prompt('Movement duration (minutes):');
+      if (!duration || isNaN(duration)) return;
+      
+      const durationNum = parseInt(duration);
+      const type = durationNum > 12 ? 'Long' : 'Short';
+      
+      movements.push({ duration: durationNum, type: type });
+      renderMovements();
+      
+      // Save immediately
+      saveData();
+    }
+
+    function removeMovement(index) {
+      movements.splice(index, 1);
+      renderMovements();
+      
+      // Save immediately
+      saveData();
+    }
+
+    function renderMovements() {
+      const list = document.getElementById('movementList');
+      list.innerHTML = '';
+      
+      if (movements.length === 0) {
+        return;
+      }
+      
+      movements.forEach((m, idx) => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        // Handle both old format (duration/type) and spreadsheet format (duration (min)/type)
+        const duration = m.duration || m['duration (min)'] || m['Duration'] || m['Duration (min)'];
+        const type = m.type || m['Type'];
+        item.innerHTML = `
+          <span class="item-text">${duration} min (${type})</span>
+          <button type="button" class="btn btn-danger" onclick="removeMovement(${idx})">×</button>
+        `;
+        list.appendChild(item);
+      });
+      
+      checkSectionCompletion();
+    }
+
+    let lastBookTitle = '';
+    let waterCount = 0;
+    let dataChanged = false;
+    let autoSaveTimeout = null;
+
+    function triggerAutoSave() {
+      // Clear any pending save
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+      
+      // Save after 1.5 seconds of no changes
+      autoSaveTimeout = setTimeout(() => {
+        console.log('Auto-saving...');
+        saveData();
+      }, 1500);
+    }
+
+    function addReading() {
+      const duration = prompt('Reading duration (minutes):');
+      if (!duration || isNaN(duration)) return;
+      
+      const book = prompt('Book title:', lastBookTitle);
+      if (!book || book.trim() === '') return;
+      
+      lastBookTitle = book.trim();
+      readings.push({ duration: parseInt(duration), book: lastBookTitle });
+      renderReadings();
+      
+      // Save immediately
+      saveData();
+    }
+
+    function removeReading(index) {
+      readings.splice(index, 1);
+      renderReadings();
+      
+      // Save immediately
+      saveData();
+    }
+
+    function renderReadings() {
+      const list = document.getElementById('readingList');
+      list.innerHTML = '';
+      
+      if (readings.length === 0) {
+        return;
+      }
+      
+      readings.forEach((r, idx) => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        // Handle both old format (duration/book) and spreadsheet format (duration (min)/Book)
+        const duration = r.duration || r['duration (min)'] || r['Duration'] || r['Duration (min)'];
+        const book = r.book || r['Book'];
+        item.innerHTML = `
+          <span class="item-text">${duration} min - ${book}</span>
+          <button type="button" class="btn btn-danger" onclick="removeReading(${idx})">×</button>
+        `;
+        list.appendChild(item);
+      });
+      
+      checkSectionCompletion();
+    }
+
+    function addHoneyDo() {
+      const task = prompt('Task description:');
+      if (!task || task.trim() === '') return;
+      
+      const dueDate = prompt('Due date (optional, format: M/D/YY):');
+      
+      honeyDos.push({ 
+        id: generateUUID(),
+        created: formatDateForAPI(),
+        due: dueDate && dueDate.trim() !== '' ? dueDate.trim() : '',
+        task: task.trim(), 
+        completed: false
+      });
+      renderHoneyDos();
+      
+      // Save immediately
+      saveData();
+    }
+    
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function toggleHoneyDo(index) {
+      honeyDos[index].completed = !honeyDos[index].completed;
+      renderHoneyDos();
+      
+      // Save immediately
+      saveData();
+    }
+
+    function removeHoneyDo(index) {
+      honeyDos.splice(index, 1);
+      renderHoneyDos();
+      
+      // Save immediately
+      saveData();
+    }
+
+    function renderHoneyDos() {
+      const list = document.getElementById('honeyDoList');
+      list.innerHTML = '';
+      
+      if (honeyDos.length === 0) {
+        updateTodoCount();
+        return;
+      }
+      
+      honeyDos.forEach((h, idx) => {
+        const item = document.createElement('div');
+        item.className = 'item honey-do-item' + (h.completed ? ' completed' : '');
+        const task = h.task || h['Task'];
+        const completed = h.completed || h['Completed'];
+        const created = h.created || '';
+        const due = h.due || '';
+        
+        const dateInfo = [];
+        if (created) dateInfo.push(`Created: ${created}`);
+        if (due) dateInfo.push(`Due: ${due}`);
+        const dateText = dateInfo.length > 0 ? `<div style="font-size: 28px; color: #666; margin-top: 8px;">${dateInfo.join(' • ')}</div>` : '';
+        
+        item.innerHTML = `
+          <input type="checkbox" ${completed ? 'checked' : ''} onchange="toggleHoneyDo(${idx})" style="width: 48px; height: 48px; margin-right: 20px;">
+          <div style="flex: 1;">
+            <span class="item-text" style="${completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task}</span>
+            ${dateText}
+          </div>
+          <button type="button" class="btn btn-danger" onclick="removeHoneyDo(${idx})">×</button>
+        `;
+        list.appendChild(item);
+      });
+      
+      updateTodoCount();
+    }
+
+    function updateTodoCount() {
+      const openCount = honeyDos.filter(h => !h.completed && !h['Completed']).length;
+      document.getElementById('todosHeader').textContent = `To-Do's (${openCount})`;
+    }
+
+    function saveData() {
+      showStatus('Saving...', 'loading');
+      
+      const data = {
+        date: formatDateForAPI(),
+        sleepHours: document.getElementById('sleepHours').value,
+        inhalerMorning: document.getElementById('inhalerMorning').checked,
+        inhalerEvening: document.getElementById('inhalerEvening').checked,
+        multiplication: document.getElementById('multiplication').checked,
+        rehit: document.getElementById('rehit').checked,
+        fitnessScore: document.getElementById('fitnessScore').value,
+        calories: document.getElementById('calories').value,
+        peakWatts: document.getElementById('peakWatts').value,
+        wattSeconds: document.getElementById('wattSeconds').value,
+        steps: document.getElementById('steps').value,
+        creatine: document.getElementById('creatine').checked,
+        vitaminD: document.getElementById('vitaminD').checked,
+        no2: document.getElementById('no2').checked,
+        psyllium: document.getElementById('psyllium').checked,
+        breakfast: document.getElementById('breakfast').checked,
+        lunch: document.getElementById('lunch').checked,
+        dinner: document.getElementById('dinner').checked,
+        daySnacks: document.getElementById('daySnacks').checked,
+        nightSnacks: document.getElementById('nightSnacks').checked,
+        noAlcohol: document.getElementById('noAlcohol').checked,
+        hydrationGood: waterCount,
+        weight: document.getElementById('weight').value,
+        leanMass: document.getElementById('leanMass').value,
+        bodyFat: document.getElementById('bodyFat').value,
+        boneMass: document.getElementById('boneMass').value,
+        water: document.getElementById('water').value,
+        meditation: document.getElementById('meditation').checked,
+        movements: movements,
+        readings: readings,
+        honeyDos: honeyDos,
+        reflections: document.getElementById('reflections').value,
+        stories: document.getElementById('stories').value,
+        carly: document.getElementById('carly').value
+      };
+      
+      console.log('=== SAVING DATA ===');
+      console.log('Movements being saved:', data.movements);
+      console.log('Readings being saved:', data.readings);
+      console.log('Honey-dos being saved:', data.honeyDos);
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          showStatus('✓ Saved', 'success');
+          markDataUnchanged(); // Reset change tracking after save
+          
+          setTimeout(hideStatus, 1500);
+        })
+        .withFailureHandler(function(error) {
+          showStatus('Error: ' + error.message, 'error');
+          console.error(error);
+          setTimeout(hideStatus, 3000);
+        })
+        .saveDataForDate(data);
+    }
+
+    function showStatus(message, type) {
+      const status = document.getElementById('statusMessage');
+      status.textContent = message;
+      status.className = 'status-message ' + type;
+      status.style.display = 'block';
+    }
+
+    function hideStatus() {
+      document.getElementById('statusMessage').style.display = 'none';
+    }
+
+    // Make functions globally accessible
+    window.removeMovement = removeMovement;
+    window.removeReading = removeReading;
+    window.toggleHoneyDo = toggleHoneyDo;
+    window.removeHoneyDo = removeHoneyDo;
+    window.checkSectionCompletion = checkSectionCompletion;
+  </script>
+</body>
+</html>
