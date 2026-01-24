@@ -94,7 +94,8 @@ function populateForm(data) {
     if (waterCountEl) waterCountEl.textContent = String(window.waterCount);
 
   // After all checkbox values are set
-  document.querySelectorAll(".checkbox-field input[type='checkbox']")
+  document
+  .querySelectorAll(".checkbox-field input[type='checkbox']")
   .forEach(syncCheckboxVisual);
   }
 
