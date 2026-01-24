@@ -72,12 +72,46 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCheckboxes();
   setupWaterButtons();
   setupInputAutosave();
-  setupRefreshButton();
   setupCollapsibleSections();   // ✅ add this
 
   updateDateDisplay();
+  updatePhaseInfo();
   loadDataForCurrentDate();
 });
+
+const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
+const PHASE_LENGTH_DAYS = 21;
+
+function updatePhaseInfo() {
+  const start = new Date(PHASE_START_DATE);
+  start.setHours(0, 0, 0, 0);
+
+  const cur = new Date(currentDate);
+  cur.setHours(0, 0, 0, 0);
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const daysSinceStart = Math.floor((cur - start) / msPerDay);
+
+  // If before start date, treat as Phase 0 / Day 0
+  const safeDays = Math.max(0, daysSinceStart);
+  const phase = Math.floor(safeDays / PHASE_LENGTH_DAYS) + 1;
+  const dayInPhase = (safeDays % PHASE_LENGTH_DAYS) + 1;
+
+  const phaseInfoEl = document.getElementById("phaseInfo");
+  if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH_DAYS}`;
+
+  // Update subtitle "Phase X"
+  const subtitleEl = document.querySelector(".subtitle");
+  if (subtitleEl) subtitleEl.textContent = `Phase ${phase}`;
+
+  // Progress bar width
+  const bar = document.getElementById("phaseProgressBar");
+  if (bar) {
+    const progress = (dayInPhase - 1) / PHASE_LENGTH_DAYS; // 0..(20/21)
+    bar.style.width = `${Math.round(progress * 100)}%`;
+  }
+}
+
 
 // =====================================
 // DATE + NAV
@@ -121,6 +155,7 @@ function changeDate(days) {
   currentDate.setDate(currentDate.getDate() + days);
   console.log("✅ Changed date to", formatDateForAPI(currentDate));
   updateDateDisplay();
+  updatePhaseInfo();
   loadDataForCurrentDate();
 }
 
@@ -324,18 +359,6 @@ function setupInputAutosave() {
   });
 
   console.log("✅ Input autosave wired");
-}
-
-// =====================================
-// Refresh button (optional)
-// =====================================
-function setupRefreshButton() {
-  const btn = document.getElementById("refreshBtn");
-  if (!btn) return;
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    loadDataForCurrentDate();
-  });
 }
 
 // =====================================
