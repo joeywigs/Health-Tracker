@@ -1,7 +1,7 @@
 // =====================================
 // CONFIG
 // =====================================
-const API_URL = "const API_URL = "https://script.google.com/macros/s/AKfycbwtzL8uj0geM3HmBIUScEhT_OAyi0I25Unbt4SsC0kfDbtonrGvmdzARdW7iuURg2D5sg/exec";
+const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
 const API_KEY = "Q8xF3N9KpZ7J2WmC4A6YBVeH5R0TqLDSU1nXgE";
 
 // =====================================
@@ -10,11 +10,7 @@ const API_KEY = "Q8xF3N9KpZ7J2WmC4A6YBVeH5R0TqLDSU1nXgE";
 async function apiGet(action, params = {}) {
   const url = new URL(API_URL);
   url.searchParams.set("action", action);
-  url.searchParams.set("key", API_KEY);
-
-  Object.entries(params).forEach(([k, v]) =>
-    url.searchParams.set(k, v)
-  );
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
   const res = await fetch(url.toString(), { method: "GET" });
   return await res.json();
@@ -31,17 +27,11 @@ async function apiSaveViaGet(dataObj) {
 }
 
 async function apiPost(action, payload = {}) {
-  const body = new URLSearchParams();
-  body.set("action", action);
-  body.set("key", API_KEY);
-  body.set("payload", JSON.stringify(payload));
-
   const res = await fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-    body: body.toString()
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ...payload })
   });
-
   return await res.json();
 }
 
@@ -92,6 +82,7 @@ async function loadDataForCurrentDate() {
 async function saveData(payload) {
   try {
     const result = await apiPost("save", { data: payload });
+    const result = await apiSaveViaGet(data);
 
     if (result?.error) {
       console.error("Save error:", result.message);
