@@ -99,6 +99,10 @@ function populateForm(data) {
     window.waterCount = parseInt(d["Water"], 10) || 0;
     const waterCountEl = document.getElementById("waterCount");
     if (waterCountEl) waterCountEl.textContent = String(window.waterCount);
+
+  // After all checkbox values are set
+  document.querySelectorAll(".checkbox-field input[type='checkbox']")
+  .forEach(syncCheckboxVisual);
   }
 
   console.log("✅ populateForm ran");
