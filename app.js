@@ -72,7 +72,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCheckboxes();
   setupWaterButtons();
   setupInputAutosave();
-  setupRefreshButton(); // optional; safe if refreshBtn exists
+  setupRefreshButton();
+  setupCollapsibleSections();   // ✅ add this
 
   updateDateDisplay();
   loadDataForCurrentDate();
@@ -532,4 +533,18 @@ async function populateForm(data) {
   document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 
   console.log("✅ populateForm ran");
+}
+
+function setupCollapsibleSections() {
+  document.querySelectorAll(".section-header.collapsible").forEach(header => {
+    header.addEventListener("click", () => {
+      header.classList.toggle("collapsed");
+      const content = header.nextElementSibling;
+      if (content && content.classList.contains("section-content")) {
+        content.classList.toggle("collapsed");
+      }
+    });
+  });
+
+  console.log("✅ Collapsible sections wired");
 }
