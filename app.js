@@ -47,6 +47,7 @@ let dataChanged = false;
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Habit Tracker booting…");
   setupDateNav();
+  setupCheckboxes();
   updateDateDisplay();
   loadDataForCurrentDate();
 });
@@ -167,4 +168,29 @@ function changeDate(days) {
   console.log("✅ Changed date to", formatDateForAPI(currentDate));
   updateDateDisplay();
   loadDataForCurrentDate();
+}
+
+function setupCheckboxes() {
+  document.querySelectorAll(".checkbox-field input[type='checkbox']")
+    .forEach(cb => {
+      // initial state
+      syncCheckboxVisual(cb);
+
+      // on change
+      cb.addEventListener("change", () => {
+        syncCheckboxVisual(cb);
+        dataChanged = true;
+      });
+
+      // allow clicking anywhere in the box
+      const wrapper = cb.closest(".checkbox-field");
+      if (wrapper) {
+        wrapper.addEventListener("click", (e) => {
+          if (e.target !== cb) {
+            cb.checked = !cb.checked;
+            cb.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+        });
+      }
+    });
 }
