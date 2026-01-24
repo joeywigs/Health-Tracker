@@ -10,13 +10,13 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
+console.log("Instant Days", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
 // CONFIG
 // =====================================
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
-console.log("Added Day X of Y");
 
 // Body fields (for carry-forward + detection)
 const BODY_FIELDS = [
@@ -62,6 +62,11 @@ let lastBookTitle = "";
 let waterCount = 0;
 
 let autoSaveTimeout = null;
+
+const PREFETCH_RANGE = 3;          // how many days ahead/behind to prefetch
+const CACHE_MAX_DAYS = 21;         // cap memory (tweak as you like)
+const dayCache = new Map();        // key: "M/D/YY" -> loadResult
+
 
 // =====================================
 // BOOTSTRAP
@@ -154,9 +159,10 @@ function setupDateNav() {
 
 function changeDate(days) {
   currentDate.setDate(currentDate.getDate() + days);
-  console.log("✅ Changed date to", formatDateForAPI(currentDate));
   updateDateDisplay();
-  updatePhaseInfo();
+  updatePhaseInfo?.(); // if you have it
+
+  // show instantly if cached, else it will fetch
   loadDataForCurrentDate();
 }
 
@@ -167,16 +173,28 @@ async function loadDataForCurrentDate() {
   const dateStr = formatDateForAPI(currentDate);
   console.log("Loading data for", dateStr);
 
-  try {
-    const loadResult = await apiGet("load", { date: dateStr });
+  // 1) If cached, show instantly
+  const cached = cacheGet(dateStr);
+  if (cached && !cached?.error) {
+    await populateForm(cached);
+    prefetchAround(currentDate);
+    return;
+  }
 
-    if (loadResult?.error) {
-      console.error("Backend error:", loadResult.message);
+  // 2) Otherwise fetch, then show
+  try {
+    const result = await fetchDay(currentDate);
+
+    if (result?.error) {
+      console.error("Backend error:", result.message);
       return;
     }
 
-    console.log("Data loaded:", loadResult);
-    await populateForm(loadResult);
+    await populateForm(result);
+
+    // 3) Prefetch neighbors so next/prev is fast
+    prefetchAround(currentDate);
+
     dataChanged = false;
   } catch (err) {
     console.error("Load failed:", err);
@@ -571,4 +589,51 @@ function setupCollapsibleSections() {
   });
 
   console.log("✅ Collapsible sections wired");
+}
+
+function addDays(date, deltaDays) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + deltaDays);
+  return d;
+}
+
+function cacheSet(key, value) {
+  dayCache.set(key, { value, ts: Date.now() });
+
+  // simple LRU-ish eviction
+  if (dayCache.size > CACHE_MAX_DAYS) {
+    const oldestKey = [...dayCache.entries()]
+      .sort((a, b) => a[1].ts - b[1].ts)[0]?.[0];
+    if (oldestKey) dayCache.delete(oldestKey);
+  }
+}
+
+function cacheGet(key) {
+  const hit = dayCache.get(key);
+  if (!hit) return null;
+  // bump recency
+  hit.ts = Date.now();
+  return hit.value;
+}
+
+async function fetchDay(dateObj) {
+  const dateStr = formatDateForAPI(dateObj);
+  const cached = cacheGet(dateStr);
+  if (cached) return cached;
+
+  const result = await apiGet("load", { date: dateStr });
+  cacheSet(dateStr, result);
+  return result;
+}
+
+function prefetchAround(dateObj) {
+  // fire-and-forget prefetch
+  for (let delta = -PREFETCH_RANGE; delta <= PREFETCH_RANGE; delta++) {
+    if (delta === 0) continue;
+    const d = addDays(dateObj, delta);
+    const key = formatDateForAPI(d);
+    if (cacheGet(key)) continue;
+
+    fetchDay(d).catch(() => {});
+  }
 }
