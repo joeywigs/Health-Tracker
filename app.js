@@ -123,6 +123,12 @@ function updateDateDisplay() {
   el.textContent = currentDate.toDateString();
 }
 
+function changeDate(days) {
+  currentDate.setDate(currentDate.getDate() + days);
+  updateDateDisplay();
+  loadDataForCurrentDate();
+}
+
 // =====================================
 // Setup the Date Nav Buttons
 // =====================================
