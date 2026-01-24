@@ -149,3 +149,9 @@ function setupDateNav() {
   console.log("✅ Date nav wired");
 }
 
+function changeDate(days) {
+  currentDate.setDate(currentDate.getDate() + days);
+  console.log("✅ Changed date to", formatDateForAPI(currentDate));
+  updateDateDisplay();
+  loadDataForCurrentDate();
+}
