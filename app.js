@@ -340,6 +340,43 @@ function addHoneyDo(taskObj) {
   triggerSaveSoon();
 }
 
+const BODY_FIELD_KEYS = [
+  ["Weight (lbs)", "Weight"],
+  ["Lean Mass (lbs)", "Lean Mass"],
+  ["Body Fat (lbs)", "Body Fat"],
+  ["Bone Mass (lbs)", "Bone Mass"],
+  ["Water (lbs)", "Water"]
+];
+
+function hasAnyBodyData(daily) {
+  if (!daily) return false;
+  return BODY_FIELD_KEYS.some(keys => {
+    const v = daily[keys[0]] ?? daily[keys[1]];
+    return v !== undefined && v !== null && v !== "";
+  });
+}
+
+async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
+  const d = new Date(beforeDate);
+
+  for (let i = 1; i <= lookbackDays; i++) {
+    d.setDate(d.getDate() - 1);
+    const dateStr = formatDateForAPI(d);
+
+    const result = await apiGet("load", { date: dateStr });
+    const daily = result?.daily;
+
+    if (hasAnyBodyData(daily)) {
+      console.log("⏩ Carry-forward body data from", dateStr);
+      return daily;
+    }
+  }
+
+  console.log("⏩ No prior body data found in lookback window");
+  return null;
+}
+
+
 // =====================================
 // populateForm: set UI from sheet data
 // =====================================
@@ -358,11 +395,11 @@ async function populateForm(data) {
 
   const d = data?.daily || null;
 
+  // BODY CARRY-FORWARD:
+  // If this date has no body data, pull the most recent prior day's body data
   let bodySource = d;
-
   if (d && !hasAnyBodyData(d)) {
-    console.log("⏩ No body data for this date — carrying forward");
-    bodySource = await loadMostRecentBodyData(currentDate);
+    bodySource = await getMostRecentBodyDaily(currentDate);
   }
 
   // No daily data
@@ -467,6 +504,7 @@ async function populateForm(data) {
   if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
   if (boneMassEl) boneMassEl.value = boneVal ?? "";
   if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
+
 
   if (typeof calculatePercentages === "function") calculatePercentages();
 
