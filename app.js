@@ -65,8 +65,13 @@ async function loadDataForCurrentDate() {
       return;
     }
 
-    console.log("Data loaded:", loadResult);
-    // TODO: populateForm(loadResult);
+console.log("Data loaded:", loadResult);
+if (typeof populateForm === "function") {
+  populateForm(loadResult);
+} else {
+  console.warn("populateForm() is not defined — UI will not update.");
+}
+
   } catch (err) {
     console.error("Load failed:", err);
   }
