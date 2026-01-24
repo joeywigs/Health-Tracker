@@ -28,13 +28,6 @@ async function apiPost(action, payload = {}) {
   return await res.json();
 }
 
-function syncCheckboxVisual(checkbox) {
-  const wrapper = checkbox.closest(".checkbox-field");
-  if (!wrapper) return;
-  wrapper.classList.toggle("checked", checkbox.checked);
-}
-
-
 // =====================================
 // APP STATE
 // =====================================
@@ -108,16 +101,6 @@ function populateForm(data) {
   console.log("✅ populateForm ran");
 }
 
-function setCheckbox(id, value) {
-  const cb = document.getElementById(id);
-  if (!cb) return;
-  cb.checked = Boolean(value);
-  syncCheckboxVisual(cb);
-}
-
-setCheckbox("vitaminD", d["Vitamin D"]);
-setCheckbox("rehit", d["REHIT 2x10"]);
-
 
 async function saveData(payload) {
   try {
@@ -184,27 +167,34 @@ function changeDate(days) {
   loadDataForCurrentDate();
 }
 
-function setupCheckboxes() {
-  document.querySelectorAll(".checkbox-field input[type='checkbox']")
-    .forEach(cb => {
-      // initial state
-      syncCheckboxVisual(cb);
-
-      // on change
-      cb.addEventListener("change", () => {
-        syncCheckboxVisual(cb);
-        dataChanged = true;
-      });
-
-      // allow clicking anywhere in the box
-      const wrapper = cb.closest(".checkbox-field");
-      if (wrapper) {
-        wrapper.addEventListener("click", (e) => {
-          if (e.target !== cb) {
-            cb.checked = !cb.checked;
-            cb.dispatchEvent(new Event("change", { bubbles: true }));
-          }
-        });
-      }
-    });
+function syncCheckboxVisual(cb) {
+  const wrapper = cb.closest(".checkbox-field");
+  if (!wrapper) return;
+  wrapper.classList.toggle("checked", cb.checked);
 }
+
+function setupCheckboxes() {
+  document.querySelectorAll(".checkbox-field").forEach(wrapper => {
+    const cb = wrapper.querySelector("input[type='checkbox']");
+    if (!cb) return;
+
+    // Set initial visual state
+    syncCheckboxVisual(cb);
+
+    // Toggle when checkbox changes
+    cb.addEventListener("change", () => {
+      syncCheckboxVisual(cb);
+      dataChanged = true;
+    });
+
+    // Click anywhere on the wrapper toggles the checkbox
+    wrapper.addEventListener("click", (e) => {
+      // If they clicked the actual checkbox or label, let default behavior happen
+      if (e.target.tagName === "INPUT" || e.target.tagName === "LABEL") return;
+
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
+}
+
