@@ -1,3 +1,6 @@
+console.log("✅ app.js running", new Date().toISOString());
+window.__APP_JS_OK__ = true;
+
 // =====================================
 // CONFIG
 // =====================================
