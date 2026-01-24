@@ -77,6 +77,29 @@ if (typeof populateForm === "function") {
   }
 }
 
+function populateForm(data) {
+  // Minimal proof-of-life mapping
+  const d = data?.daily || {};
+
+  // Sleep
+  const sleepEl = document.getElementById("sleepHours");
+  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? "";
+
+  // Steps
+  const stepsEl = document.getElementById("steps");
+  if (stepsEl) stepsEl.value = d["Steps"] ?? "";
+
+  // Water counter (if you have it)
+  if (typeof d["Water"] !== "undefined") {
+    window.waterCount = parseInt(d["Water"], 10) || 0;
+    const waterCountEl = document.getElementById("waterCount");
+    if (waterCountEl) waterCountEl.textContent = String(window.waterCount);
+  }
+
+  console.log("✅ populateForm ran");
+}
+
+
 async function saveData(payload) {
   try {
     const saveResult = await apiPost("save", { data: payload });
