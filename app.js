@@ -3,8 +3,10 @@
  * - Uses Cloudflare Worker proxy (no API key in browser)
  * - Loads data for selected date
  * - Populates UI (including checkbox highlighting from sheet data)
- * - Saves on changes (debounced) + immediate saves for list actions
+ * - Saves on changes (debounced)
  * - Date navigation prev/next
+ * - Water +/- wired
+ * - Body data carry-forward: shows last known body metrics when missing
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
@@ -14,6 +16,8 @@ window.__APP_JS_OK__ = true;
 // CONFIG
 // =====================================
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
+
+// Body fields (for carry-forward + detection)
 const BODY_FIELDS = [
   { id: "weight", keys: ["Weight (lbs)", "Weight"] },
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
@@ -21,7 +25,6 @@ const BODY_FIELDS = [
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
   { id: "water", keys: ["Water (lbs)", "Water"] }
 ];
-
 
 // =====================================
 // API HELPERS
@@ -69,6 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCheckboxes();
   setupWaterButtons();
   setupInputAutosave();
+  setupRefreshButton(); // optional; safe if refreshBtn exists
 
   updateDateDisplay();
   loadDataForCurrentDate();
@@ -135,7 +139,7 @@ async function loadDataForCurrentDate() {
     }
 
     console.log("Data loaded:", loadResult);
-    populateForm(loadResult);
+    await populateForm(loadResult);
     dataChanged = false;
   } catch (err) {
     console.error("Load failed:", err);
@@ -313,12 +317,8 @@ function setupWaterButtons() {
 // =====================================
 function setupInputAutosave() {
   document.querySelectorAll("input, textarea").forEach(el => {
-    // Ignore checkboxes here (handled separately)
-    if (el.type === "checkbox") return;
-
+    if (el.type === "checkbox") return; // handled separately
     el.addEventListener("change", triggerSaveSoon);
-
-    // Optional: autosave while typing in textareas
     if (el.tagName === "TEXTAREA") el.addEventListener("input", triggerSaveSoon);
   });
 
@@ -326,36 +326,20 @@ function setupInputAutosave() {
 }
 
 // =====================================
-// LIST ACTIONS (optional stubs)
-// - If you already have prompt-based add/remove flows, hook them here.
+// Refresh button (optional)
 // =====================================
-function addMovement(durationNum, type) {
-  movements.push({ duration: durationNum, type });
-  if (typeof renderMovements === "function") renderMovements();
-  triggerSaveSoon();
+function setupRefreshButton() {
+  const btn = document.getElementById("refreshBtn");
+  if (!btn) return;
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    loadDataForCurrentDate();
+  });
 }
 
-function addReading(durationNum, book) {
-  readings.push({ duration: durationNum, book });
-  lastBookTitle = book;
-  if (typeof renderReadings === "function") renderReadings();
-  triggerSaveSoon();
-}
-
-function addHoneyDo(taskObj) {
-  honeyDos.push(taskObj);
-  if (typeof renderHoneyDos === "function") renderHoneyDos();
-  triggerSaveSoon();
-}
-
-const BODY_FIELD_KEYS = [
-  ["Weight (lbs)", "Weight"],
-  ["Lean Mass (lbs)", "Lean Mass"],
-  ["Body Fat (lbs)", "Body Fat"],
-  ["Bone Mass (lbs)", "Bone Mass"],
-  ["Water (lbs)", "Water"]
-];
-
+// =====================================
+// BODY carry-forward helpers
+// =====================================
 function hasAnyBodyData(daily) {
   if (!daily) return false;
   return BODY_FIELDS.some(f => {
@@ -363,7 +347,6 @@ function hasAnyBodyData(daily) {
     return v !== undefined && v !== null && v !== "";
   });
 }
-
 
 async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
   const d = new Date(beforeDate);
@@ -385,6 +368,29 @@ async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
   return null;
 }
 
+function applyBodyFieldsFromDaily(daily) {
+  const source = daily || {};
+
+  const weightVal = source["Weight (lbs)"] ?? source["Weight"];
+  const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
+  const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
+  const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
+  const waterBodyVal = source["Water (lbs)"] ?? source["Water"];
+
+  const weightEl = document.getElementById("weight");
+  const leanMassEl = document.getElementById("leanMass");
+  const bodyFatEl = document.getElementById("bodyFat");
+  const boneMassEl = document.getElementById("boneMass");
+  const waterBodyEl = document.getElementById("water");
+
+  if (weightEl) weightEl.value = weightVal ?? "";
+  if (leanMassEl) leanMassEl.value = leanVal ?? "";
+  if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
+  if (boneMassEl) boneMassEl.value = boneVal ?? "";
+  if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
+
+  if (typeof calculatePercentages === "function") calculatePercentages();
+}
 
 // =====================================
 // populateForm: set UI from sheet data
@@ -405,13 +411,13 @@ async function populateForm(data) {
   const d = data?.daily || null;
 
   // BODY CARRY-FORWARD:
-  // If this date has no body data, pull the most recent prior day's body data
+  // if daily is missing OR daily exists but body is blank => carry forward
   let bodySource = d;
-  if (d && !hasAnyBodyData(d)) {
+  if (!hasAnyBodyData(d)) {
     bodySource = await getMostRecentBodyDaily(currentDate);
   }
 
-  // No daily data
+  // No daily data for this date
   if (!d) {
     waterCount = 0;
     updateWaterDisplay();
@@ -435,15 +441,9 @@ async function populateForm(data) {
     const carlyEl = document.getElementById("carly");
     if (carlyEl) carlyEl.value = data?.carly || "";
 
-    // optional renders
-    if (typeof renderMovements === "function") renderMovements();
-    if (typeof renderReadings === "function") renderReadings();
-    if (typeof renderHoneyDos === "function") renderHoneyDos();
-    if (typeof updateAverages === "function") updateAverages(data?.averages);
-    if (typeof calculatePercentages === "function") calculatePercentages();
-    if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+    // Apply carried-forward body values (even if no row exists)
+    applyBodyFieldsFromDaily(bodySource);
 
-    // final sweep
     document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
     console.log("✅ populateForm ran (no daily)");
     return;
@@ -493,29 +493,8 @@ async function populateForm(data) {
   waterCount = parseInt(d["Water"], 10) || 0;
   updateWaterDisplay();
 
-  // Body fields
-  const weightEl = document.getElementById("weight");
-  const leanMassEl = document.getElementById("leanMass");
-  const bodyFatEl = document.getElementById("bodyFat");
-  const boneMassEl = document.getElementById("boneMass");
-  const waterBodyEl = document.getElementById("water");
-
-  const source = bodySource || {};
-
-  const weightVal = source["Weight (lbs)"] ?? source["Weight"];
-  const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
-  const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
-  const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
-  const waterBodyVal = source["Water (lbs)"] ?? source["Water"];
-
-  if (weightEl) weightEl.value = weightVal ?? "";
-  if (leanMassEl) leanMassEl.value = leanVal ?? "";
-  if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
-  if (boneMassEl) boneMassEl.value = boneVal ?? "";
-  if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
-
-
-  if (typeof calculatePercentages === "function") calculatePercentages();
+  // Body fields: use current day if present, else carry-forward source
+  applyBodyFieldsFromDaily(bodySource);
 
   // Lists
   movements = (data?.movements || []).map(m => ({
@@ -554,36 +533,3 @@ async function populateForm(data) {
 
   console.log("✅ populateForm ran");
 }
-
-function hasAnyBodyData(daily) {
-  return BODY_FIELDS.some(field =>
-    field.keys.some(k => {
-      const v = daily?.[k];
-      return v !== undefined && v !== null && v !== "";
-    })
-  );
-}
-
-async function loadMostRecentBodyData(beforeDate) {
-  const d = new Date(beforeDate);
-
-  // look back up to 30 days (adjust if you want)
-  for (let i = 1; i <= 30; i++) {
-    d.setDate(d.getDate() - 1);
-    const dateStr = formatDateForAPI(d);
-
-    try {
-      const result = await apiGet("load", { date: dateStr });
-      const daily = result?.daily;
-
-      if (daily && hasAnyBodyData(daily)) {
-        return daily;
-      }
-    } catch (err) {
-      console.warn("Body carry-forward lookup failed for", dateStr);
-    }
-  }
-
-  return null;
-}
-
