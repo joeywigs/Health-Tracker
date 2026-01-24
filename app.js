@@ -39,6 +39,7 @@ let dataChanged = false;
 // =====================================
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Habit Tracker booting…");
+  setupDateNav();
   updateDateDisplay();
   loadDataForCurrentDate();
 });
@@ -121,3 +122,30 @@ function updateDateDisplay() {
 
   el.textContent = currentDate.toDateString();
 }
+
+// =====================================
+// Setup the Date Nav Buttons
+// =====================================
+
+function setupDateNav() {
+  const prev = document.getElementById("prevBtn");
+  const next = document.getElementById("nextBtn");
+
+  if (!prev || !next) {
+    console.warn("Date nav buttons not found");
+    return;
+  }
+
+  prev.addEventListener("click", (e) => {
+    e.preventDefault();
+    changeDate(-1);
+  });
+
+  next.addEventListener("click", (e) => {
+    e.preventDefault();
+    changeDate(1);
+  });
+
+  console.log("✅ Date nav wired");
+}
+
