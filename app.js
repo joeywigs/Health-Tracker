@@ -343,7 +343,7 @@ function addHoneyDo(taskObj) {
 // =====================================
 // populateForm: set UI from sheet data
 // =====================================
-function populateForm(data) {
+async function populateForm(data) {
   const form = document.getElementById("healthForm");
   if (form && typeof form.reset === "function") form.reset();
 
@@ -357,6 +357,13 @@ function populateForm(data) {
   currentAverages = null;
 
   const d = data?.daily || null;
+
+  let bodySource = d;
+
+  if (d && !hasAnyBodyData(d)) {
+    console.log("⏩ No body data for this date — carrying forward");
+    bodySource = await loadMostRecentBodyData(currentDate);
+  }
 
   // No daily data
   if (!d) {
@@ -447,11 +454,13 @@ function populateForm(data) {
   const boneMassEl = document.getElementById("boneMass");
   const waterBodyEl = document.getElementById("water");
 
-  const weightVal = d["Weight (lbs)"] ?? d["Weight"];
-  const leanVal = d["Lean Mass (lbs)"] ?? d["Lean Mass"];
-  const fatVal = d["Body Fat (lbs)"] ?? d["Body Fat"];
-  const boneVal = d["Bone Mass (lbs)"] ?? d["Bone Mass"];
-  const waterBodyVal = d["Water (lbs)"] ?? d["Water"];
+  const source = bodySource || {};
+
+  const weightVal = source["Weight (lbs)"] ?? source["Weight"];
+  const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
+  const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
+  const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
+  const waterBodyVal = source["Water (lbs)"] ?? source["Water"];
 
   if (weightEl) weightEl.value = weightVal ?? "";
   if (leanMassEl) leanMassEl.value = leanVal ?? "";
@@ -498,3 +507,36 @@ function populateForm(data) {
 
   console.log("✅ populateForm ran");
 }
+
+function hasAnyBodyData(daily) {
+  return BODY_FIELDS.some(field =>
+    field.keys.some(k => {
+      const v = daily?.[k];
+      return v !== undefined && v !== null && v !== "";
+    })
+  );
+}
+
+async function loadMostRecentBodyData(beforeDate) {
+  const d = new Date(beforeDate);
+
+  // look back up to 30 days (adjust if you want)
+  for (let i = 1; i <= 30; i++) {
+    d.setDate(d.getDate() - 1);
+    const dateStr = formatDateForAPI(d);
+
+    try {
+      const result = await apiGet("load", { date: dateStr });
+      const daily = result?.daily;
+
+      if (daily && hasAnyBodyData(daily)) {
+        return daily;
+      }
+    } catch (err) {
+      console.warn("Body carry-forward lookup failed for", dateStr);
+    }
+  }
+
+  return null;
+}
+
