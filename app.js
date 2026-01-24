@@ -2,7 +2,7 @@
 // CONFIG
 // =====================================
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
-const API_KEY = "Q8xF3N9KpZ7J2WmC4A6YBVeH5R0TqLDSU1nXgE";
+// NOTE: With the Cloudflare Worker proxy, you do NOT need API_KEY in the browser.
 
 // =====================================
 // API HELPERS
@@ -11,16 +11,6 @@ async function apiGet(action, params = {}) {
   const url = new URL(API_URL);
   url.searchParams.set("action", action);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-
-  const res = await fetch(url.toString(), { method: "GET" });
-  return await res.json();
-}
-
-async function apiSaveViaGet(dataObj) {
-  const url = new URL(API_URL);
-  url.searchParams.set("action", "save");
-  url.searchParams.set("key", API_KEY);
-  url.searchParams.set("payload", JSON.stringify({ data: dataObj }));
 
   const res = await fetch(url.toString(), { method: "GET" });
   return await res.json();
@@ -51,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =====================================
-// CORE FUNCTIONS (YOU WILL EXPAND THESE)
+// CORE FUNCTIONS
 // =====================================
 function formatDateForAPI(date = currentDate) {
   const m = date.getMonth() + 1;
@@ -65,15 +55,15 @@ async function loadDataForCurrentDate() {
   console.log("Loading data for", dateStr);
 
   try {
-    const result = await apiGet("load", { date: dateStr });
+    const loadResult = await apiGet("load", { date: dateStr });
 
-    if (result?.error) {
-      console.error("Backend error:", result.message);
+    if (loadResult?.error) {
+      console.error("Backend error:", loadResult.message);
       return;
     }
 
-    console.log("Data loaded:", result);
-    // 👇 NEXT STEP: call populateForm(result)
+    console.log("Data loaded:", loadResult);
+    // TODO: populateForm(loadResult);
   } catch (err) {
     console.error("Load failed:", err);
   }
@@ -81,15 +71,14 @@ async function loadDataForCurrentDate() {
 
 async function saveData(payload) {
   try {
-    const result = await apiPost("save", { data: payload });
-    const result = await apiSaveViaGet(data);
+    const saveResult = await apiPost("save", { data: payload });
 
-    if (result?.error) {
-      console.error("Save error:", result.message);
+    if (saveResult?.error) {
+      console.error("Save error:", saveResult.message);
       return;
     }
 
-    console.log("Saved successfully");
+    console.log("Saved successfully", saveResult);
     dataChanged = false;
   } catch (err) {
     console.error("Save failed:", err);
@@ -97,7 +86,7 @@ async function saveData(payload) {
 }
 
 // =====================================
-// UI PLACEHOLDERS (WIRE YOUR EXISTING CODE HERE)
+// UI PLACEHOLDERS
 // =====================================
 function updateDateDisplay() {
   const el = document.getElementById("dateDisplay");
@@ -105,4 +94,3 @@ function updateDateDisplay() {
 
   el.textContent = currentDate.toDateString();
 }
-
