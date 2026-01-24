@@ -363,3 +363,57 @@ function populateForm(data) {
   // Final sweep
   document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 }
+
+function buildPayloadFromUI() {
+  return {
+    date: formatDateForAPI(currentDate),
+
+    // Sleep / numbers
+    sleepHours: document.getElementById("sleepHours")?.value || "",
+    steps: document.getElementById("steps")?.value || "",
+    fitnessScore: document.getElementById("fitnessScore")?.value || "",
+    calories: document.getElementById("calories")?.value || "",
+    peakWatts: document.getElementById("peakWatts")?.value || "",
+    wattSeconds: document.getElementById("wattSeconds")?.value || "",
+
+    // Checkboxes
+    inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
+    inhalerEvening: !!document.getElementById("inhalerEvening")?.checked,
+    multiplication: !!document.getElementById("multiplication")?.checked,
+    rehit: !!document.getElementById("rehit")?.checked,
+
+    creatine: !!document.getElementById("creatine")?.checked,
+    vitaminD: !!document.getElementById("vitaminD")?.checked,
+    no2: !!document.getElementById("no2")?.checked,
+    psyllium: !!document.getElementById("psyllium")?.checked,
+
+    breakfast: !!document.getElementById("breakfast")?.checked,
+    lunch: !!document.getElementById("lunch")?.checked,
+    dinner: !!document.getElementById("dinner")?.checked,
+
+    daySnacks: !!document.getElementById("daySnacks")?.checked,
+    nightSnacks: !!document.getElementById("nightSnacks")?.checked,
+    noAlcohol: !!document.getElementById("noAlcohol")?.checked,
+
+    meditation: !!document.getElementById("meditation")?.checked,
+
+    // Water counter
+    hydrationGood: waterCount,
+
+    // Body
+    weight: document.getElementById("weight")?.value || "",
+    leanMass: document.getElementById("leanMass")?.value || "",
+    bodyFat: document.getElementById("bodyFat")?.value || "",
+    boneMass: document.getElementById("boneMass")?.value || "",
+    water: document.getElementById("water")?.value || "",
+
+    // Lists / text
+    movements,
+    readings,
+    honeyDos,
+    reflections: document.getElementById("reflections")?.value || "",
+    stories: document.getElementById("stories")?.value || "",
+    carly: document.getElementById("carly")?.value || ""
+  };
+}
+
