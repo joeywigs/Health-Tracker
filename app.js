@@ -20,6 +20,16 @@ async function apiGet(action, params = {}) {
   return await res.json();
 }
 
+async function apiSaveViaGet(dataObj) {
+  const url = new URL(API_URL);
+  url.searchParams.set("action", "save");
+  url.searchParams.set("key", API_KEY);
+  url.searchParams.set("payload", JSON.stringify({ data: dataObj }));
+
+  const res = await fetch(url.toString(), { method: "GET" });
+  return await res.json();
+}
+
 async function apiPost(action, payload = {}) {
   const body = new URLSearchParams();
   body.set("action", action);
