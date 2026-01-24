@@ -16,6 +16,7 @@ window.__APP_JS_OK__ = true;
 // CONFIG
 // =====================================
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
+console.log("Added Day X of Y");
 
 // Body fields (for carry-forward + detection)
 const BODY_FIELDS = [
