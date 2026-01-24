@@ -75,6 +75,7 @@ if (typeof populateForm === "function") {
   } catch (err) {
     console.error("Load failed:", err);
   }
+  populateForm(loadResult);
 }
 
 function populateForm(data) {
