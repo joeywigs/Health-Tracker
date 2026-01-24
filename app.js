@@ -28,6 +28,13 @@ async function apiPost(action, payload = {}) {
   return await res.json();
 }
 
+function syncCheckboxVisual(checkbox) {
+  const wrapper = checkbox.closest(".checkbox-field");
+  if (!wrapper) return;
+  wrapper.classList.toggle("checked", checkbox.checked);
+}
+
+
 // =====================================
 // APP STATE
 // =====================================
