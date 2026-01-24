@@ -14,6 +14,14 @@ window.__APP_JS_OK__ = true;
 // CONFIG
 // =====================================
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
+const BODY_FIELDS = [
+  { id: "weight", keys: ["Weight (lbs)", "Weight"] },
+  { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
+  { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
+  { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
+  { id: "water", keys: ["Water (lbs)", "Water"] }
+];
+
 
 // =====================================
 // API HELPERS
@@ -350,11 +358,12 @@ const BODY_FIELD_KEYS = [
 
 function hasAnyBodyData(daily) {
   if (!daily) return false;
-  return BODY_FIELD_KEYS.some(keys => {
-    const v = daily[keys[0]] ?? daily[keys[1]];
+  return BODY_FIELDS.some(f => {
+    const v = daily[f.keys[0]] ?? daily[f.keys[1]];
     return v !== undefined && v !== null && v !== "";
   });
 }
+
 
 async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
   const d = new Date(beforeDate);
