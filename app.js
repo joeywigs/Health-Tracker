@@ -65,18 +65,13 @@ async function loadDataForCurrentDate() {
       return;
     }
 
-console.log("Data loaded:", loadResult);
-if (typeof populateForm === "function") {
-  populateForm(loadResult);
-} else {
-  console.warn("populateForm() is not defined — UI will not update.");
-}
-
+    console.log("Data loaded:", loadResult);
+    populateForm(loadResult);   // ✅ use it here
   } catch (err) {
     console.error("Load failed:", err);
   }
-  populateForm(loadResult);
 }
+
 
 function populateForm(data) {
   // Minimal proof-of-life mapping
