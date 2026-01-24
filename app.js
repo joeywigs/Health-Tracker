@@ -47,9 +47,11 @@ let waterCount = 0;
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Habit Tracker booting…");
   setupDateNav();
+  setupWaterButtons();
   setupCheckboxes();
   updateDateDisplay();
   loadDataForCurrentDate();
+  setupInputAutosave();
 });
 
 // =====================================
@@ -169,8 +171,8 @@ function setupCheckboxes() {
     syncCheckboxVisual(cb);
 
     cb.addEventListener("change", () => {
-      syncCheckboxVisual(cb);
-      dataChanged = true;
+    syncCheckboxVisual(cb);
+    triggerSaveSoon();   // ✅ this actually saves
     });
 
     // click anywhere except the input/label toggles
@@ -416,4 +418,45 @@ function buildPayloadFromUI() {
     carly: document.getElementById("carly")?.value || ""
   };
 }
+
+let autoSaveTimeout = null;
+
+function triggerSaveSoon() {
+  dataChanged = true;
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+
+  autoSaveTimeout = setTimeout(async () => {
+    const payload = buildPayloadFromUI();
+    await saveData(payload);
+  }, 800); // tweak delay if you want
+}
+
+function setupWaterButtons() {
+  const plus = document.getElementById("waterPlus");
+  const minus = document.getElementById("waterMinus");
+  if (!plus || !minus) return;
+
+  plus.addEventListener("click", (e) => {
+    e.preventDefault();
+    waterCount += 1;
+    updateWaterDisplay();
+    triggerSaveSoon();
+  });
+
+  minus.addEventListener("click", (e) => {
+    e.preventDefault();
+    waterCount = Math.max(0, waterCount - 1);
+    updateWaterDisplay();
+    triggerSaveSoon();
+  });
+}
+
+function setupInputAutosave() {
+  document.querySelectorAll("input, textarea").forEach(el => {
+    el.addEventListener("change", triggerSaveSoon);
+    // optional: save while typing for textareas
+    if (el.tagName === "TEXTAREA") el.addEventListener("input", triggerSaveSoon);
+  });
+}
+
 
