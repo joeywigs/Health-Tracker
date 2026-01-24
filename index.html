@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Health Tracker</title>
   
   <!-- iPhone -->
@@ -19,6 +19,8 @@
   <meta name="apple-mobile-web-app-title" content="Habits">
   
   <style>
+    
+    html { -webkit-text-size-adjust: 100%; }
     * {
       box-sizing: border-box;
       margin: 0;
@@ -682,6 +684,147 @@
         margin-bottom: 12px;
       }
     }
+    /* iPhone sizing (phones / small screens) */
+@media (max-width: 430px) {
+  body {
+    padding: 14px;
+    padding-bottom: 24px;
+    font-size: 16px; /* override the 72px base */
+  }
+
+  .header,
+  .section {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .subtitle {
+    font-size: 18px;
+  }
+
+  .date-display {
+    font-size: 18px;
+  }
+
+  .date-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+
+  .section-header {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  .section-header.collapsible::after {
+    font-size: 16px;
+  }
+
+  .field-label {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .input-field {
+    padding: 12px;
+    font-size: 16px;
+    min-height: 52px;
+    border-radius: 14px;
+  }
+
+  textarea.input-field {
+    min-height: 140px;
+  }
+
+  .checkbox-field {
+    padding: 12px;
+    min-height: 52px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+  }
+
+  .checkbox-field label {
+    font-size: 16px;
+  }
+
+  .water-counter {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .water-counter-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+    border-radius: 14px;
+  }
+
+  .water-counter-value {
+    font-size: 22px;
+    min-width: 90px;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .btn {
+    padding: 12px 14px;
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 16px;
+  }
+
+  .btn-primary {
+    font-size: 18px;
+    min-height: 56px;
+    padding: 14px;
+  }
+
+  .btn-danger {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    font-size: 20px;
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .item {
+    padding: 12px;
+    min-height: 52px;
+    border-radius: 16px;
+  }
+
+  .item-text {
+    font-size: 16px;
+  }
+
+  .body-data-cell {
+    padding: 14px;
+    min-height: 100px;
+    border-radius: 16px;
+  }
+
+  .body-data-label {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .body-data-input {
+    font-size: 20px;
+    padding: 12px;
+  }
+
+  .body-data-percent {
+    font-size: 20px;
+    padding: 12px;
+  }
+}
   </style>
 </head>
 <body>
