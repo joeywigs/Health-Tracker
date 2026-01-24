@@ -21,14 +21,15 @@ async function apiGet(action, params = {}) {
 }
 
 async function apiPost(action, payload = {}) {
+  const body = new URLSearchParams();
+  body.set("action", action);
+  body.set("key", API_KEY);
+  body.set("payload", JSON.stringify(payload));
+
   const res = await fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action,
-      key: API_KEY,
-      ...payload
-    })
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: body.toString()
   });
 
   return await res.json();
