@@ -1,3 +1,12 @@
+/**********************************************
+ * Habit Tracker - app.js (clean)
+ * - Uses Cloudflare Worker proxy (no API key in browser)
+ * - Loads data for selected date
+ * - Populates UI (including checkbox highlighting from sheet data)
+ * - Saves on changes (debounced) + immediate saves for list actions
+ * - Date navigation prev/next
+ **********************************************/
+
 console.log("✅ app.js running", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
@@ -33,7 +42,6 @@ async function apiPost(action, payload = {}) {
 let currentDate = new Date();
 let dataChanged = false;
 
-// State that populateForm expects
 let movements = [];
 let readings = [];
 let honeyDos = [];
@@ -41,21 +49,25 @@ let currentAverages = null;
 let lastBookTitle = "";
 let waterCount = 0;
 
+let autoSaveTimeout = null;
+
 // =====================================
-// APP BOOTSTRAP
+// BOOTSTRAP
 // =====================================
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Habit Tracker booting…");
+
   setupDateNav();
-  setupWaterButtons();
   setupCheckboxes();
+  setupWaterButtons();
+  setupInputAutosave();
+
   updateDateDisplay();
   loadDataForCurrentDate();
-  setupInputAutosave();
 });
 
 // =====================================
-// CORE FUNCTIONS
+// DATE + NAV
 // =====================================
 function formatDateForAPI(date = currentDate) {
   const m = date.getMonth() + 1;
@@ -64,44 +76,12 @@ function formatDateForAPI(date = currentDate) {
   return `${m}/${d}/${y}`;
 }
 
-async function loadDataForCurrentDate() {
-  const dateStr = formatDateForAPI();
-  console.log("Loading data for", dateStr);
-
-  try {
-    const loadResult = await apiGet("load", { date: dateStr });
-
-    if (loadResult?.error) {
-      console.error("Backend error:", loadResult.message);
-      return;
-    }
-
-    console.log("Data loaded:", loadResult);
-    populateForm(loadResult);
-  } catch (err) {
-    console.error("Load failed:", err);
-  }
+function updateDateDisplay() {
+  const el = document.getElementById("dateDisplay");
+  if (!el) return;
+  el.textContent = currentDate.toDateString();
 }
 
-async function saveData(payload) {
-  try {
-    const saveResult = await apiPost("save", { data: payload });
-
-    if (saveResult?.error) {
-      console.error("Save error:", saveResult.message);
-      return;
-    }
-
-    console.log("Saved successfully", saveResult);
-    dataChanged = false;
-  } catch (err) {
-    console.error("Save failed:", err);
-  }
-}
-
-// =====================================
-// DATE NAV
-// =====================================
 function setupDateNav() {
   const prev = document.getElementById("prevBtn");
   const next = document.getElementById("nextBtn");
@@ -132,245 +112,62 @@ function changeDate(days) {
 }
 
 // =====================================
-// CHECKBOX VISUALS + NORMALIZATION
+// LOAD / SAVE
 // =====================================
-function toBool(v) {
-  if (v === true) return true;
-  if (v === false) return false;
+async function loadDataForCurrentDate() {
+  const dateStr = formatDateForAPI(currentDate);
+  console.log("Loading data for", dateStr);
 
-  if (typeof v === "string") {
-    const s = v.trim().toLowerCase();
-    if (s === "true" || s === "yes" || s === "y" || s === "1") return true;
-    if (s === "false" || s === "no" || s === "n" || s === "0" || s === "") return false;
+  try {
+    const loadResult = await apiGet("load", { date: dateStr });
+
+    if (loadResult?.error) {
+      console.error("Backend error:", loadResult.message);
+      return;
+    }
+
+    console.log("Data loaded:", loadResult);
+    populateForm(loadResult);
+    dataChanged = false;
+  } catch (err) {
+    console.error("Load failed:", err);
   }
-
-  if (typeof v === "number") return v !== 0;
-
-  return Boolean(v);
 }
 
-function syncCheckboxVisual(cb) {
-  const wrapper = cb.closest(".checkbox-field");
-  if (!wrapper) return;
-  wrapper.classList.toggle("checked", cb.checked);
-}
+async function saveData(payload) {
+  console.log("💾 saveData called", payload);
 
-function setCheckbox(id, valueFromSheet) {
-  const cb = document.getElementById(id);
-  if (!cb) return;
-  cb.checked = toBool(valueFromSheet);
-  syncCheckboxVisual(cb);
-}
+  try {
+    const saveResult = await apiPost("save", { data: payload });
 
-function setupCheckboxes() {
-  document.querySelectorAll(".checkbox-field").forEach(wrapper => {
-    const cb = wrapper.querySelector("input[type='checkbox']");
-    if (!cb) return;
+    if (saveResult?.error) {
+      console.error("Save error:", saveResult.message);
+      return;
+    }
 
-    // initial state
-    syncCheckboxVisual(cb);
-
-    cb.addEventListener("change", () => {
-    syncCheckboxVisual(cb);
-    triggerSaveSoon();   // ✅ this actually saves
-    });
-
-    // click anywhere except the input/label toggles
-    wrapper.addEventListener("click", (e) => {
-      if (e.target.tagName === "INPUT" || e.target.tagName === "LABEL") return;
-      cb.checked = !cb.checked;
-      cb.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-  });
-
-  console.log("✅ Checkboxes wired");
-}
-
-// =====================================
-// UI
-// =====================================
-function updateDateDisplay() {
-  const el = document.getElementById("dateDisplay");
-  if (!el) return;
-  el.textContent = currentDate.toDateString();
-}
-
-// Optional water display helper
-function updateWaterDisplay() {
-  const waterCountEl = document.getElementById("waterCount");
-  if (waterCountEl) waterCountEl.textContent = String(waterCount);
-}
-
-// =====================================
-// FULL populateForm
-// =====================================
-function populateForm(data) {
-  const form = document.getElementById("healthForm");
-  if (form && typeof form.reset === "function") form.reset();
-
-  // Clear checkbox visual state first
-  document.querySelectorAll(".checkbox-field").forEach(w => w.classList.remove("checked"));
-
-  // Reset state
-  movements = [];
-  readings = [];
-  honeyDos = [];
-  currentAverages = null;
-
-  const d = data?.daily || null;
-
-  // No daily data case
-  if (!d) {
-    waterCount = 0;
-    updateWaterDisplay();
-
-    movements = (data?.movements || []).map(m => ({
-      duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
-      type: m.type ?? m["type"] ?? m["Type"]
-    }));
-
-    readings = (data?.readings || []).map(r => ({
-      duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
-      book: r.book ?? r["book"] ?? r["Book"]
-    }));
-
-    honeyDos = data?.honeyDos || [];
-
-    const reflectionsEl = document.getElementById("reflections");
-    if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
-    const storiesEl = document.getElementById("stories");
-    if (storiesEl) storiesEl.value = data?.stories || "";
-    const carlyEl = document.getElementById("carly");
-    if (carlyEl) carlyEl.value = data?.carly || "";
-
-    // Render if you later add these functions
-    if (typeof renderMovements === "function") renderMovements();
-    if (typeof renderReadings === "function") renderReadings();
-    if (typeof renderHoneyDos === "function") renderHoneyDos();
-    if (typeof updateAverages === "function") updateAverages(data?.averages);
-    if (typeof calculatePercentages === "function") calculatePercentages();
-    if (typeof checkSectionCompletion === "function") checkSectionCompletion();
-
-    document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
-    return;
+    console.log("💾 Saved successfully", saveResult);
+    dataChanged = false;
+  } catch (err) {
+    console.error("Save failed:", err);
   }
+}
 
-  // -------------------
-  // Sleep + Numbers
-  // -------------------
-  const sleepEl = document.getElementById("sleepHours");
-  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? "";
+function triggerSaveSoon() {
+  console.log("💾 triggerSaveSoon fired");
+  dataChanged = true;
 
-  const stepsEl = document.getElementById("steps");
-  if (stepsEl) stepsEl.value = d["Steps"] ?? "";
-
-  const fitnessEl = document.getElementById("fitnessScore");
-  if (fitnessEl) fitnessEl.value = d["Fitness Score"] ?? "";
-
-  const caloriesEl = document.getElementById("calories");
-  if (caloriesEl) caloriesEl.value = d["Calories"] ?? "";
-
-  const peakWattsEl = document.getElementById("peakWatts");
-  if (peakWattsEl) peakWattsEl.value = d["Peak Watts"] ?? "";
-
-  const wattSecondsEl = document.getElementById("wattSeconds");
-  if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? "";
-
-  // -------------------
-  // Checkboxes
-  // -------------------
-  setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"]);
-  setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"]);
-  setCheckbox("multiplication", d["5 min Multiplication"]);
-
-  setCheckbox("rehit", d["REHIT 2x10"] ?? d["REHIT"]);
-
-  setCheckbox("creatine", d["Creatine Chews"] ?? d["Creatine"]);
-  setCheckbox("vitaminD", d["Vitamin D"]);
-  setCheckbox("no2", d["NO2"]);
-  setCheckbox("psyllium", d["Psyllium Husk"] ?? d["Psyllium"]);
-
-  setCheckbox("breakfast", d["Breakfast"]);
-  setCheckbox("lunch", d["Lunch"]);
-  setCheckbox("dinner", d["Dinner"]);
-
-  setCheckbox("daySnacks", d["Healthy Day Snacks"] ?? d["Day Snacks"]);
-  setCheckbox("nightSnacks", d["Healthy Night Snacks"] ?? d["Night Snacks"]);
-  setCheckbox("noAlcohol", d["No Alcohol"]);
-
-  setCheckbox("meditation", d["Meditation"]);
-
-  // -------------------
-  // Water counter
-  // -------------------
-  waterCount = parseInt(d["Water"], 10) || 0;
-  updateWaterDisplay();
-
-  // -------------------
-  // Body fields
-  // -------------------
-  const weightEl = document.getElementById("weight");
-  const leanMassEl = document.getElementById("leanMass");
-  const bodyFatEl = document.getElementById("bodyFat");
-  const boneMassEl = document.getElementById("boneMass");
-  const waterBodyEl = document.getElementById("water");
-
-  const weightVal = d["Weight (lbs)"] ?? d["Weight"];
-  const leanVal = d["Lean Mass (lbs)"] ?? d["Lean Mass"];
-  const fatVal = d["Body Fat (lbs)"] ?? d["Body Fat"];
-  const boneVal = d["Bone Mass (lbs)"] ?? d["Bone Mass"];
-  const waterBodyVal = d["Water (lbs)"] ?? d["Water"];
-
-  if (weightEl) weightEl.value = weightVal ?? "";
-  if (leanMassEl) leanMassEl.value = leanVal ?? "";
-  if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
-  if (boneMassEl) boneMassEl.value = boneVal ?? "";
-  if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
-
-  if (typeof calculatePercentages === "function") calculatePercentages();
-
-  // -------------------
-  // Lists
-  // -------------------
-  movements = (data?.movements || []).map(m => ({
-    duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
-    type: m.type ?? m["Type"] ?? m["type"]
-  }));
-
-  readings = (data?.readings || []).map(r => ({
-    duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
-    book: r.book ?? r["Book"] ?? r["book"]
-  }));
-
-  honeyDos = data?.honeyDos || [];
-
-  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
-
-  const reflectionsEl = document.getElementById("reflections");
-  if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
-
-  const storiesEl = document.getElementById("stories");
-  if (storiesEl) storiesEl.value = data?.stories || "";
-
-  const carlyEl = document.getElementById("carly");
-  if (carlyEl) carlyEl.value = data?.carly || "";
-
-  // Optional: averages/completion
-  if (typeof updateAverages === "function") updateAverages(data?.averages);
-  if (typeof renderMovements === "function") renderMovements();
-  if (typeof renderReadings === "function") renderReadings();
-  if (typeof renderHoneyDos === "function") renderHoneyDos();
-  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
-
-  // Final sweep
-  document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(async () => {
+    const payload = buildPayloadFromUI();
+    await saveData(payload);
+  }, 800);
 }
 
 function buildPayloadFromUI() {
   return {
     date: formatDateForAPI(currentDate),
 
-    // Sleep / numbers
+    // Daily numbers
     sleepHours: document.getElementById("sleepHours")?.value || "",
     steps: document.getElementById("steps")?.value || "",
     fitnessScore: document.getElementById("fitnessScore")?.value || "",
@@ -409,7 +206,7 @@ function buildPayloadFromUI() {
     boneMass: document.getElementById("boneMass")?.value || "",
     water: document.getElementById("water")?.value || "",
 
-    // Lists / text
+    // Lists + text
     movements,
     readings,
     honeyDos,
@@ -419,16 +216,66 @@ function buildPayloadFromUI() {
   };
 }
 
-let autoSaveTimeout = null;
+// =====================================
+// CHECKBOXES: normalize + visuals + click-anywhere
+// =====================================
+function toBool(v) {
+  if (v === true) return true;
+  if (v === false) return false;
 
-function triggerSaveSoon() {
-  dataChanged = true;
-  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  if (typeof v === "string") {
+    const s = v.trim().toLowerCase();
+    if (s === "true" || s === "yes" || s === "y" || s === "1") return true;
+    if (s === "false" || s === "no" || s === "n" || s === "0" || s === "") return false;
+  }
 
-  autoSaveTimeout = setTimeout(async () => {
-    const payload = buildPayloadFromUI();
-    await saveData(payload);
-  }, 800); // tweak delay if you want
+  if (typeof v === "number") return v !== 0;
+  return Boolean(v);
+}
+
+function syncCheckboxVisual(cb) {
+  const wrapper = cb.closest(".checkbox-field");
+  if (!wrapper) return;
+  wrapper.classList.toggle("checked", cb.checked);
+}
+
+function setCheckbox(id, valueFromSheet) {
+  const cb = document.getElementById(id);
+  if (!cb) return;
+  cb.checked = toBool(valueFromSheet);
+  syncCheckboxVisual(cb);
+}
+
+function setupCheckboxes() {
+  document.querySelectorAll(".checkbox-field").forEach(wrapper => {
+    const cb = wrapper.querySelector("input[type='checkbox']");
+    if (!cb) return;
+
+    // initial state
+    syncCheckboxVisual(cb);
+
+    cb.addEventListener("change", () => {
+      syncCheckboxVisual(cb);
+      triggerSaveSoon();
+    });
+
+    // click anywhere except the input/label toggles
+    wrapper.addEventListener("click", (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "LABEL") return;
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
+
+  console.log("✅ Checkboxes wired");
+}
+
+// =====================================
+// WATER BUTTONS
+// =====================================
+function updateWaterDisplay() {
+  const waterCountEl = document.getElementById("waterCount");
+  if (waterCountEl) waterCountEl.textContent = String(waterCount);
 }
 
 function setupWaterButtons() {
@@ -449,14 +296,205 @@ function setupWaterButtons() {
     updateWaterDisplay();
     triggerSaveSoon();
   });
+
+  console.log("✅ Water buttons wired");
 }
 
+// =====================================
+// INPUT AUTOSAVE
+// =====================================
 function setupInputAutosave() {
   document.querySelectorAll("input, textarea").forEach(el => {
+    // Ignore checkboxes here (handled separately)
+    if (el.type === "checkbox") return;
+
     el.addEventListener("change", triggerSaveSoon);
-    // optional: save while typing for textareas
+
+    // Optional: autosave while typing in textareas
     if (el.tagName === "TEXTAREA") el.addEventListener("input", triggerSaveSoon);
   });
+
+  console.log("✅ Input autosave wired");
 }
 
+// =====================================
+// LIST ACTIONS (optional stubs)
+// - If you already have prompt-based add/remove flows, hook them here.
+// =====================================
+function addMovement(durationNum, type) {
+  movements.push({ duration: durationNum, type });
+  if (typeof renderMovements === "function") renderMovements();
+  triggerSaveSoon();
+}
 
+function addReading(durationNum, book) {
+  readings.push({ duration: durationNum, book });
+  lastBookTitle = book;
+  if (typeof renderReadings === "function") renderReadings();
+  triggerSaveSoon();
+}
+
+function addHoneyDo(taskObj) {
+  honeyDos.push(taskObj);
+  if (typeof renderHoneyDos === "function") renderHoneyDos();
+  triggerSaveSoon();
+}
+
+// =====================================
+// populateForm: set UI from sheet data
+// =====================================
+function populateForm(data) {
+  const form = document.getElementById("healthForm");
+  if (form && typeof form.reset === "function") form.reset();
+
+  // clear checkbox visuals
+  document.querySelectorAll(".checkbox-field").forEach(w => w.classList.remove("checked"));
+
+  // reset state
+  movements = [];
+  readings = [];
+  honeyDos = [];
+  currentAverages = null;
+
+  const d = data?.daily || null;
+
+  // No daily data
+  if (!d) {
+    waterCount = 0;
+    updateWaterDisplay();
+
+    movements = (data?.movements || []).map(m => ({
+      duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
+      type: m.type ?? m["type"] ?? m["Type"]
+    }));
+
+    readings = (data?.readings || []).map(r => ({
+      duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
+      book: r.book ?? r["book"] ?? r["Book"]
+    }));
+
+    honeyDos = data?.honeyDos || [];
+
+    const reflectionsEl = document.getElementById("reflections");
+    if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
+    const storiesEl = document.getElementById("stories");
+    if (storiesEl) storiesEl.value = data?.stories || "";
+    const carlyEl = document.getElementById("carly");
+    if (carlyEl) carlyEl.value = data?.carly || "";
+
+    // optional renders
+    if (typeof renderMovements === "function") renderMovements();
+    if (typeof renderReadings === "function") renderReadings();
+    if (typeof renderHoneyDos === "function") renderHoneyDos();
+    if (typeof updateAverages === "function") updateAverages(data?.averages);
+    if (typeof calculatePercentages === "function") calculatePercentages();
+    if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+
+    // final sweep
+    document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
+    console.log("✅ populateForm ran (no daily)");
+    return;
+  }
+
+  // Numbers
+  const sleepEl = document.getElementById("sleepHours");
+  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? "";
+
+  const stepsEl = document.getElementById("steps");
+  if (stepsEl) stepsEl.value = d["Steps"] ?? "";
+
+  const fitnessEl = document.getElementById("fitnessScore");
+  if (fitnessEl) fitnessEl.value = d["Fitness Score"] ?? "";
+
+  const caloriesEl = document.getElementById("calories");
+  if (caloriesEl) caloriesEl.value = d["Calories"] ?? "";
+
+  const peakWattsEl = document.getElementById("peakWatts");
+  if (peakWattsEl) peakWattsEl.value = d["Peak Watts"] ?? "";
+
+  const wattSecondsEl = document.getElementById("wattSeconds");
+  if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? "";
+
+  // Checkboxes (sheet -> UI)
+  setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"]);
+  setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"]);
+  setCheckbox("multiplication", d["5 min Multiplication"]);
+  setCheckbox("rehit", d["REHIT 2x10"] ?? d["REHIT"]);
+
+  setCheckbox("creatine", d["Creatine Chews"] ?? d["Creatine"]);
+  setCheckbox("vitaminD", d["Vitamin D"]);
+  setCheckbox("no2", d["NO2"]);
+  setCheckbox("psyllium", d["Psyllium Husk"] ?? d["Psyllium"]);
+
+  setCheckbox("breakfast", d["Breakfast"]);
+  setCheckbox("lunch", d["Lunch"]);
+  setCheckbox("dinner", d["Dinner"]);
+
+  setCheckbox("daySnacks", d["Healthy Day Snacks"] ?? d["Day Snacks"]);
+  setCheckbox("nightSnacks", d["Healthy Night Snacks"] ?? d["Night Snacks"]);
+  setCheckbox("noAlcohol", d["No Alcohol"]);
+
+  setCheckbox("meditation", d["Meditation"]);
+
+  // Water counter
+  waterCount = parseInt(d["Water"], 10) || 0;
+  updateWaterDisplay();
+
+  // Body fields
+  const weightEl = document.getElementById("weight");
+  const leanMassEl = document.getElementById("leanMass");
+  const bodyFatEl = document.getElementById("bodyFat");
+  const boneMassEl = document.getElementById("boneMass");
+  const waterBodyEl = document.getElementById("water");
+
+  const weightVal = d["Weight (lbs)"] ?? d["Weight"];
+  const leanVal = d["Lean Mass (lbs)"] ?? d["Lean Mass"];
+  const fatVal = d["Body Fat (lbs)"] ?? d["Body Fat"];
+  const boneVal = d["Bone Mass (lbs)"] ?? d["Bone Mass"];
+  const waterBodyVal = d["Water (lbs)"] ?? d["Water"];
+
+  if (weightEl) weightEl.value = weightVal ?? "";
+  if (leanMassEl) leanMassEl.value = leanVal ?? "";
+  if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
+  if (boneMassEl) boneMassEl.value = boneVal ?? "";
+  if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
+
+  if (typeof calculatePercentages === "function") calculatePercentages();
+
+  // Lists
+  movements = (data?.movements || []).map(m => ({
+    duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
+    type: m.type ?? m["Type"] ?? m["type"]
+  }));
+
+  readings = (data?.readings || []).map(r => ({
+    duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
+    book: r.book ?? r["Book"] ?? r["book"]
+  }));
+
+  honeyDos = data?.honeyDos || [];
+
+  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
+
+  // Textareas
+  const reflectionsEl = document.getElementById("reflections");
+  if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
+
+  const storiesEl = document.getElementById("stories");
+  if (storiesEl) storiesEl.value = data?.stories || "";
+
+  const carlyEl = document.getElementById("carly");
+  if (carlyEl) carlyEl.value = data?.carly || "";
+
+  // Optional renders/averages/completion
+  if (typeof updateAverages === "function") updateAverages(data?.averages);
+  if (typeof renderMovements === "function") renderMovements();
+  if (typeof renderReadings === "function") renderReadings();
+  if (typeof renderHoneyDos === "function") renderHoneyDos();
+  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+
+  // final sweep
+  document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
+
+  console.log("✅ populateForm ran");
+}
