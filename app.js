@@ -108,6 +108,16 @@ function populateForm(data) {
   console.log("✅ populateForm ran");
 }
 
+function setCheckbox(id, value) {
+  const cb = document.getElementById(id);
+  if (!cb) return;
+  cb.checked = Boolean(value);
+  syncCheckboxVisual(cb);
+}
+
+setCheckbox("vitaminD", d["Vitamin D"]);
+setCheckbox("rehit", d["REHIT 2x10"]);
+
 
 async function saveData(payload) {
   try {
