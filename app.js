@@ -461,6 +461,8 @@ async function populateForm(data) {
   let bodySource = d;
   if (!hasAnyBodyData(d)) {
     bodySource = await getMostRecentBodyDaily(currentDate);
+
+  updateAverages(data?.averages);
   }
 
   // No daily data for this date
@@ -498,7 +500,7 @@ async function populateForm(data) {
 
   // Numbers
   const sleepEl = document.getElementById("sleepHours");
-  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? "";
+  if (sleepEl) sleepEl.value = d["Sleep"] ?? "";
 
   const stepsEl = document.getElementById("steps");
   if (stepsEl) stepsEl.value = d["Steps"] ?? "";
@@ -704,3 +706,52 @@ function renderMovements() {
   if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 }
 
+function updateAverages(averages) {
+  currentAverages = averages || null;
+
+  const avgSleepEl = document.getElementById("avgSleep");
+  const avgStepsEl = document.getElementById("avgSteps");
+  const avgMovementsEl = document.getElementById("avgMovements");
+  const rehitWeekEl = document.getElementById("rehitWeek");
+
+  if (!averages) {
+    if (avgSleepEl) avgSleepEl.textContent = "--";
+    if (avgStepsEl) avgStepsEl.textContent = "--";
+    if (avgMovementsEl) avgMovementsEl.textContent = "--";
+    if (rehitWeekEl) rehitWeekEl.textContent = "--";
+    return;
+  }
+
+  // Sleep: show 2 decimals
+  if (avgSleepEl) {
+    const v = averages.sleep;
+    avgSleepEl.textContent = (v === null || v === undefined || v === "")
+      ? "--"
+      : Number(v).toFixed(2);
+  }
+
+  // Steps: show whole number w/ commas
+  if (avgStepsEl) {
+    const v = averages.steps;
+    avgStepsEl.textContent = (v === null || v === undefined || v === "")
+      ? "--"
+      : Number(v).toLocaleString();
+  }
+
+  // Movements per day: your backend returns a string like "0.7"
+  if (avgMovementsEl) {
+    const v = averages.movements;
+    const num = (v === null || v === undefined || v === "") ? null : Number(v);
+    avgMovementsEl.textContent = (num === null || Number.isNaN(num))
+      ? "--"
+      : num.toFixed(1);
+  }
+
+  // REHIT sessions this week
+  if (rehitWeekEl) {
+    const v = averages.rehitWeek;
+    rehitWeekEl.textContent = (v === null || v === undefined || v === "")
+      ? "--"
+      : String(v);
+  }
+}
