@@ -263,38 +263,61 @@ function renderBiomarkersTable() {
 
   host.innerHTML = "";
 
-  // Build rows aligned by index
+  const lastDate = formatMDYY(biomarkersLatest.date);
+
   biomarkersDef.forEach((row, idx) => {
-    const currentVal = (biomarkersLatest.values && biomarkersLatest.values[idx] != null)
-      ? String(biomarkersLatest.values[idx])
-      : "";
+    const lastValRaw =
+      (biomarkersLatest.values && biomarkersLatest.values[idx] != null)
+        ? String(biomarkersLatest.values[idx]).trim()
+        : "";
+
+    const lastVal = (!lastValRaw || lastValRaw === "0") ? lastValRaw : lastValRaw; // keep as-is
+    const units = row.units || "";
+    const optimal = row.optimal || "";
 
     const wrapper = document.createElement("div");
     wrapper.className = "biom-row";
 
-    wrapper.innerHTML = `
-      <div class="biom-cell">
-        <div style="font-weight:700; font-size: 16px;">${escapeHtml(row.biomarker || "")}</div>
-        <div class="biom-meta">${escapeHtml(row.category || "")}</div>
-      </div>
-      <div class="biom-cell">
-        <div style="font-weight:700; font-size: 16px;">Optimal</div>
-        <div class="biom-meta">${escapeHtml(row.optimal || "")} ${escapeHtml(row.units || "")}</div>
-      </div>
-      <div class="biom-cell">
-        <div style="font-weight:700; font-size: 16px;">Units</div>
-        <div class="biom-meta">${escapeHtml(row.units || "")}</div>
-      </div>
-      <div class="biom-cell">
-        <div style="font-weight:700; font-size: 16px;">Value</div>
-        <input class="input-field" style="min-height: 52px; padding: 10px; font-size: 16px;" 
-               data-biom-idx="${idx}" value="${escapeAttr(currentVal)}" />
+    // Box 1: biomarker + optimal + units (all together)
+    const box1 = document.createElement("div");
+    box1.className = "biom-cell";
+    box1.innerHTML = `
+      <div class="biom-title">${escapeHtml(row.biomarker || "")}</div>
+      <div class="biom-sub">
+        <div>${escapeHtml(row.category || "")}</div>
+        <div>Optimal: ${escapeHtml(optimal)} ${escapeHtml(units)}</div>
       </div>
     `;
+
+    // Box 2: last data (most recent)
+    const box2 = document.createElement("div");
+    box2.className = "biom-cell";
+    box2.innerHTML = `
+      <div class="biom-title">Last</div>
+      <div class="biom-last">${escapeHtml(lastVal || "--")}</div>
+      <div class="biom-last-sub">${escapeHtml(lastDate || "--")}</div>
+    `;
+
+    // Box 3: input
+    const box3 = document.createElement("div");
+    box3.className = "biom-cell";
+    box3.innerHTML = `
+      <div class="biom-title">New</div>
+      <input class="input-field"
+             style="min-height: 52px; padding: 10px; font-size: 16px;"
+             data-biom-idx="${idx}"
+             placeholder="Enter value"
+             value="${escapeAttr(lastVal || "")}" />
+    `;
+
+    wrapper.appendChild(box1);
+    wrapper.appendChild(box2);
+    wrapper.appendChild(box3);
 
     host.appendChild(wrapper);
   });
 }
+
 
 async function submitBiomarkers() {
   const statusEl = document.getElementById("biomarkersSaveStatus");
