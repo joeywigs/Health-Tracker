@@ -11,7 +11,7 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("******* Fix Water ******");
+console.log("******* Blood Icon ******");
 window.__APP_JS_OK__ = true;
 
 // =====================================
