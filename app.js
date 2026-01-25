@@ -162,8 +162,7 @@ function loadDataForDate(dateStr) {
       'Breakfast', 'Lunch', 'Dinner', 'Healthy Day Snacks', 'Healthy Night Snacks', 'No Alcohol',
       'Water',
       'Weight (lbs)', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
-      'Meditation',
-      'Waist (inches)'
+      'Meditation'
     ]);
     
     Logger.log('Daily Data sheet ready');
@@ -361,8 +360,7 @@ function saveDataForDate(data) {
       'Breakfast', 'Lunch', 'Dinner', 'Healthy Day Snacks', 'Healthy Night Snacks', 'No Alcohol',
       'Water',
       'Weight (lbs)', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
-      'Meditation',
-      'Waist (inches)"
+      'Meditation'
     ]);
     
     saveOrUpdateRow(dailySheet, dateStr, [
@@ -397,8 +395,7 @@ function saveDataForDate(data) {
       '', // Bone Mass % - calculated, don't save
       data.water || '',
       '', // Water % - calculated, don't save
-      data.meditation || false,
-      data.waist || ''
+      data.meditation || false
     ]);
     
     // Save movements (replace all for this date)
@@ -709,7 +706,6 @@ const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
 // Body fields (for carry-forward + detection)
 const BODY_FIELDS = [
   { id: "weight", keys: ["Weight (lbs)", "Weight"] },
-  { id: "waist", keys: ["Waist (inches)", "Waist"] },
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
@@ -965,7 +961,6 @@ function buildPayloadFromUI() {
 
     // Body
     weight: document.getElementById("weight")?.value || "",
-    waist: document.getElementById("waist")?.value || "",
     leanMass: document.getElementById("leanMass")?.value || "",
     bodyFat: document.getElementById("bodyFat")?.value || "",
     boneMass: document.getElementById("boneMass")?.value || "",
@@ -1113,7 +1108,6 @@ function applyBodyFieldsFromDaily(daily) {
   const source = daily || {};
 
   const weightVal = source["Weight (lbs)"] ?? source["Weight"];
-  const waistVal = source["Waist (inches)"] ?? source["Waist"];
   const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
   const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
