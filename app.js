@@ -9,7 +9,7 @@
  * - Body data carry-forward: shows last known body metrics when missing
  **********************************************/
 
-console.log("✅ app.js running v2", new Date().toISOString());
+console.log("✅ app.js running", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
