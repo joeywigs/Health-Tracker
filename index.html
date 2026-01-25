@@ -854,6 +854,11 @@
 }
 /* Biomarkers layout */
 
+/* ================================
+   Biomarkers Page – Final Styling
+   ================================ */
+
+/* Category headers (section-style) */
 .biom-category {
   font-size: 18px;
   font-weight: 700;
@@ -863,6 +868,7 @@
   border-bottom: 2px solid #3a3a3a;
 }
 
+/* Biomarker row layout */
 .biom-row {
   display: grid;
   grid-template-columns: 1.6fr 0.7fr 0.9fr;
@@ -870,42 +876,68 @@
   margin-bottom: 10px;
 }
 
+/* Biomarker boxes – compact (~75% height) */
 .biom-cell {
-  padding: 12px;
+  padding: 8px 12px;          /* reduced padding */
   border: 2px solid #3a3a3a;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #1a1a1a;
 }
 
+/* Primary text (matches main habit page size) */
 .biom-title {
   font-weight: 600;
-  font-size: 16px; /* match main page */
+  font-size: 16px;
+  line-height: 1.15;
 }
 
+/* Subtext (optimal, units, dates) */
 .biom-sub {
-  font-size: 14px;
+  font-size: 13px;
   color: #999;
-  margin-top: 4px;
+  margin-top: 2px;
+  line-height: 1.15;
 }
 
 .biom-last {
   font-weight: 600;
   font-size: 16px;
+  line-height: 1.15;
 }
 
 .biom-last-sub {
-  font-size: 13px;
+  font-size: 12px;
   color: #999;
-  margin-top: 4px;
+  margin-top: 2px;
+  line-height: 1.15;
 }
 
-/* Ensure inputs match main page sizing */
+/* ================================
+   Input styling – borderless
+   ================================ */
+
 .biom-cell .input-field {
+  border: none !important;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
   font-size: 16px;
-  min-height: 48px;
-  padding: 8px;
+  min-height: auto;
+  line-height: 1.2;
+  color: #e0e0e0;
 }
-  </style>
+
+.biom-cell .input-field:focus {
+  outline: none;
+  background: transparent;
+}
+
+/* Placeholder subtlety */
+.biom-cell .input-field::placeholder {
+  color: #666;
+  opacity: 0.8;
+}
+</style>
 
 </head>
 <body>
