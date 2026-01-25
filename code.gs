@@ -259,13 +259,15 @@ function calculate7DayAverages(dateStr) {
       const daysDiff = Math.floor((targetDate - rowDate) / (1000 * 60 * 60 * 24));
       
       // Last 7 days for sleep/steps
-      if (daysDiff >= 0 && daysDiff < 7) {
-        const sleep = parseFloat(data[i][sleepCol]);
-        const steps = parseInt(data[i][stepsCol]);
-        
-        if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
-        if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
-      }
+    // Sleep + Steps: current week (Sunday-Saturday), week-to-date avg
+    if (rowDate >= weekStart && rowDate <= weekEnd) {
+      const sleep = parseFloat(data[i][sleepCol]);
+      const steps = parseInt(data[i][stepsCol]);
+
+      if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
+      if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
+    }
+
       
       // REHIT count for current week (Sunday-Saturday)
       if (rowDate >= weekStart && rowDate <= weekEnd) {
