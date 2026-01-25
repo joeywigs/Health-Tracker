@@ -10,7 +10,7 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("******* Updated Hours of Sleep ******");
+console.log("******* Averages ******");
 console.log("Instant Days", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
