@@ -10,7 +10,7 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("******* Updating Averages *******");
+console.log("******* Updated Hours of Sleep ******");
 console.log("Instant Days", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
@@ -500,7 +500,7 @@ async function populateForm(data) {
 
   // Numbers
   const sleepEl = document.getElementById("sleepHours");
-  if (sleepEl) sleepEl.value = d["Sleep"] ?? "";
+  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? "";
 
   const stepsEl = document.getElementById("steps");
   if (stepsEl) stepsEl.value = d["Steps"] ?? "";
