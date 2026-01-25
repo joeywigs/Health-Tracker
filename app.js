@@ -84,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupMovementUI();
   setupBloodPressureCalculator();
   setupBiomarkersUI();
+  setupReadingUI();
 
   updateDateDisplay();
   updatePhaseInfo();
@@ -169,6 +170,79 @@ function changeDate(days) {
 
   // show instantly if cached, else it will fetch
   loadDataForCurrentDate();
+}
+
+// =====================================
+// READING SESSIONS UI
+// =====================================
+function setupReadingUI() {
+  const btn = document.getElementById("addReadingBtn");
+  if (!btn) {
+    console.warn("addReadingBtn not found");
+    return;
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    promptAddReading();
+  });
+
+  console.log("✅ Reading UI wired");
+}
+
+function promptAddReading() {
+  const raw = prompt("Reading duration (minutes):");
+  if (raw === null) return;
+
+  const durationNum = parseInt(raw, 10);
+  if (!Number.isFinite(durationNum) || durationNum <= 0) {
+    alert("Please enter a valid number of minutes.");
+    return;
+  }
+
+  let book = prompt("Book (optional):");
+  if (book === null) return;
+  book = String(book || "").trim();
+
+  // If blank, carry forward last title you were reading (optional convenience)
+  if (!book && lastBookTitle) book = lastBookTitle;
+
+  readings.push({ duration: durationNum, book });
+
+  if (book) lastBookTitle = book;
+
+  renderReadings();
+  triggerSaveSoon();
+}
+
+function removeReading(index) {
+  readings.splice(index, 1);
+  renderReadings();
+  triggerSaveSoon();
+}
+
+function renderReadings() {
+  const list = document.getElementById("readingList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  readings.forEach((r, idx) => {
+    const duration = r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"] ?? "";
+    const book = r.book ?? r["Book"] ?? r["book"] ?? "";
+
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerHTML = `
+      <span class="item-text">${duration} min${book ? ` — ${escapeHtml(book)}` : ""}</span>
+      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
+    `;
+
+    item.querySelector("button").addEventListener("click", () => removeReading(idx));
+    list.appendChild(item);
+  });
+
+  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 }
 
 // =====================================
