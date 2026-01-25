@@ -9,7 +9,7 @@
  * - Body data carry-forward: shows last known body metrics when missing
  **********************************************/
 
-console.log("✅ app.js running v1", new Date().toISOString());
+console.log("✅ app.js running", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -20,6 +20,9 @@ const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
 // Body fields (for carry-forward + detection)
 const BODY_FIELDS = [
   { id: "weight", keys: ["Weight (lbs)", "Weight"] },
+  { id: "waist", keys: ["Waist (inches)", "Waist"] },
+  { id: "systolic", keys: ["Systolic", "Systolic BP"] },
+  { id: "diastolic", keys: ["Diastolic", "Diastolic BP"] },
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
@@ -268,6 +271,9 @@ function buildPayloadFromUI() {
     hydrationGood: waterCount,
 
     weight: document.getElementById("weight")?.value || "",
+    waist: document.getElementById("waist")?.value || "",
+    systolic: document.getElementById("systolic")?.value || "",
+    diastolic: document.getElementById("diastolic")?.value || "",
     leanMass: document.getElementById("leanMass")?.value || "",
     bodyFat: document.getElementById("bodyFat")?.value || "",
     boneMass: document.getElementById("boneMass")?.value || "",
@@ -437,18 +443,27 @@ function applyBodyFieldsFromDaily(daily) {
   const source = daily || {};
 
   const weightVal = source["Weight (lbs)"] ?? source["Weight"];
+  const waistVal = source["Waist (inches)"] ?? source["Waist"];
+  const systolicVal = source["Systolic"] ?? source["Systolic BP"];
+  const diastolicVal = source["Diastolic"] ?? source["Diastolic BP"];
   const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
   const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
   const waterBodyVal = source["Water (lbs)"] ?? source["Water"];
 
   const weightEl = document.getElementById("weight");
+  const waistEl = document.getElementById("waist");
+  const systolicEl = document.getElementById("systolic");
+  const diastolicEl = document.getElementById("diastolic");
   const leanMassEl = document.getElementById("leanMass");
   const bodyFatEl = document.getElementById("bodyFat");
   const boneMassEl = document.getElementById("boneMass");
   const waterBodyEl = document.getElementById("water");
 
   if (weightEl) weightEl.value = weightVal ?? "";
+  if (waistEl) waistEl.value = waistVal ?? "";
+  if (systolicEl) systolicEl.value = systolicVal ?? "";
+  if (diastolicEl) diastolicEl.value = diastolicVal ?? "";
   if (leanMassEl) leanMassEl.value = leanVal ?? "";
   if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
   if (boneMassEl) boneMassEl.value = boneVal ?? "";
@@ -924,7 +939,7 @@ function calculatePercentages() {
 
 // Setup body calculations on input
 document.addEventListener("DOMContentLoaded", () => {
-  const bodyFields = ["weight", "leanMass", "bodyFat", "boneMass", "water"];
+  const bodyFields = ["weight", "waist", "systolic", "diastolic", "leanMass", "bodyFat", "boneMass", "water"];
   bodyFields.forEach(id => {
     const field = document.getElementById(id);
     if (field) {
