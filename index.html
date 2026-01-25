@@ -852,6 +852,25 @@
     height: 78px !important;
   }
 }
+.biom-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.1fr 0.9fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.biom-cell {
+  padding: 14px;
+  border: 2px solid #3a3a3a;
+  border-radius: 16px;
+  background: #1a1a1a;
+}
+
+.biom-meta {
+  font-size: 14px;
+  color: #999;
+  margin-top: 6px;
+}
   </style>
 </head>
 <body>
@@ -866,8 +885,10 @@
       </div>
     </div>
     <div style="display: flex; gap: 12px; align-items: center;">
-      <div id="statusMessage" class="status-message"></div>
-    </div>
+      <button id="biomarkersBtn" type="button" class="refresh-btn" title="Biomarkers">🧪</button>
+    <div id="statusMessage" class="status-message"></div>
+</div>
+
   </div>
   
   <div class="header">
@@ -1198,6 +1219,39 @@
       </div>
     </div>
   </form>
+
+<!-- Biomarkers Page (hidden by default) -->
+<div id="biomarkersPage" style="display:none;">
+  <div class="header" style="margin-top: 16px;">
+    <div class="header-top" style="margin-bottom: 0;">
+      <div>
+        <div class="title">Biomarkers</div>
+        <div class="subtitle" id="biomarkersSubtitle" style="margin-top: 6px;">Most recent: --</div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <button type="button" class="date-btn" id="biomarkersCloseBtn" style="width: 90px; height: 90px;">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">Update Labs</div>
+    <div class="section-content">
+      <div class="field-group">
+        <label class="field-label">Lab Date (used as new column header)</label>
+        <input type="text" class="input-field" id="biomarkersDate" placeholder="M/D/YY (e.g., 1/25/26)">
+      </div>
+
+      <div class="field-group">
+        <div id="biomarkersTable"></div>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn">Submit Biomarkers</button>
+      <div class="average-display" id="biomarkersSaveStatus" style="margin-top: 10px;"> </div>
+    </div>
+  </div>
+</div>
+  
 <script src="app.js" defer></script>
 </body>
 </html>
