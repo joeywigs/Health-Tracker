@@ -216,7 +216,11 @@ async function saveData(payload) {
     console.log("💾 Saved successfully", saveResult);
     dataChanged = false;
 
-    markSleepSaved();
+    if ("sleepHours" in payload) {
+      markSleepSaved();
+      await loadDataForCurrentDate({ force: true });
+}
+
     await loadDataForCurrentDate({ force: true });
 
   } catch (err) {
