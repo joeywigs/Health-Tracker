@@ -189,8 +189,16 @@ function setupBiomarkersUI() {
   }
 
   btn.addEventListener("click", async () => {
+  const page = document.getElementById("biomarkersPage");
+
+  // If biomarkers page is open → go back to main habit page
+  if (page && page.style.display === "block") {
+    closeBiomarkersPage();
+  } else {
     await openBiomarkersPage();
-  });
+  }
+});
+
 
   closeBtn.addEventListener("click", () => {
     closeBiomarkersPage();
