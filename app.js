@@ -10,7 +10,6 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("Update 1");
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -209,8 +208,15 @@ async function saveData(payload) {
       markSleepSaved();
     }
 
-    // Reload to refresh averages
-    await loadDataForCurrentDate();
+    // Invalidate cache for current date so next load gets fresh data
+    const dateStr = formatDateForAPI(currentDate);
+    dayCache.delete(dateStr);
+
+    // Fetch fresh averages without full UI reload
+    const freshData = await fetchDay(currentDate);
+    if (freshData?.averages) {
+      updateAverages(freshData.averages);
+    }
 
   } catch (err) {
     console.error("Save failed:", err);
@@ -455,10 +461,8 @@ function applyBodyFieldsFromDaily(daily) {
 // populateForm: set UI from sheet data
 // =====================================
 async function populateForm(data) {
-  // Reset form inputs only (not checkbox visuals yet)
-  const form = document.getElementById("healthForm");
-  if (form && typeof form.reset === "function") form.reset();
-
+  console.log("📝 populateForm START", { hasDaily: !!data?.daily });
+  
   // Reset state
   movements = [];
   readings = [];
@@ -478,6 +482,10 @@ async function populateForm(data) {
 
   // No daily data for this date
   if (!d) {
+    // Reset form inputs
+    const form = document.getElementById("healthForm");
+    if (form && typeof form.reset === "function") form.reset();
+    
     waterCount = 0;
     updateWaterDisplay();
 
@@ -510,9 +518,13 @@ async function populateForm(data) {
       syncCheckboxVisual(cb);
     });
 
-    console.log("✅ populateForm ran (no daily)");
+    console.log("✅ populateForm END (no daily)");
     return;
   }
+
+  // Reset form inputs BEFORE setting checkbox values
+  const form = document.getElementById("healthForm");
+  if (form && typeof form.reset === "function") form.reset();
 
   // Numbers
   const sleepEl = document.getElementById("sleepHours");
@@ -533,7 +545,14 @@ async function populateForm(data) {
   const wattSecondsEl = document.getElementById("wattSeconds");
   if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? "";
 
-  // Checkboxes (sheet -> UI)
+  // Checkboxes (sheet -> UI) - log what we're setting
+  console.log("Setting checkboxes:", {
+    inhalerMorning: d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"],
+    inhalerEvening: d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"],
+    multiplication: d["5 min Multiplication"],
+    rehit: d["REHIT 2x10"] ?? d["REHIT"]
+  });
+  
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"]);
   setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"]);
   setCheckbox("multiplication", d["5 min Multiplication"]);
@@ -594,12 +613,16 @@ async function populateForm(data) {
   // Update REHIT fields visibility based on checkbox state
   updateREHITFieldsVisibility();
 
-  // Sync all checkbox visuals after everything is set
-  document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(cb => {
-    syncCheckboxVisual(cb);
-  });
+  // Final: Sync all checkbox visuals - use a small delay to ensure DOM has settled
+  setTimeout(() => {
+    console.log("🎨 Final checkbox visual sync");
+    document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(cb => {
+      console.log(`  ${cb.id}: checked=${cb.checked}`);
+      syncCheckboxVisual(cb);
+    });
+  }, 0);
 
-  console.log("✅ populateForm ran");
+  console.log("✅ populateForm END");
 }
 
 function setupCollapsibleSections() {
