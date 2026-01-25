@@ -390,9 +390,14 @@ async function saveData(payload) {
     // Invalidate cache for current day so UI can't "revert"
     dayCache.delete(formatDateForAPI(currentDate));
 
-    // Reload fresh from server
+    // Reload fresh from server (must honor opts.force)
     await loadDataForCurrentDate({ force: true });
+
+  } catch (err) {
+    console.error("Save failed:", err);
+  }
 }
+
 
 function triggerSaveSoon() {
   console.log("💾 triggerSaveSoon fired");
