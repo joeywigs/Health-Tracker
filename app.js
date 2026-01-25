@@ -755,3 +755,14 @@ function updateAverages(averages) {
       : String(v);
   }
 }
+function markSleepSaved() {
+  const el = document.getElementById("sleepHours");
+  if (!el) return;
+
+  el.classList.add("saved");
+
+  // Optional: remove after a few seconds
+  setTimeout(() => {
+    el.classList.remove("saved");
+  }, 3000);
+}
