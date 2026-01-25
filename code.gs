@@ -2,79 +2,10 @@
 const SPREADSHEET_ID = '1svS0fMSg91rg5sBHBTJJnBQUgV6xs1sWOh7uvmu0C3M';
 
 // Serves the HTML page
-// Replace this with your actual Google Sheets ID
-const SPREADSHEET_ID = '1svS0fMSg91rg5sBHBTJJnBQUgV6xs1sWOh7uvmu0C3M';
-
-/**
- * ONE-TIME SETUP:
- * Run setApiKeyOnce() once to set your API key in Script Properties.
- */
-function setApiKeyOnce() {
-  PropertiesService.getScriptProperties().setProperty(
-    "API_KEY",
-    "PASTE_A_LONG_RANDOM_KEY_HERE" // e.g. 50+ random chars
-  );
-}
-
-/**
- * GET /exec?action=load&date=...&key=...
- * GET /exec?action=ping&key=...
- */
-function doGet(e) {
-  try {
-    const p = (e && e.parameter) ? e.parameter : {};
-    assertKey_(p.key);
-
-    const action = (p.action || "").toLowerCase();
-
-    if (action === "load") {
-      const dateStr = p.date || "";
-      if (!dateStr) return json_({ error: true, message: "Missing date" });
-      return json_(loadDataForDate(dateStr));
-    }
-
-    if (action === "ping") {
-      return json_({ ok: true, ts: new Date().toISOString() });
-    }
-
-    return json_({ error: true, message: "Unknown action" });
-  } catch (err) {
-    return json_({ error: true, message: err.message });
-  }
-}
-
-/**
- * POST /exec
- * Body: { action:"save", key:"...", data:{...} }
- */
-function doPost(e) {
-  try {
-    const body = JSON.parse((e && e.postData && e.postData.contents) ? e.postData.contents : "{}");
-    assertKey_(body.key);
-
-    const action = (body.action || "").toLowerCase();
-
-    if (action === "save") {
-      if (!body.data) return json_({ error: true, message: "Missing data" });
-      const result = saveDataForDate(body.data);
-      return json_(result);
-    }
-
-    return json_({ error: true, message: "Unknown action" });
-  } catch (err) {
-    return json_({ error: true, message: err.message });
-  }
-}
-
-function json_(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function assertKey_(key) {
-  const API_KEY = PropertiesService.getScriptProperties().getProperty("API_KEY");
-  if (!API_KEY || key !== API_KEY) throw new Error("Unauthorized");
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Habit Tracker')
+    .setFaviconUrl('https://i.imgur.com/ACLnzvO.png');
 }
 
 // TEST FUNCTION: Simple connection test
@@ -126,7 +57,7 @@ function loadDataForDate(dateStr) {
       'Creatine Chews', 'Vitamin D', 'NO2', 'Psyllium Husk',
       'Breakfast', 'Lunch', 'Dinner', 'Healthy Day Snacks', 'Healthy Night Snacks', 'No Alcohol',
       'Water',
-      'Weight (lbs)', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
+      'Weight (lbs)', 'Waist (inches)', 'Systolic', 'Diastolic', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
       'Meditation'
     ]);
     
@@ -259,15 +190,13 @@ function calculate7DayAverages(dateStr) {
       const daysDiff = Math.floor((targetDate - rowDate) / (1000 * 60 * 60 * 24));
       
       // Last 7 days for sleep/steps
-    // Sleep + Steps: current week (Sunday-Saturday), week-to-date avg
-    if (rowDate >= weekStart && rowDate <= weekEnd) {
-      const sleep = parseFloat(data[i][sleepCol]);
-      const steps = parseInt(data[i][stepsCol]);
-
-      if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
-      if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
-    }
-
+      if (daysDiff >= 0 && daysDiff < 7) {
+        const sleep = parseFloat(data[i][sleepCol]);
+        const steps = parseInt(data[i][stepsCol]);
+        
+        if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
+        if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
+      }
       
       // REHIT count for current week (Sunday-Saturday)
       if (rowDate >= weekStart && rowDate <= weekEnd) {
@@ -337,7 +266,7 @@ function saveDataForDate(data) {
       'Creatine Chews', 'Vitamin D', 'NO2', 'Psyllium Husk',
       'Breakfast', 'Lunch', 'Dinner', 'Healthy Day Snacks', 'Healthy Night Snacks', 'No Alcohol',
       'Water',
-      'Weight (lbs)', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
+      'Weight (lbs)', 'Waist (inches)', 'Systolic', 'Diastolic', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
       'Meditation'
     ]);
     
@@ -365,6 +294,9 @@ function saveDataForDate(data) {
       data.noAlcohol || false,
       data.hydrationGood || 0,
       data.weight || '',
+      data.waist || '',
+      data.systolic || '',
+      data.diastolic || '',
       data.leanMass || '',
       '', // Lean Mass % - calculated, don't save
       data.bodyFat || '',
