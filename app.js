@@ -11,7 +11,7 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("******* Checking Blood Pressure ******");
+console.log("******* Fix Water ******");
 window.__APP_JS_OK__ = true;
 
 // =====================================
