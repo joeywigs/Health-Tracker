@@ -242,7 +242,8 @@ async function loadBiomarkersMostRecent() {
     biomarkersDef = res.definition || [];
     biomarkersLatest = { date: res.latestDate || "", values: res.latestValues || [] };
 
-    if (subtitleEl) subtitleEl.textContent = `Most recent: ${biomarkersLatest.date || "--"}`;
+    const lastDate = formatMDYY(biomarkersLatest.date);
+    if (subtitleEl) subtitleEl.textContent = `Most recent: ${lastDate || "--"}`;
 
     // default lab date input = today (M/D/YY)
     if (dateInput && !dateInput.value) dateInput.value = formatDateForAPI(new Date());
@@ -1046,3 +1047,29 @@ function markSleepSaved() {
     el.classList.remove("saved");
   }, 3000);
 }
+
+function formatMDYY(input) {
+  if (!input) return "";
+
+  // If it's already M/D/YY, keep it
+  if (typeof input === "string") {
+    const s = input.trim();
+    if (/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(s)) return s;
+
+    // Try to parse other formats safely
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return formatDateForAPI(d);
+
+    return s; // fallback
+  }
+
+  // Date object
+  if (input instanceof Date) return formatDateForAPI(input);
+
+  // Numbers etc.
+  const d = new Date(input);
+  if (!Number.isNaN(d.getTime())) return formatDateForAPI(d);
+
+  return String(input);
+}
+
