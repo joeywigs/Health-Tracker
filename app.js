@@ -10,6 +10,7 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
+console.log("Update 1");
 window.__APP_JS_OK__ = true;
 
 // =====================================
