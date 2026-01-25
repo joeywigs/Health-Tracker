@@ -545,6 +545,13 @@
       transition: width 0.3s ease;
     }
     
+    .sleep-water-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+    
     /* Desktop Layout - Fit everything on one screen */
     @media (min-width: 1024px) {
       body {
@@ -829,6 +836,12 @@
     font-size: 20px;
     padding: 12px;
   }
+  
+  .sleep-water-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
 }
   </style>
 </head>
@@ -875,13 +888,30 @@
       </div>
     </div>
 
-    <!-- Sleep -->
-    <div class="section" id="sleepSection">
-      <div class="section-header">Sleep</div>
-      <div class="section-content">
-        <div class="field-group">
-          <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24">
-          <div class="average-display">7-day avg: <span id="avgSleep">--</span></div>
+    <!-- Sleep & Water -->
+    <div class="sleep-water-grid">
+      <!-- Sleep -->
+      <div class="section" id="sleepSection">
+        <div class="section-header">Sleep</div>
+        <div class="section-content">
+          <div class="field-group">
+            <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24">
+            <div class="average-display">7-day avg: <span id="avgSleep">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Water -->
+      <div class="section" id="waterSection">
+        <div class="section-header">Water</div>
+        <div class="section-content">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="water-counter-value" id="waterCount" style="flex: 1;">0</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button type="button" class="water-counter-btn" id="waterPlus">+</button>
+              <button type="button" class="water-counter-btn" id="waterMinus">−</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1017,18 +1047,6 @@
               <label for="noAlcohol">No Alcohol</label>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Water -->
-    <div class="section" id="waterSection">
-      <div class="section-header">Water</div>
-      <div class="section-content">
-        <div class="water-counter">
-          <button type="button" class="water-counter-btn" id="waterMinus">−</button>
-          <div class="water-counter-value" id="waterCount">0</div>
-          <button type="button" class="water-counter-btn" id="waterPlus">+</button>
         </div>
       </div>
     </div>
