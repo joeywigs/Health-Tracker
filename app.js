@@ -205,8 +205,6 @@ async function loadDataForCurrentDate() {
 }
 
 async function saveData(payload) {
-  console.log("💾 saveData called", payload);
-
   try {
     const saveResult = await apiPost("save", { data: payload });
 
@@ -217,6 +215,10 @@ async function saveData(payload) {
 
     console.log("💾 Saved successfully", saveResult);
     dataChanged = false;
+
+    markSleepSaved();
+    await loadDataForCurrentDate({ force: true });
+
   } catch (err) {
     console.error("Save failed:", err);
   }
