@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running v9", new Date().toISOString());
+console.log("✅ app.js running", new Date().toISOString());
 console.log("******* Checking Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
