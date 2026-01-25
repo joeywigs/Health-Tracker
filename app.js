@@ -26,7 +26,7 @@ const BODY_FIELDS = [
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
-  { id: "water", keys: ["Water (lbs)", "Water"] }
+  { id: "water", keys: ["Water (lbs)"] }
 ];
 
 // =====================================
@@ -338,21 +338,27 @@ function escapeAttr(s) {
 // =====================================
 // LOAD / SAVE
 // =====================================
-async function loadDataForCurrentDate() {
+async function loadDataForCurrentDate(opts = {}) {
+  const { force = false } = opts;
   const dateStr = formatDateForAPI(currentDate);
-  console.log("Loading data for", dateStr);
+  console.log("Loading data for", dateStr, force ? "(force)" : "");
 
-  // 1) If cached, show instantly
-  const cached = cacheGet(dateStr);
-  if (cached && !cached?.error) {
-    await populateForm(cached);
-    prefetchAround(currentDate);
-    return;
+  // 1) If not forced and cached, show instantly
+  if (!force) {
+    const cached = cacheGet(dateStr);
+    if (cached && !cached?.error) {
+      await populateForm(cached);
+      prefetchAround(currentDate);
+      return;
+    }
+  } else {
+    // bust cache for this day when forced
+    dayCache.delete(dateStr);
   }
 
   // 2) Otherwise fetch, then show
   try {
-    const result = await fetchDay(currentDate);
+    const result = await fetchDay(currentDate, { force });
 
     if (result?.error) {
       console.error("Backend error:", result.message);
@@ -360,8 +366,6 @@ async function loadDataForCurrentDate() {
     }
 
     await populateForm(result);
-
-    // 3) Prefetch neighbors so next/prev is fast
     prefetchAround(currentDate);
 
     dataChanged = false;
@@ -369,6 +373,7 @@ async function loadDataForCurrentDate() {
     console.error("Load failed:", err);
   }
 }
+
 
 async function saveData(payload) {
   try {
@@ -382,16 +387,11 @@ async function saveData(payload) {
     console.log("💾 Saved successfully", saveResult);
     dataChanged = false;
 
-    if ("sleepHours" in payload) {
-      markSleepSaved();
-      await loadDataForCurrentDate({ force: true });
-    }
+    // Invalidate cache for current day so UI can't "revert"
+    dayCache.delete(formatDateForAPI(currentDate));
 
+    // Reload fresh from server
     await loadDataForCurrentDate({ force: true });
-
-  } catch (err) {
-    console.error("Save failed:", err);
-  }
 }
 
 function triggerSaveSoon() {
@@ -650,7 +650,7 @@ function applyBodyFieldsFromDaily(daily) {
   const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
   const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
-  const waterBodyVal = source["Water (lbs)"] ?? source["Water"];
+  const waterBodyVal = source["Water (lbs)"];
 
   const weightEl = document.getElementById("weight");
   const waistEl = document.getElementById("waist");
@@ -881,10 +881,16 @@ function cacheGet(key) {
   return hit.value;
 }
 
-async function fetchDay(dateObj) {
+async function fetchDay(dateObj, opts = {}) {
+  const { force = false } = opts;
   const dateStr = formatDateForAPI(dateObj);
-  const cached = cacheGet(dateStr);
-  if (cached) return cached;
+
+  if (!force) {
+    const cached = cacheGet(dateStr);
+    if (cached) return cached;
+  } else {
+    dayCache.delete(dateStr);
+  }
 
   const result = await apiGet("load", { date: dateStr });
   cacheSet(dateStr, result);
