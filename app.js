@@ -11,7 +11,7 @@
  **********************************************/
 
 console.log("✅ app.js running v5", new Date().toISOString());
-console.log("******* Added Waist & Blood Pressure ******");
+console.log("******* Checking Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
 // =====================================
