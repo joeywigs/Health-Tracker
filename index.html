@@ -132,6 +132,7 @@
     #storiesSection .section-header { color: #ff6b9d; }
     #carlySection .section-header { color: #ffbe0b; }
     #bodyDataSection .section-header { color: #06ffa5; }
+    #bloodPressureSection .section-header { color: #ff006e; }
     
     .section-header {
       font-size: 59px;
@@ -1082,9 +1083,16 @@
     <div class="section" id="bodyDataSection">
       <div class="section-header collapsible collapsed">Body</div>
       <div class="section-content collapsed">
-        <div class="field-group">
-          <label class="field-label">Weight (lbs)</label>
-          <input type="number" inputmode="numeric" class="body-data-input" id="weight" step="0.1" style="background: #1a1a1a; border-radius: 20px; padding: 24px;">
+        <!-- Weight & Waist Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Weight (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="weight" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Waist (in)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="waist" step="0.1">
+          </div>
         </div>
         
         <!-- Lean Mass Row -->
@@ -1132,6 +1140,32 @@
           <div class="body-data-cell">
             <label class="body-data-label">Water %</label>
             <div class="body-data-percent" id="waterPercent">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blood Pressure -->
+    <div class="section" id="bloodPressureSection">
+      <div class="section-header collapsible collapsed">Blood Pressure</div>
+      <div class="section-content collapsed">
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Systolic (mmHg)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="systolic">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Diastolic (mmHg)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="diastolic">
+          </div>
+        </div>
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Heart Rate (bpm)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="heartRate">
+          </div>
+          <div class="body-data-cell" style="display: flex; align-items: center; justify-content: center;">
+            <div id="bpStatus" class="body-data-percent" style="font-size: 42px;">--</div>
           </div>
         </div>
       </div>
