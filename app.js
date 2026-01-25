@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCollapsibleSections();
   setupMovementUI();
   setupBloodPressureCalculator();
+  setupBiomarkersUI();
 
   updateDateDisplay();
   updatePhaseInfo();
@@ -169,6 +170,170 @@ function changeDate(days) {
   // show instantly if cached, else it will fetch
   loadDataForCurrentDate();
 }
+
+// =====================================
+// BIOMARKERS PAGE
+// =====================================
+let biomarkersDef = [];
+let biomarkersLatest = { date: "", values: [] };
+
+function setupBiomarkersUI() {
+  const btn = document.getElementById("biomarkersBtn");
+  const page = document.getElementById("biomarkersPage");
+  const closeBtn = document.getElementById("biomarkersCloseBtn");
+  const submitBtn = document.getElementById("biomarkersSubmitBtn");
+
+  if (!btn || !page || !closeBtn || !submitBtn) {
+    console.warn("Biomarkers UI elements missing");
+    return;
+  }
+
+  btn.addEventListener("click", async () => {
+    await openBiomarkersPage();
+  });
+
+  closeBtn.addEventListener("click", () => {
+    closeBiomarkersPage();
+  });
+
+  submitBtn.addEventListener("click", async () => {
+    await submitBiomarkers();
+  });
+
+  console.log("✅ Biomarkers UI wired");
+}
+
+function openBiomarkersPage() {
+  // hide main form, show biomarkers
+  const form = document.getElementById("healthForm");
+  const page = document.getElementById("biomarkersPage");
+  if (form) form.style.display = "none";
+  if (page) page.style.display = "block";
+
+  return loadBiomarkersMostRecent();
+}
+
+function closeBiomarkersPage() {
+  const form = document.getElementById("healthForm");
+  const page = document.getElementById("biomarkersPage");
+  if (page) page.style.display = "none";
+  if (form) form.style.display = "block";
+}
+
+async function loadBiomarkersMostRecent() {
+  const statusEl = document.getElementById("biomarkersSaveStatus");
+  const subtitleEl = document.getElementById("biomarkersSubtitle");
+  const dateInput = document.getElementById("biomarkersDate");
+
+  try {
+    if (statusEl) statusEl.textContent = "Loading…";
+
+    const res = await apiGet("biomarkers_load", {});
+    if (res?.error) throw new Error(res.message || "Failed to load biomarkers");
+
+    biomarkersDef = res.definition || [];
+    biomarkersLatest = { date: res.latestDate || "", values: res.latestValues || [] };
+
+    if (subtitleEl) subtitleEl.textContent = `Most recent: ${biomarkersLatest.date || "--"}`;
+
+    // default lab date input = today (M/D/YY)
+    if (dateInput && !dateInput.value) dateInput.value = formatDateForAPI(new Date());
+
+    renderBiomarkersTable();
+
+    if (statusEl) statusEl.textContent = "";
+  } catch (err) {
+    console.error("Biomarkers load failed:", err);
+    if (statusEl) statusEl.textContent = `Error: ${err.message || err}`;
+  }
+}
+
+function renderBiomarkersTable() {
+  const host = document.getElementById("biomarkersTable");
+  if (!host) return;
+
+  host.innerHTML = "";
+
+  // Build rows aligned by index
+  biomarkersDef.forEach((row, idx) => {
+    const currentVal = (biomarkersLatest.values && biomarkersLatest.values[idx] != null)
+      ? String(biomarkersLatest.values[idx])
+      : "";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "biom-row";
+
+    wrapper.innerHTML = `
+      <div class="biom-cell">
+        <div style="font-weight:700; font-size: 16px;">${escapeHtml(row.biomarker || "")}</div>
+        <div class="biom-meta">${escapeHtml(row.category || "")}</div>
+      </div>
+      <div class="biom-cell">
+        <div style="font-weight:700; font-size: 16px;">Optimal</div>
+        <div class="biom-meta">${escapeHtml(row.optimal || "")} ${escapeHtml(row.units || "")}</div>
+      </div>
+      <div class="biom-cell">
+        <div style="font-weight:700; font-size: 16px;">Units</div>
+        <div class="biom-meta">${escapeHtml(row.units || "")}</div>
+      </div>
+      <div class="biom-cell">
+        <div style="font-weight:700; font-size: 16px;">Value</div>
+        <input class="input-field" style="min-height: 52px; padding: 10px; font-size: 16px;" 
+               data-biom-idx="${idx}" value="${escapeAttr(currentVal)}" />
+      </div>
+    `;
+
+    host.appendChild(wrapper);
+  });
+}
+
+async function submitBiomarkers() {
+  const statusEl = document.getElementById("biomarkersSaveStatus");
+  const dateStr = document.getElementById("biomarkersDate")?.value?.trim();
+
+  try {
+    if (!dateStr) {
+      alert("Please enter a Lab Date (M/D/YY).");
+      return;
+    }
+
+    // gather values by idx
+    const inputs = document.querySelectorAll("#biomarkersTable input[data-biom-idx]");
+    const values = [];
+    inputs.forEach(inp => {
+      const idx = parseInt(inp.getAttribute("data-biom-idx"), 10);
+      values[idx] = inp.value.trim();
+    });
+
+    if (statusEl) statusEl.textContent = "Saving…";
+
+    const res = await apiPost("biomarkers_save", { date: dateStr, values });
+
+    if (res?.error) throw new Error(res.message || "Failed to save biomarkers");
+
+    if (statusEl) statusEl.textContent = "✅ Saved.";
+
+    // reload so the “most recent” view is updated
+    await loadBiomarkersMostRecent();
+  } catch (err) {
+    console.error("Biomarkers save failed:", err);
+    if (statusEl) statusEl.textContent = `Error: ${err.message || err}`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s).replaceAll("\n", " ");
+}
+
 
 // =====================================
 // LOAD / SAVE
