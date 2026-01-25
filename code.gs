@@ -1,12 +1,116 @@
 // Replace this with your actual Google Sheets ID
-const SPREADSHEET_ID = '1svS0fMSg91rg5sBHBTJJnBQUgV6xs1sWOh7uvmu0C3M';
+const SPREADSHEET_ID = '1L4tbpsUv5amXWYNBLHLcsVueD289THc8a5ys9reSd98';
 
-// Serves the HTML page
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle('Habit Tracker')
-    .setFaviconUrl('https://i.imgur.com/ACLnzvO.png');
+/**************************************
+ * OPTION A API ROUTER (Apps Script)
+ * - GET  /exec?action=ping&key=...
+ * - GET  /exec?action=load&date=M/D/YY&key=...
+ * - POST /exec  { action:"save", key:"...", data:{...} }
+ **************************************/
+
+/**
+ * Run ONCE to set your API key in Script Properties.
+ * After running, you can leave it here or delete it.
+ */
+function setApiKeyOnce() {
+  PropertiesService.getScriptProperties().setProperty(
+    "API_KEY",
+    "Q8xF3N9KpZ7J2WmC4A6YBVeH5R0TqLDSU1nXgE"
+  );
 }
+
+/**
+ * GET router
+ */
+function doGet(e) {
+  try {
+    const p = (e && e.parameter) ? e.parameter : {};
+    const action = String(p.action || "").toLowerCase();
+
+    // Auth
+    assertKey_(p.key);
+
+    // Routes
+    if (action === "ping") {
+      return json_({
+        ok: true,
+        ts: new Date().toISOString(),
+        version: "api-router-v1"
+      });
+    }
+
+    if (action === "load") {
+      const dateStr = String(p.date || "").trim();
+      if (!dateStr) return json_({ error: true, message: "Missing required parameter: date" });
+
+      // Your existing function
+      const data = loadDataForDate(dateStr);
+      return json_(data);
+    }
+
+    if (action === "save") {
+      const payloadStr = String(p.payload || "");
+      if (!payloadStr) return json_({ error: true, message: "Missing payload" });
+      const payload = JSON.parse(payloadStr);
+      if (!payload.data) return json_({ error: true, message: "Missing data" });
+      return json_(saveDataForDate(payload.data));
+    }
+
+    return json_({ error: true, message: `Unknown action: ${action || "(none)"}` });
+  } catch (err) {
+    return json_({
+      error: true,
+      message: err && err.message ? err.message : String(err)
+    });
+  }
+}
+
+/**
+ * POST router
+ */
+function doPost(e) {
+  try {
+    const raw = (e && e.postData && e.postData.contents) ? e.postData.contents : "{}";
+    const body = JSON.parse(raw);
+
+    // IMPORTANT: key is in JSON body (not e.parameter)
+    assertKey_(body.key);
+
+    const action = String(body.action || "").toLowerCase();
+
+    if (action === "save") {
+      if (!body.data) return json_({ error: true, message: "Missing required field: data" });
+      return json_(saveDataForDate(body.data));
+    }
+
+    if (action === "ping") {
+      return json_({ ok: true, ts: new Date().toISOString(), via: "post" });
+    }
+
+    return json_({ error: true, message: `Unknown action: ${action || "(none)"}` });
+  } catch (err) {
+    return json_({ error: true, message: err && err.message ? err.message : String(err) });
+  }
+}
+
+
+
+/**
+ * Helpers
+ */
+function json_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function assertKey_(providedKey) {
+  const storedKey = PropertiesService.getScriptProperties().getProperty("API_KEY");
+  if (!storedKey) throw new Error("API key not set. Run setApiKeyOnce() in Apps Script.");
+  if (!providedKey || String(providedKey) !== String(storedKey)) throw new Error("Unauthorized");
+}
+
+
 
 // TEST FUNCTION: Simple connection test
 function testConnection() {
@@ -57,7 +161,7 @@ function loadDataForDate(dateStr) {
       'Creatine Chews', 'Vitamin D', 'NO2', 'Psyllium Husk',
       'Breakfast', 'Lunch', 'Dinner', 'Healthy Day Snacks', 'Healthy Night Snacks', 'No Alcohol',
       'Water',
-      'Weight (lbs)', 'Waist (inches)', 'Systolic', 'Diastolic', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
+      'Weight (lbs)', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
       'Meditation'
     ]);
     
@@ -151,106 +255,95 @@ function loadDataForDate(dateStr) {
 
 // Calculate 7-day averages for sleep and steps
 function calculate7DayAverages(dateStr) {
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const dailySheet = ss.getSheetByName('Daily Data');
-    const movementSheet = ss.getSheetByName('Movement Log');
-    
-    if (!dailySheet) {
-      return { sleep: null, steps: null, movements: null, rehitWeek: 0 };
-    }
-    
-    const data = dailySheet.getDataRange().getValues();
-    const headers = data[0];
-    const dateCol = headers.indexOf('Date');
-    const sleepCol = headers.indexOf('Hours of Sleep');
-    const stepsCol = headers.indexOf('Steps');
-    const rehitCol = headers.indexOf('REHIT 2x10');
-    
-    // Parse target date
-    const targetDate = new Date(dateStr + ' 12:00:00');
-    
-    // Get last 7 days of data (including today)
-    let sleepValues = [];
-    let stepsValues = [];
-    let movementCounts = {};
-    let rehitThisWeek = 0;
-    
-    // Calculate week boundaries (Sunday to Saturday)
-    const currentDay = targetDate.getDay(); // 0 = Sunday
-    const weekStart = new Date(targetDate);
-    weekStart.setDate(targetDate.getDate() - currentDay);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
-    
-    for (let i = 1; i < data.length; i++) {
-      const rowDate = new Date(formatDate(data[i][dateCol]) + ' 12:00:00');
-      const daysDiff = Math.floor((targetDate - rowDate) / (1000 * 60 * 60 * 24));
-      
-      // Last 7 days for sleep/steps
-      if (daysDiff >= 0 && daysDiff < 7) {
-        const sleep = parseFloat(data[i][sleepCol]);
-        const steps = parseInt(data[i][stepsCol]);
-        
-        if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
-        if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
-      }
-      
-      // REHIT count for current week (Sunday-Saturday)
-      if (rowDate >= weekStart && rowDate <= weekEnd) {
-        const rehit = data[i][rehitCol];
-        if (rehit === true || rehit === 'TRUE' || rehit === 'true') {
-          rehitThisWeek++;
-        }
-      }
-    }
-    
-    // Count movements per day
-    // Count movements per day for current week (Sunday-Saturday)
-    if (movementSheet) {
-      const movementData = movementSheet.getDataRange().getValues();
-      const movementHeaders = movementData[0];
-      const movementDateCol = movementHeaders.indexOf('Date');
-      
-      for (let i = 1; i < movementData.length; i++) {
-        const rowDate = new Date(formatDate(movementData[i][movementDateCol]) + ' 12:00:00');
-        
-        // Check if this movement is in the current week (Sunday-Saturday)
-        if (rowDate >= weekStart && rowDate <= weekEnd) {
-          const dateKey = formatDate(movementData[i][movementDateCol]);
-          movementCounts[dateKey] = (movementCounts[dateKey] || 0) + 1;
-        }
-      }
-    }
-    
-    // Calculate averages
-    const avgSleep = sleepValues.length > 0 
-      ? sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length 
-      : null;
-    const avgSteps = stepsValues.length > 0 
-      ? Math.round(stepsValues.reduce((a, b) => a + b, 0) / stepsValues.length)
-      : null;
-    
-    // Calculate average movements per day for current week
-    const totalMovements = Object.values(movementCounts).reduce((a, b) => a + b, 0);
-    const daysInWeekSoFar = Math.min(currentDay + 1, 7); // Days from Sunday to today
-    const avgMovements = daysInWeekSoFar > 0 ? (totalMovements / daysInWeekSoFar).toFixed(1) : null;
-    
-    return {
-      sleep: avgSleep,
-      steps: avgSteps,
-      movements: avgMovements,
-      rehitWeek: rehitThisWeek,
-      sleepDays: sleepValues.length,
-      stepsDays: stepsValues.length
-    };
-  } catch (err) {
-    Logger.log('ERROR in calculate7DayAverages: ' + err.toString());
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const dailySheet = ss.getSheetByName('Daily Data');
+  const movementSheet = ss.getSheetByName('Movement Log');
+
+  if (!dailySheet) {
     return { sleep: null, steps: null, movements: null, rehitWeek: 0 };
   }
+
+  const data = dailySheet.getDataRange().getValues();
+  const headers = data[0];
+
+  const dateCol = headers.indexOf('Date');
+  const sleepCol = headers.indexOf('Hours of Sleep');
+  const stepsCol = headers.indexOf('Steps');
+  const rehitCol = headers.indexOf('REHIT 2x10');
+
+  const targetDate = new Date(dateStr + ' 12:00:00');
+
+  // ---- WEEK BOUNDARIES (Sunday → Saturday) ----
+  const currentDay = targetDate.getDay(); // 0 = Sunday
+  const weekStart = new Date(targetDate);
+  weekStart.setDate(targetDate.getDate() - currentDay);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  let sleepValues = [];
+  let stepsValues = [];
+  let rehitThisWeek = 0;
+
+  // ---- DAILY DATA (Sleep, Steps, REHIT) ----
+  for (let i = 1; i < data.length; i++) {
+    const rowDate = new Date(formatDate(data[i][dateCol]) + ' 12:00:00');
+
+    if (rowDate >= weekStart && rowDate <= weekEnd) {
+      const sleep = parseFloat(data[i][sleepCol]);
+      const steps = parseInt(data[i][stepsCol]);
+      const rehit = data[i][rehitCol];
+
+      if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
+      if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
+
+      if (rehit === true || rehit === 'TRUE' || rehit === 'true') {
+        rehitThisWeek++;
+      }
+    }
+  }
+
+  // ---- MOVEMENTS PER DAY (week-to-date) ----
+  let movementCounts = {};
+  if (movementSheet) {
+    const movementData = movementSheet.getDataRange().getValues();
+    const movementHeaders = movementData[0];
+    const movementDateCol = movementHeaders.indexOf('Date');
+
+    for (let i = 1; i < movementData.length; i++) {
+      const rowDate = new Date(formatDate(movementData[i][movementDateCol]) + ' 12:00:00');
+
+      if (rowDate >= weekStart && rowDate <= weekEnd) {
+        const key = formatDate(movementData[i][movementDateCol]);
+        movementCounts[key] = (movementCounts[key] || 0) + 1;
+      }
+    }
+  }
+
+  const totalMovements = Object.values(movementCounts).reduce((a, b) => a + b, 0);
+  const daysInWeekSoFar = Math.min(currentDay + 1, 7);
+  const avgMovements = daysInWeekSoFar > 0
+    ? (totalMovements / daysInWeekSoFar).toFixed(1)
+    : null;
+
+  const avgSleep = sleepValues.length
+    ? sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length
+    : null;
+
+  const avgSteps = stepsValues.length
+    ? Math.round(stepsValues.reduce((a, b) => a + b, 0) / stepsValues.length)
+    : null;
+
+  return {
+    sleep: avgSleep,
+    steps: avgSteps,
+    movements: avgMovements,
+    rehitWeek: rehitThisWeek
+  };
 }
+
 
 // Save all data for a specific date
 function saveDataForDate(data) {
@@ -266,7 +359,7 @@ function saveDataForDate(data) {
       'Creatine Chews', 'Vitamin D', 'NO2', 'Psyllium Husk',
       'Breakfast', 'Lunch', 'Dinner', 'Healthy Day Snacks', 'Healthy Night Snacks', 'No Alcohol',
       'Water',
-      'Weight (lbs)', 'Waist (inches)', 'Systolic', 'Diastolic', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
+      'Weight (lbs)', 'Lean Mass (lbs)', 'Lean Mass %', 'Body Fat (lbs)', 'Body Fat %', 'Bone Mass (lbs)', 'Bone Mass %', 'Water (lbs)', 'Water %',
       'Meditation'
     ]);
     
@@ -294,9 +387,6 @@ function saveDataForDate(data) {
       data.noAlcohol || false,
       data.hydrationGood || 0,
       data.weight || '',
-      data.waist || '',
-      data.systolic || '',
-      data.diastolic || '',
       data.leanMass || '',
       '', // Lean Mass % - calculated, don't save
       data.bodyFat || '',
