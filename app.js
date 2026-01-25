@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running v6", new Date().toISOString());
+console.log("✅ app.js running v5", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -559,6 +559,19 @@ async function populateForm(data) {
     // Apply carried-forward body values (even if no row exists)
     applyBodyFieldsFromDaily(bodySource);
 
+    // Clear blood pressure fields (no data for this date)
+    const systolicEl = document.getElementById("systolic");
+    if (systolicEl) systolicEl.value = "";
+    const diastolicEl = document.getElementById("diastolic");
+    if (diastolicEl) diastolicEl.value = "";
+    const heartRateEl = document.getElementById("heartRate");
+    if (heartRateEl) heartRateEl.value = "";
+    const bpStatusEl = document.getElementById("bpStatus");
+    if (bpStatusEl) {
+      bpStatusEl.textContent = "--";
+      bpStatusEl.style.color = "#52b788";
+    }
+
     document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
     console.log("✅ populateForm ran (no daily)");
     return;
@@ -611,7 +624,7 @@ async function populateForm(data) {
   // Body fields: use current day if present, else carry-forward source
   applyBodyFieldsFromDaily(bodySource);
 
-  // Blood Pressure
+  // Blood Pressure - load from current day's data
   const systolicEl = document.getElementById("systolic");
   if (systolicEl) systolicEl.value = d["Systolic"] ?? "";
 
@@ -622,11 +635,8 @@ async function populateForm(data) {
   if (heartRateEl) heartRateEl.value = d["Heart Rate"] ?? "";
 
   // Trigger BP status calculation
-  if (typeof setupBloodPressureCalculator === "function") {
-    const bpStatusEl = document.getElementById("bpStatus");
-    if (bpStatusEl && systolicEl?.value && diastolicEl?.value) {
-      systolicEl.dispatchEvent(new Event("input"));
-    }
+  if (systolicEl?.value && diastolicEl?.value) {
+    systolicEl.dispatchEvent(new Event("input"));
   }
 
   // Lists
