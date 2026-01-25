@@ -2,16 +2,16 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Health Tracker</title>
   
-  <!-- iOS Home Screen Icons -->
-  <!-- iOS Home Screen Icons - Multiple sizes for better compatibility -->
-  <link rel="apple-touch-icon" href="https://i.imgur.com/ACLnzvO.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://i.imgur.com/ACLnzvO.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="https://i.imgur.com/ACLnzvO.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="https://i.imgur.com/ACLnzvO.png">
-  <link rel="icon" type="image/png" href="https://i.imgur.com/ACLnzvO.png">
+  <!-- iPhone -->
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="mobile-web-app-capable" content="yes">
+
   
   <!-- iOS Web App Settings -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,6 +19,8 @@
   <meta name="apple-mobile-web-app-title" content="Habits">
   
   <style>
+    
+    html { -webkit-text-size-adjust: 100%; }
     * {
       box-sizing: border-box;
       margin: 0;
@@ -681,23 +683,167 @@
       .field-group {
         margin-bottom: 12px;
       }
+      .input-field.saved {
+      border-color: #52b788 !important;
+      }
+
     }
+    /* iPhone sizing (phones / small screens) */
+@media (max-width: 430px) {
+  body {
+    padding: 14px;
+    padding-bottom: 24px;
+    font-size: 16px; /* override the 72px base */
+  }
+
+  .header,
+  .section {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .subtitle {
+    font-size: 18px;
+  }
+
+  .date-display {
+    font-size: 18px;
+  }
+
+  .date-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+
+  .section-header {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  .section-header.collapsible::after {
+    font-size: 16px;
+  }
+
+  .field-label {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .input-field {
+    padding: 12px;
+    font-size: 16px;
+    min-height: 52px;
+    border-radius: 14px;
+  }
+
+  textarea.input-field {
+    min-height: 140px;
+  }
+
+  .checkbox-field {
+    padding: 12px;
+    min-height: 52px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+  }
+
+  .checkbox-field label {
+    font-size: 16px;
+  }
+
+  .water-counter {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .water-counter-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+    border-radius: 14px;
+  }
+
+  .water-counter-value {
+    font-size: 22px;
+    min-width: 90px;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .btn {
+    padding: 12px 14px;
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 16px;
+  }
+
+  .btn-primary {
+    font-size: 18px;
+    min-height: 56px;
+    padding: 14px;
+  }
+
+  .btn-danger {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    font-size: 20px;
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .item {
+    padding: 12px;
+    min-height: 52px;
+    border-radius: 16px;
+  }
+
+  .item-text {
+    font-size: 16px;
+  }
+
+  .body-data-cell {
+    padding: 14px;
+    min-height: 100px;
+    border-radius: 16px;
+  }
+
+  .body-data-label {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .body-data-input {
+    font-size: 20px;
+    padding: 12px;
+  }
+
+  .body-data-percent {
+    font-size: 20px;
+    padding: 12px;
+  }
+}
   </style>
 </head>
 <body>
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <div style="display: flex; align-items: center; gap: 16px;">
       <img src="https://i.imgur.com/ACLnzvO.png" 
-           style="width: 52px; height: 52px; border-radius: 12px;" 
+           style="width: 80px; height: 80px; border-radius: 12px;" 
            alt="Habit Tracker Icon">
       <div>
         <div class="title">Habit Tracker</div>
-        <div class="subtitle">Phase 1</div>
+        <div class="subtitle">Phase 1 v1.0</div>
       </div>
     </div>
     <div style="display: flex; gap: 12px; align-items: center;">
       <div id="statusMessage" class="status-message"></div>
-      <button type="button" id="refreshBtn" class="refresh-btn">↻</button>
     </div>
   </div>
   
@@ -730,7 +876,7 @@
 
     <!-- Sleep -->
     <div class="section" id="sleepSection">
-      <div class="section-header">Hours of Sleep</div>
+      <div class="section-header">Sleep</div>
       <div class="section-content">
         <div class="field-group">
           <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24">
@@ -941,27 +1087,6 @@
           <input type="number" inputmode="numeric" class="body-data-input" id="weight" step="0.1" style="background: #1a1a1a; border-radius: 20px; padding: 24px;">
         </div>
         
-        <!-- Waist Circumference -->
-        <div class="field-group">
-          <label class="field-label">Waist (inches)</label>
-          <input type="number" inputmode="decimal" class="body-data-input" id="waist" step="0.1" style="background: #1a1a1a; border-radius: 20px; padding: 24px;">
-        </div>
-        
-        <!-- Blood Pressure -->
-        <div class="field-group">
-          <label class="field-label">Blood Pressure</label>
-          <div class="grid-2">
-            <div style="background: #1a1a1a; border-radius: 20px; padding: 24px;">
-              <label class="field-label" style="font-size: 32px; margin-bottom: 8px;">Systolic</label>
-              <input type="number" inputmode="numeric" class="body-data-input" id="systolic" step="1" style="padding: 20px; font-size: 56px;">
-            </div>
-            <div style="background: #1a1a1a; border-radius: 20px; padding: 24px;">
-              <label class="field-label" style="font-size: 32px; margin-bottom: 8px;">Diastolic</label>
-              <input type="number" inputmode="numeric" class="body-data-input" id="diastolic" step="1" style="padding: 20px; font-size: 56px;">
-            </div>
-          </div>
-        </div>
-        
         <!-- Lean Mass Row -->
         <div class="body-data-row">
           <div class="body-data-cell">
@@ -1012,7 +1137,6 @@
       </div>
     </div>
   </form>
-
 <script src="app.js" defer></script>
 </body>
 </html>
