@@ -9,7 +9,9 @@
  * - Body data carry-forward: shows last known body metrics when missing
  **********************************************/
 
-console.log("✅ app.js running v3", new Date().toISOString());
+console.log("✅ app.js running v4", new Date().toISOString());
+console.log("******* Sleep Changes ******");
+console.log("Instant Days", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -20,9 +22,6 @@ const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
 // Body fields (for carry-forward + detection)
 const BODY_FIELDS = [
   { id: "weight", keys: ["Weight (lbs)", "Weight"] },
-  { id: "waist", keys: ["Waist (inches)", "Waist"] },
-  { id: "systolic", keys: ["Systolic", "Systolic BP"] },
-  { id: "diastolic", keys: ["Diastolic", "Diastolic BP"] },
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
@@ -65,9 +64,10 @@ let waterCount = 0;
 
 let autoSaveTimeout = null;
 
-const PREFETCH_RANGE = 3;
-const CACHE_MAX_DAYS = 21;
-const dayCache = new Map();
+const PREFETCH_RANGE = 3;          // how many days ahead/behind to prefetch
+const CACHE_MAX_DAYS = 21;         // cap memory (tweak as you like)
+const dayCache = new Map();        // key: "M/D/YY" -> loadResult
+
 
 // =====================================
 // BOOTSTRAP
@@ -79,17 +79,16 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCheckboxes();
   setupWaterButtons();
   setupInputAutosave();
-  setupCollapsibleSections();
+  setupCollapsibleSections();   // ✅ add this
   setupMovementUI();
-  setupReadingUI();
-  setupREHITToggle();
+
 
   updateDateDisplay();
   updatePhaseInfo();
   loadDataForCurrentDate();
 });
 
-const PHASE_START_DATE = new Date("2026-01-19T00:00:00");
+const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
 const PHASE_LENGTH_DAYS = 21;
 
 function updatePhaseInfo() {
@@ -102,6 +101,7 @@ function updatePhaseInfo() {
   const msPerDay = 1000 * 60 * 60 * 24;
   const daysSinceStart = Math.floor((cur - start) / msPerDay);
 
+  // If before start date, treat as Phase 0 / Day 0
   const safeDays = Math.max(0, daysSinceStart);
   const phase = Math.floor(safeDays / PHASE_LENGTH_DAYS) + 1;
   const dayInPhase = (safeDays % PHASE_LENGTH_DAYS) + 1;
@@ -109,15 +109,18 @@ function updatePhaseInfo() {
   const phaseInfoEl = document.getElementById("phaseInfo");
   if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH_DAYS}`;
 
+  // Update subtitle "Phase X"
   const subtitleEl = document.querySelector(".subtitle");
   if (subtitleEl) subtitleEl.textContent = `Phase ${phase}`;
 
+  // Progress bar width
   const bar = document.getElementById("phaseProgressBar");
   if (bar) {
-    const progress = (dayInPhase - 1) / PHASE_LENGTH_DAYS;
+    const progress = (dayInPhase - 1) / PHASE_LENGTH_DAYS; // 0..(20/21)
     bar.style.width = `${Math.round(progress * 100)}%`;
   }
 }
+
 
 // =====================================
 // DATE + NAV
@@ -160,7 +163,9 @@ function setupDateNav() {
 function changeDate(days) {
   currentDate.setDate(currentDate.getDate() + days);
   updateDateDisplay();
-  updatePhaseInfo();
+  updatePhaseInfo?.(); // if you have it
+
+  // show instantly if cached, else it will fetch
   loadDataForCurrentDate();
 }
 
@@ -171,6 +176,7 @@ async function loadDataForCurrentDate() {
   const dateStr = formatDateForAPI(currentDate);
   console.log("Loading data for", dateStr);
 
+  // 1) If cached, show instantly
   const cached = cacheGet(dateStr);
   if (cached && !cached?.error) {
     await populateForm(cached);
@@ -178,6 +184,7 @@ async function loadDataForCurrentDate() {
     return;
   }
 
+  // 2) Otherwise fetch, then show
   try {
     const result = await fetchDay(currentDate);
 
@@ -187,6 +194,8 @@ async function loadDataForCurrentDate() {
     }
 
     await populateForm(result);
+
+    // 3) Prefetch neighbors so next/prev is fast
     prefetchAround(currentDate);
 
     dataChanged = false;
@@ -209,17 +218,10 @@ async function saveData(payload) {
 
     if ("sleepHours" in payload) {
       markSleepSaved();
-    }
+      await loadDataForCurrentDate({ force: true });
+}
 
-    // Invalidate cache for current date so next load gets fresh data
-    const dateStr = formatDateForAPI(currentDate);
-    dayCache.delete(dateStr);
-
-    // Fetch fresh averages without full UI reload
-    const freshData = await fetchDay(currentDate);
-    if (freshData?.averages) {
-      updateAverages(freshData.averages);
-    }
+    await loadDataForCurrentDate({ force: true });
 
   } catch (err) {
     console.error("Save failed:", err);
@@ -234,13 +236,14 @@ function triggerSaveSoon() {
   autoSaveTimeout = setTimeout(async () => {
     const payload = buildPayloadFromUI();
     await saveData(payload);
-  }, 1500);
+  }, 800);
 }
 
 function buildPayloadFromUI() {
   return {
     date: formatDateForAPI(currentDate),
 
+    // Daily numbers
     sleepHours: document.getElementById("sleepHours")?.value || "",
     steps: document.getElementById("steps")?.value || "",
     fitnessScore: document.getElementById("fitnessScore")?.value || "",
@@ -248,6 +251,7 @@ function buildPayloadFromUI() {
     peakWatts: document.getElementById("peakWatts")?.value || "",
     wattSeconds: document.getElementById("wattSeconds")?.value || "",
 
+    // Checkboxes
     inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
     inhalerEvening: !!document.getElementById("inhalerEvening")?.checked,
     multiplication: !!document.getElementById("multiplication")?.checked,
@@ -268,17 +272,17 @@ function buildPayloadFromUI() {
 
     meditation: !!document.getElementById("meditation")?.checked,
 
+    // Water counter
     hydrationGood: waterCount,
 
+    // Body
     weight: document.getElementById("weight")?.value || "",
-    waist: document.getElementById("waist")?.value || "",
-    systolic: document.getElementById("systolic")?.value || "",
-    diastolic: document.getElementById("diastolic")?.value || "",
     leanMass: document.getElementById("leanMass")?.value || "",
     bodyFat: document.getElementById("bodyFat")?.value || "",
     boneMass: document.getElementById("boneMass")?.value || "",
     water: document.getElementById("water")?.value || "",
 
+    // Lists + text
     movements,
     readings,
     honeyDos,
@@ -323,6 +327,7 @@ function setupCheckboxes() {
     const cb = wrapper.querySelector("input[type='checkbox']");
     if (!cb) return;
 
+    // initial state
     syncCheckboxVisual(cb);
 
     cb.addEventListener("change", () => {
@@ -330,6 +335,7 @@ function setupCheckboxes() {
       triggerSaveSoon();
     });
 
+    // click anywhere except the input/label toggles
     wrapper.addEventListener("click", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "LABEL") return;
       cb.checked = !cb.checked;
@@ -338,31 +344,6 @@ function setupCheckboxes() {
   });
 
   console.log("✅ Checkboxes wired");
-}
-
-// =====================================
-// REHIT TOGGLE
-// =====================================
-function setupREHITToggle() {
-  const rehitCb = document.getElementById("rehit");
-  const rehitFields = document.getElementById("rehitFields");
-  
-  if (!rehitCb || !rehitFields) return;
-
-  rehitCb.addEventListener("change", () => {
-    rehitFields.style.display = rehitCb.checked ? "block" : "none";
-  });
-
-  console.log("✅ REHIT toggle wired");
-}
-
-function updateREHITFieldsVisibility() {
-  const rehitCb = document.getElementById("rehit");
-  const rehitFields = document.getElementById("rehitFields");
-  
-  if (rehitCb && rehitFields) {
-    rehitFields.style.display = rehitCb.checked ? "block" : "none";
-  }
 }
 
 // =====================================
@@ -400,7 +381,7 @@ function setupWaterButtons() {
 // =====================================
 function setupInputAutosave() {
   document.querySelectorAll("input, textarea").forEach(el => {
-    if (el.type === "checkbox") return;
+    if (el.type === "checkbox") return; // handled separately
     el.addEventListener("change", triggerSaveSoon);
     if (el.tagName === "TEXTAREA") el.addEventListener("input", triggerSaveSoon);
   });
@@ -443,27 +424,18 @@ function applyBodyFieldsFromDaily(daily) {
   const source = daily || {};
 
   const weightVal = source["Weight (lbs)"] ?? source["Weight"];
-  const waistVal = source["Waist (inches)"] ?? source["Waist"];
-  const systolicVal = source["Systolic"] ?? source["Systolic BP"];
-  const diastolicVal = source["Diastolic"] ?? source["Diastolic BP"];
   const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
   const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
   const waterBodyVal = source["Water (lbs)"] ?? source["Water"];
 
   const weightEl = document.getElementById("weight");
-  const waistEl = document.getElementById("waist");
-  const systolicEl = document.getElementById("systolic");
-  const diastolicEl = document.getElementById("diastolic");
   const leanMassEl = document.getElementById("leanMass");
   const bodyFatEl = document.getElementById("bodyFat");
   const boneMassEl = document.getElementById("boneMass");
   const waterBodyEl = document.getElementById("water");
 
   if (weightEl) weightEl.value = weightVal ?? "";
-  if (waistEl) waistEl.value = waistVal ?? "";
-  if (systolicEl) systolicEl.value = systolicVal ?? "";
-  if (diastolicEl) diastolicEl.value = diastolicVal ?? "";
   if (leanMassEl) leanMassEl.value = leanVal ?? "";
   if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
   if (boneMassEl) boneMassEl.value = boneVal ?? "";
@@ -476,9 +448,13 @@ function applyBodyFieldsFromDaily(daily) {
 // populateForm: set UI from sheet data
 // =====================================
 async function populateForm(data) {
-  console.log("📝 populateForm START", { hasDaily: !!data?.daily });
-  
-  // Reset state
+  const form = document.getElementById("healthForm");
+  if (form && typeof form.reset === "function") form.reset();
+
+  // clear checkbox visuals
+  document.querySelectorAll(".checkbox-field").forEach(w => w.classList.remove("checked"));
+
+  // reset state
   movements = [];
   readings = [];
   honeyDos = [];
@@ -486,21 +462,17 @@ async function populateForm(data) {
 
   const d = data?.daily || null;
 
-  // BODY CARRY-FORWARD
+  // BODY CARRY-FORWARD:
+  // if daily is missing OR daily exists but body is blank => carry forward
   let bodySource = d;
   if (!hasAnyBodyData(d)) {
     bodySource = await getMostRecentBodyDaily(currentDate);
-  }
 
-  // Update averages first
   updateAverages(data?.averages);
+  }
 
   // No daily data for this date
   if (!d) {
-    // Reset form inputs
-    const form = document.getElementById("healthForm");
-    if (form && typeof form.reset === "function") form.reset();
-    
     waterCount = 0;
     updateWaterDisplay();
 
@@ -514,10 +486,8 @@ async function populateForm(data) {
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
       book: r.book ?? r["book"] ?? r["Book"]
     }));
-    renderReadings();
 
     honeyDos = data?.honeyDos || [];
-    renderHoneyDos();
 
     const reflectionsEl = document.getElementById("reflections");
     if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
@@ -526,20 +496,13 @@ async function populateForm(data) {
     const carlyEl = document.getElementById("carly");
     if (carlyEl) carlyEl.value = data?.carly || "";
 
+    // Apply carried-forward body values (even if no row exists)
     applyBodyFieldsFromDaily(bodySource);
 
-    // Sync all checkbox visuals after setting values
-    document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(cb => {
-      syncCheckboxVisual(cb);
-    });
-
-    console.log("✅ populateForm END (no daily)");
+    document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
+    console.log("✅ populateForm ran (no daily)");
     return;
   }
-
-  // Reset form inputs BEFORE setting checkbox values
-  const form = document.getElementById("healthForm");
-  if (form && typeof form.reset === "function") form.reset();
 
   // Numbers
   const sleepEl = document.getElementById("sleepHours");
@@ -560,14 +523,7 @@ async function populateForm(data) {
   const wattSecondsEl = document.getElementById("wattSeconds");
   if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? "";
 
-  // Checkboxes (sheet -> UI) - log what we're setting
-  console.log("Setting checkboxes:", {
-    inhalerMorning: d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"],
-    inhalerEvening: d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"],
-    multiplication: d["5 min Multiplication"],
-    rehit: d["REHIT 2x10"] ?? d["REHIT"]
-  });
-  
+  // Checkboxes (sheet -> UI)
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"]);
   setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"]);
   setCheckbox("multiplication", d["5 min Multiplication"]);
@@ -592,7 +548,7 @@ async function populateForm(data) {
   waterCount = parseInt(d["Water"], 10) || 0;
   updateWaterDisplay();
 
-  // Body fields
+  // Body fields: use current day if present, else carry-forward source
   applyBodyFieldsFromDaily(bodySource);
 
   // Lists
@@ -620,24 +576,17 @@ async function populateForm(data) {
   const carlyEl = document.getElementById("carly");
   if (carlyEl) carlyEl.value = data?.carly || "";
 
-  // Renders
+  // Optional renders/averages/completion
+  if (typeof updateAverages === "function") updateAverages(data?.averages);
   if (typeof renderMovements === "function") renderMovements();
   if (typeof renderReadings === "function") renderReadings();
   if (typeof renderHoneyDos === "function") renderHoneyDos();
+  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 
-  // Update REHIT fields visibility based on checkbox state
-  updateREHITFieldsVisibility();
+  // final sweep
+  document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 
-  // Final: Sync all checkbox visuals - use a small delay to ensure DOM has settled
-  setTimeout(() => {
-    console.log("🎨 Final checkbox visual sync");
-    document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(cb => {
-      console.log(`  ${cb.id}: checked=${cb.checked}`);
-      syncCheckboxVisual(cb);
-    });
-  }, 0);
-
-  console.log("✅ populateForm END");
+  console.log("✅ populateForm ran");
 }
 
 function setupCollapsibleSections() {
@@ -663,6 +612,7 @@ function addDays(date, deltaDays) {
 function cacheSet(key, value) {
   dayCache.set(key, { value, ts: Date.now() });
 
+  // simple LRU-ish eviction
   if (dayCache.size > CACHE_MAX_DAYS) {
     const oldestKey = [...dayCache.entries()]
       .sort((a, b) => a[1].ts - b[1].ts)[0]?.[0];
@@ -673,6 +623,7 @@ function cacheSet(key, value) {
 function cacheGet(key) {
   const hit = dayCache.get(key);
   if (!hit) return null;
+  // bump recency
   hit.ts = Date.now();
   return hit.value;
 }
@@ -688,6 +639,7 @@ async function fetchDay(dateObj) {
 }
 
 function prefetchAround(dateObj) {
+  // fire-and-forget prefetch
   for (let delta = -PREFETCH_RANGE; delta <= PREFETCH_RANGE; delta++) {
     if (delta === 0) continue;
     const d = addDays(dateObj, delta);
@@ -697,7 +649,6 @@ function prefetchAround(dateObj) {
     fetchDay(d).catch(() => {});
   }
 }
-
 function setupMovementUI() {
   const btn = document.getElementById("addMovementBtn");
   if (!btn) {
@@ -756,97 +707,9 @@ function renderMovements() {
     item.querySelector("button").addEventListener("click", () => removeMovement(idx));
     list.appendChild(item);
   });
-}
 
-function setupReadingUI() {
-  const btn = document.getElementById("addReadingBtn");
-  if (!btn) {
-    console.warn("addReadingBtn not found");
-    return;
-  }
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    promptAddReading();
-  });
-
-  console.log("✅ Reading UI wired");
-}
-
-function promptAddReading() {
-  const duration = prompt("Reading duration (minutes):");
-  if (!duration || isNaN(duration)) return;
-
-  const book = prompt("Book title:", lastBookTitle);
-  if (!book || book.trim() === "") return;
-
-  lastBookTitle = book.trim();
-  readings.push({ duration: parseInt(duration), book: lastBookTitle });
-  renderReadings();
-  triggerSaveSoon();
-}
-
-function removeReading(index) {
-  readings.splice(index, 1);
-  renderReadings();
-  triggerSaveSoon();
-}
-
-function renderReadings() {
-  const list = document.getElementById("readingList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  readings.forEach((r, idx) => {
-    const duration = r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"];
-    const book = r.book ?? r["Book"];
-
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <span class="item-text">${duration} min - ${book}</span>
-      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
-    `;
-
-    item.querySelector("button").addEventListener("click", () => removeReading(idx));
-    list.appendChild(item);
-  });
-}
-
-function renderHoneyDos() {
-  const list = document.getElementById("honeyDoList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  honeyDos.forEach((h, idx) => {
-    const task = h.task ?? h["Task"];
-    const completed = h.completed ?? h["Completed"];
-
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <input type="checkbox" ${completed ? "checked" : ""} style="width: 48px; height: 48px; margin-right: 20px;">
-      <span class="item-text" style="${completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task}</span>
-      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
-    `;
-
-    const cb = item.querySelector("input[type='checkbox']");
-    cb.addEventListener("change", () => {
-      honeyDos[idx].completed = cb.checked;
-      renderHoneyDos();
-      triggerSaveSoon();
-    });
-
-    item.querySelector(".btn-danger").addEventListener("click", () => {
-      honeyDos.splice(idx, 1);
-      renderHoneyDos();
-      triggerSaveSoon();
-    });
-
-    list.appendChild(item);
-  });
+  // If you have completion logic, call it safely
+  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 }
 
 function updateAverages(averages) {
@@ -865,6 +728,7 @@ function updateAverages(averages) {
     return;
   }
 
+  // Sleep: show 2 decimals
   if (avgSleepEl) {
     const v = averages.sleep;
     avgSleepEl.textContent = (v === null || v === undefined || v === "")
@@ -872,6 +736,7 @@ function updateAverages(averages) {
       : Number(v).toFixed(2);
   }
 
+  // Steps: show whole number w/ commas
   if (avgStepsEl) {
     const v = averages.steps;
     avgStepsEl.textContent = (v === null || v === undefined || v === "")
@@ -879,6 +744,7 @@ function updateAverages(averages) {
       : Number(v).toLocaleString();
   }
 
+  // Movements per day: your backend returns a string like "0.7"
   if (avgMovementsEl) {
     const v = averages.movements;
     const num = (v === null || v === undefined || v === "") ? null : Number(v);
@@ -887,6 +753,7 @@ function updateAverages(averages) {
       : num.toFixed(1);
   }
 
+  // REHIT sessions this week
   if (rehitWeekEl) {
     const v = averages.rehitWeek;
     rehitWeekEl.textContent = (v === null || v === undefined || v === "")
@@ -894,56 +761,14 @@ function updateAverages(averages) {
       : String(v);
   }
 }
-
 function markSleepSaved() {
   const el = document.getElementById("sleepHours");
   if (!el) return;
 
   el.classList.add("saved");
 
+  // Optional: remove after a few seconds
   setTimeout(() => {
     el.classList.remove("saved");
   }, 3000);
 }
-
-function calculatePercentages() {
-  const weight = parseFloat(document.getElementById("weight")?.value) || 0;
-
-  if (weight > 0) {
-    const leanMass = parseFloat(document.getElementById("leanMass")?.value) || 0;
-    const bodyFat = parseFloat(document.getElementById("bodyFat")?.value) || 0;
-    const boneMass = parseFloat(document.getElementById("boneMass")?.value) || 0;
-    const water = parseFloat(document.getElementById("water")?.value) || 0;
-
-    const leanPercent = document.getElementById("leanMassPercent");
-    const fatPercent = document.getElementById("bodyFatPercent");
-    const bonePercent = document.getElementById("boneMassPercent");
-    const waterPercent = document.getElementById("waterPercent");
-
-    if (leanPercent) leanPercent.textContent = leanMass > 0 ? ((leanMass / weight) * 100).toFixed(1) : "--";
-    if (fatPercent) fatPercent.textContent = bodyFat > 0 ? ((bodyFat / weight) * 100).toFixed(1) : "--";
-    if (bonePercent) bonePercent.textContent = boneMass > 0 ? ((boneMass / weight) * 100).toFixed(1) : "--";
-    if (waterPercent) waterPercent.textContent = water > 0 ? ((water / weight) * 100).toFixed(1) : "--";
-  } else {
-    const leanPercent = document.getElementById("leanMassPercent");
-    const fatPercent = document.getElementById("bodyFatPercent");
-    const bonePercent = document.getElementById("boneMassPercent");
-    const waterPercent = document.getElementById("waterPercent");
-
-    if (leanPercent) leanPercent.textContent = "--";
-    if (fatPercent) fatPercent.textContent = "--";
-    if (bonePercent) bonePercent.textContent = "--";
-    if (waterPercent) waterPercent.textContent = "--";
-  }
-}
-
-// Setup body calculations on input
-document.addEventListener("DOMContentLoaded", () => {
-  const bodyFields = ["weight", "waist", "systolic", "diastolic", "leanMass", "bodyFat", "boneMass", "water"];
-  bodyFields.forEach(id => {
-    const field = document.getElementById(id);
-    if (field) {
-      field.addEventListener("input", calculatePercentages);
-    }
-  });
-});
