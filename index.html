@@ -887,13 +887,21 @@
     <div style="display: flex; gap: 12px; align-items: center;">
       <button id="biomarkersBtn"
         type="button"
-        class="refresh-btn"
         title="Biomarkers"
-        style="padding: 0; overflow: hidden;">
+        style="
+          background: transparent;
+          border: none;
+          padding: 0;
+          width: 60px;
+          height: 60px;
+          border-radius: 0;
+          box-shadow: none;
+          cursor: pointer;
+        ">
   <img src="icons/blood.png"
        alt="Biomarkers"
-       style="width: 70%; height: 70%; object-fit: contain;">
-      </button>
+       style="width: 100%; height: 100%; object-fit: contain;">
+</button>
     <div id="statusMessage" class="status-message"></div>
 </div>
 
