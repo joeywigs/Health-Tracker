@@ -80,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupWaterButtons();
   setupInputAutosave();
   setupCollapsibleSections();   // ✅ add this
+  setupMovementUI();
+
 
   updateDateDisplay();
   updatePhaseInfo();
@@ -470,6 +472,7 @@ async function populateForm(data) {
       duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
       type: m.type ?? m["type"] ?? m["Type"]
     }));
+    renderMovements();
 
     readings = (data?.readings || []).map(r => ({
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
@@ -638,3 +641,66 @@ function prefetchAround(dateObj) {
     fetchDay(d).catch(() => {});
   }
 }
+function setupMovementUI() {
+  const btn = document.getElementById("addMovementBtn");
+  if (!btn) {
+    console.warn("addMovementBtn not found");
+    return;
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    promptAddMovement();
+  });
+
+  console.log("✅ Movement UI wired");
+}
+
+function promptAddMovement() {
+  const raw = prompt("Movement duration (minutes):");
+  if (raw === null) return;
+
+  const durationNum = parseInt(raw, 10);
+  if (!Number.isFinite(durationNum) || durationNum <= 0) {
+    alert("Please enter a valid number of minutes.");
+    return;
+  }
+
+  const type = durationNum > 12 ? "Long" : "Short";
+  movements.push({ duration: durationNum, type });
+
+  renderMovements();
+  triggerSaveSoon();
+}
+
+function removeMovement(index) {
+  movements.splice(index, 1);
+  renderMovements();
+  triggerSaveSoon();
+}
+
+function renderMovements() {
+  const list = document.getElementById("movementList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  movements.forEach((m, idx) => {
+    const duration = m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"];
+    const type = m.type ?? m["Type"] ?? m["type"] ?? "";
+
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerHTML = `
+      <span class="item-text">${duration} min (${type})</span>
+      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
+    `;
+
+    item.querySelector("button").addEventListener("click", () => removeMovement(idx));
+    list.appendChild(item);
+  });
+
+  // If you have completion logic, call it safely
+  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+}
+
