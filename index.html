@@ -842,6 +842,14 @@
     gap: 12px;
     margin-bottom: 12px;
   }
+  
+  #sleepHours {
+    min-height: 78px !important;
+  }
+  
+  .sleep-water-grid #waterSection .section-content > div {
+    height: 78px !important;
+  }
 }
   </style>
 </head>
@@ -894,8 +902,8 @@
       <div class="section" id="sleepSection">
         <div class="section-header">Sleep</div>
         <div class="section-content">
-          <div class="field-group">
-            <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24">
+          <div class="field-group" style="margin-bottom: 0;">
+            <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24" style="min-height: 180px;">
             <div class="average-display">7-day avg: <span id="avgSleep">--</span></div>
           </div>
         </div>
@@ -905,11 +913,11 @@
       <div class="section" id="waterSection">
         <div class="section-header">Water</div>
         <div class="section-content">
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div class="water-counter-value" id="waterCount" style="flex: 1;">0</div>
+          <div style="display: flex; align-items: stretch; gap: 16px; height: 180px;">
+            <div class="water-counter-value" id="waterCount" style="flex: 1; display: flex; align-items: center; justify-content: center;">0</div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
-              <button type="button" class="water-counter-btn" id="waterPlus">+</button>
-              <button type="button" class="water-counter-btn" id="waterMinus">−</button>
+              <button type="button" class="water-counter-btn" id="waterPlus" style="flex: 1;">+</button>
+              <button type="button" class="water-counter-btn" id="waterMinus" style="flex: 1;">−</button>
             </div>
           </div>
         </div>
