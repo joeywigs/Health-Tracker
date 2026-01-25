@@ -306,7 +306,7 @@ function renderBiomarkersTable() {
       <input class="input-field"
              style="min-height: 52px; padding: 10px; font-size: 16px;"
              data-biom-idx="${idx}"
-             placeholder="Enter value"
+             placeholder=""
              value="${escapeAttr(lastVal || "")}" />
     `;
 
