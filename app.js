@@ -18,7 +18,7 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("Body Change indicators");
+console.log("Look for most recent different values");
 window.__APP_JS_OK__ = true;
 
 // =====================================
