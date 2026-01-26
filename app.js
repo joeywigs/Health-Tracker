@@ -608,6 +608,7 @@ prevBodyForDelta = {
 };
 
 
+
   updateAverages(data?.averages);
 
   // No daily data for this date
