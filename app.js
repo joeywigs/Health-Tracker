@@ -75,6 +75,8 @@ let honeyDos = [];
 let currentAverages = null;
 let lastBookTitle = "";
 let waterCount = 0;
+let prevBodyForDelta = { weight: null, leanMass: null, bodyFat: null };
+
 
 let autoSaveTimeout = null;
 
@@ -384,17 +386,28 @@ function setupInputSaveOnBlur() {
   document.querySelectorAll("input, textarea").forEach(el => {
     if (el.type === "checkbox") return;
 
-    // Track dirty as user types (no save until blur)
-    el.addEventListener("input", () => markDirty());
+    el.addEventListener("input", () => {
+      markDirty();
 
-    // Commit on blur
+      // live-update body deltas while typing (only for these 3)
+      if (el.id === "weight" || el.id === "leanMass" || el.id === "bodyFat") {
+        updateBodyDeltasFromUI();
+      }
+    });
+
     el.addEventListener("blur", async () => {
+      // ensure delta is correct after blur formatting
+      if (el.id === "weight" || el.id === "leanMass" || el.id === "bodyFat") {
+        updateBodyDeltasFromUI();
+      }
+
       await flushSaveNow(`blur:${el.id || el.name || el.tagName}`);
     });
   });
 
-  console.log("✅ Inputs wired (blur-save)");
+  console.log("✅ Inputs wired (blur-save + delta updates)");
 }
+
 
 // =====================================
 // COLLAPSIBLES: save when collapsing
@@ -585,6 +598,15 @@ async function populateForm(data) {
     bodySource = await getMostRecentBodyDaily(currentDate);
   }
 
+  // Previous measurement (always from an earlier date, not today)
+const prevDaily = await getMostRecentBodyDaily(currentDate);
+prevBodyForDelta = {
+  weight: parseNum(prevDaily?.["Weight (lbs)"] ?? prevDaily?.["Weight"]),
+  leanMass: parseNum(prevDaily?.["Lean Mass (lbs)"] ?? prevDaily?.["Lean Mass"]),
+  bodyFat: parseNum(prevDaily?.["Body Fat (lbs)"] ?? prevDaily?.["Body Fat"])
+};
+
+
   updateAverages(data?.averages);
 
   // No daily data for this date
@@ -616,6 +638,9 @@ async function populateForm(data) {
 
     // Apply carried-forward body values
     applyBodyFieldsFromDaily(bodySource);
+    updateBodyDeltasFromUI();
+    
+
 
     // Clear blood pressure fields (no data for this date)
     const systolicEl = document.getElementById("systolic");
@@ -992,3 +1017,54 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
+function parseNum(v) {
+  const n = parseFloat(String(v ?? "").trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+function setDelta(elId, delta, isPositive) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+
+  if (delta === null || Math.abs(delta) < 0.0001) {
+    el.style.display = "none";
+    el.classList.remove("positive", "negative");
+    el.innerHTML = "";
+    return;
+  }
+
+  const abs = Math.round(Math.abs(delta) * 10) / 10; // 1 decimal
+  const up = "▲";
+  const down = "▼";
+
+  const tri = delta > 0 ? up : down;
+
+  el.classList.toggle("positive", isPositive);
+  el.classList.toggle("negative", !isPositive);
+  el.style.display = "inline-flex";
+  el.innerHTML = `<span class="tri">${tri}</span><span class="val">${abs}</span>`;
+}
+
+function updateBodyDeltasFromUI() {
+  const curWeight = parseNum(document.getElementById("weight")?.value);
+  const curLean = parseNum(document.getElementById("leanMass")?.value);
+  const curFat = parseNum(document.getElementById("bodyFat")?.value);
+
+  const prevW = prevBodyForDelta.weight;
+  const prevL = prevBodyForDelta.leanMass;
+  const prevF = prevBodyForDelta.bodyFat;
+
+  // Weight: decreasing is positive
+  const dW = (curWeight !== null && prevW !== null) ? (curWeight - prevW) : null;
+  setDelta("weightDelta", dW, dW !== null ? (dW < 0) : false);
+
+  // Lean mass: increasing is positive
+  const dL = (curLean !== null && prevL !== null) ? (curLean - prevL) : null;
+  setDelta("leanMassDelta", dL, dL !== null ? (dL > 0) : false);
+
+  // Body fat: decreasing is positive
+  const dF = (curFat !== null && prevF !== null) ? (curFat - prevF) : null;
+  setDelta("bodyFatDelta", dF, dF !== null ? (dF < 0) : false);
+}
+
