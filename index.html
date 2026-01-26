@@ -1008,6 +1008,41 @@
   color: #666;
   opacity: 0.8;
 }
+    /* Body delta indicator (inside body cards) */
+.body-data-cell {
+  position: relative; /* enables absolute positioning for the delta badge */
+}
+
+.delta-indicator {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  display: none;              /* hidden unless we have a delta */
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.4em;           /* ~40% of the surrounding font size */
+  line-height: 1;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+/* We anchor the size to the input font by inheriting from the cell */
+.body-data-cell:has(.body-data-input) {
+  font-size: 56px;            /* matches your body-data-input font size on mobile */
+}
+
+@media (min-width: 1024px) {
+  .body-data-cell:has(.body-data-input) {
+    font-size: 20px;          /* matches your smaller desktop body input scale */
+  }
+}
+
+.delta-indicator.positive { color: #52b788; } /* green */
+.delta-indicator.negative { color: #e63946; } /* red */
+.delta-indicator .tri { font-size: 1em; }
+.delta-indicator .val { font-size: 1em; }
+
 </style>
 
 </head>
@@ -1293,6 +1328,7 @@
           <div class="body-data-cell">
             <label class="body-data-label">Weight (lbs)</label>
             <input type="number" inputmode="decimal" class="body-data-input" id="weight" step="0.1">
+            <div class="delta-indicator" id="weightDelta" aria-hidden="true"></div>
           </div>
           <div class="body-data-cell">
             <label class="body-data-label">Waist (in)</label>
@@ -1309,6 +1345,7 @@
           <div class="body-data-cell">
             <label class="body-data-label">Lean Mass %</label>
             <div class="body-data-percent" id="leanMassPercent">--</div>
+            <div class="delta-indicator" id="leanMassDelta" aria-hidden="true"></div>
           </div>
         </div>
         
@@ -1321,6 +1358,8 @@
           <div class="body-data-cell">
             <label class="body-data-label">Body Fat %</label>
             <div class="body-data-percent" id="bodyFatPercent">--</div>
+            <div class="delta-indicator" id="bodyFatDelta" aria-hidden="true"></div>
+
           </div>
         </div>
         
