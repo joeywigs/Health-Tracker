@@ -1049,6 +1049,14 @@ function setDelta(elId, delta, isPositive) {
 }
 
 function updateBodyDeltasFromUI() {
+  console.log("prevBodyForDelta", prevBodyForDelta);
+  console.log("cur", {
+    weight: document.getElementById("weight")?.value,
+    leanMass: document.getElementById("leanMass")?.value,
+    bodyFat: document.getElementById("bodyFat")?.value
+});
+
+  
   const curWeight = parseNum(document.getElementById("weight")?.value);
   const curLean = parseNum(document.getElementById("leanMass")?.value);
   const curFat = parseNum(document.getElementById("bodyFat")?.value);
