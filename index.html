@@ -1009,39 +1009,34 @@
   opacity: 0.8;
 }
     /* Body delta indicator (inside body cards) */
-.body-data-cell {
-  position: relative; /* enables absolute positioning for the delta badge */
-}
+.body-data-cell { position: relative; }
 
-.delta-indicator {
+.delta-indicator{
   position: absolute;
   right: 12px;
   bottom: 10px;
-  display: none;              /* hidden unless we have a delta */
+  display: none;
   align-items: center;
   gap: 6px;
-  font-weight: 700;
-  font-size: 0.4em;           /* ~40% of the surrounding font size */
+  font-weight: 800;
   line-height: 1;
   opacity: 0.95;
   pointer-events: none;
+
+  /* 40% of 56px ≈ 22px */
+  font-size: 22px;
 }
 
-/* We anchor the size to the input font by inheriting from the cell */
-.body-data-cell:has(.body-data-input) {
-  font-size: 56px;            /* matches your body-data-input font size on mobile */
+@media (min-width: 1024px){
+  /* 40% of ~20px ≈ 8px */
+  .delta-indicator{ font-size: 8px; }
 }
 
-@media (min-width: 1024px) {
-  .body-data-cell:has(.body-data-input) {
-    font-size: 20px;          /* matches your smaller desktop body input scale */
-  }
-}
-
-.delta-indicator.positive { color: #52b788; } /* green */
-.delta-indicator.negative { color: #e63946; } /* red */
-.delta-indicator .tri { font-size: 1em; }
+.delta-indicator.positive { color: #52b788; }
+.delta-indicator.negative { color: #e63946; }
+.delta-indicator .tri,
 .delta-indicator .val { font-size: 1em; }
+
 
 </style>
 
