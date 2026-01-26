@@ -1,17 +1,23 @@
 /**********************************************
- * Habit Tracker - app.js (clean)
- * - Uses Cloudflare Worker proxy (no API key in browser)
- * - Loads data for selected date
- * - Populates UI (including checkbox highlighting from sheet data)
- * - Saves on changes (debounced)
- * - Date navigation prev/next
- * - Water +/- wired
- * - Body data carry-forward: shows last known body metrics when missing
- * - Blood pressure tracking with status indicator
+ * Habit Tracker - app.js (clean + consistent)
+ *
+ * GOALS (consistency-first):
+ * ✅ Load fresh data when:
+ *    - changing dates (prev/next)
+ *    - returning to the app after idle time
+ * ✅ Save data when:
+ *    - blur (click out) of an input/textarea
+ *    - collapsing a section
+ *    - toggling a checkbox
+ *    - clicking +/- water buttons
+ * ✅ NEVER auto-reload after save (prevents “revert/disappear” anxiety)
+ *
+ * Notes:
+ * - Removed cache/prefetch on purpose (stability > speed). Add later if desired.
+ * - populateForm() does NOT call form.reset() (prevents wiping fields unexpectedly).
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("******* Format Dates ******");
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -19,15 +25,17 @@ window.__APP_JS_OK__ = true;
 // =====================================
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
 
-// Body fields (for carry-forward + detection)
+// Carry-forward body detection
 const BODY_FIELDS = [
   { id: "weight", keys: ["Weight (lbs)", "Weight"] },
-  { id: "waist", keys: ["Waist (in)", "Waist"] },
+  { id: "waist", keys: ["Waist (in)", "Waist"] }, // supports either header
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
-  { id: "water", keys: ["Water (lbs)"] }
+  { id: "water", keys: ["Water (lbs)"] } // IMPORTANT: do NOT fall back to "Water" (hydration count)
 ];
+
+const RELOAD_AFTER_IDLE_MS = 2 * 60 * 1000; // 2 min idle -> reload on return (tune)
 
 // =====================================
 // API HELPERS
@@ -54,7 +62,12 @@ async function apiPost(action, payload = {}) {
 // APP STATE
 // =====================================
 let currentDate = new Date();
+
 let dataChanged = false;
+let saveInFlight = false;
+let pendingSave = false;
+
+let lastUserActivityAt = Date.now();
 
 let movements = [];
 let readings = [];
@@ -65,33 +78,32 @@ let waterCount = 0;
 
 let autoSaveTimeout = null;
 
-const PREFETCH_RANGE = 3;          // how many days ahead/behind to prefetch
-const CACHE_MAX_DAYS = 21;         // cap memory (tweak as you like)
-const dayCache = new Map();        // key: "M/D/YY" -> loadResult
-
-
 // =====================================
 // BOOTSTRAP
 // =====================================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log("Habit Tracker booting…");
 
   setupDateNav();
   setupCheckboxes();
   setupWaterButtons();
-  setupInputAutosave();
-  setupCollapsibleSections();
+  setupInputSaveOnBlur();
+  setupCollapsibleSectionsSaveOnCollapse();
   setupMovementUI();
+  setupReadingUI(); // prompt-based by default; swap to modal version if you’ve added modal elements
   setupBloodPressureCalculator();
-  setupBiomarkersUI();
-  setupReadingUI();
+
+  // If you’ve added Biomarkers page wiring, this will wire it (only if elements exist)
+  setupBiomarkersUIToggleSafe();
 
   updateDateDisplay();
   updatePhaseInfo();
-  loadDataForCurrentDate();
+  await loadDataForCurrentDate({ force: true });
+
+  setupReloadOnReturnFromIdle();
 });
 
-const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
+const PHASE_START_DATE = new Date("2026-01-19T00:00:00");
 const PHASE_LENGTH_DAYS = 21;
 
 function updatePhaseInfo() {
@@ -104,7 +116,6 @@ function updatePhaseInfo() {
   const msPerDay = 1000 * 60 * 60 * 24;
   const daysSinceStart = Math.floor((cur - start) / msPerDay);
 
-  // If before start date, treat as Phase 0 / Day 0
   const safeDays = Math.max(0, daysSinceStart);
   const phase = Math.floor(safeDays / PHASE_LENGTH_DAYS) + 1;
   const dayInPhase = (safeDays % PHASE_LENGTH_DAYS) + 1;
@@ -112,18 +123,15 @@ function updatePhaseInfo() {
   const phaseInfoEl = document.getElementById("phaseInfo");
   if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH_DAYS}`;
 
-  // Update subtitle "Phase X"
   const subtitleEl = document.querySelector(".subtitle");
   if (subtitleEl) subtitleEl.textContent = `Phase ${phase}`;
 
-  // Progress bar width
   const bar = document.getElementById("phaseProgressBar");
   if (bar) {
-    const progress = (dayInPhase - 1) / PHASE_LENGTH_DAYS; // 0..(20/21)
+    const progress = (dayInPhase - 1) / PHASE_LENGTH_DAYS;
     bar.style.width = `${Math.round(progress * 100)}%`;
   }
 }
-
 
 // =====================================
 // DATE + NAV
@@ -150,370 +158,111 @@ function setupDateNav() {
     return;
   }
 
-  prev.addEventListener("click", (e) => {
+  prev.addEventListener("click", async (e) => {
     e.preventDefault();
-    changeDate(-1);
+    await changeDate(-1);
   });
 
-  next.addEventListener("click", (e) => {
+  next.addEventListener("click", async (e) => {
     e.preventDefault();
-    changeDate(1);
+    await changeDate(1);
   });
 
   console.log("✅ Date nav wired");
 }
 
-function changeDate(days) {
+async function changeDate(days) {
+  // Save before navigating away (prevents losing entered data)
+  await flushSaveNow("date_change");
+
   currentDate.setDate(currentDate.getDate() + days);
   updateDateDisplay();
-  updatePhaseInfo?.(); // if you have it
+  updatePhaseInfo();
 
-  // show instantly if cached, else it will fetch
-  loadDataForCurrentDate();
+  // Always load fresh when switching dates
+  await loadDataForCurrentDate({ force: true });
 }
 
 // =====================================
-// READING SESSIONS UI
+// LOAD
 // =====================================
-function setupReadingUI() {
-  const btn = document.getElementById("addReadingBtn");
-  if (!btn) {
-    console.warn("addReadingBtn not found");
-    return;
-  }
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    promptAddReading();
-  });
-
-  console.log("✅ Reading UI wired");
-}
-
-function promptAddReading() {
-  const raw = prompt("Reading duration (minutes):");
-  if (raw === null) return;
-
-  const durationNum = parseInt(raw, 10);
-  if (!Number.isFinite(durationNum) || durationNum <= 0) {
-    alert("Please enter a valid number of minutes.");
-    return;
-  }
-
-  let book = prompt("Book (optional):");
-  if (book === null) return;
-  book = String(book || "").trim();
-
-  // If blank, carry forward last title you were reading (optional convenience)
-  if (!book && lastBookTitle) book = lastBookTitle;
-
-  readings.push({ duration: durationNum, book });
-
-  if (book) lastBookTitle = book;
-
-  renderReadings();
-  triggerSaveSoon();
-}
-
-function removeReading(index) {
-  readings.splice(index, 1);
-  renderReadings();
-  triggerSaveSoon();
-}
-
-function renderReadings() {
-  const list = document.getElementById("readingList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  readings.forEach((r, idx) => {
-    const duration = r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"] ?? "";
-    const book = r.book ?? r["Book"] ?? r["book"] ?? "";
-
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <span class="item-text">${duration} min${book ? ` — ${escapeHtml(book)}` : ""}</span>
-      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
-    `;
-
-    item.querySelector("button").addEventListener("click", () => removeReading(idx));
-    list.appendChild(item);
-  });
-
-  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
-}
-
-// =====================================
-// BIOMARKERS PAGE
-// =====================================
-let biomarkersDef = [];
-let biomarkersLatest = { date: "", values: [] };
-
-function setupBiomarkersUI() {
-  const btn = document.getElementById("biomarkersBtn");
-  const page = document.getElementById("biomarkersPage");
-  const closeBtn = document.getElementById("biomarkersCloseBtn");
-  const submitBtn = document.getElementById("biomarkersSubmitBtn");
-
-  if (!btn || !page || !closeBtn || !submitBtn) {
-    console.warn("Biomarkers UI elements missing");
-    return;
-  }
-
-  btn.addEventListener("click", async () => {
-  const page = document.getElementById("biomarkersPage");
-
-  // If biomarkers page is open → go back to main habit page
-  if (page && page.style.display === "block") {
-    closeBiomarkersPage();
-  } else {
-    await openBiomarkersPage();
-  }
-});
-
-
-  closeBtn.addEventListener("click", () => {
-    closeBiomarkersPage();
-  });
-
-  submitBtn.addEventListener("click", async () => {
-    await submitBiomarkers();
-  });
-
-  console.log("✅ Biomarkers UI wired");
-}
-
-function openBiomarkersPage() {
-  // hide main form, show biomarkers
-  const form = document.getElementById("healthForm");
-  const page = document.getElementById("biomarkersPage");
-  if (form) form.style.display = "none";
-  if (page) page.style.display = "block";
-
-  return loadBiomarkersMostRecent();
-}
-
-function closeBiomarkersPage() {
-  const form = document.getElementById("healthForm");
-  const page = document.getElementById("biomarkersPage");
-  if (page) page.style.display = "none";
-  if (form) form.style.display = "block";
-}
-
-async function loadBiomarkersMostRecent() {
-  const statusEl = document.getElementById("biomarkersSaveStatus");
-  const subtitleEl = document.getElementById("biomarkersSubtitle");
-  const dateInput = document.getElementById("biomarkersDate");
-
-  try {
-    if (statusEl) statusEl.textContent = "Loading…";
-
-    const res = await apiGet("biomarkers_load", {});
-    if (res?.error) throw new Error(res.message || "Failed to load biomarkers");
-
-    biomarkersDef = res.definition || [];
-    biomarkersLatest = { date: res.latestDate || "", values: res.latestValues || [] };
-
-    const lastDate = formatMDYY(biomarkersLatest.date);
-    if (subtitleEl) subtitleEl.textContent = `Most recent: ${lastDate || "--"}`;
-
-    // default lab date input = today (M/D/YY)
-    if (dateInput && !dateInput.value) dateInput.value = formatDateForAPI(new Date());
-
-    renderBiomarkersTable();
-
-    if (statusEl) statusEl.textContent = "";
-  } catch (err) {
-    console.error("Biomarkers load failed:", err);
-    if (statusEl) statusEl.textContent = `Error: ${err.message || err}`;
-  }
-}
-
-function renderBiomarkersTable() {
-  const host = document.getElementById("biomarkersTable");
-  if (!host) return;
-
-  host.innerHTML = "";
-
-  const lastDate = formatMDYY(biomarkersLatest.date);
-
-  biomarkersDef.forEach((row, idx) => {
-    const lastValRaw =
-      (biomarkersLatest.values && biomarkersLatest.values[idx] != null)
-        ? String(biomarkersLatest.values[idx]).trim()
-        : "";
-
-    const lastVal = (!lastValRaw || lastValRaw === "0") ? lastValRaw : lastValRaw; // keep as-is
-    const units = row.units || "";
-    const optimal = row.optimal || "";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "biom-row";
-
-    // Box 1: biomarker + optimal + units (all together)
-    const box1 = document.createElement("div");
-    box1.className = "biom-cell";
-    box1.innerHTML = `
-      <div class="biom-title">${escapeHtml(row.biomarker || "")}</div>
-      <div class="biom-sub">
-        <div>${escapeHtml(row.category || "")}</div>
-        <div>Optimal: ${escapeHtml(optimal)} ${escapeHtml(units)}</div>
-      </div>
-    `;
-
-    // Box 2: last data (most recent)
-    const box2 = document.createElement("div");
-    box2.className = "biom-cell";
-    box2.innerHTML = `
-      <div class="biom-title">Last</div>
-      <div class="biom-last">${escapeHtml(lastVal || "--")}</div>
-      <div class="biom-last-sub">${escapeHtml(lastDate || "--")}</div>
-    `;
-
-    // Box 3: input
-    const box3 = document.createElement("div");
-    box3.className = "biom-cell";
-    box3.innerHTML = `
-      <div class="biom-title">New</div>
-      <input class="input-field"
-             style="min-height: 52px; padding: 10px; font-size: 16px;"
-             data-biom-idx="${idx}"
-             placeholder=""
-             value="${escapeAttr(lastVal || "")}" />
-    `;
-
-    wrapper.appendChild(box1);
-    wrapper.appendChild(box2);
-    wrapper.appendChild(box3);
-
-    host.appendChild(wrapper);
-  });
-}
-
-
-async function submitBiomarkers() {
-  const statusEl = document.getElementById("biomarkersSaveStatus");
-  const dateStr = document.getElementById("biomarkersDate")?.value?.trim();
-
-  try {
-    if (!dateStr) {
-      alert("Please enter a Lab Date (M/D/YY).");
-      return;
-    }
-
-    // gather values by idx
-    const inputs = document.querySelectorAll("#biomarkersTable input[data-biom-idx]");
-    const values = [];
-    inputs.forEach(inp => {
-      const idx = parseInt(inp.getAttribute("data-biom-idx"), 10);
-      values[idx] = inp.value.trim();
-    });
-
-    if (statusEl) statusEl.textContent = "Saving…";
-
-    const res = await apiPost("biomarkers_save", { date: dateStr, values });
-
-    if (res?.error) throw new Error(res.message || "Failed to save biomarkers");
-
-    if (statusEl) statusEl.textContent = "✅ Saved.";
-
-    // reload so the “most recent” view is updated
-    await loadBiomarkersMostRecent();
-  } catch (err) {
-    console.error("Biomarkers save failed:", err);
-    if (statusEl) statusEl.textContent = `Error: ${err.message || err}`;
-  }
-}
-
-function escapeHtml(s) {
-  return String(s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function escapeAttr(s) {
-  return escapeHtml(s).replaceAll("\n", " ");
-}
-
-
-// =====================================
-// LOAD / SAVE
-// =====================================
-async function loadDataForCurrentDate(opts = {}) {
-  const { force = false } = opts;
+async function loadDataForCurrentDate({ force = false } = {}) {
   const dateStr = formatDateForAPI(currentDate);
   console.log("Loading data for", dateStr, force ? "(force)" : "");
 
-  // 1) If not forced and cached, show instantly
-  if (!force) {
-    const cached = cacheGet(dateStr);
-    if (cached && !cached?.error) {
-      await populateForm(cached);
-      prefetchAround(currentDate);
-      return;
-    }
-  } else {
-    // bust cache for this day when forced
-    dayCache.delete(dateStr);
-  }
-
-  // 2) Otherwise fetch, then show
   try {
-    const result = await fetchDay(currentDate, { force });
+    const result = await apiGet("load", { date: dateStr });
 
     if (result?.error) {
       console.error("Backend error:", result.message);
+      showStatus("Load failed", "error");
       return;
     }
 
     await populateForm(result);
-    prefetchAround(currentDate);
-
     dataChanged = false;
+    showStatus("Loaded", "success", 600);
   } catch (err) {
     console.error("Load failed:", err);
+    showStatus("Load failed", "error");
   }
 }
 
+// =====================================
+// SAVE
+// =====================================
+function markDirty() {
+  dataChanged = true;
+  lastUserActivityAt = Date.now();
+}
 
-async function saveData(payload) {
+function queueSaveSoon(reason = "debounced") {
+  markDirty();
+
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(() => {
+    flushSaveNow(reason);
+  }, 600);
+}
+
+async function flushSaveNow(reason = "flush") {
+  if (!dataChanged) return;
+
+  // If a save is already running, we’ll do one more pass after it finishes
+  if (saveInFlight) {
+    pendingSave = true;
+    return;
+  }
+
+  saveInFlight = true;
+  pendingSave = false;
+
   try {
+    const payload = buildPayloadFromUI();
+    showStatus("Saving…", "loading");
+
     const saveResult = await apiPost("save", { data: payload });
 
     if (saveResult?.error) {
       console.error("Save error:", saveResult.message);
+      showStatus("Save failed", "error");
       return;
     }
 
-    console.log("💾 Saved successfully", saveResult);
     dataChanged = false;
-
-    // Invalidate cache for current day so UI can't "revert"
-    dayCache.delete(formatDateForAPI(currentDate));
-
-    // Reload fresh from server (must honor opts.force)
-    await loadDataForCurrentDate({ force: true });
+    showStatus("Saved ✓", "success");
+    // IMPORTANT: no reload here (prevents revert/disappear problems)
 
   } catch (err) {
     console.error("Save failed:", err);
+    showStatus("Save failed", "error");
+  } finally {
+    saveInFlight = false;
+    if (pendingSave) {
+      pendingSave = false;
+      await flushSaveNow("pending");
+    }
   }
-}
-
-
-function triggerSaveSoon() {
-  console.log("💾 triggerSaveSoon fired");
-  dataChanged = true;
-
-  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-  autoSaveTimeout = setTimeout(async () => {
-    const payload = buildPayloadFromUI();
-    await saveData(payload);
-  }, 800);
 }
 
 function buildPayloadFromUI() {
@@ -610,15 +359,14 @@ function setupCheckboxes() {
     const cb = wrapper.querySelector("input[type='checkbox']");
     if (!cb) return;
 
-    // initial state
     syncCheckboxVisual(cb);
 
-    cb.addEventListener("change", () => {
+    cb.addEventListener("change", async () => {
       syncCheckboxVisual(cb);
-      triggerSaveSoon();
+      markDirty();
+      await flushSaveNow(`checkbox:${cb.id}`);
     });
 
-    // click anywhere except the input/label toggles
     wrapper.addEventListener("click", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "LABEL") return;
       cb.checked = !cb.checked;
@@ -630,7 +378,51 @@ function setupCheckboxes() {
 }
 
 // =====================================
-// WATER BUTTONS
+// INPUTS: save on BLUR (click out)
+// =====================================
+function setupInputSaveOnBlur() {
+  document.querySelectorAll("input, textarea").forEach(el => {
+    if (el.type === "checkbox") return;
+
+    // Track dirty as user types (no save until blur)
+    el.addEventListener("input", () => markDirty());
+
+    // Commit on blur
+    el.addEventListener("blur", async () => {
+      await flushSaveNow(`blur:${el.id || el.name || el.tagName}`);
+    });
+  });
+
+  console.log("✅ Inputs wired (blur-save)");
+}
+
+// =====================================
+// COLLAPSIBLES: save when collapsing
+// =====================================
+function setupCollapsibleSectionsSaveOnCollapse() {
+  document.querySelectorAll(".section-header.collapsible").forEach(header => {
+    header.addEventListener("click", async () => {
+      const wasCollapsed = header.classList.contains("collapsed");
+
+      header.classList.toggle("collapsed");
+      const content = header.nextElementSibling;
+      if (content && content.classList.contains("section-content")) {
+        content.classList.toggle("collapsed");
+      }
+
+      const nowCollapsed = header.classList.contains("collapsed");
+      // If it was open and is now collapsed -> commit save
+      if (!wasCollapsed && nowCollapsed) {
+        await flushSaveNow(`collapse:${header.id || header.textContent || "section"}`);
+      }
+    });
+  });
+
+  console.log("✅ Collapsible sections wired (collapse-save)");
+}
+
+// =====================================
+// WATER BUTTONS: save immediately
 // =====================================
 function updateWaterDisplay() {
   const waterCountEl = document.getElementById("waterCount");
@@ -642,34 +434,23 @@ function setupWaterButtons() {
   const minus = document.getElementById("waterMinus");
   if (!plus || !minus) return;
 
-  plus.addEventListener("click", (e) => {
+  plus.addEventListener("click", async (e) => {
     e.preventDefault();
     waterCount += 1;
     updateWaterDisplay();
-    triggerSaveSoon();
+    markDirty();
+    await flushSaveNow("water_plus");
   });
 
-  minus.addEventListener("click", (e) => {
+  minus.addEventListener("click", async (e) => {
     e.preventDefault();
     waterCount = Math.max(0, waterCount - 1);
     updateWaterDisplay();
-    triggerSaveSoon();
+    markDirty();
+    await flushSaveNow("water_minus");
   });
 
   console.log("✅ Water buttons wired");
-}
-
-// =====================================
-// INPUT AUTOSAVE
-// =====================================
-function setupInputAutosave() {
-  document.querySelectorAll("input, textarea").forEach(el => {
-    if (el.type === "checkbox") return; // handled separately
-    el.addEventListener("change", triggerSaveSoon);
-    if (el.tagName === "TEXTAREA") el.addEventListener("input", triggerSaveSoon);
-  });
-
-  console.log("✅ Input autosave wired");
 }
 
 // =====================================
@@ -683,8 +464,8 @@ function setupBloodPressureCalculator() {
   if (!systolicEl || !diastolicEl || !bpStatusEl) return;
 
   const calculateBPStatus = () => {
-    const systolic = parseInt(systolicEl.value);
-    const diastolic = parseInt(diastolicEl.value);
+    const systolic = parseInt(systolicEl.value, 10);
+    const diastolic = parseInt(diastolicEl.value, 10);
 
     if (!systolic || !diastolic) {
       bpStatusEl.textContent = "--";
@@ -693,7 +474,7 @@ function setupBloodPressureCalculator() {
     }
 
     let status = "";
-    let color = "#52b788"; // green
+    let color = "#52b788";
 
     if (systolic < 120 && diastolic < 80) {
       status = "Normal";
@@ -728,7 +509,7 @@ function setupBloodPressureCalculator() {
 function hasAnyBodyData(daily) {
   if (!daily) return false;
   return BODY_FIELDS.some(f => {
-    const v = daily[f.keys[0]] ?? daily[f.keys[1]];
+    const v = f.keys.reduce((acc, k) => acc ?? daily[k], undefined);
     return v !== undefined && v !== null && v !== "";
   });
 }
@@ -761,7 +542,7 @@ function applyBodyFieldsFromDaily(daily) {
   const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
   const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
-  const waterBodyVal = source["Water (lbs)"];
+  const waterBodyVal = source["Water (lbs)"]; // important
 
   const weightEl = document.getElementById("weight");
   const waistEl = document.getElementById("waist");
@@ -784,8 +565,8 @@ function applyBodyFieldsFromDaily(daily) {
 // populateForm: set UI from sheet data
 // =====================================
 async function populateForm(data) {
-  const form = document.getElementById("healthForm");
-  if (form && typeof form.reset === "function") form.reset();
+  // Don’t reset the form; it can wipe fields and cause “disappearing” confusion.
+  // Instead we explicitly set fields we care about.
 
   // clear checkbox visuals
   document.querySelectorAll(".checkbox-field").forEach(w => w.classList.remove("checked"));
@@ -799,7 +580,6 @@ async function populateForm(data) {
   const d = data?.daily || null;
 
   // BODY CARRY-FORWARD:
-  // if daily is missing OR daily exists but body is blank => carry forward
   let bodySource = d;
   if (!hasAnyBodyData(d)) {
     bodySource = await getMostRecentBodyDaily(currentDate);
@@ -822,8 +602,10 @@ async function populateForm(data) {
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
       book: r.book ?? r["book"] ?? r["Book"]
     }));
+    renderReadings();
 
     honeyDos = data?.honeyDos || [];
+    if (typeof renderHoneyDos === "function") renderHoneyDos();
 
     const reflectionsEl = document.getElementById("reflections");
     if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
@@ -832,7 +614,7 @@ async function populateForm(data) {
     const carlyEl = document.getElementById("carly");
     if (carlyEl) carlyEl.value = data?.carly || "";
 
-    // Apply carried-forward body values (even if no row exists)
+    // Apply carried-forward body values
     applyBodyFieldsFromDaily(bodySource);
 
     // Clear blood pressure fields (no data for this date)
@@ -842,6 +624,7 @@ async function populateForm(data) {
     if (diastolicEl) diastolicEl.value = "";
     const heartRateEl = document.getElementById("heartRate");
     if (heartRateEl) heartRateEl.value = "";
+
     const bpStatusEl = document.getElementById("bpStatus");
     if (bpStatusEl) {
       bpStatusEl.textContent = "--";
@@ -893,14 +676,14 @@ async function populateForm(data) {
 
   setCheckbox("meditation", d["Meditation"]);
 
-  // Water counter
+  // Water counter (hydration)
   waterCount = parseInt(d["Water"], 10) || 0;
   updateWaterDisplay();
 
   // Body fields: use current day if present, else carry-forward source
   applyBodyFieldsFromDaily(bodySource);
 
-  // Blood Pressure - load from current day's data
+  // Blood Pressure
   const systolicEl = document.getElementById("systolic");
   if (systolicEl) systolicEl.value = d["Systolic"] ?? "";
 
@@ -908,9 +691,9 @@ async function populateForm(data) {
   if (diastolicEl) diastolicEl.value = d["Diastolic"] ?? "";
 
   const heartRateEl = document.getElementById("heartRate");
+  // sheet header is "Heart Rate" (you already fixed this)
   if (heartRateEl) heartRateEl.value = d["Heart Rate"] ?? "";
 
-  // Trigger BP status calculation
   if (systolicEl?.value && diastolicEl?.value) {
     systolicEl.dispatchEvent(new Event("input"));
   }
@@ -920,15 +703,17 @@ async function populateForm(data) {
     duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
     type: m.type ?? m["Type"] ?? m["type"]
   }));
+  renderMovements();
 
   readings = (data?.readings || []).map(r => ({
     duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
     book: r.book ?? r["Book"] ?? r["book"]
   }));
+  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
+  renderReadings();
 
   honeyDos = data?.honeyDos || [];
-
-  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
+  if (typeof renderHoneyDos === "function") renderHoneyDos();
 
   // Textareas
   const reflectionsEl = document.getElementById("reflections");
@@ -940,86 +725,15 @@ async function populateForm(data) {
   const carlyEl = document.getElementById("carly");
   if (carlyEl) carlyEl.value = data?.carly || "";
 
-  // Optional renders/averages/completion
-  if (typeof updateAverages === "function") updateAverages(data?.averages);
-  if (typeof renderMovements === "function") renderMovements();
-  if (typeof renderReadings === "function") renderReadings();
-  if (typeof renderHoneyDos === "function") renderHoneyDos();
-  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
-
   // final sweep
   document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 
   console.log("✅ populateForm ran");
 }
 
-function setupCollapsibleSections() {
-  document.querySelectorAll(".section-header.collapsible").forEach(header => {
-    header.addEventListener("click", () => {
-      header.classList.toggle("collapsed");
-      const content = header.nextElementSibling;
-      if (content && content.classList.contains("section-content")) {
-        content.classList.toggle("collapsed");
-      }
-    });
-  });
-
-  console.log("✅ Collapsible sections wired");
-}
-
-function addDays(date, deltaDays) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + deltaDays);
-  return d;
-}
-
-function cacheSet(key, value) {
-  dayCache.set(key, { value, ts: Date.now() });
-
-  // simple LRU-ish eviction
-  if (dayCache.size > CACHE_MAX_DAYS) {
-    const oldestKey = [...dayCache.entries()]
-      .sort((a, b) => a[1].ts - b[1].ts)[0]?.[0];
-    if (oldestKey) dayCache.delete(oldestKey);
-  }
-}
-
-function cacheGet(key) {
-  const hit = dayCache.get(key);
-  if (!hit) return null;
-  // bump recency
-  hit.ts = Date.now();
-  return hit.value;
-}
-
-async function fetchDay(dateObj, opts = {}) {
-  const { force = false } = opts;
-  const dateStr = formatDateForAPI(dateObj);
-
-  if (!force) {
-    const cached = cacheGet(dateStr);
-    if (cached) return cached;
-  } else {
-    dayCache.delete(dateStr);
-  }
-
-  const result = await apiGet("load", { date: dateStr });
-  cacheSet(dateStr, result);
-  return result;
-}
-
-function prefetchAround(dateObj) {
-  // fire-and-forget prefetch
-  for (let delta = -PREFETCH_RANGE; delta <= PREFETCH_RANGE; delta++) {
-    if (delta === 0) continue;
-    const d = addDays(dateObj, delta);
-    const key = formatDateForAPI(d);
-    if (cacheGet(key)) continue;
-
-    fetchDay(d).catch(() => {});
-  }
-}
-
+// =====================================
+// MOVEMENT UI
+// =====================================
 function setupMovementUI() {
   const btn = document.getElementById("addMovementBtn");
   if (!btn) {
@@ -1049,13 +763,13 @@ function promptAddMovement() {
   movements.push({ duration: durationNum, type });
 
   renderMovements();
-  triggerSaveSoon();
+  queueSaveSoon("movement_add");
 }
 
 function removeMovement(index) {
   movements.splice(index, 1);
   renderMovements();
-  triggerSaveSoon();
+  queueSaveSoon("movement_remove");
 }
 
 function renderMovements() {
@@ -1065,13 +779,13 @@ function renderMovements() {
   list.innerHTML = "";
 
   movements.forEach((m, idx) => {
-    const duration = m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"];
-    const type = m.type ?? m["Type"] ?? m["type"] ?? "";
+    const duration = m.duration ?? "";
+    const type = m.type ?? "";
 
     const item = document.createElement("div");
     item.className = "item";
     item.innerHTML = `
-      <span class="item-text">${duration} min (${type})</span>
+      <span class="item-text">${escapeHtml(duration)} min (${escapeHtml(type)})</span>
       <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
     `;
 
@@ -1079,10 +793,83 @@ function renderMovements() {
     list.appendChild(item);
   });
 
-  // If you have completion logic, call it safely
   if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 }
 
+// =====================================
+// READING UI (simple prompt version)
+// If you have a modal version, you can replace this safely.
+// =====================================
+function setupReadingUI() {
+  const btn = document.getElementById("addReadingBtn");
+  if (!btn) {
+    console.warn("addReadingBtn not found");
+    return;
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    promptAddReading();
+  });
+
+  console.log("✅ Reading UI wired");
+}
+
+function promptAddReading() {
+  const raw = prompt("Reading duration (minutes):");
+  if (raw === null) return;
+
+  const durationNum = parseInt(raw, 10);
+  if (!Number.isFinite(durationNum) || durationNum <= 0) {
+    alert("Please enter a valid number of minutes.");
+    return;
+  }
+
+  let book = prompt("Book title (optional). Leave blank to use your last book:");
+  if (book === null) return;
+  book = String(book || "").trim();
+  if (!book && lastBookTitle) book = lastBookTitle;
+  if (book) lastBookTitle = book;
+
+  readings.push({ duration: durationNum, book });
+
+  renderReadings();
+  queueSaveSoon("reading_add");
+}
+
+function removeReading(index) {
+  readings.splice(index, 1);
+  renderReadings();
+  queueSaveSoon("reading_remove");
+}
+
+function renderReadings() {
+  const list = document.getElementById("readingList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  readings.forEach((r, idx) => {
+    const duration = r.duration ?? "";
+    const book = r.book ?? "";
+
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerHTML = `
+      <span class="item-text">${escapeHtml(duration)} min${book ? ` — ${escapeHtml(book)}` : ""}</span>
+      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
+    `;
+
+    item.querySelector("button").addEventListener("click", () => removeReading(idx));
+    list.appendChild(item);
+  });
+
+  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+}
+
+// =====================================
+// AVERAGES (includes readingMinutes7d if you added it server-side)
+// =====================================
 function updateAverages(averages) {
   currentAverages = averages || null;
 
@@ -1090,162 +877,118 @@ function updateAverages(averages) {
   const avgStepsEl = document.getElementById("avgSteps");
   const avgMovementsEl = document.getElementById("avgMovements");
   const rehitWeekEl = document.getElementById("rehitWeek");
+  const avgReadingMinutesEl = document.getElementById("avgReadingMinutes");
 
   if (!averages) {
     if (avgSleepEl) avgSleepEl.textContent = "--";
     if (avgStepsEl) avgStepsEl.textContent = "--";
     if (avgMovementsEl) avgMovementsEl.textContent = "--";
     if (rehitWeekEl) rehitWeekEl.textContent = "--";
+    if (avgReadingMinutesEl) avgReadingMinutesEl.textContent = "--";
     return;
   }
 
-  // Sleep: show 2 decimals
   if (avgSleepEl) {
     const v = averages.sleep;
-    avgSleepEl.textContent = (v === null || v === undefined || v === "")
-      ? "--"
-      : Number(v).toFixed(2);
+    avgSleepEl.textContent = (v === null || v === undefined || v === "") ? "--" : Number(v).toFixed(2);
   }
 
-  // Steps: show whole number w/ commas
   if (avgStepsEl) {
     const v = averages.steps;
-    avgStepsEl.textContent = (v === null || v === undefined || v === "")
-      ? "--"
-      : Number(v).toLocaleString();
+    avgStepsEl.textContent = (v === null || v === undefined || v === "") ? "--" : Number(v).toLocaleString();
   }
 
-  // Movements per day: your backend returns a string like "0.7"
   if (avgMovementsEl) {
     const v = averages.movements;
     const num = (v === null || v === undefined || v === "") ? null : Number(v);
-    avgMovementsEl.textContent = (num === null || Number.isNaN(num))
-      ? "--"
-      : num.toFixed(1);
+    avgMovementsEl.textContent = (num === null || Number.isNaN(num)) ? "--" : num.toFixed(1);
   }
 
-  // REHIT sessions this week
   if (rehitWeekEl) {
     const v = averages.rehitWeek;
-    rehitWeekEl.textContent = (v === null || v === undefined || v === "")
-      ? "--"
-      : String(v);
-  }
-}
-
-function markSleepSaved() {
-  const el = document.getElementById("sleepHours");
-  if (!el) return;
-
-  el.classList.add("saved");
-
-  // Optional: remove after a few seconds
-  setTimeout(() => {
-    el.classList.remove("saved");
-  }, 3000);
-}
-
-function formatMDYY(input) {
-  if (!input) return "";
-
-  // If it's already M/D/YY, keep it
-  if (typeof input === "string") {
-    const s = input.trim();
-    if (/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(s)) return s;
-
-    // Try to parse other formats safely
-    const d = new Date(s);
-    if (!Number.isNaN(d.getTime())) return formatDateForAPI(d);
-
-    return s; // fallback
+    rehitWeekEl.textContent = (v === null || v === undefined || v === "") ? "--" : String(v);
   }
 
-  // Date object
-  if (input instanceof Date) return formatDateForAPI(input);
-
-  // Numbers etc.
-  const d = new Date(input);
-  if (!Number.isNaN(d.getTime())) return formatDateForAPI(d);
-
-  return String(input);
+  if (avgReadingMinutesEl) {
+    const v = averages.readingMinutes7d;
+    avgReadingMinutesEl.textContent = (v === null || v === undefined || v === "") ? "--" : Number(v).toLocaleString();
+  }
 }
 
 // =====================================
-// READING SESSIONS MODAL UI
+// Reload when returning after idle
 // =====================================
-function setupReadingUI() {
-  const addBtn = document.getElementById("addReadingBtn");
-
-  const overlay = document.getElementById("readingModalOverlay");
-  const closeBtn = document.getElementById("readingModalClose");
-  const cancelBtn = document.getElementById("readingModalCancel");
-  const saveBtn = document.getElementById("readingModalSave");
-
-  const durationEl = document.getElementById("readingDuration");
-  const bookEl = document.getElementById("readingBook");
-  const errorEl = document.getElementById("readingModalError");
-
-  if (!addBtn || !overlay || !closeBtn || !cancelBtn || !saveBtn || !durationEl || !bookEl || !errorEl) {
-    console.warn("Reading modal elements missing");
-    return;
-  }
-
-  const open = () => {
-    errorEl.textContent = "";
-    durationEl.value = "";
-    bookEl.value = (lastBookTitle || ""); // ✅ default to previous title
-    overlay.style.display = "flex";
-
-    // Focus duration for quick entry
-    setTimeout(() => durationEl.focus(), 0);
-  };
-
-  const close = () => {
-    overlay.style.display = "none";
-  };
-
-  const submit = () => {
-    errorEl.textContent = "";
-
-    const durationNum = parseInt(durationEl.value, 10);
-    if (!Number.isFinite(durationNum) || durationNum <= 0) {
-      errorEl.textContent = "Please enter a valid duration in minutes.";
-      durationEl.focus();
+function setupReloadOnReturnFromIdle() {
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState !== "visible") {
+      // best-effort save if leaving
+      await flushSaveNow("visibility_hide");
       return;
     }
 
-    let book = String(bookEl.value || "").trim();
-    if (!book && lastBookTitle) book = lastBookTitle; // ✅ default if left blank
-    if (book) lastBookTitle = book;
-
-    readings.push({ duration: durationNum, book });
-
-    renderReadings();
-    triggerSaveSoon();
-    close();
-  };
-
-  addBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    open();
+    const idleFor = Date.now() - lastUserActivityAt;
+    if (idleFor > RELOAD_AFTER_IDLE_MS) {
+      await loadDataForCurrentDate({ force: true });
+    }
   });
 
-  closeBtn.addEventListener("click", close);
-  cancelBtn.addEventListener("click", close);
-
-  // Click outside card closes
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) close();
+  window.addEventListener("focus", async () => {
+    const idleFor = Date.now() - lastUserActivityAt;
+    if (idleFor > RELOAD_AFTER_IDLE_MS) {
+      await loadDataForCurrentDate({ force: true });
+    }
   });
-
-  // Enter to submit, Esc to close
-  overlay.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-    if (e.key === "Enter") submit();
-  });
-
-  saveBtn.addEventListener("click", submit);
-
-  console.log("✅ Reading modal wired");
 }
 
+// =====================================
+// Biomarkers toggle wiring (safe noop if not present)
+// =====================================
+function setupBiomarkersUIToggleSafe() {
+  const btn = document.getElementById("biomarkersBtn");
+  const page = document.getElementById("biomarkersPage");
+  const form = document.getElementById("healthForm");
+  if (!btn || !page || !form) return;
+
+  btn.addEventListener("click", async () => {
+    const open = page.style.display === "block";
+    if (open) {
+      page.style.display = "none";
+      form.style.display = "block";
+    } else {
+      // Save before leaving habit page
+      await flushSaveNow("open_biomarkers");
+      form.style.display = "none";
+      page.style.display = "block";
+
+      // If you have loadBiomarkersMostRecent defined elsewhere, call it
+      if (typeof loadBiomarkersMostRecent === "function") {
+        await loadBiomarkersMostRecent();
+      }
+    }
+  });
+}
+
+// =====================================
+// Status message UI
+// =====================================
+function showStatus(msg, kind = "success", timeoutMs = 1500) {
+  const el = document.getElementById("statusMessage");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `status-message ${kind}`;
+  el.style.display = "block";
+  clearTimeout(showStatus._t);
+  showStatus._t = setTimeout(() => { el.style.display = "none"; }, timeoutMs);
+}
+
+// =====================================
+// Utilities
+// =====================================
+function escapeHtml(s) {
+  return String(s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
