@@ -1170,3 +1170,82 @@ function formatMDYY(input) {
   return String(input);
 }
 
+// =====================================
+// READING SESSIONS MODAL UI
+// =====================================
+function setupReadingUI() {
+  const addBtn = document.getElementById("addReadingBtn");
+
+  const overlay = document.getElementById("readingModalOverlay");
+  const closeBtn = document.getElementById("readingModalClose");
+  const cancelBtn = document.getElementById("readingModalCancel");
+  const saveBtn = document.getElementById("readingModalSave");
+
+  const durationEl = document.getElementById("readingDuration");
+  const bookEl = document.getElementById("readingBook");
+  const errorEl = document.getElementById("readingModalError");
+
+  if (!addBtn || !overlay || !closeBtn || !cancelBtn || !saveBtn || !durationEl || !bookEl || !errorEl) {
+    console.warn("Reading modal elements missing");
+    return;
+  }
+
+  const open = () => {
+    errorEl.textContent = "";
+    durationEl.value = "";
+    bookEl.value = (lastBookTitle || ""); // ✅ default to previous title
+    overlay.style.display = "flex";
+
+    // Focus duration for quick entry
+    setTimeout(() => durationEl.focus(), 0);
+  };
+
+  const close = () => {
+    overlay.style.display = "none";
+  };
+
+  const submit = () => {
+    errorEl.textContent = "";
+
+    const durationNum = parseInt(durationEl.value, 10);
+    if (!Number.isFinite(durationNum) || durationNum <= 0) {
+      errorEl.textContent = "Please enter a valid duration in minutes.";
+      durationEl.focus();
+      return;
+    }
+
+    let book = String(bookEl.value || "").trim();
+    if (!book && lastBookTitle) book = lastBookTitle; // ✅ default if left blank
+    if (book) lastBookTitle = book;
+
+    readings.push({ duration: durationNum, book });
+
+    renderReadings();
+    triggerSaveSoon();
+    close();
+  };
+
+  addBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    open();
+  });
+
+  closeBtn.addEventListener("click", close);
+  cancelBtn.addEventListener("click", close);
+
+  // Click outside card closes
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close();
+  });
+
+  // Enter to submit, Esc to close
+  overlay.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+    if (e.key === "Enter") submit();
+  });
+
+  saveBtn.addEventListener("click", submit);
+
+  console.log("✅ Reading modal wired");
+}
+
