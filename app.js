@@ -11,7 +11,7 @@
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
-console.log("******* Blood Icon 3 ******");
+console.log("******* Complete Code.gs redo ******");
 window.__APP_JS_OK__ = true;
 
 // =====================================
