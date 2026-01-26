@@ -640,6 +640,27 @@ prevBodyForDelta = {
 
     // Apply carried-forward body values
     applyBodyFieldsFromDaily(bodySource);
+    
+    // Set "previous" as the last time each metric was DIFFERENT (avoids 0 deltas from carry-forward)
+    const curWeight = document.getElementById("weight")?.value;
+    const curLean = document.getElementById("leanMass")?.value;
+    const curFat = document.getElementById("bodyFat")?.value;
+
+    const [prevW, prevL, prevF] = await Promise.all([
+      getMostRecentDifferentBodyValue(currentDate, ["Weight (lbs)", "Weight"], curWeight),
+      getMostRecentDifferentBodyValue(currentDate, ["Lean Mass (lbs)", "Lean Mass"], curLean),
+      getMostRecentDifferentBodyValue(currentDate, ["Body Fat (lbs)", "Body Fat"], curFat)
+]);
+
+prevBodyForDelta = {
+  weight: prevW?.value ?? null,
+  leanMass: prevL?.value ?? null,
+  bodyFat: prevF?.value ?? null
+};
+
+// (optional) if you want to show the date too later, keep prevW?.date etc.
+updateBodyDeltasFromUI();
+
     updateBodyDeltasFromUI();
     
 
@@ -1076,5 +1097,33 @@ function updateBodyDeltasFromUI() {
   // Body fat: decreasing is positive
   const dF = (curFat !== null && prevF !== null) ? (curFat - prevF) : null;
   setDelta("bodyFatDelta", dF, dF !== null ? (dF < 0) : false);
+}
+
+async function getMostRecentDifferentBodyValue(beforeDate, fieldKeys, currentValue, lookbackDays = 180) {
+  const cur = parseNum(currentValue);
+  if (cur === null) return null;
+
+  const d = new Date(beforeDate);
+
+  for (let i = 1; i <= lookbackDays; i++) {
+    d.setDate(d.getDate() - 1);
+    const dateStr = formatDateForAPI(d);
+
+    const result = await apiGet("load", { date: dateStr });
+    const daily = result?.daily;
+    if (!daily) continue;
+
+    const priorRaw = fieldKeys.reduce((acc, k) => acc ?? daily[k], undefined);
+    const prior = parseNum(priorRaw);
+
+    if (prior === null) continue;
+
+    // Treat as "different" if not equal (small tolerance)
+    if (Math.abs(prior - cur) > 0.0001) {
+      return { value: prior, date: dateStr };
+    }
+  }
+
+  return null;
 }
 
