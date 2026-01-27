@@ -28,6 +28,7 @@
  *   <div class="delta-indicator" id="bodyFatDelta"></div>
  **********************************************/
 
+console.log("reverted to 1/26");
 console.log("✅ app.js running", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
