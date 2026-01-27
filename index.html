@@ -1155,15 +1155,38 @@
     <div class="section" id="movementSection">
       <div class="section-header">Movement</div>
       <div class="section-content">
-        <div class="grid-2">
-          <div class="field-group">
-            <label class="field-label">Carol Bike</label>
-            <div class="checkbox-field">
-              <input type="checkbox" id="rehit">
-              <label for="rehit">REHIT 2x10</label>
-            </div>
-            <div class="average-display">REHIT Sessions this week: <span id="rehitWeek">--</span></div>
-          </div>
+        <!-- REHIT buttons row -->
+<div class="field-group">
+  <label class="field-label">Carol Bike</label>
+
+  <div class="grid-2">
+    <!-- REHIT 2x10 -->
+    <div>
+      <div class="checkbox-field">
+        <input type="checkbox" id="rehit2">
+        <label for="rehit2">REHIT 2x10</label>
+      </div>
+      <div class="average-display">This week: <span id="rehitWeek">--</span></div>
+    </div>
+
+    <!-- REHIT 3x10 -->
+    <div>
+      <div class="checkbox-field">
+        <input type="checkbox" id="rehit3">
+        <label for="rehit3">REHIT 3x10</label>
+      </div>
+      <div class="average-display">This week: <span id="rehit3Week">--</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Steps full-width row below -->
+<div class="field-group">
+  <label class="field-label">Steps</label>
+  <input type="text" inputmode="numeric" pattern="[0-9]*" class="input-field" id="steps">
+  <div class="average-display">7-day avg: <span id="avgSteps">--</span></div>
+</div>
+
           <div class="field-group">
             <label class="field-label">Steps</label>
             <input type="number" inputmode="numeric" class="input-field" id="steps">
