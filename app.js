@@ -1,31 +1,25 @@
 /**********************************************
  * Habit Tracker - app.js (clean + consistent)
  *
- * CONSISTENCY RULES:
- * ✅ Load data when:
- *    - you change dates (prev/next)
- *    - you return to the app after being idle
+ * LOAD:
+ *  - when changing dates (prev/next)
+ *  - when returning after idle time
  *
- * ✅ Save data when:
- *    - you blur (click out) of an input/textarea
- *    - you collapse a section
- *    - you toggle a checkbox
- *    - you press water +/- buttons
- *    - you add/remove a movement or reading session
+ * SAVE:
+ *  - blur of input/textarea
+ *  - collapsing a section
+ *  - checkbox toggle
+ *  - water +/- buttons
+ *  - add/remove movement or reading
  *
- * 🚫 Never auto-reload immediately after saving (prevents “revert/disappear”)
+ * NO auto-reload after save (prevents “revert/disappear”)
  *
- * BODY DELTA INDICATORS:
- * - Weight: down is good (green ▼)
- * - Lean mass: up is good (green ▲)
- * - Body fat: down is good (green ▼)
- * - Previous baseline = last time that metric was DIFFERENT (not just yesterday’s carry-forward)
- * - Not shown for Water (lbs)
- *
- * NOTE: For indicators to render, index.html must include:
- *   <div class="delta-indicator" id="weightDelta"></div>
- *   <div class="delta-indicator" id="leanMassDelta"></div>
- *   <div class="delta-indicator" id="bodyFatDelta"></div>
+ * BODY DELTAS:
+ *  - Weight: down is good (green ▼)
+ *  - Lean mass: up is good (green ▲)
+ *  - Body fat: down is good (green ▼)
+ *  - Baseline = last time value was DIFFERENT (not carry-forward)
+ *  - No deltas for Water (lbs)
  **********************************************/
 
 console.log("✅ app.js running", new Date().toISOString());
@@ -35,17 +29,17 @@ window.__APP_JS_OK__ = true;
 // CONFIG
 // =====================================
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
-const RELOAD_AFTER_IDLE_MS = 2 * 60 * 1000; // 2 min idle -> reload on return
-const BODY_DIFF_LOOKBACK_DAYS = 365;        // how far back to find last different body measurement
+const RELOAD_AFTER_IDLE_MS = 2 * 60 * 1000; // 2 minutes
+const BODY_DIFF_LOOKBACK_DAYS = 365;
 
-// Body fields (carry-forward + detection)
+// Body fields (carry-forward)
 const BODY_FIELDS = [
   { id: "weight", keys: ["Weight (lbs)", "Weight"] },
-  { id: "waist", keys: ["Waist (in)", "Waist"] },
+  { id: "waist", keys: ["Waist (in)", "Waist"] }, // supports either
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
-  { id: "water", keys: ["Water (lbs)"] } // IMPORTANT: do NOT fall back to "Water" (hydration)
+  { id: "water", keys: ["Water (lbs)"] } // IMPORTANT: do NOT fall back to hydration "Water"
 ];
 
 // =====================================
@@ -82,13 +76,11 @@ let lastUserActivityAt = Date.now();
 let movements = [];
 let readings = [];
 let honeyDos = [];
-
-let currentAverages = null;
 let lastBookTitle = "";
 
 let waterCount = 0;
 
-// Body deltas
+// Body deltas baseline (previous different)
 let prevBodyForDelta = { weight: null, leanMass: null, bodyFat: null };
 let _deltaFetchToken = 0;
 
@@ -98,6 +90,7 @@ let _deltaFetchToken = 0;
 document.addEventListener("DOMContentLoaded", async () => {
   setupDateNav();
   setupCheckboxes();
+  setupRehitChoice(); // mutual exclusivity between rehit2/rehit3
   setupWaterButtons();
   setupInputSaveOnBlur();
   setupCollapsibleSectionsSaveOnCollapse();
@@ -106,47 +99,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupBloodPressureCalculator();
   setupReloadOnReturnFromIdle();
 
-  // Optional Biomarkers toggle wiring (no-op if elements absent)
+  // optional biomarkers toggle (no-op if not present)
   setupBiomarkersUIToggleSafe();
 
   updateDateDisplay();
-  updatePhaseInfo();
+  updatePhaseInfo?.();
 
   await loadDataForCurrentDate({ force: true });
 });
-
-// =====================================
-// PHASE INFO
-// =====================================
-const PHASE_START_DATE = new Date("2026-01-19T00:00:00");
-const PHASE_LENGTH_DAYS = 21;
-
-function updatePhaseInfo() {
-  const start = new Date(PHASE_START_DATE);
-  start.setHours(0, 0, 0, 0);
-
-  const cur = new Date(currentDate);
-  cur.setHours(0, 0, 0, 0);
-
-  const msPerDay = 1000 * 60 * 60 * 24;
-  const daysSinceStart = Math.floor((cur - start) / msPerDay);
-
-  const safeDays = Math.max(0, daysSinceStart);
-  const phase = Math.floor(safeDays / PHASE_LENGTH_DAYS) + 1;
-  const dayInPhase = (safeDays % PHASE_LENGTH_DAYS) + 1;
-
-  const phaseInfoEl = document.getElementById("phaseInfo");
-  if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH_DAYS}`;
-
-  const subtitleEl = document.querySelector(".subtitle");
-  if (subtitleEl) subtitleEl.textContent = `Phase ${phase}`;
-
-  const bar = document.getElementById("phaseProgressBar");
-  if (bar) {
-    const progress = (dayInPhase - 1) / PHASE_LENGTH_DAYS;
-    bar.style.width = `${Math.round(progress * 100)}%`;
-  }
-}
 
 // =====================================
 // DATE + NAV
@@ -160,8 +120,7 @@ function formatDateForAPI(date = currentDate) {
 
 function updateDateDisplay() {
   const el = document.getElementById("dateDisplay");
-  if (!el) return;
-  el.textContent = currentDate.toDateString();
+  if (el) el.textContent = currentDate.toDateString();
 }
 
 function setupDateNav() {
@@ -185,7 +144,7 @@ async function changeDate(days) {
 
   currentDate.setDate(currentDate.getDate() + days);
   updateDateDisplay();
-  updatePhaseInfo();
+  updatePhaseInfo?.();
 
   await loadDataForCurrentDate({ force: true });
 }
@@ -195,6 +154,7 @@ async function changeDate(days) {
 // =====================================
 async function loadDataForCurrentDate({ force = false } = {}) {
   const dateStr = formatDateForAPI(currentDate);
+
   try {
     showStatus("Loading…", "loading");
 
@@ -247,6 +207,8 @@ async function flushSaveNow(reason = "flush") {
 
     dataChanged = false;
     showStatus("Saved ✓", "success");
+    // IMPORTANT: no reload here
+
   } catch (err) {
     console.error("Save failed:", err);
     showStatus("Save failed", "error");
@@ -260,6 +222,12 @@ async function flushSaveNow(reason = "flush") {
 }
 
 function buildPayloadFromUI() {
+  // REHIT: store a string in the existing "REHIT 2x10" column
+  const rehitVal =
+    document.getElementById("rehit3")?.checked ? "3x10" :
+    document.getElementById("rehit2")?.checked ? "2x10" :
+    "";
+
   return {
     date: formatDateForAPI(currentDate),
 
@@ -275,7 +243,9 @@ function buildPayloadFromUI() {
     inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
     inhalerEvening: !!document.getElementById("inhalerEvening")?.checked,
     multiplication: !!document.getElementById("multiplication")?.checked,
-    rehit: !!document.getElementById("rehit")?.checked,
+
+    // store string
+    rehit: rehitVal,
 
     creatine: !!document.getElementById("creatine")?.checked,
     vitaminD: !!document.getElementById("vitaminD")?.checked,
@@ -303,7 +273,7 @@ function buildPayloadFromUI() {
     boneMass: document.getElementById("boneMass")?.value || "",
     water: document.getElementById("water")?.value || "",
 
-    // Blood Pressure
+    // BP
     systolic: document.getElementById("systolic")?.value || "",
     diastolic: document.getElementById("diastolic")?.value || "",
     heartRate: document.getElementById("heartRate")?.value || "",
@@ -319,8 +289,8 @@ function buildPayloadFromUI() {
 }
 
 // =====================================
-// INPUTS: save on blur
-// Also updates body delta indicators live for weight/leanMass/bodyFat
+// INPUTS: save on BLUR
+// also update body delta indicators live
 // =====================================
 function setupInputSaveOnBlur() {
   document.querySelectorAll("input, textarea").forEach(el => {
@@ -365,7 +335,7 @@ function setupCollapsibleSectionsSaveOnCollapse() {
 }
 
 // =====================================
-// CHECKBOXES: save immediately on change
+// CHECKBOXES (general): save immediately
 // =====================================
 function toBool(v) {
   if (v === true) return true;
@@ -415,11 +385,34 @@ function setupCheckboxes() {
 }
 
 // =====================================
-// WATER BUTTONS: save immediately
+// REHIT mutual exclusivity
+// =====================================
+function setupRehitChoice() {
+  const rehit2 = document.getElementById("rehit2");
+  const rehit3 = document.getElementById("rehit3");
+  if (!rehit2 || !rehit3) return;
+
+  const enforce = (changed) => {
+    if (changed === rehit2 && rehit2.checked) {
+      rehit3.checked = false;
+      syncCheckboxVisual(rehit3);
+    }
+    if (changed === rehit3 && rehit3.checked) {
+      rehit2.checked = false;
+      syncCheckboxVisual(rehit2);
+    }
+  };
+
+  rehit2.addEventListener("change", () => enforce(rehit2));
+  rehit3.addEventListener("change", () => enforce(rehit3));
+}
+
+// =====================================
+// WATER +/- : save immediately
 // =====================================
 function updateWaterDisplay() {
-  const waterCountEl = document.getElementById("waterCount");
-  if (waterCountEl) waterCountEl.textContent = String(waterCount);
+  const el = document.getElementById("waterCount");
+  if (el) el.textContent = String(waterCount);
 }
 
 function setupWaterButtons() {
@@ -445,7 +438,7 @@ function setupWaterButtons() {
 }
 
 // =====================================
-// BLOOD PRESSURE CALCULATOR
+// BP status calculator (UI only)
 // =====================================
 function setupBloodPressureCalculator() {
   const systolicEl = document.getElementById("systolic");
@@ -453,7 +446,7 @@ function setupBloodPressureCalculator() {
   const bpStatusEl = document.getElementById("bpStatus");
   if (!systolicEl || !diastolicEl || !bpStatusEl) return;
 
-  const calculateBPStatus = () => {
+  const calc = () => {
     const systolic = parseInt(systolicEl.value, 10);
     const diastolic = parseInt(diastolicEl.value, 10);
 
@@ -482,12 +475,12 @@ function setupBloodPressureCalculator() {
     bpStatusEl.style.color = color;
   };
 
-  systolicEl.addEventListener("input", calculateBPStatus);
-  diastolicEl.addEventListener("input", calculateBPStatus);
+  systolicEl.addEventListener("input", calc);
+  diastolicEl.addEventListener("input", calc);
 }
 
 // =====================================
-// MOVEMENT UI
+// Movement UI
 // =====================================
 function setupMovementUI() {
   const btn = document.getElementById("addMovementBtn");
@@ -531,24 +524,19 @@ function renderMovements() {
   list.innerHTML = "";
 
   movements.forEach((m, idx) => {
-    const duration = m.duration ?? "";
-    const type = m.type ?? "";
-
     const item = document.createElement("div");
     item.className = "item";
     item.innerHTML = `
-      <span class="item-text">${escapeHtml(duration)} min (${escapeHtml(type)})</span>
-      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
+      <span class="item-text">${escapeHtml(m.duration)} min (${escapeHtml(m.type)})</span>
+      <button type="button" class="btn btn-danger">×</button>
     `;
     item.querySelector("button").addEventListener("click", () => removeMovement(idx));
     list.appendChild(item);
   });
-
-  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 }
 
 // =====================================
-// READING UI (prompt version)
+// Reading UI (prompt version)
 // =====================================
 function setupReadingUI() {
   const btn = document.getElementById("addReadingBtn");
@@ -597,72 +585,19 @@ function renderReadings() {
   list.innerHTML = "";
 
   readings.forEach((r, idx) => {
-    const duration = r.duration ?? "";
-    const book = r.book ?? "";
-
     const item = document.createElement("div");
     item.className = "item";
     item.innerHTML = `
-      <span class="item-text">${escapeHtml(duration)} min${book ? ` — ${escapeHtml(book)}` : ""}</span>
-      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
+      <span class="item-text">${escapeHtml(r.duration)} min${r.book ? ` — ${escapeHtml(r.book)}` : ""}</span>
+      <button type="button" class="btn btn-danger">×</button>
     `;
     item.querySelector("button").addEventListener("click", () => removeReading(idx));
     list.appendChild(item);
   });
-
-  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 }
 
 // =====================================
-// AVERAGES (optional: readingMinutes7d if present)
-// =====================================
-function updateAverages(averages) {
-  currentAverages = averages || null;
-
-  const avgSleepEl = document.getElementById("avgSleep");
-  const avgStepsEl = document.getElementById("avgSteps");
-  const avgMovementsEl = document.getElementById("avgMovements");
-  const rehitWeekEl = document.getElementById("rehitWeek");
-  const avgReadingMinutesEl = document.getElementById("avgReadingMinutes");
-
-  if (!averages) {
-    if (avgSleepEl) avgSleepEl.textContent = "--";
-    if (avgStepsEl) avgStepsEl.textContent = "--";
-    if (avgMovementsEl) avgMovementsEl.textContent = "--";
-    if (rehitWeekEl) rehitWeekEl.textContent = "--";
-    if (avgReadingMinutesEl) avgReadingMinutesEl.textContent = "--";
-    return;
-  }
-
-  if (avgSleepEl) {
-    const v = averages.sleep;
-    avgSleepEl.textContent = (v === null || v === undefined || v === "") ? "--" : Number(v).toFixed(2);
-  }
-
-  if (avgStepsEl) {
-    const v = averages.steps;
-    avgStepsEl.textContent = (v === null || v === undefined || v === "") ? "--" : Number(v).toLocaleString();
-  }
-
-  if (avgMovementsEl) {
-    const v = averages.movements;
-    const num = (v === null || v === undefined || v === "") ? null : Number(v);
-    avgMovementsEl.textContent = (num === null || Number.isNaN(num)) ? "--" : num.toFixed(1);
-  }
-
-  if (rehitWeekEl) {
-    const v = averages.rehitWeek;
-    rehitWeekEl.textContent = (v === null || v === undefined || v === "") ? "--" : String(v);
-  }
-
-  if (avgReadingMinutesEl) {
-    const v = averages.readingMinutes7d;
-    avgReadingMinutesEl.textContent = (v === null || v === undefined || v === "") ? "--" : Number(v).toLocaleString();
-  }
-}
-
-// =====================================
-// BODY carry-forward + DELTAS
+// Body carry-forward + deltas
 // =====================================
 function hasAnyBodyData(daily) {
   if (!daily) return false;
@@ -678,13 +613,9 @@ async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
   for (let i = 1; i <= lookbackDays; i++) {
     d.setDate(d.getDate() - 1);
     const dateStr = formatDateForAPI(d);
-
     const result = await apiGet("load", { date: dateStr });
     const daily = result?.daily;
-
-    if (hasAnyBodyData(daily)) {
-      return daily;
-    }
+    if (hasAnyBodyData(daily)) return daily;
   }
   return null;
 }
@@ -699,21 +630,12 @@ function applyBodyFieldsFromDaily(daily) {
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
   const waterBodyVal = source["Water (lbs)"]; // do NOT fall back to hydration
 
-  const weightEl = document.getElementById("weight");
-  const waistEl = document.getElementById("waist");
-  const leanMassEl = document.getElementById("leanMass");
-  const bodyFatEl = document.getElementById("bodyFat");
-  const boneMassEl = document.getElementById("boneMass");
-  const waterBodyEl = document.getElementById("water");
-
-  if (weightEl) weightEl.value = weightVal ?? "";
-  if (waistEl) waistEl.value = waistVal ?? "";
-  if (leanMassEl) leanMassEl.value = leanVal ?? "";
-  if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
-  if (boneMassEl) boneMassEl.value = boneVal ?? "";
-  if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
-
-  if (typeof calculatePercentages === "function") calculatePercentages();
+  if (document.getElementById("weight")) document.getElementById("weight").value = weightVal ?? "";
+  if (document.getElementById("waist")) document.getElementById("waist").value = waistVal ?? "";
+  if (document.getElementById("leanMass")) document.getElementById("leanMass").value = leanVal ?? "";
+  if (document.getElementById("bodyFat")) document.getElementById("bodyFat").value = fatVal ?? "";
+  if (document.getElementById("boneMass")) document.getElementById("boneMass").value = boneVal ?? "";
+  if (document.getElementById("water")) document.getElementById("water").value = waterBodyVal ?? "";
 }
 
 function parseNum(v) {
@@ -732,7 +654,7 @@ function setDelta(elId, delta, isPositive) {
     return;
   }
 
-  const abs = Math.round(Math.abs(delta) * 10) / 10; // 1 decimal
+  const abs = Math.round(Math.abs(delta) * 10) / 10;
   const tri = delta > 0 ? "▲" : "▼";
 
   el.classList.toggle("positive", isPositive);
@@ -750,17 +672,19 @@ function updateBodyDeltasFromUI() {
   const prevL = prevBodyForDelta.leanMass;
   const prevF = prevBodyForDelta.bodyFat;
 
+  // Weight: down is good
   const dW = (curWeight !== null && prevW !== null) ? (curWeight - prevW) : null;
   setDelta("weightDelta", dW, dW !== null ? (dW < 0) : false);
 
+  // Lean mass: up is good
   const dL = (curLean !== null && prevL !== null) ? (curLean - prevL) : null;
   setDelta("leanMassDelta", dL, dL !== null ? (dL > 0) : false);
 
+  // Body fat: down is good
   const dF = (curFat !== null && prevF !== null) ? (curFat - prevF) : null;
   setDelta("bodyFatDelta", dF, dF !== null ? (dF < 0) : false);
 }
 
-// Find previous baseline = last time each metric was DIFFERENT (single pass: <= lookback API calls)
 async function computePrevDifferentBodyBaselines_(beforeDate, currentVals, lookbackDays = BODY_DIFF_LOOKBACK_DAYS) {
   const remaining = new Set(["weight", "leanMass", "bodyFat"]);
   const out = { weight: null, leanMass: null, bodyFat: null };
@@ -813,117 +737,86 @@ async function computePrevDifferentBodyBaselines_(beforeDate, currentVals, lookb
 // populateForm
 // =====================================
 async function populateForm(data) {
-  // reset visuals
+  // reset checkbox visuals
   document.querySelectorAll(".checkbox-field").forEach(w => w.classList.remove("checked"));
-
-  // reset lists/state
-  movements = [];
-  readings = [];
-  honeyDos = [];
-  currentAverages = null;
 
   const d = data?.daily || null;
 
-  // Determine body source (carry-forward if needed)
+  // Carry-forward body if missing
   let bodySource = d;
   if (!hasAnyBodyData(d)) {
     bodySource = await getMostRecentBodyDaily(currentDate);
   }
 
-  // Update averages
-  updateAverages(data?.averages);
-
-  // Hydration
+  // Water counter
   waterCount = parseInt(d?.["Water"], 10) || 0;
   updateWaterDisplay();
 
-  // Movements/Readings/HoneyDos
-  movements = (data?.movements || []).map(m => ({
-    duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
-    type: m.type ?? m["Type"] ?? m["type"]
-  }));
-
-  readings = (data?.readings || []).map(r => ({
-    duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
-    book: r.book ?? r["Book"] ?? r["book"]
-  }));
-
-  honeyDos = data?.honeyDos || [];
-
-  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
-
-  renderMovements();
-  renderReadings();
-  if (typeof renderHoneyDos === "function") renderHoneyDos();
-
-  // Textareas
-  const reflectionsEl = document.getElementById("reflections");
-  if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
-  const storiesEl = document.getElementById("stories");
-  if (storiesEl) storiesEl.value = data?.stories || "";
-  const carlyEl = document.getElementById("carly");
-  if (carlyEl) carlyEl.value = data?.carly || "";
-
   // Numbers
-  const sleepEl = document.getElementById("sleepHours");
-  if (sleepEl) sleepEl.value = d?.["Hours of Sleep"] ?? "";
-  const stepsEl = document.getElementById("steps");
-  if (stepsEl) stepsEl.value = d?.["Steps"] ?? "";
-  const fitnessEl = document.getElementById("fitnessScore");
-  if (fitnessEl) fitnessEl.value = d?.["Fitness Score"] ?? "";
-  const caloriesEl = document.getElementById("calories");
-  if (caloriesEl) caloriesEl.value = d?.["Calories"] ?? "";
-  const peakWattsEl = document.getElementById("peakWatts");
-  if (peakWattsEl) peakWattsEl.value = d?.["Peak Watts"] ?? "";
-  const wattSecondsEl = document.getElementById("wattSeconds");
-  if (wattSecondsEl) wattSecondsEl.value = d?.["Watt Seconds"] ?? "";
+  if (document.getElementById("sleepHours")) document.getElementById("sleepHours").value = d?.["Hours of Sleep"] ?? "";
+  if (document.getElementById("steps")) document.getElementById("steps").value = d?.["Steps"] ?? "";
+  if (document.getElementById("fitnessScore")) document.getElementById("fitnessScore").value = d?.["Fitness Score"] ?? "";
+  if (document.getElementById("calories")) document.getElementById("calories").value = d?.["Calories"] ?? "";
+  if (document.getElementById("peakWatts")) document.getElementById("peakWatts").value = d?.["Peak Watts"] ?? "";
+  if (document.getElementById("wattSeconds")) document.getElementById("wattSeconds").value = d?.["Watt Seconds"] ?? "";
 
   // Checkboxes
-  setCheckbox("inhalerMorning", d?.["Grey's Inhaler Morning"] ?? d?.["Inhaler Morning"]);
-  setCheckbox("inhalerEvening", d?.["Grey's Inhaler Evening"] ?? d?.["Inhaler Evening"]);
+  setCheckbox("inhalerMorning", d?.["Grey's Inhaler Morning"]);
+  setCheckbox("inhalerEvening", d?.["Grey's Inhaler Evening"]);
   setCheckbox("multiplication", d?.["5 min Multiplication"]);
-  setCheckbox("rehit", d?.["REHIT 2x10"] ?? d?.["REHIT"]);
 
-  setCheckbox("creatine", d?.["Creatine Chews"] ?? d?.["Creatine"]);
+  // REHIT: set 2x10 or 3x10 from the same column
+  const rv = String(d?.["REHIT 2x10"] ?? "").trim();
+  setCheckbox("rehit2", rv === "2x10");
+  setCheckbox("rehit3", rv === "3x10");
+
+  setCheckbox("creatine", d?.["Creatine Chews"]);
   setCheckbox("vitaminD", d?.["Vitamin D"]);
   setCheckbox("no2", d?.["NO2"]);
-  setCheckbox("psyllium", d?.["Psyllium Husk"] ?? d?.["Psyllium"]);
+  setCheckbox("psyllium", d?.["Psyllium Husk"]);
 
   setCheckbox("breakfast", d?.["Breakfast"]);
   setCheckbox("lunch", d?.["Lunch"]);
   setCheckbox("dinner", d?.["Dinner"]);
 
-  setCheckbox("daySnacks", d?.["Healthy Day Snacks"] ?? d?.["Day Snacks"]);
-  setCheckbox("nightSnacks", d?.["Healthy Night Snacks"] ?? d?.["Night Snacks"]);
+  setCheckbox("daySnacks", d?.["Healthy Day Snacks"]);
+  setCheckbox("nightSnacks", d?.["Healthy Night Snacks"]);
   setCheckbox("noAlcohol", d?.["No Alcohol"]);
-
   setCheckbox("meditation", d?.["Meditation"]);
+
+  // Lists
+  movements = (data?.movements || []).map(m => ({
+    duration: m.duration ?? m["duration (min)"] ?? m["Duration (min)"] ?? m["Duration"],
+    type: m.type ?? m["type"] ?? m["Type"]
+  }));
+  renderMovements();
+
+  readings = (data?.readings || []).map(r => ({
+    duration: r.duration ?? r["duration (min)"] ?? r["Duration (min)"] ?? r["Duration"],
+    book: r.book ?? r["book"] ?? r["Book"]
+  }));
+  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
+  renderReadings();
+
+  honeyDos = data?.honeyDos || [];
+
+  // Textareas
+  if (document.getElementById("reflections")) document.getElementById("reflections").value = data?.reflections || "";
+  if (document.getElementById("stories")) document.getElementById("stories").value = data?.stories || "";
+  if (document.getElementById("carly")) document.getElementById("carly").value = data?.carly || "";
 
   // Body fields
   applyBodyFieldsFromDaily(bodySource);
 
-  // BP fields
-  const systolicEl = document.getElementById("systolic");
-  if (systolicEl) systolicEl.value = d?.["Systolic"] ?? "";
-  const diastolicEl = document.getElementById("diastolic");
-  if (diastolicEl) diastolicEl.value = d?.["Diastolic"] ?? "";
-  const heartRateEl = document.getElementById("heartRate");
-  if (heartRateEl) heartRateEl.value = d?.["Heart Rate"] ?? "";
+  // BP
+  if (document.getElementById("systolic")) document.getElementById("systolic").value = d?.["Systolic"] ?? "";
+  if (document.getElementById("diastolic")) document.getElementById("diastolic").value = d?.["Diastolic"] ?? "";
+  if (document.getElementById("heartRate")) document.getElementById("heartRate").value = d?.["Heart Rate"] ?? "";
 
-  if (systolicEl?.value && diastolicEl?.value) {
-    systolicEl.dispatchEvent(new Event("input"));
-  } else {
-    const bpStatusEl = document.getElementById("bpStatus");
-    if (bpStatusEl) {
-      bpStatusEl.textContent = "--";
-      bpStatusEl.style.color = "#52b788";
-    }
-  }
-
-  // Final sweep checkbox visuals
+  // Update checkbox visuals
   document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 
-  // ---- BODY DELTAS: baseline = last DIFFERENT values ----
+  // BODY DELTAS: compute baseline in background (ignore stale requests)
   const token = ++_deltaFetchToken;
 
   const curVals = {
@@ -932,21 +825,19 @@ async function populateForm(data) {
     bodyFat: parseNum(document.getElementById("bodyFat")?.value)
   };
 
-  // Hide until baseline is known
   prevBodyForDelta = { weight: null, leanMass: null, bodyFat: null };
   updateBodyDeltasFromUI();
 
-  // Compute baseline in background; then render if still on same load token
   (async () => {
     const baselines = await computePrevDifferentBodyBaselines_(currentDate, curVals);
-    if (token !== _deltaFetchToken) return; // ignore stale async completion
+    if (token !== _deltaFetchToken) return;
     prevBodyForDelta = baselines;
     updateBodyDeltasFromUI();
   })();
 }
 
 // =====================================
-// Reload when returning after idle
+// Reload on return after idle
 // =====================================
 function setupReloadOnReturnFromIdle() {
   document.addEventListener("visibilitychange", async () => {
@@ -971,7 +862,7 @@ function setupReloadOnReturnFromIdle() {
 }
 
 // =====================================
-// Biomarkers toggle wiring (safe no-op if not present)
+// Biomarkers toggle (safe no-op)
 // =====================================
 function setupBiomarkersUIToggleSafe() {
   const btn = document.getElementById("biomarkersBtn");
@@ -988,15 +879,13 @@ function setupBiomarkersUIToggleSafe() {
       await flushSaveNow("open_biomarkers");
       form.style.display = "none";
       page.style.display = "block";
-      if (typeof loadBiomarkersMostRecent === "function") {
-        await loadBiomarkersMostRecent();
-      }
+      if (typeof loadBiomarkersMostRecent === "function") await loadBiomarkersMostRecent();
     }
   });
 }
 
 // =====================================
-// STATUS UI + utils
+// Status UI + utils
 // =====================================
 function showStatus(msg, kind = "success", timeoutMs = 1500) {
   const el = document.getElementById("statusMessage");
