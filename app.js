@@ -1,3 +1,9 @@
+document.documentElement.insertAdjacentHTML(
+  "afterbegin",
+  "<div style='position:fixed;top:8px;left:8px;z-index:99999;background:#000;color:#0f0;padding:6px 8px;border-radius:8px;font:12px/1.2 -apple-system,system-ui'>app.js loaded</div>"
+);
+
+
 /**********************************************
  * Habit Tracker - app.js (clean + consistent)
  *
