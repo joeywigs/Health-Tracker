@@ -22,7 +22,7 @@
  *  - No deltas for Water (lbs)
  **********************************************/
 
-console.log("✅ app.js running", new Date().toISOString());
+console.log("✅ app.js running v1", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
