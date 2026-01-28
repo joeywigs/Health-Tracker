@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Reading render fix", new Date().toISOString());
+console.log("✅ app.js running - Swipe, refresh, reminders", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -85,6 +85,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setupMovementUI();
   setupReadingUI();
   setupBloodPressureCalculator();
+  setupSwipeNavigation();
+  setupPullToRefresh();
+  setupWeeklyReminders();
+  setupWeeklySummaryButton();
 
   updateDateDisplay();
   updatePhaseInfo();
@@ -170,6 +174,193 @@ function changeDate(days) {
 
   // show instantly if cached, else it will fetch
   loadDataForCurrentDate();
+  updateWeighReminder();
+  updateWeeklySummaryButton();
+}
+
+// =====================================
+// SWIPE NAVIGATION
+// =====================================
+function setupSwipeNavigation() {
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  const minSwipeDistance = 50;
+  
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  document.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+  
+  function handleSwipe() {
+    const swipeDistance = touchEndX - touchStartX;
+    
+    if (Math.abs(swipeDistance) < minSwipeDistance) return;
+    
+    // Swipe right = previous day
+    if (swipeDistance > 0) {
+      changeDate(-1);
+    }
+    // Swipe left = next day  
+    else {
+      changeDate(1);
+    }
+  }
+  
+  console.log("✅ Swipe navigation wired");
+}
+
+// =====================================
+// PULL TO REFRESH
+// =====================================
+function setupPullToRefresh() {
+  let touchStartY = 0;
+  let pulling = false;
+  
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) {
+      touchStartY = e.touches[0].clientY;
+      pulling = true;
+    }
+  }, { passive: true });
+  
+  document.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    
+    const touchY = e.touches[0].clientY;
+    const pullDistance = touchY - touchStartY;
+    
+    if (pullDistance > 100 && window.scrollY === 0) {
+      pulling = false;
+      loadDataForCurrentDate({ force: true });
+      
+      // Visual feedback
+      const statusMsg = document.getElementById("statusMessage");
+      if (statusMsg) {
+        statusMsg.textContent = "Refreshing...";
+        statusMsg.className = "status-message loading";
+        statusMsg.style.display = "block";
+        setTimeout(() => {
+          statusMsg.style.display = "none";
+        }, 1500);
+      }
+    }
+  }, { passive: true });
+  
+  document.addEventListener('touchend', () => {
+    pulling = false;
+  }, { passive: true });
+  
+  console.log("✅ Pull-to-refresh wired");
+}
+
+// =====================================
+// WEEKLY REMINDERS
+// =====================================
+function setupWeeklyReminders() {
+  updateWeighReminder();
+  console.log("✅ Weekly reminders wired");
+}
+
+function updateWeighReminder() {
+  const today = new Date(currentDate);
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday
+  
+  // Only show on Mondays
+  if (dayOfWeek !== 1) {
+    hideWeighReminder();
+    return;
+  }
+  
+  // Check if body measurements exist for today
+  const dateStr = formatDateForAPI(currentDate);
+  apiGet("load", { date: dateStr }).then(result => {
+    const daily = result?.daily;
+    const hasBodyData = daily && (daily["Weight (lbs)"] || daily["Waist"]);
+    
+    if (!hasBodyData) {
+      showWeighReminder();
+    } else {
+      hideWeighReminder();
+    }
+  }).catch(() => {
+    // If error, don't show reminder
+    hideWeighReminder();
+  });
+}
+
+function showWeighReminder() {
+  let banner = document.getElementById("weighReminder");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "weighReminder";
+    banner.className = "reminder-banner";
+    banner.innerHTML = `
+      <span>📊 Weigh-in Monday! Don't forget to log your body measurements.</span>
+      <button onclick="document.getElementById('weighReminder').remove()">✕</button>
+    `;
+    
+    const header = document.querySelector(".header");
+    if (header) {
+      header.parentNode.insertBefore(banner, header.nextSibling);
+    }
+  }
+}
+
+function hideWeighReminder() {
+  const banner = document.getElementById("weighReminder");
+  if (banner) banner.remove();
+}
+
+// =====================================
+// WEEKLY SUMMARY
+// =====================================
+function setupWeeklySummaryButton() {
+  updateWeeklySummaryButton();
+  console.log("✅ Weekly summary button wired");
+}
+
+function updateWeeklySummaryButton() {
+  const today = new Date(currentDate);
+  const dayOfWeek = today.getDay(); // 0 = Sunday
+  
+  let summaryBtn = document.getElementById("weeklySummaryBtn");
+  
+  // Only show on Sundays
+  if (dayOfWeek === 0) {
+    if (!summaryBtn) {
+      summaryBtn = document.createElement("button");
+      summaryBtn.id = "weeklySummaryBtn";
+      summaryBtn.className = "btn btn-primary";
+      summaryBtn.textContent = "📊 View Week Summary";
+      summaryBtn.style.marginBottom = "20px";
+      summaryBtn.addEventListener("click", showWeeklySummary);
+      
+      const form = document.getElementById("healthForm");
+      if (form) {
+        form.parentNode.insertBefore(summaryBtn, form);
+      }
+    }
+  } else {
+    if (summaryBtn) summaryBtn.remove();
+  }
+}
+
+async function showWeeklySummary() {
+  // Calculate the week: Sunday to Saturday
+  const sunday = new Date(currentDate);
+  sunday.setDate(sunday.getDate() - sunday.getDay()); // Go back to Sunday
+  
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
+  
+  alert(`Weekly Summary\n${formatDateForAPI(sunday)} to ${formatDateForAPI(saturday)}\n\nComing soon with detailed stats!`);
+  
+  // TODO: Implement full weekly summary modal with charts
 }
 
 // =====================================
