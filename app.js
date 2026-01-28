@@ -10,7 +10,8 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Fixed Reading Log", new Date().toISOString());
+console.log("✅ app.js running - Reading render fix", new Date().toISOString());
+console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -576,6 +577,7 @@ async function populateForm(data) {
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
       book: r.book ?? r["book"] ?? r["Book"]
     }));
+    renderReadings();
 
     honeyDos = data?.honeyDos || [];
 
