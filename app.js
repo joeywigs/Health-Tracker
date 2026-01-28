@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Swipe, refresh, reminders", new Date().toISOString());
+console.log("✅ app.js running - Charts page added", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupPullToRefresh();
   setupWeeklyReminders();
   setupWeeklySummaryButton();
+  setupChartsPage();
 
   updateDateDisplay();
   updatePhaseInfo();
@@ -361,6 +362,359 @@ async function showWeeklySummary() {
   alert(`Weekly Summary\n${formatDateForAPI(sunday)} to ${formatDateForAPI(saturday)}\n\nComing soon with detailed stats!`);
   
   // TODO: Implement full weekly summary modal with charts
+}
+
+// =====================================
+// CHARTS PAGE
+// =====================================
+function setupChartsPage() {
+  const chartsBtn = document.getElementById("chartsBtn");
+  const chartsCloseBtn = document.getElementById("chartsCloseBtn");
+  
+  if (chartsBtn) {
+    chartsBtn.addEventListener("click", showChartsPage);
+  }
+  
+  if (chartsCloseBtn) {
+    chartsCloseBtn.addEventListener("click", hideChartsPage);
+  }
+  
+  console.log("✅ Charts page wired");
+}
+
+async function showChartsPage() {
+  const mainPage = document.getElementById("healthForm");
+  const chartsPage = document.getElementById("chartsPage");
+  
+  if (mainPage) mainPage.style.display = "none";
+  if (chartsPage) chartsPage.style.display = "block";
+  
+  // Scroll to top
+  window.scrollTo(0, 0);
+  
+  // Load data and render charts
+  await loadAndRenderCharts();
+}
+
+function hideChartsPage() {
+  const mainPage = document.getElementById("healthForm");
+  const chartsPage = document.getElementById("chartsPage");
+  
+  if (chartsPage) chartsPage.style.display = "none";
+  if (mainPage) mainPage.style.display = "block";
+  
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
+
+async function loadAndRenderCharts() {
+  // Fetch last 30 days of data
+  const days = 30;
+  const dataPoints = [];
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateStr = formatDateForAPI(date);
+    
+    try {
+      const result = await apiGet("load", { date: dateStr });
+      dataPoints.push({
+        date: dateStr,
+        daily: result?.daily || {},
+        averages: result?.averages || {}
+      });
+    } catch (err) {
+      console.error(`Failed to load ${dateStr}:`, err);
+    }
+  }
+  
+  // Render each chart
+  renderWeightChart(dataPoints);
+  renderSleepChart(dataPoints);
+  renderStepsChart(dataPoints);
+  renderRehitChart(dataPoints);
+  renderBodyCompositionChart(dataPoints);
+}
+
+let weightChart, sleepChart, stepsChart, rehitChart, bodyCompChart;
+
+function renderWeightChart(dataPoints) {
+  const canvas = document.getElementById("weightChart");
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext("2d");
+  
+  // Destroy existing chart
+  if (weightChart) weightChart.destroy();
+  
+  const labels = dataPoints.map(d => d.date);
+  const weights = dataPoints.map(d => parseFloat(d.daily["Weight (lbs)"]) || null);
+  const waists = dataPoints.map(d => parseFloat(d.daily["Waist"]) || null);
+  
+  weightChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Weight (lbs)',
+          data: weights,
+          borderColor: '#06ffa5',
+          backgroundColor: 'rgba(6, 255, 165, 0.1)',
+          tension: 0.3,
+          spanGaps: true
+        },
+        {
+          label: 'Waist (in)',
+          data: waists,
+          borderColor: '#4d9de0',
+          backgroundColor: 'rgba(77, 157, 224, 0.1)',
+          tension: 0.3,
+          spanGaps: true,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: true, labels: { color: '#e0e0e0' } }
+      },
+      scales: {
+        x: { 
+          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
+          grid: { color: '#3a3a3a' }
+        },
+        y: {
+          type: 'linear',
+          position: 'left',
+          ticks: { color: '#999' },
+          grid: { color: '#3a3a3a' },
+          title: { display: true, text: 'Weight (lbs)', color: '#999' }
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          ticks: { color: '#999' },
+          grid: { display: false },
+          title: { display: true, text: 'Waist (in)', color: '#999' }
+        }
+      }
+    }
+  });
+}
+
+function renderSleepChart(dataPoints) {
+  const canvas = document.getElementById("sleepChart");
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext("2d");
+  
+  if (sleepChart) sleepChart.destroy();
+  
+  const labels = dataPoints.map(d => d.date);
+  const sleep = dataPoints.map(d => parseFloat(d.daily["Hours of Sleep"]) || null);
+  
+  sleepChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Hours of Sleep',
+        data: sleep,
+        backgroundColor: '#a393eb',
+        borderColor: '#a393eb',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { 
+          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
+          grid: { color: '#3a3a3a' }
+        },
+        y: {
+          beginAtZero: true,
+          max: 12,
+          ticks: { color: '#999' },
+          grid: { color: '#3a3a3a' },
+          title: { display: true, text: 'Hours', color: '#999' }
+        }
+      }
+    }
+  });
+}
+
+function renderStepsChart(dataPoints) {
+  const canvas = document.getElementById("stepsChart");
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext("2d");
+  
+  if (stepsChart) stepsChart.destroy();
+  
+  const labels = dataPoints.map(d => d.date);
+  const steps = dataPoints.map(d => parseInt(d.daily["Steps"]) || null);
+  
+  stepsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Daily Steps',
+        data: steps,
+        borderColor: '#4d9de0',
+        backgroundColor: 'rgba(77, 157, 224, 0.1)',
+        tension: 0.3,
+        fill: true,
+        spanGaps: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { 
+          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
+          grid: { color: '#3a3a3a' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#999' },
+          grid: { color: '#3a3a3a' },
+          title: { display: true, text: 'Steps', color: '#999' }
+        }
+      }
+    }
+  });
+}
+
+function renderRehitChart(dataPoints) {
+  const canvas = document.getElementById("rehitChart");
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext("2d");
+  
+  if (rehitChart) rehitChart.destroy();
+  
+  const labels = dataPoints.map(d => d.date);
+  const rehitData = dataPoints.map(d => {
+    const val = d.daily["REHIT 2x10"];
+    if (val === "2x10") return 1;
+    if (val === "3x10") return 2;
+    return 0;
+  });
+  
+  rehitChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'REHIT Sessions',
+        data: rehitData,
+        backgroundColor: rehitData.map(v => {
+          if (v === 2) return '#52b788';
+          if (v === 1) return '#4d9de0';
+          return '#3a3a3a';
+        }),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { 
+          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
+          grid: { color: '#3a3a3a' }
+        },
+        y: {
+          beginAtZero: true,
+          max: 2,
+          ticks: { 
+            color: '#999',
+            stepSize: 1,
+            callback: function(value) {
+              if (value === 0) return 'None';
+              if (value === 1) return '2x10';
+              if (value === 2) return '3x10';
+              return value;
+            }
+          },
+          grid: { color: '#3a3a3a' }
+        }
+      }
+    }
+  });
+}
+
+function renderBodyCompositionChart(dataPoints) {
+  const canvas = document.getElementById("bodyCompChart");
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext("2d");
+  
+  if (bodyCompChart) bodyCompChart.destroy();
+  
+  const labels = dataPoints.map(d => d.date);
+  const leanMass = dataPoints.map(d => parseFloat(d.daily["Lean Mass (lbs)"]) || null);
+  const bodyFat = dataPoints.map(d => parseFloat(d.daily["Body Fat (lbs)"]) || null);
+  
+  bodyCompChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Lean Mass (lbs)',
+          data: leanMass,
+          borderColor: '#52b788',
+          backgroundColor: 'rgba(82, 183, 136, 0.1)',
+          tension: 0.3,
+          spanGaps: true
+        },
+        {
+          label: 'Body Fat (lbs)',
+          data: bodyFat,
+          borderColor: '#e63946',
+          backgroundColor: 'rgba(230, 57, 70, 0.1)',
+          tension: 0.3,
+          spanGaps: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: true, labels: { color: '#e0e0e0' } }
+      },
+      scales: {
+        x: { 
+          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
+          grid: { color: '#3a3a3a' }
+        },
+        y: {
+          ticks: { color: '#999' },
+          grid: { color: '#3a3a3a' },
+          title: { display: true, text: 'Pounds', color: '#999' }
+        }
+      }
+    }
+  });
 }
 
 // =====================================
