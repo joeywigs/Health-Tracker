@@ -78,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupDateNav();
   setupCheckboxes();
+  setupRehitMutualExclusion();
   setupWaterButtons();
   setupInputAutosave();
   setupCollapsibleSections();
@@ -256,7 +257,10 @@ function buildPayloadFromUI() {
     inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
     inhalerEvening: !!document.getElementById("inhalerEvening")?.checked,
     multiplication: !!document.getElementById("multiplication")?.checked,
-    rehit: !!document.getElementById("rehit")?.checked,
+    
+    // REHIT: send "2x10", "3x10", or ""
+    rehit: document.getElementById("rehit2")?.checked ? "2x10" : 
+           document.getElementById("rehit3")?.checked ? "3x10" : "",
 
     creatine: !!document.getElementById("creatine")?.checked,
     vitaminD: !!document.getElementById("vitaminD")?.checked,
@@ -351,6 +355,32 @@ function setupCheckboxes() {
   });
 
   console.log("✅ Checkboxes wired");
+}
+
+// =====================================
+// REHIT Mutual Exclusion
+// =====================================
+function setupRehitMutualExclusion() {
+  const rehit2 = document.getElementById("rehit2");
+  const rehit3 = document.getElementById("rehit3");
+  
+  if (!rehit2 || !rehit3) return;
+  
+  rehit2.addEventListener("change", () => {
+    if (rehit2.checked && rehit3.checked) {
+      rehit3.checked = false;
+      syncCheckboxVisual(rehit3);
+    }
+  });
+  
+  rehit3.addEventListener("change", () => {
+    if (rehit3.checked && rehit2.checked) {
+      rehit2.checked = false;
+      syncCheckboxVisual(rehit2);
+    }
+  });
+  
+  console.log("✅ REHIT mutual exclusion wired");
 }
 
 // =====================================
@@ -600,7 +630,11 @@ async function populateForm(data) {
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"]);
   setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"]);
   setCheckbox("multiplication", d["5 min Multiplication"]);
-  setCheckbox("rehit", d["REHIT 2x10"] ?? d["REHIT"]);
+  
+  // REHIT: check the right one based on value
+  const rehitVal = d["REHIT 2x10"] ?? d["REHIT"] ?? "";
+  setCheckbox("rehit2", rehitVal === "2x10" || rehitVal === true || rehitVal === "TRUE");
+  setCheckbox("rehit3", rehitVal === "3x10");
 
   setCheckbox("creatine", d["Creatine Chews"] ?? d["Creatine"]);
   setCheckbox("vitaminD", d["Vitamin D"]);
