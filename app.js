@@ -10,8 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running v5", new Date().toISOString());
-console.log("******* Added Waist & Blood Pressure ******");
+console.log("✅ app.js running - Fixed Reading Log", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
