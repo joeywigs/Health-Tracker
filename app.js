@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Added 3x10 REHIT", new Date().toISOString());
+console.log("✅ app.js running v5", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupInputAutosave();
   setupCollapsibleSections();
   setupMovementUI();
+  setupReadingUI();
   setupBloodPressureCalculator();
 
   updateDateDisplay();
@@ -828,6 +829,74 @@ function renderMovements() {
     `;
 
     item.querySelector("button").addEventListener("click", () => removeMovement(idx));
+    list.appendChild(item);
+  });
+
+  // If you have completion logic, call it safely
+  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+}
+
+function setupReadingUI() {
+  const btn = document.getElementById("addReadingBtn");
+  if (!btn) {
+    console.warn("addReadingBtn not found");
+    return;
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    promptAddReading();
+  });
+
+  console.log("✅ Reading UI wired");
+}
+
+function promptAddReading() {
+  const durationRaw = prompt("Reading duration (minutes):");
+  if (durationRaw === null) return;
+
+  const duration = parseInt(durationRaw, 10);
+  if (!Number.isFinite(duration) || duration <= 0) {
+    alert("Please enter a valid number of minutes.");
+    return;
+  }
+
+  const book = prompt("Book title:", lastBookTitle);
+  if (book === null) return;
+
+  const bookTitle = book.trim() || lastBookTitle;
+  
+  readings.push({ duration, book: bookTitle });
+  lastBookTitle = bookTitle;
+
+  renderReadings();
+  triggerSaveSoon();
+}
+
+function removeReading(index) {
+  readings.splice(index, 1);
+  renderReadings();
+  triggerSaveSoon();
+}
+
+function renderReadings() {
+  const list = document.getElementById("readingList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  readings.forEach((r, idx) => {
+    const duration = r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"];
+    const book = r.book ?? r["Book"] ?? r["book"] ?? "";
+
+    const item = document.createElement("div");
+    item.className = "item";
+    item.innerHTML = `
+      <span class="item-text">${duration} min — ${book}</span>
+      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
+    `;
+
+    item.querySelector("button").addEventListener("click", () => removeReading(idx));
     list.appendChild(item);
   });
 
