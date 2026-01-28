@@ -1,896 +1,662 @@
-/**********************************************
- * Habit Tracker - app.js (clean + consistent)
+/**************************************
+ * Habit Tracker - code.gs (clean)
  *
- * Key rules:
- * - LOAD: on date change, and when returning after idle
- * - SAVE: blur inputs, collapse sections, toggle checkboxes, water +/-, add/remove items
- * - NO auto-reload immediately after save
+ * Routes:
+ * - GET  ?action=load&date=M/D/YY&key=...
+ * - POST { action:"save", key:"...", data:{...} }
+ * - GET  ?action=biomarkers_load&key=...
+ * - POST { action:"biomarkers_save", key:"...", date:"M/D/YY", values:[...] }
  *
- * REHIT:
- * - Two buttons: rehit2 (2x10) and rehit3 (3x10) are mutually exclusive
- * - Stored as "2x10" / "3x10" / "" in the existing sheet column "REHIT 2x10"
- * - Weekly counts displayed:
- *    rehitWeek  = total REHIT sessions this week (2x10 + 3x10)
- *    rehit3Week = 3x10 sessions this week
+ * REHIT stored in "REHIT 2x10" column as:
+ * - "2x10" / "3x10" / ""  (backwards compatible with TRUE)
  *
- * Body deltas:
- * - Weight: down is good (green ▼)
- * - Lean mass: up is good (green ▲)
- * - Body fat: down is good (green ▼)
- * - Baseline = last time value was different (not carry-forward)
- **********************************************/
+ * Averages returned:
+ * - rehitWeek (2x10 + 3x10)
+ * - rehit3Week (3x10 only)
+ * - readingMinutes7d (rolling)
+ **************************************/
 
-console.log("✅ app.js running NEW", new Date().toISOString());
-window.__APP_JS_OK__ = true;
+const SPREADSHEET_ID = "1L4tbpsUv5amXWYNBLHLcsVueD289THc8a5ys9reSd98";
 
-// =====================================
-// CONFIG
-// =====================================
-const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
-const RELOAD_AFTER_IDLE_MS = 2 * 60 * 1000; // 2 min
-const BODY_DIFF_LOOKBACK_DAYS = 365;
-
-// Carry-forward body detection
-const BODY_FIELDS = [
-  { id: "weight", keys: ["Weight (lbs)", "Weight"] },
-  { id: "waist", keys: ["Waist (in)", "Waist"] },
-  { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
-  { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
-  { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
-  { id: "water", keys: ["Water (lbs)"] } // IMPORTANT: do NOT fall back to hydration "Water"
-];
-
-// =====================================
-// API
-// =====================================
-async function apiGet(action, params = {}) {
-  const url = new URL(API_URL);
-  url.searchParams.set("action", action);
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  const res = await fetch(url.toString(), { method: "GET" });
-  return await res.json();
+// Optional helper to set Script Properties once (put your real key and run once)
+function setApiKeyOnce() {
+  PropertiesService.getScriptProperties().setProperty("API_KEY", "PUT_YOUR_REAL_KEY_HERE");
 }
 
-async function apiPost(action, payload = {}) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...payload })
-  });
-  return await res.json();
+function doGet(e) {
+  try {
+    const p = (e && e.parameter) ? e.parameter : {};
+    const action = String(p.action || "").toLowerCase();
+    assertKey_(p.key);
+
+    if (action === "ping") return json_({ ok: true, ts: new Date().toISOString() });
+
+    if (action === "load") {
+      const dateStr = String(p.date || "").trim();
+      if (!dateStr) return json_({ error: true, message: "Missing date" });
+      return json_(loadDataForDate(dateStr));
+    }
+
+    if (action === "biomarkers_load") {
+      return json_(loadBiomarkers_());
+    }
+
+    return json_({ error: true, message: `Unknown action: ${action}` });
+  } catch (err) {
+    return json_({ error: true, message: err && err.message ? err.message : String(err) });
+  }
 }
 
-// =====================================
-// STATE
-// =====================================
-let currentDate = new Date();
-let dataChanged = false;
+function doPost(e) {
+  try {
+    const raw = (e && e.postData && e.postData.contents) ? e.postData.contents : "{}";
+    const body = JSON.parse(raw);
 
-let saveInFlight = false;
-let pendingSave = false;
+    assertKey_(body.key);
 
-let lastUserActivityAt = Date.now();
+    const action = String(body.action || "").toLowerCase();
 
-let movements = [];
-let readings = [];
-let honeyDos = [];
-let lastBookTitle = "";
+    if (action === "save") {
+      if (!body.data) return json_({ error: true, message: "Missing data" });
+      return json_(saveDataForDate(body.data));
+    }
 
-let waterCount = 0;
+    if (action === "biomarkers_save") {
+      if (!body.date) return json_({ error: true, message: "Missing date" });
+      if (!body.values) return json_({ error: true, message: "Missing values" });
+      return json_(saveBiomarkers_(String(body.date), body.values));
+    }
 
-// Body delta baselines
-let prevBodyForDelta = { weight: null, leanMass: null, bodyFat: null };
-let _deltaFetchToken = 0;
+    if (action === "ping") return json_({ ok: true, ts: new Date().toISOString(), via: "post" });
 
-// =====================================
-// BOOT
-// =====================================
-document.addEventListener("DOMContentLoaded", async () => {
-  setupDateNav();
-  setupCheckboxes();
-  setupRehitChoice();
-  setupWaterButtons();
-  setupInputSaveOnBlur();
-  setupCollapsibleSectionsSaveOnCollapse();
-  setupMovementUI();
-  setupReadingUI(); // prompt-based (modal markup can exist; this still works)
-  setupBloodPressureCalculator();
-  setupReloadOnReturnFromIdle();
-  setupBiomarkersUIToggleSafe();
-
-  updateDateDisplay();
-  if (typeof updatePhaseInfo === "function") updatePhaseInfo();
-
-  await loadDataForCurrentDate({ force: true });
-});
-
-// =====================================
-// DATE
-// =====================================
-function formatDateForAPI(date = currentDate) {
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
-  const y = String(date.getFullYear()).slice(-2);
-  return `${m}/${d}/${y}`;
+    return json_({ error: true, message: `Unknown action: ${action}` });
+  } catch (err) {
+    return json_({ error: true, message: err && err.message ? err.message : String(err) });
+  }
 }
 
-function updateDateDisplay() {
-  const el = document.getElementById("dateDisplay");
-  if (el) el.textContent = currentDate.toDateString();
+// =========================
+// Auth + JSON
+// =========================
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-function setupDateNav() {
-  const prev = document.getElementById("prevBtn");
-  const next = document.getElementById("nextBtn");
-  if (!prev || !next) return;
-
-  prev.addEventListener("click", async (e) => {
-    e.preventDefault();
-    await changeDate(-1);
-  });
-
-  next.addEventListener("click", async (e) => {
-    e.preventDefault();
-    await changeDate(1);
-  });
+function assertKey_(providedKey) {
+  const storedKey = PropertiesService.getScriptProperties().getProperty("API_KEY");
+  if (!storedKey) throw new Error("API key not set. Run setApiKeyOnce().");
+  if (!providedKey || String(providedKey) !== String(storedKey)) throw new Error("Unauthorized");
 }
 
-async function changeDate(days) {
-  await flushSaveNow("date_change");
-
-  currentDate.setDate(currentDate.getDate() + days);
-  updateDateDisplay();
-  if (typeof updatePhaseInfo === "function") updatePhaseInfo();
-
-  await loadDataForCurrentDate({ force: true });
+// =========================
+// Daily headers (match your sheet)
+// =========================
+function DAILY_HEADERS_() {
+  return [
+    "Date",
+    "Hours of Sleep",
+    "Grey's Inhaler Morning",
+    "Grey's Inhaler Evening",
+    "5 min Multiplication",
+    "REHIT 2x10",
+    "Fitness Score",
+    "Calories",
+    "Peak Watts",
+    "Watt Seconds",
+    "Steps",
+    "Creatine Chews",
+    "Vitamin D",
+    "NO2",
+    "Psyllium Husk",
+    "Breakfast",
+    "Lunch",
+    "Dinner",
+    "Healthy Day Snacks",
+    "Healthy Night Snacks",
+    "No Alcohol",
+    "Water",
+    "Weight (lbs)",
+    "Waist",
+    "Lean Mass (lbs)",
+    "Lean Mass %",
+    "Body Fat (lbs)",
+    "Body Fat %",
+    "Bone Mass (lbs)",
+    "Bone Mass %",
+    "Water (lbs)",
+    "Water %",
+    "Systolic",
+    "Diastolic",
+    "Heart Rate",
+    "Meditation"
+  ];
 }
 
-// =====================================
+// =========================
 // LOAD
-// =====================================
-async function loadDataForCurrentDate({ force = false } = {}) {
-  const dateStr = formatDateForAPI(currentDate);
-
+// =========================
+function loadDataForDate(dateStr) {
   try {
-    showStatus("Loading…", "loading");
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
-    const result = await apiGet("load", { date: dateStr });
-    if (result?.error) {
-      console.error("Load error:", result.message);
-      showStatus("Load failed", "error");
-      return;
-    }
+    const dailySheet = getOrCreateSheet(ss, "Daily Data", DAILY_HEADERS_());
+    const daily = findRowByDate(dailySheet, dateStr);
 
-    await populateForm(result);
-    dataChanged = false;
+    const movementSheet = getOrCreateSheet(ss, "Movement Log", ["Date", "Duration (min)", "Type"]);
+    const movements = getItemsByDate(movementSheet, dateStr);
 
-    showStatus("Loaded", "success", 600);
+    const readingSheet = getOrCreateSheet(ss, "Reading Log", ["Date", "Duration (min)", "Book"]);
+    const readings = getItemsByDate(readingSheet, dateStr);
+
+    const honeyDoSheet = getOrCreateSheet(ss, "Honey-Dos", ["ID", "Created", "Due", "Task", "Completed", "Completed Date"]);
+    const honeyDos = getHoneyDos_(honeyDoSheet, dateStr);
+
+    const reflectionsSheet = getOrCreateSheet(ss, "Reflections", ["Date", "Text"]);
+    const reflections = findRowByDate(reflectionsSheet, dateStr);
+
+    const storiesSheet = getOrCreateSheet(ss, "Grey & Sloane", ["Date", "Text"]);
+    const stories = findRowByDate(storiesSheet, dateStr);
+
+    const carlySheet = getOrCreateSheet(ss, "Carly", ["Date", "Text"]);
+    const carly = findRowByDate(carlySheet, dateStr);
+
+    return {
+      daily,
+      movements,
+      readings,
+      honeyDos,
+      reflections: reflections ? (reflections["Text"] || "") : "",
+      stories: stories ? (stories["Text"] || "") : "",
+      carly: carly ? (carly["Text"] || "") : "",
+      averages: calculate7DayAverages(dateStr)
+    };
   } catch (err) {
-    console.error("Load failed:", err);
-    showStatus("Load failed", "error");
+    return { error: true, message: err.message, stack: err.stack };
   }
 }
 
-// =====================================
+// =========================
 // SAVE
-// =====================================
-function markDirty() {
-  dataChanged = true;
-  lastUserActivityAt = Date.now();
-}
-
-async function flushSaveNow(reason = "flush") {
-  if (!dataChanged) return;
-
-  if (saveInFlight) {
-    pendingSave = true;
-    return;
-  }
-
-  saveInFlight = true;
-  pendingSave = false;
-
+// =========================
+function saveDataForDate(data) {
   try {
-    const payload = buildPayloadFromUI();
-    showStatus("Saving…", "loading");
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const dateStr = String(data.date || "").trim();
+    if (!dateStr) throw new Error("Missing required field: date");
 
-    const saveResult = await apiPost("save", { data: payload });
-    if (saveResult?.error) {
-      console.error("Save error:", saveResult.message);
-      showStatus("Save failed", "error");
-      return;
+    const dailySheet = getOrCreateSheet(ss, "Daily Data", DAILY_HEADERS_());
+
+    // Backward compatibility: if old app sent boolean true, treat as "2x10"
+    let rehitVal = data.rehit;
+    if (rehitVal === true || rehitVal === "TRUE" || rehitVal === "true") rehitVal = "2x10";
+
+    const rowNumber = saveOrUpdateRow(dailySheet, dateStr, [
+      dateStr,
+      data.sleepHours || "",
+      data.inhalerMorning || false,
+      data.inhalerEvening || false,
+      data.multiplication || false,
+      rehitVal || "",
+      data.fitnessScore || "",
+      data.calories || "",
+      data.peakWatts || "",
+      data.wattSeconds || "",
+      data.steps || "",
+      data.creatine || false,
+      data.vitaminD || false,
+      data.no2 || false,
+      data.psyllium || false,
+      data.breakfast || false,
+      data.lunch || false,
+      data.dinner || false,
+      data.daySnacks || false,
+      data.nightSnacks || false,
+      data.noAlcohol || false,
+      data.hydrationGood || 0,
+      data.weight || "",
+      data.waist || "",
+      data.leanMass || "",
+      "", // Lean Mass % formula
+      data.bodyFat || "",
+      "", // Body Fat % formula
+      data.boneMass || "",
+      "", // Bone Mass % formula
+      data.water || "",
+      "", // Water % formula
+      data.systolic || "",
+      data.diastolic || "",
+      data.heartRate || "",
+      data.meditation || false
+    ]);
+
+    applyBodyPercentFormulas_(dailySheet, rowNumber);
+
+    // Movements (replace all for date)
+    const movementSheet = getOrCreateSheet(ss, "Movement Log", ["Date", "Duration (min)", "Type"]);
+    deleteRowsByDate(movementSheet, dateStr);
+    if (Array.isArray(data.movements)) {
+      data.movements.forEach(m => movementSheet.appendRow([dateStr, m.duration || "", m.type || ""]));
     }
 
-    dataChanged = false;
-    showStatus("Saved ✓", "success");
+    // Readings (replace all for date)
+    const readingSheet = getOrCreateSheet(ss, "Reading Log", ["Date", "Duration (min)", "Book"]);
+    deleteRowsByDate(readingSheet, dateStr);
+    if (Array.isArray(data.readings)) {
+      data.readings.forEach(r => readingSheet.appendRow([dateStr, r.duration || "", r.book || ""]));
+    }
+
+    // Honey-dos upsert by ID
+    const honeyDoSheet = getOrCreateSheet(ss, "Honey-Dos", ["ID", "Created", "Due", "Task", "Completed", "Completed Date"]);
+    if (Array.isArray(data.honeyDos)) {
+      const existing = honeyDoSheet.getDataRange().getValues();
+
+      data.honeyDos.forEach(h => {
+        const id = h.id || Utilities.getUuid();
+        const created = h.created || dateStr;
+        const due = h.due || "";
+        const task = h.task || "";
+        const completed = !!h.completed;
+        const completedDate = completed ? dateStr : "";
+
+        let foundRow = -1;
+        for (let i = 1; i < existing.length; i++) {
+          if (existing[i][0] === id) { foundRow = i + 1; break; }
+        }
+
+        const rowVals = [id, created, due, task, completed, completedDate];
+        if (foundRow > 0) honeyDoSheet.getRange(foundRow, 1, 1, 6).setValues([rowVals]);
+        else honeyDoSheet.appendRow(rowVals);
+      });
+    }
+
+    // Reflections / Stories / Carly
+    const reflectionsSheet = getOrCreateSheet(ss, "Reflections", ["Date", "Text"]);
+    saveOrUpdateRow(reflectionsSheet, dateStr, [dateStr, data.reflections || ""]);
+
+    const storiesSheet = getOrCreateSheet(ss, "Grey & Sloane", ["Date", "Text"]);
+    saveOrUpdateRow(storiesSheet, dateStr, [dateStr, data.stories || ""]);
+
+    const carlySheet = getOrCreateSheet(ss, "Carly", ["Date", "Text"]);
+    saveOrUpdateRow(carlySheet, dateStr, [dateStr, data.carly || ""]);
+
+    return { success: true };
   } catch (err) {
-    console.error("Save failed:", err);
-    showStatus("Save failed", "error");
-  } finally {
-    saveInFlight = false;
-    if (pendingSave) {
-      pendingSave = false;
-      await flushSaveNow("pending");
-    }
+    return { error: true, message: err.message, stack: err.stack };
   }
 }
 
-function buildPayloadFromUI() {
-  // REHIT stored as string in existing column
-  const rehitVal =
-    document.getElementById("rehit3")?.checked ? "3x10" :
-    document.getElementById("rehit2")?.checked ? "2x10" :
-    "";
+// =========================
+// Averages (Sun->Sat week for REHIT + sleep/steps, rolling for reading)
+// =========================
+function calculate7DayAverages(dateStr) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const dailySheet = ss.getSheetByName("Daily Data");
+  const movementSheet = ss.getSheetByName("Movement Log");
+  const readingSheet = ss.getSheetByName("Reading Log");
+
+  if (!dailySheet) {
+    return { sleep: null, steps: null, movements: null, rehitWeek: 0, rehit3Week: 0, readingMinutes7d: 0 };
+  }
+
+  const data = dailySheet.getDataRange().getValues();
+  const headers = data[0];
+
+  const dateCol = headers.indexOf("Date");
+  const sleepCol = headers.indexOf("Hours of Sleep");
+  const stepsCol = headers.indexOf("Steps");
+  const rehitCol = headers.indexOf("REHIT 2x10");
+
+  const targetDate = new Date(dateStr + " 12:00:00");
+
+  // Week boundaries Sun->Sat
+  const currentDay = targetDate.getDay(); // 0=Sun
+  const weekStart = new Date(targetDate);
+  weekStart.setDate(targetDate.getDate() - currentDay);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  // Rolling 7 days
+  const start7d = new Date(targetDate);
+  start7d.setDate(targetDate.getDate() - 6);
+  start7d.setHours(0, 0, 0, 0);
+
+  const end7d = new Date(targetDate);
+  end7d.setHours(23, 59, 59, 999);
+
+  let sleepValues = [];
+  let stepsValues = [];
+  let rehitThisWeek = 0;
+  let rehit3ThisWeek = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowDate = new Date(formatDate(data[i][dateCol]) + " 12:00:00");
+
+    if (rowDate >= weekStart && rowDate <= weekEnd) {
+      const sleep = parseFloat(data[i][sleepCol]);
+      const steps = parseInt(data[i][stepsCol], 10);
+      const rehit = data[i][rehitCol];
+
+      if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
+      if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
+
+      const rv = String(rehit ?? "").trim().toLowerCase();
+      const isOldTrue = (rv === "true");
+      const is2 = (rv === "2x10");
+      const is3 = (rv === "3x10");
+
+      if (isOldTrue || is2 || is3) rehitThisWeek++;
+      if (is3) rehit3ThisWeek++;
+    }
+  }
+
+  // Movements/day (week-to-date)
+  let movementCounts = {};
+  if (movementSheet) {
+    const mData = movementSheet.getDataRange().getValues();
+    const mHeaders = mData[0];
+    const mDateCol = mHeaders.indexOf("Date");
+
+    for (let i = 1; i < mData.length; i++) {
+      const rowDate = new Date(formatDate(mData[i][mDateCol]) + " 12:00:00");
+      if (rowDate >= weekStart && rowDate <= weekEnd) {
+        const key = formatDate(mData[i][mDateCol]);
+        movementCounts[key] = (movementCounts[key] || 0) + 1;
+      }
+    }
+  }
+
+  const totalMovements = Object.values(movementCounts).reduce((a, b) => a + b, 0);
+  const daysInWeekSoFar = Math.min(currentDay + 1, 7);
+  const avgMovements = daysInWeekSoFar > 0 ? (totalMovements / daysInWeekSoFar).toFixed(1) : null;
+
+  const avgSleep = sleepValues.length ? sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length : null;
+  const avgSteps = stepsValues.length ? Math.round(stepsValues.reduce((a, b) => a + b, 0) / stepsValues.length) : null;
+
+  // Reading minutes rolling 7 days
+  let readingMinutes7d = 0;
+  if (readingSheet) {
+    const rData = readingSheet.getDataRange().getValues();
+    const rHeaders = rData[0];
+    const rDateCol = rHeaders.indexOf("Date");
+    const rDurCol = rHeaders.indexOf("Duration (min)");
+
+    for (let i = 1; i < rData.length; i++) {
+      const rowDate = new Date(formatDate(rData[i][rDateCol]) + " 12:00:00");
+      if (rowDate >= start7d && rowDate <= end7d) {
+        const mins = parseFloat(rData[i][rDurCol]);
+        if (!isNaN(mins) && mins > 0) readingMinutes7d += mins;
+      }
+    }
+  }
 
   return {
-    date: formatDateForAPI(currentDate),
-
-    sleepHours: document.getElementById("sleepHours")?.value || "",
-    steps: document.getElementById("steps")?.value || "",
-    fitnessScore: document.getElementById("fitnessScore")?.value || "",
-    calories: document.getElementById("calories")?.value || "",
-    peakWatts: document.getElementById("peakWatts")?.value || "",
-    wattSeconds: document.getElementById("wattSeconds")?.value || "",
-
-    inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
-    inhalerEvening: !!document.getElementById("inhalerEvening")?.checked,
-    multiplication: !!document.getElementById("multiplication")?.checked,
-
-    rehit: rehitVal,
-
-    creatine: !!document.getElementById("creatine")?.checked,
-    vitaminD: !!document.getElementById("vitaminD")?.checked,
-    no2: !!document.getElementById("no2")?.checked,
-    psyllium: !!document.getElementById("psyllium")?.checked,
-
-    breakfast: !!document.getElementById("breakfast")?.checked,
-    lunch: !!document.getElementById("lunch")?.checked,
-    dinner: !!document.getElementById("dinner")?.checked,
-
-    daySnacks: !!document.getElementById("daySnacks")?.checked,
-    nightSnacks: !!document.getElementById("nightSnacks")?.checked,
-    noAlcohol: !!document.getElementById("noAlcohol")?.checked,
-
-    meditation: !!document.getElementById("meditation")?.checked,
-
-    hydrationGood: waterCount,
-
-    weight: document.getElementById("weight")?.value || "",
-    waist: document.getElementById("waist")?.value || "",
-    leanMass: document.getElementById("leanMass")?.value || "",
-    bodyFat: document.getElementById("bodyFat")?.value || "",
-    boneMass: document.getElementById("boneMass")?.value || "",
-    water: document.getElementById("water")?.value || "",
-
-    systolic: document.getElementById("systolic")?.value || "",
-    diastolic: document.getElementById("diastolic")?.value || "",
-    heartRate: document.getElementById("heartRate")?.value || "",
-
-    movements,
-    readings,
-    honeyDos,
-    reflections: document.getElementById("reflections")?.value || "",
-    stories: document.getElementById("stories")?.value || "",
-    carly: document.getElementById("carly")?.value || ""
+    sleep: avgSleep,
+    steps: avgSteps,
+    movements: avgMovements,
+    rehitWeek: rehitThisWeek,
+    rehit3Week: rehit3ThisWeek,
+    readingMinutes7d: Math.round(readingMinutes7d)
   };
 }
 
-// =====================================
-// INPUTS: blur-save + body delta live updates
-// =====================================
-function setupInputSaveOnBlur() {
-  document.querySelectorAll("input, textarea").forEach(el => {
-    if (el.type === "checkbox") return;
-
-    el.addEventListener("input", () => {
-      markDirty();
-      if (el.id === "weight" || el.id === "leanMass" || el.id === "bodyFat") {
-        updateBodyDeltasFromUI();
-      }
-    });
-
-    el.addEventListener("blur", async () => {
-      if (el.id === "weight" || el.id === "leanMass" || el.id === "bodyFat") {
-        updateBodyDeltasFromUI();
-      }
-      await flushSaveNow(`blur:${el.id || el.name || el.tagName}`);
-    });
-  });
-}
-
-// =====================================
-// COLLAPSIBLES: save on collapse
-// =====================================
-function setupCollapsibleSectionsSaveOnCollapse() {
-  document.querySelectorAll(".section-header.collapsible").forEach(header => {
-    header.addEventListener("click", async () => {
-      const wasCollapsed = header.classList.contains("collapsed");
-
-      header.classList.toggle("collapsed");
-      const content = header.nextElementSibling;
-      if (content && content.classList.contains("section-content")) {
-        content.classList.toggle("collapsed");
-      }
-
-      const nowCollapsed = header.classList.contains("collapsed");
-      if (!wasCollapsed && nowCollapsed) {
-        await flushSaveNow(`collapse:${header.id || header.textContent || "section"}`);
-      }
-    });
-  });
-}
-
-// =====================================
-// CHECKBOXES
-// =====================================
-function toBool(v) {
-  if (v === true) return true;
-  if (v === false) return false;
-  if (typeof v === "string") {
-    const s = v.trim().toLowerCase();
-    if (s === "true" || s === "yes" || s === "y" || s === "1") return true;
-    if (s === "false" || s === "no" || s === "n" || s === "0" || s === "") return false;
-  }
-  if (typeof v === "number") return v !== 0;
-  return Boolean(v);
-}
-
-function syncCheckboxVisual(cb) {
-  const wrapper = cb.closest(".checkbox-field");
-  if (!wrapper) return;
-  wrapper.classList.toggle("checked", cb.checked);
-}
-
-function setCheckbox(id, valueFromSheet) {
-  const cb = document.getElementById(id);
-  if (!cb) return;
-  cb.checked = toBool(valueFromSheet);
-  syncCheckboxVisual(cb);
-}
-
-function setupCheckboxes() {
-  document.querySelectorAll(".checkbox-field").forEach(wrapper => {
-    const cb = wrapper.querySelector("input[type='checkbox']");
-    if (!cb) return;
-
-    syncCheckboxVisual(cb);
-
-    cb.addEventListener("change", async () => {
-      syncCheckboxVisual(cb);
-      markDirty();
-      await flushSaveNow(`checkbox:${cb.id}`);
-    });
-
-    wrapper.addEventListener("click", (e) => {
-      if (e.target.tagName === "INPUT" || e.target.tagName === "LABEL") return;
-      cb.checked = !cb.checked;
-      cb.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-  });
-}
-
-// =====================================
-// REHIT: mutual exclusivity + show/hide fields
-// =====================================
-function setupRehitChoice() {
-  const rehit2 = document.getElementById("rehit2");
-  const rehit3 = document.getElementById("rehit3");
-
-  // if your HTML hasn't been updated yet, don't crash
-  if (!rehit2 || !rehit3) return;
-
-  const enforce = (changed) => {
-    if (changed === rehit2 && rehit2.checked) {
-      rehit3.checked = false;
-      syncCheckboxVisual(rehit3);
+// =========================
+// Sheet helpers
+// =========================
+function getOrCreateSheet(ss, name, headers) {
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    if (headers && headers.length) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+      sheet.setFrozenRows(1);
     }
-    if (changed === rehit3 && rehit3.checked) {
-      rehit2.checked = false;
-      syncCheckboxVisual(rehit2);
-    }
-    updateRehitFieldsVisibility();
-  };
-
-  rehit2.addEventListener("change", () => enforce(rehit2));
-  rehit3.addEventListener("change", () => enforce(rehit3));
-
-  updateRehitFieldsVisibility();
-}
-
-function updateRehitFieldsVisibility() {
-  const rehitFields = document.getElementById("rehitFields");
-  if (!rehitFields) return;
-
-  const on2 = !!document.getElementById("rehit2")?.checked;
-  const on3 = !!document.getElementById("rehit3")?.checked;
-  rehitFields.style.display = (on2 || on3) ? "block" : "none";
-}
-
-// =====================================
-// WATER
-// =====================================
-function updateWaterDisplay() {
-  const el = document.getElementById("waterCount");
-  if (el) el.textContent = String(waterCount);
-}
-
-function setupWaterButtons() {
-  const plus = document.getElementById("waterPlus");
-  const minus = document.getElementById("waterMinus");
-  if (!plus || !minus) return;
-
-  plus.addEventListener("click", async (e) => {
-    e.preventDefault();
-    waterCount += 1;
-    updateWaterDisplay();
-    markDirty();
-    await flushSaveNow("water_plus");
-  });
-
-  minus.addEventListener("click", async (e) => {
-    e.preventDefault();
-    waterCount = Math.max(0, waterCount - 1);
-    updateWaterDisplay();
-    markDirty();
-    await flushSaveNow("water_minus");
-  });
-}
-
-// =====================================
-// BLOOD PRESSURE STATUS
-// =====================================
-function setupBloodPressureCalculator() {
-  const systolicEl = document.getElementById("systolic");
-  const diastolicEl = document.getElementById("diastolic");
-  const bpStatusEl = document.getElementById("bpStatus");
-  if (!systolicEl || !diastolicEl || !bpStatusEl) return;
-
-  const calc = () => {
-    const systolic = parseInt(systolicEl.value, 10);
-    const diastolic = parseInt(diastolicEl.value, 10);
-
-    if (!systolic || !diastolic) {
-      bpStatusEl.textContent = "--";
-      bpStatusEl.style.color = "#52b788";
-      return;
-    }
-
-    let status = "";
-    let color = "#52b788";
-
-    if (systolic < 120 && diastolic < 80) { status = "Normal"; color = "#52b788"; }
-    else if (systolic >= 120 && systolic <= 129 && diastolic < 80) { status = "Elevated"; color = "#f4a261"; }
-    else if ((systolic >= 130 && systolic <= 139) || (diastolic >= 80 && diastolic <= 89)) { status = "Stage 1 High"; color = "#e76f51"; }
-    else if (systolic >= 140 || diastolic >= 90) { status = "Stage 2 High"; color = "#e63946"; }
-    else if (systolic > 180 || diastolic > 120) { status = "Crisis"; color = "#d00000"; }
-
-    bpStatusEl.textContent = status;
-    bpStatusEl.style.color = color;
-  };
-
-  systolicEl.addEventListener("input", calc);
-  diastolicEl.addEventListener("input", calc);
-}
-
-// =====================================
-// MOVEMENTS
-// =====================================
-function setupMovementUI() {
-  const btn = document.getElementById("addMovementBtn");
-  if (!btn) return;
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    promptAddMovement();
-  });
-}
-
-function promptAddMovement() {
-  const raw = prompt("Movement duration (minutes):");
-  if (raw === null) return;
-
-  const durationNum = parseInt(raw, 10);
-  if (!Number.isFinite(durationNum) || durationNum <= 0) {
-    alert("Please enter a valid number of minutes.");
-    return;
   }
-
-  const type = durationNum > 12 ? "Long" : "Short";
-  movements.push({ duration: durationNum, type });
-
-  renderMovements();
-  markDirty();
-  flushSaveNow("movement_add");
+  return sheet;
 }
 
-function removeMovement(index) {
-  movements.splice(index, 1);
-  renderMovements();
-  markDirty();
-  flushSaveNow("movement_remove");
-}
+function findRowByDate(sheet, dateStr) {
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return null;
 
-function renderMovements() {
-  const list = document.getElementById("movementList");
-  if (!list) return;
+  const headers = data[0];
 
-  list.innerHTML = "";
-
-  movements.forEach((m, idx) => {
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <span class="item-text">${escapeHtml(m.duration)} min (${escapeHtml(m.type)})</span>
-      <button type="button" class="btn btn-danger">×</button>
-    `;
-    item.querySelector("button").addEventListener("click", () => removeMovement(idx));
-    list.appendChild(item);
-  });
-}
-
-// =====================================
-// READINGS
-// =====================================
-function setupReadingUI() {
-  const btn = document.getElementById("addReadingBtn");
-  if (!btn) return;
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    promptAddReading();
-  });
-}
-
-function promptAddReading() {
-  const raw = prompt("Reading duration (minutes):");
-  if (raw === null) return;
-
-  const durationNum = parseInt(raw, 10);
-  if (!Number.isFinite(durationNum) || durationNum <= 0) {
-    alert("Please enter a valid number of minutes.");
-    return;
-  }
-
-  let book = prompt("Book title (optional). Leave blank to use your last book:");
-  if (book === null) return;
-  book = String(book || "").trim();
-  if (!book && lastBookTitle) book = lastBookTitle;
-  if (book) lastBookTitle = book;
-
-  readings.push({ duration: durationNum, book });
-
-  renderReadings();
-  markDirty();
-  flushSaveNow("reading_add");
-}
-
-function removeReading(index) {
-  readings.splice(index, 1);
-  renderReadings();
-  markDirty();
-  flushSaveNow("reading_remove");
-}
-
-function renderReadings() {
-  const list = document.getElementById("readingList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  readings.forEach((r, idx) => {
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <span class="item-text">${escapeHtml(r.duration)} min${r.book ? ` — ${escapeHtml(r.book)}` : ""}</span>
-      <button type="button" class="btn btn-danger">×</button>
-    `;
-    item.querySelector("button").addEventListener("click", () => removeReading(idx));
-    list.appendChild(item);
-  });
-}
-
-// =====================================
-// BODY carry-forward + deltas
-// =====================================
-function hasAnyBodyData(daily) {
-  if (!daily) return false;
-  return BODY_FIELDS.some(f => {
-    const v = f.keys.reduce((acc, k) => acc ?? daily[k], undefined);
-    return v !== undefined && v !== null && v !== "";
-  });
-}
-
-async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
-  const d = new Date(beforeDate);
-  for (let i = 1; i <= lookbackDays; i++) {
-    d.setDate(d.getDate() - 1);
-    const dateStr = formatDateForAPI(d);
-    const result = await apiGet("load", { date: dateStr });
-    const daily = result?.daily;
-    if (hasAnyBodyData(daily)) return daily;
+  for (let i = 1; i < data.length; i++) {
+    const rowDate = formatDate(data[i][0]);
+    if (rowDate === dateStr) {
+      const obj = {};
+      headers.forEach((h, idx) => {
+        if (h !== "Date") obj[h] = data[i][idx];
+      });
+      return obj;
+    }
   }
   return null;
 }
 
-function applyBodyFieldsFromDaily(daily) {
-  const source = daily || {};
+function getItemsByDate(sheet, dateStr) {
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
 
-  const weightVal = source["Weight (lbs)"] ?? source["Weight"];
-  const waistVal = source["Waist (in)"] ?? source["Waist"];
-  const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
-  const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
-  const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
-  const waterBodyVal = source["Water (lbs)"]; // do NOT fall back
+  const headers = data[0];
+  const items = [];
 
-  if (document.getElementById("weight")) document.getElementById("weight").value = weightVal ?? "";
-  if (document.getElementById("waist")) document.getElementById("waist").value = waistVal ?? "";
-  if (document.getElementById("leanMass")) document.getElementById("leanMass").value = leanVal ?? "";
-  if (document.getElementById("bodyFat")) document.getElementById("bodyFat").value = fatVal ?? "";
-  if (document.getElementById("boneMass")) document.getElementById("boneMass").value = boneVal ?? "";
-  if (document.getElementById("water")) document.getElementById("water").value = waterBodyVal ?? "";
-
-  if (typeof calculatePercentages === "function") calculatePercentages();
-}
-
-function parseNum(v) {
-  const n = parseFloat(String(v ?? "").trim());
-  return Number.isFinite(n) ? n : null;
-}
-
-function setDelta(elId, delta, isPositive) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-
-  if (delta === null || Math.abs(delta) < 0.0001) {
-    el.style.display = "none";
-    el.classList.remove("positive", "negative");
-    el.innerHTML = "";
-    return;
+  for (let i = 1; i < data.length; i++) {
+    const rowDate = formatDate(data[i][0]);
+    if (rowDate === dateStr) {
+      const obj = {};
+      headers.forEach((h, idx) => {
+        if (h !== "Date") obj[h.toLowerCase()] = data[i][idx];
+      });
+      items.push(obj);
+    }
   }
-
-  const abs = Math.round(Math.abs(delta) * 10) / 10;
-  const tri = delta > 0 ? "▲" : "▼";
-
-  el.classList.toggle("positive", isPositive);
-  el.classList.toggle("negative", !isPositive);
-  el.style.display = "inline-flex";
-  el.innerHTML = `<span class="tri">${tri}</span><span class="val">${abs}</span>`;
+  return items;
 }
 
-function updateBodyDeltasFromUI() {
-  const curWeight = parseNum(document.getElementById("weight")?.value);
-  const curLean = parseNum(document.getElementById("leanMass")?.value);
-  const curFat = parseNum(document.getElementById("bodyFat")?.value);
-
-  const prevW = prevBodyForDelta.weight;
-  const prevL = prevBodyForDelta.leanMass;
-  const prevF = prevBodyForDelta.bodyFat;
-
-  const dW = (curWeight !== null && prevW !== null) ? (curWeight - prevW) : null;
-  setDelta("weightDelta", dW, dW !== null ? (dW < 0) : false);
-
-  const dL = (curLean !== null && prevL !== null) ? (curLean - prevL) : null;
-  setDelta("leanMassDelta", dL, dL !== null ? (dL > 0) : false);
-
-  const dF = (curFat !== null && prevF !== null) ? (curFat - prevF) : null;
-  setDelta("bodyFatDelta", dF, dF !== null ? (dF < 0) : false);
+function deleteRowsByDate(sheet, dateStr) {
+  const data = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    const rowDate = formatDate(data[i][0]);
+    if (rowDate === dateStr) sheet.deleteRow(i + 1);
+  }
 }
 
-async function computePrevDifferentBodyBaselines_(beforeDate, currentVals, lookbackDays = BODY_DIFF_LOOKBACK_DAYS) {
-  const remaining = new Set(["weight", "leanMass", "bodyFat"]);
-  const out = { weight: null, leanMass: null, bodyFat: null };
+// Returns row number written
+function saveOrUpdateRow(sheet, dateStr, values) {
+  const data = sheet.getDataRange().getValues();
 
-  const curW = currentVals.weight;
-  const curL = currentVals.leanMass;
-  const curF = currentVals.bodyFat;
-
-  const d = new Date(beforeDate);
-
-  for (let i = 1; i <= lookbackDays; i++) {
-    if (remaining.size === 0) break;
-
-    d.setDate(d.getDate() - 1);
-    const dateStr = formatDateForAPI(d);
-
-    const result = await apiGet("load", { date: dateStr });
-    const daily = result?.daily;
-    if (!daily) continue;
-
-    if (remaining.has("weight")) {
-      const v = parseNum(daily["Weight (lbs)"] ?? daily["Weight"]);
-      if (v !== null && curW !== null && Math.abs(v - curW) > 0.0001) {
-        out.weight = v;
-        remaining.delete("weight");
-      }
-    }
-    if (remaining.has("leanMass")) {
-      const v = parseNum(daily["Lean Mass (lbs)"] ?? daily["Lean Mass"]);
-      if (v !== null && curL !== null && Math.abs(v - curL) > 0.0001) {
-        out.leanMass = v;
-        remaining.delete("leanMass");
-      }
-    }
-    if (remaining.has("bodyFat")) {
-      const v = parseNum(daily["Body Fat (lbs)"] ?? daily["Body Fat"]);
-      if (v !== null && curF !== null && Math.abs(v - curF) > 0.0001) {
-        out.bodyFat = v;
-        remaining.delete("bodyFat");
-      }
+  for (let i = 1; i < data.length; i++) {
+    const rowDate = formatDate(data[i][0]);
+    if (rowDate === dateStr) {
+      const rowNumber = i + 1;
+      sheet.getRange(rowNumber, 1, 1, values.length).setValues([values]);
+      return rowNumber;
     }
   }
 
-  return out;
+  sheet.appendRow(values);
+  return sheet.getLastRow();
 }
 
-// =====================================
-// populateForm
-// =====================================
-async function populateForm(data) {
-  document.querySelectorAll(".checkbox-field").forEach(w => w.classList.remove("checked"));
+// Noon-safe date normalization
+function formatDate(date) {
+  if (!date) return "";
 
-  movements = [];
-  readings = [];
-  honeyDos = [];
-
-  const d = data?.daily || null;
-
-  let bodySource = d;
-  if (!hasAnyBodyData(d)) bodySource = await getMostRecentBodyDaily(currentDate);
-
-  // Hydration
-  waterCount = parseInt(d?.["Water"], 10) || 0;
-  updateWaterDisplay();
-
-  // Basic fields
-  if (document.getElementById("sleepHours")) document.getElementById("sleepHours").value = d?.["Hours of Sleep"] ?? "";
-  if (document.getElementById("steps")) document.getElementById("steps").value = d?.["Steps"] ?? "";
-  if (document.getElementById("fitnessScore")) document.getElementById("fitnessScore").value = d?.["Fitness Score"] ?? "";
-  if (document.getElementById("calories")) document.getElementById("calories").value = d?.["Calories"] ?? "";
-  if (document.getElementById("peakWatts")) document.getElementById("peakWatts").value = d?.["Peak Watts"] ?? "";
-  if (document.getElementById("wattSeconds")) document.getElementById("wattSeconds").value = d?.["Watt Seconds"] ?? "";
-
-  // Checkboxes
-  setCheckbox("inhalerMorning", d?.["Grey's Inhaler Morning"]);
-  setCheckbox("inhalerEvening", d?.["Grey's Inhaler Evening"]);
-  setCheckbox("multiplication", d?.["5 min Multiplication"]);
-
-  // REHIT load (string in same column)
-  const rv = String(d?.["REHIT 2x10"] ?? "").trim();
-  setCheckbox("rehit2", rv === "2x10");
-  setCheckbox("rehit3", rv === "3x10");
-  updateRehitFieldsVisibility();
-
-  setCheckbox("creatine", d?.["Creatine Chews"]);
-  setCheckbox("vitaminD", d?.["Vitamin D"]);
-  setCheckbox("no2", d?.["NO2"]);
-  setCheckbox("psyllium", d?.["Psyllium Husk"]);
-
-  setCheckbox("breakfast", d?.["Breakfast"]);
-  setCheckbox("lunch", d?.["Lunch"]);
-  setCheckbox("dinner", d?.["Dinner"]);
-  setCheckbox("daySnacks", d?.["Healthy Day Snacks"]);
-  setCheckbox("nightSnacks", d?.["Healthy Night Snacks"]);
-  setCheckbox("noAlcohol", d?.["No Alcohol"]);
-  setCheckbox("meditation", d?.["Meditation"]);
-
-  // Lists
-  movements = (data?.movements || []).map(m => ({
-    duration: m.duration ?? m["duration (min)"] ?? m["Duration (min)"] ?? m["Duration"],
-    type: m.type ?? m["Type"] ?? m["type"]
-  }));
-  renderMovements();
-
-  readings = (data?.readings || []).map(r => ({
-    duration: r.duration ?? r["duration (min)"] ?? r["Duration (min)"] ?? r["Duration"],
-    book: r.book ?? r["Book"] ?? r["book"]
-  }));
-  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
-  renderReadings();
-
-  honeyDos = data?.honeyDos || [];
-
-  if (document.getElementById("reflections")) document.getElementById("reflections").value = data?.reflections || "";
-  if (document.getElementById("stories")) document.getElementById("stories").value = data?.stories || "";
-  if (document.getElementById("carly")) document.getElementById("carly").value = data?.carly || "";
-
-  // Body
-  applyBodyFieldsFromDaily(bodySource);
-
-  // BP
-  if (document.getElementById("systolic")) document.getElementById("systolic").value = d?.["Systolic"] ?? "";
-  if (document.getElementById("diastolic")) document.getElementById("diastolic").value = d?.["Diastolic"] ?? "";
-  if (document.getElementById("heartRate")) document.getElementById("heartRate").value = d?.["Heart Rate"] ?? "";
-
-  document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
-
-  // Averages (includes rehitWeek, rehit3Week, readingMinutes7d)
-  if (typeof updateAverages === "function") updateAverages(data?.averages);
-
-  // Body deltas baseline (async)
-  const token = ++_deltaFetchToken;
-  const curVals = {
-    weight: parseNum(document.getElementById("weight")?.value),
-    leanMass: parseNum(document.getElementById("leanMass")?.value),
-    bodyFat: parseNum(document.getElementById("bodyFat")?.value)
-  };
-
-  prevBodyForDelta = { weight: null, leanMass: null, bodyFat: null };
-  updateBodyDeltasFromUI();
-
-  (async () => {
-    const baselines = await computePrevDifferentBodyBaselines_(currentDate, curVals);
-    if (token !== _deltaFetchToken) return;
-    prevBodyForDelta = baselines;
-    updateBodyDeltasFromUI();
-  })();
-}
-
-// =====================================
-// Reload after idle
-// =====================================
-function setupReloadOnReturnFromIdle() {
-  document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState !== "visible") {
-      await flushSaveNow("visibility_hide");
-      return;
+  if (typeof date === "string") {
+    const s = date.trim();
+    if (s.includes("/")) {
+      const parts = s.split("/");
+      if (parts.length === 3) {
+        const m = String(parseInt(parts[0], 10));
+        const d = String(parseInt(parts[1], 10));
+        let y = parts[2].trim();
+        if (y.length === 4) y = y.slice(-2);
+        return `${m}/${d}/${y}`;
+      }
+      return s;
     }
-    const idleFor = Date.now() - lastUserActivityAt;
-    if (idleFor > RELOAD_AFTER_IDLE_MS) {
-      await flushSaveNow("idle_return_save");
-      await loadDataForCurrentDate({ force: true });
-    }
-  });
 
-  window.addEventListener("focus", async () => {
-    const idleFor = Date.now() - lastUserActivityAt;
-    if (idleFor > RELOAD_AFTER_IDLE_MS) {
-      await flushSaveNow("focus_return_save");
-      await loadDataForCurrentDate({ force: true });
+    const dObj = new Date(s);
+    if (!isNaN(dObj.getTime())) {
+      dObj.setHours(12, 0, 0, 0);
+      return `${dObj.getMonth() + 1}/${dObj.getDate()}/${String(dObj.getFullYear()).slice(-2)}`;
     }
-  });
+    return s;
+  }
+
+  if (date instanceof Date) {
+    const dObj = new Date(date);
+    dObj.setHours(12, 0, 0, 0);
+    return `${dObj.getMonth() + 1}/${dObj.getDate()}/${String(dObj.getFullYear()).slice(-2)}`;
+  }
+
+  const dObj = new Date(date);
+  if (!isNaN(dObj.getTime())) {
+    dObj.setHours(12, 0, 0, 0);
+    return `${dObj.getMonth() + 1}/${dObj.getDate()}/${String(dObj.getFullYear()).slice(-2)}`;
+  }
+  return String(date);
 }
 
-// =====================================
-// Biomarkers toggle (safe no-op if missing)
-/// =====================================
-function setupBiomarkersUIToggleSafe() {
-  const btn = document.getElementById("biomarkersBtn");
-  const page = document.getElementById("biomarkersPage");
-  const form = document.getElementById("healthForm");
-  if (!btn || !page || !form) return;
+// Apply body % formulas for the saved row
+function applyBodyPercentFormulas_(dailySheet, rowNumber) {
+  const headers = dailySheet.getRange(1, 1, 1, dailySheet.getLastColumn()).getValues()[0];
+  const col = (name) => headers.indexOf(name) + 1;
 
-  btn.addEventListener("click", async () => {
-    const open = page.style.display === "block";
-    if (open) {
-      page.style.display = "none";
-      form.style.display = "block";
-    } else {
-      await flushSaveNow("open_biomarkers");
-      form.style.display = "none";
-      page.style.display = "block";
-      if (typeof loadBiomarkersMostRecent === "function") await loadBiomarkersMostRecent();
+  const weightCol = col("Weight (lbs)");
+  const leanCol = col("Lean Mass (lbs)");
+  const leanPctCol = col("Lean Mass %");
+  const fatCol = col("Body Fat (lbs)");
+  const fatPctCol = col("Body Fat %");
+  const boneCol = col("Bone Mass (lbs)");
+  const bonePctCol = col("Bone Mass %");
+  const waterCol = col("Water (lbs)");
+  const waterPctCol = col("Water %");
+
+  const required = [weightCol, leanCol, leanPctCol, fatCol, fatPctCol, boneCol, bonePctCol, waterCol, waterPctCol];
+  if (required.some(c => !c || c < 1)) return;
+
+  const mkPct = (massCol) => `=IFERROR(RC${massCol}/RC${weightCol},"")`;
+
+  dailySheet.getRange(rowNumber, leanPctCol).setFormulaR1C1(mkPct(leanCol));
+  dailySheet.getRange(rowNumber, fatPctCol).setFormulaR1C1(mkPct(fatCol));
+  dailySheet.getRange(rowNumber, bonePctCol).setFormulaR1C1(mkPct(boneCol));
+  dailySheet.getRange(rowNumber, waterPctCol).setFormulaR1C1(mkPct(waterCol));
+
+  dailySheet.getRange(rowNumber, leanPctCol).setNumberFormat("0.0%");
+  dailySheet.getRange(rowNumber, fatPctCol).setNumberFormat("0.0%");
+  dailySheet.getRange(rowNumber, bonePctCol).setNumberFormat("0.0%");
+  dailySheet.getRange(rowNumber, waterPctCol).setNumberFormat("0.0%");
+}
+
+// Honey-dos (returns active + completed today)
+function getHoneyDos_(sheet, dateStr) {
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+
+  const headers = data[0];
+  const hasIdColumn = headers[0] === "ID";
+  const items = [];
+
+  if (!hasIdColumn) return items;
+
+  for (let i = 1; i < data.length; i++) {
+    const taskId = data[i][0];
+    const createdDate = data[i][1] ? formatDate(data[i][1]) : "";
+    const dueDate = data[i][2] ? formatDate(data[i][2]) : "";
+    const task = data[i][3];
+    const completed = data[i][4];
+    const completedDate = data[i][5] ? formatDate(data[i][5]) : "";
+
+    if (!createdDate || createdDate.includes("NaN") || !task) continue;
+
+    if (!completed || completedDate === dateStr) {
+      items.push({
+        id: taskId,
+        created: createdDate,
+        due: dueDate,
+        task: task,
+        completed: completed === true || completed === "TRUE" || completed === "true"
+      });
     }
-  });
+  }
+
+  return items;
 }
 
-// =====================================
-// STATUS + utils
-// =====================================
-function showStatus(msg, kind = "success", timeoutMs = 1500) {
-  const el = document.getElementById("statusMessage");
-  if (!el) return;
-  el.textContent = msg;
-  el.className = `status-message ${kind}`;
-  el.style.display = "block";
-  clearTimeout(showStatus._t);
-  showStatus._t = setTimeout(() => { el.style.display = "none"; }, timeoutMs);
+// =========================
+// Biomarkers
+// =========================
+function getOrCreateBiomarkersSheet_(ss) {
+  const name = "Biomarkers";
+  let sheet = ss.getSheetByName(name);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.getRange(1, 1, 1, 4).setValues([["Category", "Biomarker", "Optimal Range", "Units"]]);
+    sheet.getRange(1, 1, 1, 4).setFontWeight("bold");
+    sheet.setFrozenRows(1);
+  }
+
+  return sheet;
 }
 
-function escapeHtml(s) {
-  return String(s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+function loadBiomarkers_() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = getOrCreateBiomarkersSheet_(ss);
+
+  const lastCol = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+
+  const defRange = sheet.getRange(2, 1, Math.max(0, lastRow - 1), 4).getValues();
+  const definition = defRange
+    .filter(r => r[0] || r[1] || r[2] || r[3])
+    .map(r => ({ category: r[0], biomarker: r[1], optimal: r[2], units: r[3] }));
+
+  let latestCol = 0;
+  let latestDate = "";
+
+  if (lastCol >= 5) {
+    const headerRow = sheet.getRange(1, 5, 1, lastCol - 4).getValues()[0];
+    for (let i = headerRow.length - 1; i >= 0; i--) {
+      const v = headerRow[i];
+      if (v !== "" && v != null) {
+        latestCol = 5 + i;
+        latestDate = String(v);
+        break;
+      }
+    }
+  }
+
+  let latestValues = [];
+  if (latestCol && definition.length) {
+    latestValues = sheet.getRange(2, latestCol, definition.length, 1).getValues().map(r => r[0]);
+  }
+
+  return { definition, latestDate, latestValues };
+}
+
+function saveBiomarkers_(dateStr, values) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = getOrCreateBiomarkersSheet_(ss);
+
+  const def = sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues()
+    .filter(r => r[0] || r[1] || r[2] || r[3]);
+
+  const n = def.length;
+  if (!n) throw new Error("Biomarkers sheet has no definition rows.");
+
+  const newCol = sheet.getLastColumn() + 1;
+  sheet.getRange(1, newCol).setValue(dateStr);
+
+  const out = [];
+  for (let i = 0; i < n; i++) out.push([values?.[i] ?? ""]);
+  sheet.getRange(2, newCol, n, 1).setValues(out);
+
+  return { success: true, date: dateStr, col: newCol };
 }
