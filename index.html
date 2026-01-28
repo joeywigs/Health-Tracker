@@ -890,6 +890,7 @@
       </div>
     </div>
     <div style="display: flex; gap: 12px; align-items: center;">
+      <button id="chartsBtn" type="button" title="Charts" style="background: transparent; border: none; padding: 0; cursor: pointer; font-size: 36px;">📈</button>
       <div id="statusMessage" class="status-message"></div>
     </div>
   </div>
@@ -1233,6 +1234,63 @@
       </div>
     </div>
   </form>
+
+<!-- Charts Page (hidden by default) -->
+<div id="chartsPage" style="display:none;">
+  <div class="header" style="margin-top: 16px;">
+    <div class="header-top" style="margin-bottom: 0;">
+      <div>
+        <div class="title">Charts & Trends</div>
+        <div class="subtitle" style="margin-top: 6px;">Last 30 Days</div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <button type="button" class="date-btn" id="chartsCloseBtn" style="width: 90px; height: 90px;">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weight Trend -->
+  <div class="section">
+    <div class="section-header">Weight Trend</div>
+    <div class="section-content">
+      <canvas id="weightChart" style="max-height: 300px;"></canvas>
+    </div>
+  </div>
+
+  <!-- Sleep Pattern -->
+  <div class="section">
+    <div class="section-header">Sleep Pattern</div>
+    <div class="section-content">
+      <canvas id="sleepChart" style="max-height: 300px;"></canvas>
+    </div>
+  </div>
+
+  <!-- Steps Average -->
+  <div class="section">
+    <div class="section-header">Daily Steps</div>
+    <div class="section-content">
+      <canvas id="stepsChart" style="max-height: 300px;"></canvas>
+    </div>
+  </div>
+
+  <!-- REHIT Frequency -->
+  <div class="section">
+    <div class="section-header">REHIT Sessions</div>
+    <div class="section-content">
+      <canvas id="rehitChart" style="max-height: 300px;"></canvas>
+    </div>
+  </div>
+
+  <!-- Body Composition -->
+  <div class="section">
+    <div class="section-header">Body Composition</div>
+    <div class="section-content">
+      <canvas id="bodyCompChart" style="max-height: 300px;"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="app.js" defer></script>
 </body>
 </html>
