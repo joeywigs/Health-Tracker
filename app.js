@@ -173,21 +173,21 @@ function changeDate(days) {
 // =====================================
 // LOAD / SAVE
 // =====================================
-async function loadDataForCurrentDate() {
+async function loadDataForCurrentDate(options = {}) {
   const dateStr = formatDateForAPI(currentDate);
   console.log("Loading data for", dateStr);
 
-  // 1) If cached, show instantly
+  // 1) If cached and not forcing, show instantly
   const cached = cacheGet(dateStr);
-  if (cached && !cached?.error) {
+  if (cached && !cached?.error && !options.force) {
     await populateForm(cached);
     prefetchAround(currentDate);
     return;
   }
 
-  // 2) Otherwise fetch, then show
+  // 2) Otherwise fetch (or force fetch), then show
   try {
-    const result = await fetchDay(currentDate);
+    const result = await fetchDay(currentDate, options.force);
 
     if (result?.error) {
       console.error("Backend error:", result.message);
@@ -219,9 +219,9 @@ async function saveData(payload) {
 
     if ("sleepHours" in payload) {
       markSleepSaved();
-      await loadDataForCurrentDate({ force: true });
     }
 
+    // Force reload from server to get fresh data including averages
     await loadDataForCurrentDate({ force: true });
 
   } catch (err) {
@@ -716,10 +716,10 @@ function cacheGet(key) {
   return hit.value;
 }
 
-async function fetchDay(dateObj) {
+async function fetchDay(dateObj, force = false) {
   const dateStr = formatDateForAPI(dateObj);
   const cached = cacheGet(dateStr);
-  if (cached) return cached;
+  if (cached && !force) return cached;
 
   const result = await apiGet("load", { date: dateStr });
   cacheSet(dateStr, result);
