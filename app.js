@@ -16,6 +16,8 @@
  * - readingMinutes7d (rolling)
  **************************************/
 
+console.log("Loading the new app.js");
+
 const SPREADSHEET_ID = "1L4tbpsUv5amXWYNBLHLcsVueD289THc8a5ys9reSd98";
 
 // Optional helper to set Script Properties once (put your real key and run once)
