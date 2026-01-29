@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Chart range, sticky header", new Date().toISOString());
+console.log("✅ app.js running - Better errors, data check", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -546,6 +546,9 @@ async function loadAndRenderCharts() {
     chartDataCache = allData;
   }
   
+  // Update range buttons to show data availability
+  updateRangeButtonsAvailability();
+  
   if (allData.length === 0) {
     console.log("No data to chart");
     const subtitle = document.getElementById("chartsSubtitle");
@@ -592,6 +595,29 @@ function setupChartRangeToggle() {
       loadAndRenderCharts();
     });
   });
+}
+
+function updateRangeButtonsAvailability() {
+  if (!chartDataCache) return;
+  
+  const totalDays = chartDataCache.length;
+  const btn30 = document.querySelector('.range-btn[data-range="30"]');
+  const btnAll = document.querySelector('.range-btn[data-range="all"]');
+  
+  // Update button labels to show available data
+  if (btn30) {
+    if (totalDays < 30) {
+      btn30.textContent = `30 Days (${totalDays})`;
+      btn30.style.opacity = '0.5';
+    } else {
+      btn30.textContent = '30 Days';
+      btn30.style.opacity = '1';
+    }
+  }
+  
+  if (btnAll) {
+    btnAll.textContent = `All (${totalDays})`;
+  }
 }
 
 let weightChart, sleepChart, stepsChart, rehitChart, bodyCompChart;
@@ -1087,10 +1113,21 @@ function hideBiomarkersPage() {
 
 async function loadBiomarkers() {
   try {
+    console.log("Loading biomarkers...");
     const result = await apiGet("biomarkers_load", {});
+    console.log("Biomarkers result:", result);
     
     if (result?.error) {
-      alert("Error loading biomarkers: " + result.message);
+      console.error("Biomarkers error:", result);
+      const subtitle = document.getElementById("biomarkersSubtitle");
+      if (subtitle) {
+        // Check if it's an "unknown action" error - means the backend doesn't support it
+        if (result.message && result.message.includes("Unknown action")) {
+          subtitle.textContent = "⚠️ Backend needs update - biomarkers_load not supported";
+        } else {
+          subtitle.textContent = "Error: " + result.message;
+        }
+      }
       return;
     }
     
@@ -1103,7 +1140,8 @@ async function loadBiomarkers() {
     
   } catch (err) {
     console.error("Failed to load biomarkers:", err);
-    alert("Failed to load biomarkers");
+    const subtitle = document.getElementById("biomarkersSubtitle");
+    if (subtitle) subtitle.textContent = "Failed to connect";
   }
 }
 
