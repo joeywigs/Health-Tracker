@@ -14,6 +14,14 @@
 console.log(“✅ app.js running - No bottom nav”, new Date().toISOString());
 window.**APP_JS_OK** = true;
 
+// Show errors on screen
+window.onerror = function(msg, url, line) {
+document.body.insertAdjacentHTML(‘afterbegin’,
+‘<div style="background:red;color:white;padding:20px;font-size:16px;position:fixed;top:0;left:0;right:0;z-index:99999;">’ +
+’ERROR: ’ + msg + ’ (Line ’ + line + ‘)’ +
+‘</div>’);
+};
+
 // =====================================
 // CONFIG
 // =====================================
