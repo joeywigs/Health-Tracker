@@ -965,9 +965,12 @@
         <div class="subtitle">Phase 1 v1.0</div>
       </div>
     </div>
-    <div style="display: flex; gap: 20px; align-items: center;">
-      <a id="chartsBtn" href="#" style="color: #4d9de0; text-decoration: none; font-size: 18px; font-weight: 600;">Charts</a>
-      <a id="biomarkersBtn" href="#" style="color: #ff006e; text-decoration: none; font-size: 18px; font-weight: 600;">Biomarkers</a>
+    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+      <div style="display: flex; gap: 16px;">
+        <a id="chartsBtn" href="#" style="color: #4d9de0; text-decoration: none; font-size: 16px; font-weight: 600;">Charts</a>
+        <a id="biomarkersBtn" href="#" style="color: #ff006e; text-decoration: none; font-size: 16px; font-weight: 600;">Biomarkers</a>
+        <a id="weeklySummaryLink" href="#" style="color: #52b788; text-decoration: none; font-size: 16px; font-weight: 600;">Summary</a>
+      </div>
       <div id="statusMessage" class="status-message"></div>
     </div>
   </div>
@@ -1321,7 +1324,7 @@
         <div class="subtitle" id="chartsSubtitle" style="margin-top: 6px;">Last 7 Days</div>
       </div>
       <div style="display:flex; gap:12px; align-items: center;">
-        <a href="#" id="chartsCloseBtn" style="color: #52b788; text-decoration: none; font-size: 18px; font-weight: 600;">← Back</a>
+        <button type="button" id="chartsCloseBtn" style="background: #4d9de0; border: none; color: #1a1a1a; width: 44px; height: 44px; border-radius: 12px; font-size: 24px; font-weight: bold; cursor: pointer;">✕</button>
       </div>
     </div>
     
@@ -1399,10 +1402,80 @@
         <div class="subtitle" id="biomarkersSubtitle" style="margin-top: 6px;">Most recent: --</div>
       </div>
       <div style="display:flex; gap:12px; align-items: center;">
-        <a href="#" id="biomarkersCloseBtn" style="color: #52b788; text-decoration: none; font-size: 18px; font-weight: 600;">← Back</a>
+        <button type="button" id="biomarkersCloseBtn" style="background: #ff006e; border: none; color: #fff; width: 44px; height: 44px; border-radius: 12px; font-size: 24px; font-weight: bold; cursor: pointer;">✕</button>
       </div>
     </div>
   </div>
+
+<!-- Weekly Summary Page (hidden by default) -->
+<div id="weeklySummaryPage" style="display:none;">
+  <div class="header" style="margin-top: 16px;">
+    <div class="header-top" style="margin-bottom: 0;">
+      <div>
+        <div class="title">Weekly Summary</div>
+        <div class="subtitle" id="summarySubtitle" style="margin-top: 6px;">This Week</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items: center;">
+        <button type="button" id="summaryCloseBtn" style="background: #52b788; border: none; color: #1a1a1a; width: 44px; height: 44px; border-radius: 12px; font-size: 24px; font-weight: bold; cursor: pointer;">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase Progress -->
+  <div class="section">
+    <div class="section-header">Phase Progress</div>
+    <div class="section-content">
+      <div id="phaseProgressSummary" style="text-align: center;">
+        <div style="font-size: 48px; font-weight: bold; color: #52b788;" id="phaseDaysComplete">--</div>
+        <div style="font-size: 16px; color: #999;">days completed in Phase 1</div>
+        <div style="background: #3a3a3a; border-radius: 8px; height: 12px; margin-top: 16px; overflow: hidden;">
+          <div id="phaseProgressBar" style="background: #52b788; height: 100%; width: 0%; transition: width 0.5s;"></div>
+        </div>
+        <div style="font-size: 14px; color: #999; margin-top: 8px;" id="phaseDaysRemaining">-- days remaining</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- This Week Stats -->
+  <div class="section">
+    <div class="section-header">This Week's Stats</div>
+    <div class="section-content">
+      <div id="weeklyStats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <!-- Stats will be populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Streaks -->
+  <div class="section">
+    <div class="section-header">Current Streaks 🔥</div>
+    <div class="section-content">
+      <div id="streaksDisplay">
+        <!-- Streaks will be populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Wins This Week -->
+  <div class="section">
+    <div class="section-header">Wins This Week 🏆</div>
+    <div class="section-content">
+      <div id="winsDisplay" style="color: #999;">
+        <!-- Wins will be populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Week vs Last Week -->
+  <div class="section">
+    <div class="section-header">vs Last Week</div>
+    <div class="section-content">
+      <div id="weekComparisonDisplay">
+        <!-- Comparison will be populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
 
   <div class="section">
     <div class="section-header">Update Labs</div>
