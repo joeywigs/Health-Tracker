@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Biomarkers cache bust", new Date().toISOString());
+console.log("✅ app.js running - Fixed Worker", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
