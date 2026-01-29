@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Better empty detection fixed", new Date().toISOString());
+console.log("✅ app.js running - Rate limit delay", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -96,9 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
   updateDateDisplay();
   updatePhaseInfo();
   loadDataForCurrentDate();
-  
-  // Start loading chart data in background immediately
-  setTimeout(() => prefetchChartData(), 500);
 });
 
 const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
@@ -467,20 +464,52 @@ function hideChartProgress() {
 async function fetchChartData(maxDays = null, silent = false) {
   const dataPoints = [];
   let emptyDaysInARow = 0;
-  const maxEmptyDays = 2; // Stop after 2 consecutive empty days (was 3)
-  const absoluteMax = maxDays || 365; // Use provided max or go up to a year
+  const maxEmptyDays = 2; // Stop after 2 consecutive empty days
+  const absoluteMax = maxDays || 365;
+  
+  // Never go before this date
+  const startDate = new Date("2026-01-19");
+  startDate.setHours(0, 0, 0, 0);
+  
+  // Calculate how many days since start for progress display
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const totalPossibleDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  const progressMax = maxDays ? Math.min(maxDays, totalPossibleDays) : totalPossibleDays;
   
   for (let i = 0; i < absoluteMax; i++) {
     const date = new Date();
     date.setDate(date.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    
+    // Stop if we've gone before the start date
+    if (date < startDate) {
+      console.log(`📊 Reached start date limit (1/19/2026)`);
+      break;
+    }
+    
     const dateStr = formatDateForAPI(date);
     
     if (!silent) {
-      updateChartProgress(i + 1, Math.min(absoluteMax, 60), `Loading ${dateStr}...`);
+      updateChartProgress(i + 1, progressMax, `Loading day ${i + 1} of ${progressMax}...`);
     }
     
     try {
+      // Small delay between requests to avoid rate limiting
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       const result = await apiGet("load", { date: dateStr });
+      
+      // Check for error responses
+      if (result?.error) {
+        console.error(`Error loading ${dateStr}:`, result.message);
+        emptyDaysInARow++;
+        if (emptyDaysInARow >= maxEmptyDays) break;
+        continue;
+      }
+      
       const daily = result?.daily;
       
       // Check if this day has any meaningful data (more robust check)
@@ -1233,6 +1262,11 @@ async function loadDataForCurrentDate(options = {}) {
   if (cached && !cached?.error && !options.force) {
     await populateForm(cached);
     prefetchAround(currentDate);
+    
+    // Start chart data loading in background if not already loaded
+    if (!chartDataCache && !chartDataLoading) {
+      setTimeout(() => prefetchChartData(), 100);
+    }
     return;
   }
 
@@ -1249,6 +1283,11 @@ async function loadDataForCurrentDate(options = {}) {
 
     // 3) Prefetch neighbors so next/prev is fast
     prefetchAround(currentDate);
+    
+    // 4) Start chart data loading in background if not already loaded
+    if (!chartDataCache && !chartDataLoading) {
+      setTimeout(() => prefetchChartData(), 100);
+    }
 
     dataChanged = false;
   } catch (err) {
