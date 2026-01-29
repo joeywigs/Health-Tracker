@@ -2422,7 +2422,7 @@ async function populateForm(data) {
   setCheckbox("meditation", d["Meditation"]);
 
   // Water counter
-  waterCount = parseInt(d["Water"], 10) || 0;
+  waterCount = parseInt(d["Water (glasses)"] ?? d["Water"], 10) || 0;
   updateWaterDisplay();
 
   // Body fields: use current day if present, else carry-forward source
