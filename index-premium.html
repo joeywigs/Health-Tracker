@@ -197,6 +197,16 @@
     .milestone-sub { font-size: 14px; color: var(--text-dim); margin-top: 6px; }
     .milestone-btn { margin-top: 24px; padding: 12px 28px; background: linear-gradient(135deg, var(--gold), #ff8a00); border: none; border-radius: var(--radius-pill); font-size: 15px; font-weight: 600; color: #000; cursor: pointer; }
     
+    /* Modal */
+    .modal { position: fixed; inset: 0; background: rgba(10,10,15,0.9); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(8px); padding: 16px; }
+    .modal.show { opacity: 1; pointer-events: auto; }
+    .modal-content { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 360px; animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); }
+    .modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-muted); font-size: 16px; cursor: pointer; transition: all 0.2s; }
+    .modal-close:hover { background: var(--bg-hover); color: var(--text); }
+    .modal-body { padding: 16px; }
+    .modal-footer { padding: 16px; border-top: 1px solid var(--border); }
+    
     /* Pages */
     .page { display: none; }
     .page.active { display: block; }
@@ -226,6 +236,45 @@
       <div class="milestone-title" id="milestoneTitle">Amazing!</div>
       <div class="milestone-sub" id="milestoneSubtitle">You did something great!</div>
       <button class="milestone-btn" onclick="closeMilestone()">Continue</button>
+    </div>
+  </div>
+
+  <!-- REHIT Modal -->
+  <div id="rehitModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--movement);display:flex;align-items:center;justify-content:center;font-size:18px">🚴</div>
+          <div>
+            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">REHIT Stats</div>
+            <div style="font-size:12px;color:var(--text-muted)">Enter your workout data</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeRehitModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="body-grid">
+          <div class="body-cell">
+            <div class="body-label">Fitness Score</div>
+            <input type="number" inputmode="decimal" class="body-input" id="fitnessScore" step="0.1" placeholder="0.0">
+          </div>
+          <div class="body-cell">
+            <div class="body-label">Calories</div>
+            <input type="number" inputmode="numeric" class="body-input" id="calories" placeholder="0">
+          </div>
+          <div class="body-cell">
+            <div class="body-label">Peak Watts</div>
+            <input type="number" inputmode="numeric" class="body-input" id="peakWatts" placeholder="0">
+          </div>
+          <div class="body-cell">
+            <div class="body-label">Watt Seconds</div>
+            <input type="number" inputmode="numeric" class="body-input" id="wattSeconds" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="saveRehitAndClose()" style="width:100%">Save Stats</button>
+      </div>
     </div>
   </div>
 
@@ -279,11 +328,20 @@
         <input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0">
         <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
       </div>
-      <div class="card movement">
+      <div class="card movement" id="rehitCard">
         <div class="card-head"><div class="card-icon">🚴</div><div class="card-title">REHIT</div></div>
         <div class="chips" style="margin-top:8px">
           <div class="chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
           <div class="chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
+        </div>
+        <div id="rehitStats" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;">
+            <div><span style="color:var(--text-muted)">Score:</span> <span id="rehitScoreDisplay" style="color:var(--success);font-weight:600">--</span></div>
+            <div><span style="color:var(--text-muted)">Cals:</span> <span id="rehitCalsDisplay" style="color:var(--gold);font-weight:600">--</span></div>
+            <div><span style="color:var(--text-muted)">Watts:</span> <span id="rehitWattsDisplay" style="color:var(--movement);font-weight:600">--</span></div>
+            <div><span style="color:var(--text-muted)">W-Sec:</span> <span id="rehitWsDisplay" style="color:var(--water);font-weight:600">--</span></div>
+          </div>
+          <button type="button" class="btn btn-secondary" id="editRehitBtn" style="width:100%;margin-top:8px;font-size:12px;padding:6px 10px;">Edit Stats</button>
         </div>
         <div class="card-avg">This week: <span id="rehitWeek">--</span></div>
       </div>
@@ -396,17 +454,6 @@
         </div>
       </div>
     </div>
-
-    <div id="rehitFields" style="display:none">
-      <div class="section">
-        <div class="body-grid">
-          <div class="body-cell"><div class="body-label">Fitness Score</div><input type="number" inputmode="decimal" class="body-input" id="fitnessScore" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Calories</div><input type="number" inputmode="numeric" class="body-input" id="calories"></div>
-          <div class="body-cell"><div class="body-label">Peak Watts</div><input type="number" inputmode="numeric" class="body-input" id="peakWatts"></div>
-          <div class="body-cell"><div class="body-label">Watt Seconds</div><input type="number" inputmode="numeric" class="body-input" id="wattSeconds"></div>
-        </div>
-      </div>
-    </div>
   </form>
 
   <div id="chartsPage" style="display:none">
@@ -497,6 +544,75 @@
         h.classList.toggle('collapsed');
         const c=h.nextElementSibling;if(c&&c.classList.contains('sec-content'))c.classList.toggle('collapsed');
       });
+    });
+    
+    // REHIT Modal Logic
+    function openRehitModal() {
+      document.getElementById('rehitModal').classList.add('show');
+    }
+    
+    function closeRehitModal() {
+      document.getElementById('rehitModal').classList.remove('show');
+    }
+    
+    function saveRehitAndClose() {
+      updateRehitDisplay();
+      closeRehitModal();
+      if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+    }
+    
+    function updateRehitDisplay() {
+      const score = document.getElementById('fitnessScore')?.value;
+      const cals = document.getElementById('calories')?.value;
+      const watts = document.getElementById('peakWatts')?.value;
+      const ws = document.getElementById('wattSeconds')?.value;
+      
+      const rehit2 = document.getElementById('rehit2')?.checked;
+      const rehit3 = document.getElementById('rehit3')?.checked;
+      const statsDiv = document.getElementById('rehitStats');
+      
+      if (statsDiv) {
+        const hasData = score || cals || watts || ws;
+        const isChecked = rehit2 || rehit3;
+        statsDiv.style.display = (isChecked || hasData) ? 'block' : 'none';
+      }
+      
+      document.getElementById('rehitScoreDisplay').textContent = score || '--';
+      document.getElementById('rehitCalsDisplay').textContent = cals || '--';
+      document.getElementById('rehitWattsDisplay').textContent = watts || '--';
+      document.getElementById('rehitWsDisplay').textContent = ws ? parseInt(ws).toLocaleString() : '--';
+    }
+    
+    // Wire up REHIT checkboxes to show modal
+    document.addEventListener('DOMContentLoaded', () => {
+      const rehit2 = document.getElementById('rehit2');
+      const rehit3 = document.getElementById('rehit3');
+      const editBtn = document.getElementById('editRehitBtn');
+      
+      const showModalOnCheck = (e) => {
+        if (e.target.checked) {
+          setTimeout(openRehitModal, 300); // Small delay for checkbox animation
+        }
+        updateRehitDisplay();
+      };
+      
+      if (rehit2) rehit2.addEventListener('change', showModalOnCheck);
+      if (rehit3) rehit3.addEventListener('change', showModalOnCheck);
+      if (editBtn) editBtn.addEventListener('click', openRehitModal);
+      
+      // Update display when inputs change
+      ['fitnessScore', 'calories', 'peakWatts', 'wattSeconds'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', updateRehitDisplay);
+      });
+      
+      // Initial display update after data loads
+      setTimeout(updateRehitDisplay, 1000);
+    });
+    
+    // Close modal on outside click
+    document.getElementById('rehitModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'rehitModal') closeRehitModal();
     });
   </script>
 </body>
