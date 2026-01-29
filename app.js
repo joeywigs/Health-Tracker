@@ -11,17 +11,8 @@
 - - Blood pressure tracking with status indicator
     **********************************************/
 
-console.log(“✅ app.js running - Bottom nav”, new Date().toISOString());
+console.log(“✅ app.js running - No bottom nav”, new Date().toISOString());
 window.**APP_JS_OK** = true;
-
-// Debug - show errors visually
-window.onerror = function(msg, url, line, col, error) {
-const div = document.createElement(‘div’);
-div.style.cssText = ‘position:fixed;top:0;left:0;right:0;background:red;color:white;padding:10px;z-index:9999;font-size:12px;’;
-div.textContent = ’JS Error: ’ + msg + ’ (line ’ + line + ‘)’;
-document.body.appendChild(div);
-return false;
-};
 
 // =====================================
 // CONFIG
@@ -103,7 +94,6 @@ setupBiomarkersPage();
 setupStickyHeader();
 setupQuickLog();
 setupDopamineBoosts();
-setupBottomNav();
 
 updateDateDisplay();
 updatePhaseInfo();
