@@ -17,9 +17,9 @@
       --bg-card: rgba(255,255,255,0.08);
       --bg-card-hover: rgba(255,255,255,0.12);
       
-      --text: #f0f0f0;
-      --text-dim: rgba(255,255,255,0.7);
-      --text-muted: rgba(255,255,255,0.5);
+      --text: #ffffff;
+      --text-dim: rgba(255,255,255,0.85);
+      --text-muted: rgba(255,255,255,0.6);
       
       --accent-pink: #ff6b9d;
       --accent-orange: #ffa552;
@@ -40,7 +40,7 @@
       --movement: #ff6b9d;
       --nutrition: #6dd5ed;
       
-      --border: rgba(255,255,255,0.1);
+      --border: rgba(255,255,255,0.2);
       --radius: 20px;
       --radius-sm: 12px;
       --radius-pill: 100px;
@@ -53,42 +53,122 @@
         radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
     }
     
-    /* === DAY MODE === */
+    /* === DAY MODE - Sunny Orange Base === */
     body.day-mode {
-      --bg-deep: #fef9f3;
-      --bg-mid: #fff7ed;
-      --bg-card: rgba(0,0,0,0.04);
-      --bg-card-hover: rgba(0,0,0,0.08);
+      --bg-deep: #f97316;
+      --bg-mid: #fb923c;
+      --bg-card: rgba(255,255,255,0.2);
+      --bg-card-hover: rgba(255,255,255,0.3);
       
-      --text: #1a1a2e;
-      --text-dim: rgba(26,26,46,0.7);
-      --text-muted: rgba(26,26,46,0.5);
+      --text: #ffffff;
+      --text-dim: rgba(255,255,255,0.9);
+      --text-muted: rgba(255,255,255,0.7);
       
-      --accent-pink: #e85d75;
-      --accent-orange: #f97316;
-      --accent-yellow: #eab308;
-      --accent-teal: #0891b2;
-      --accent-purple: #9333ea;
+      /* Contrasting accents - use deep purple/blue to pop against orange */
+      --accent-pink: #db2777;
+      --accent-orange: #dc2626;
+      --accent-yellow: #fbbf24;
+      --accent-teal: #0d9488;
+      --accent-purple: #7c3aed;
       
-      --glow-pink: rgba(232,93,117,0.3);
-      --glow-orange: rgba(249,115,22,0.3);
-      --glow-teal: rgba(8,145,178,0.3);
-      --glow-purple: rgba(147,51,234,0.3);
+      --glow-pink: rgba(219,39,119,0.4);
+      --glow-orange: rgba(220,38,38,0.4);
+      --glow-teal: rgba(13,148,136,0.4);
+      --glow-purple: rgba(124,58,237,0.5);
       
       --success: #10b981;
-      --success-soft: rgba(16,185,129,0.15);
+      --success-soft: rgba(16,185,129,0.25);
       
-      --sleep: #9333ea;
-      --water: #0891b2;
-      --movement: #e85d75;
+      --sleep: #7c3aed;
+      --water: #0d9488;
+      --movement: #db2777;
       --nutrition: #10b981;
       
-      --border: rgba(0,0,0,0.1);
+      --border: rgba(255,255,255,0.3);
       
-      --bg-gradient: linear-gradient(135deg, #fef9f3 0%, #fff7ed 50%, #fef3c7 100%);
+      --bg-gradient: linear-gradient(135deg, #f97316 0%, #fb923c 30%, #f59e0b 70%, #f97316 100%);
       --bg-aurora: 
-        radial-gradient(ellipse at 30% 0%, rgba(249,115,22,0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 100%, rgba(234,179,8,0.1) 0%, transparent 50%);
+        radial-gradient(ellipse at 30% 0%, rgba(251,191,36,0.3) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 100%, rgba(249,115,22,0.2) 0%, transparent 50%);
+    }
+    
+    /* Day mode specific overrides - purple/teal buttons to contrast with orange */
+    body.day-mode .logo {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+      box-shadow: 0 0 30px var(--glow-purple);
+    }
+    body.day-mode .date-btn {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      box-shadow: 0 4px 15px var(--glow-purple);
+    }
+    body.day-mode .phase-fill {
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-teal));
+    }
+    body.day-mode .fab {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      box-shadow: 0 8px 30px var(--glow-purple);
+    }
+    body.day-mode .btn-primary {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      color: white;
+    }
+    body.day-mode .ring-progress {
+      stroke: var(--accent-purple);
+    }
+    body.day-mode .ring-text {
+      color: var(--accent-purple);
+    }
+    body.day-mode .chip.on {
+      background: var(--success-soft);
+      border-color: var(--success);
+      box-shadow: 0 0 12px rgba(16,185,129,0.4);
+    }
+    body.day-mode .chip.on .chip-dot {
+      background: var(--success);
+      border-color: var(--success);
+      box-shadow: 0 0 8px rgba(16,185,129,0.5);
+    }
+    body.day-mode .drop.on {
+      background: var(--accent-teal);
+      box-shadow: 0 0 8px var(--glow-teal);
+    }
+    body.day-mode .water-btn {
+      border-color: var(--accent-teal);
+      color: var(--accent-teal);
+    }
+    body.day-mode .water-btn:hover {
+      background: var(--accent-teal);
+      color: white;
+    }
+    body.day-mode .milestone-title {
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    body.day-mode .card {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.3);
+    }
+    body.day-mode .section {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.3);
+    }
+    body.day-mode .nav-link {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.3);
+      color: white;
+    }
+    body.day-mode .nav-link:hover {
+      background: rgba(255,255,255,0.3);
+      color: var(--accent-purple);
+      border-color: var(--accent-purple);
+    }
+    body.day-mode .date-nav {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.3);
+    }
+    body.day-mode .steps-bar-fill {
+      background: linear-gradient(to top, var(--accent-purple), var(--accent-pink), var(--accent-yellow));
     }
     
     /* === SUNSET TRANSITION MODE === */
@@ -323,8 +403,8 @@
     /* Cards - Glowing borders on hover */
     .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .card {
-      background: var(--bg-card); 
-      border: 1px solid var(--border); 
+      background: rgba(255,255,255,0.06); 
+      border: 1px solid rgba(255,255,255,0.15); 
       border-radius: var(--radius);
       padding: 18px; 
       position: relative; 
@@ -341,7 +421,7 @@
       opacity: 0.8; 
     }
     .card:hover { 
-      border-color: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.25);
       box-shadow: 0 0 30px var(--card-glow, var(--glow-purple));
       transform: translateY(-2px);
     }
@@ -356,10 +436,10 @@
       background: linear-gradient(135deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink)));
       box-shadow: 0 0 15px var(--card-glow, var(--glow-purple));
     }
-    .card-title { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-    .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; }
-    .card-unit { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
-    .card-avg { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+    .card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
+    .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
+    .card-unit { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: 4px; }
+    .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 8px; }
     
     .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--text); outline: none; }
     .big-input::placeholder { color: var(--text-muted); }
@@ -384,7 +464,7 @@
     }
     .steps-bar-goal { font-size: 9px; color: var(--text-muted); font-weight: 600; }
     
-    /* Water - Glowing drops */
+    /* Water */
     .water-row { display: flex; align-items: center; gap: 12px; }
     .water-btn { 
       width: 38px; height: 38px; border-radius: 50%; 
@@ -397,30 +477,38 @@
       box-shadow: 0 0 20px var(--glow-teal);
     }
     .water-btn:active { transform: scale(0.9); }
-    .water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; }
-    .drops { display: flex; gap: 4px; margin-top: 10px; }
-    .drop { 
-      width: 8px; height: 12px; 
-      background: rgba(255,255,255,0.15); 
-      border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%; 
-      transition: all 0.3s; 
+    .water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: #ffffff; }
+    
+    /* Water Progress Bar */
+    .water-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .water-bar-track { 
+      width: 12px; height: 60px; 
+      background: rgba(255,255,255,0.1); 
+      border-radius: 6px; 
+      overflow: hidden;
+      position: relative;
     }
-    .drop.on { 
-      background: var(--accent-teal); 
+    .water-bar-fill { 
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, var(--accent-teal), #6dd5ed, #a5f3fc); 
+      border-radius: 6px;
+      transition: height 0.5s ease;
       box-shadow: 0 0 10px var(--glow-teal);
     }
+    .water-bar-goal { font-size: 9px; color: rgba(255,255,255,0.6); font-weight: 600; }
     
     /* Sections */
     .section { 
-      background: var(--bg-card); 
-      border: 1px solid var(--border); 
+      background: rgba(255,255,255,0.06); 
+      border: 1px solid rgba(255,255,255,0.15); 
       border-radius: var(--radius); 
       padding: 18px; 
       margin-bottom: 12px; 
       backdrop-filter: blur(20px); 
       transition: all 0.3s;
     }
-    .section:hover { border-color: rgba(255,255,255,0.15); }
+    .section:hover { border-color: rgba(255,255,255,0.2); }
     .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
     .sec-title { display: flex; align-items: center; gap: 10px; }
     .sec-icon { 
@@ -429,8 +517,8 @@
       background: linear-gradient(135deg, var(--icon-start, var(--accent-purple)), var(--icon-end, var(--accent-pink)));
       box-shadow: 0 0 12px var(--icon-glow, var(--glow-purple));
     }
-    .sec-name { font-size: 14px; font-weight: 600; }
-    .sec-toggle { color: var(--text-muted); font-size: 11px; transition: transform 0.3s; }
+    .sec-name { font-size: 14px; font-weight: 600; color: #ffffff; }
+    .sec-toggle { color: rgba(255,255,255,0.5); font-size: 11px; transition: transform 0.3s; }
     .sec-head.collapsed .sec-toggle { transform: rotate(-90deg); }
     .sec-content { transition: max-height 0.3s, opacity 0.3s; overflow: hidden; }
     .sec-content.collapsed { max-height: 0; opacity: 0; }
@@ -775,8 +863,19 @@
       </div>
       <div class="card water" id="waterSection">
         <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
-        <div class="water-row"><button type="button" class="water-btn" id="waterMinus">−</button><div class="water-num" id="waterCount">0</div><button type="button" class="water-btn" id="waterPlus">+</button></div>
-        <div class="drops" id="waterDrops"></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="water-row" style="flex:1">
+            <button type="button" class="water-btn" id="waterMinus">−</button>
+            <div class="water-num" id="waterCount">0</div>
+            <button type="button" class="water-btn" id="waterPlus">+</button>
+          </div>
+          <div class="water-bar-wrap">
+            <div class="water-bar-track">
+              <div class="water-bar-fill" id="waterBarFill"></div>
+            </div>
+            <div class="water-bar-goal">6</div>
+          </div>
+        </div>
       </div>
       <div class="card movement">
         <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
@@ -1088,16 +1187,15 @@
       if(cb)cb.addEventListener('change',()=>c.classList.toggle('on',cb.checked));
     });
     
-    // Water drops (pip indicators)
-    function updateDrops(){
-      const n=parseInt(document.getElementById('waterCount')?.textContent||'0',10);
-      const box=document.getElementById('waterDrops');if(!box)return;
-      box.innerHTML='';
-      for(let i=0;i<8;i++){
-        const d=document.createElement('div');
-        d.className='drop'+(i<n?' on':'');
-        box.appendChild(d);
-      }
+    // Water progress bar (goal: 6)
+    function updateWaterBar(){
+      const waterCount = document.getElementById('waterCount');
+      const fill = document.getElementById('waterBarFill');
+      if(!waterCount || !fill) return;
+      const count = parseInt(waterCount.textContent) || 0;
+      const goal = 6;
+      const pct = Math.min(100, (count / goal) * 100);
+      fill.style.height = pct + '%';
     }
     
     // Steps progress bar (goal: 7500)
@@ -1115,11 +1213,12 @@
     const originalPopulateForm = window.populateForm;
     window.populateForm = function(...args) {
       if (originalPopulateForm) originalPopulateForm.apply(this, args);
-      setTimeout(() => { syncAllChips(); updateDrops(); updateRehitDisplay(); updateStepsBar(); }, 100);
+      setTimeout(() => { syncAllChips(); updateWaterBar(); updateRehitDisplay(); updateStepsBar(); }, 100);
     };
     
+    // Hook water display updates
     const origWater=window.updateWaterDisplay;
-    window.updateWaterDisplay=function(){if(origWater)origWater();updateDrops()};
+    window.updateWaterDisplay=function(){if(origWater)origWater();updateWaterBar()};
     
     // Steps input listener
     document.addEventListener('DOMContentLoaded',()=>{
@@ -1129,7 +1228,14 @@
         stepsInput.addEventListener('change', updateStepsBar);
       }
       // Initialize everything after a delay to let app.js load data
-      setTimeout(()=>{ syncAllChips(); updateDrops(); updateStepsBar(); }, 800);
+      setTimeout(()=>{ 
+        syncAllChips(); 
+        updateWaterBar(); 
+        updateStepsBar();
+        // Call app.js phase functions if they exist
+        if(typeof updatePhaseInfo === 'function') updatePhaseInfo();
+        if(typeof loadPhaseProgress === 'function') loadPhaseProgress();
+      }, 800);
     });
     
     // Section collapse
