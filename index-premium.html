@@ -206,6 +206,26 @@
     body.day-mode .chip-dot {
       border-color: var(--text-muted);
     }
+    /* Dark empty progress bars in day mode */
+    body.day-mode .steps-bar-track,
+    body.day-mode .water-bar-track {
+      background: rgba(0,0,0,0.15);
+    }
+    body.day-mode .ring-bg {
+      stroke: rgba(0,0,0,0.15);
+    }
+    body.day-mode .phase-track {
+      background: rgba(0,0,0,0.12);
+    }
+    /* Darker collapse arrows */
+    body.day-mode .sec-toggle {
+      color: var(--text-dim);
+    }
+    /* Movement/Reading items shading */
+    body.day-mode .item {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
     
     /* === SUNSET TRANSITION MODE === */
     body.sunset-mode {
@@ -401,6 +421,9 @@
       overflow: hidden; 
       backdrop-filter: blur(20px);
       transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      min-height: 140px;
     }
     .card::before { 
       content: ''; 
@@ -429,7 +452,27 @@
     .card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
     .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
     .card-unit { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: 4px; }
-    .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 8px; }
+    .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
+    
+    /* REHIT Dots */
+    .rehit-dots { display: flex; gap: 6px; margin-left: auto; }
+    .rehit-dot { 
+      width: 10px; height: 10px; 
+      border-radius: 50%; 
+      background: rgba(255,255,255,0.2); 
+      transition: all 0.3s;
+    }
+    .rehit-dot.on { 
+      background: var(--accent-teal); 
+      box-shadow: 0 0 8px var(--glow-teal);
+    }
+    body.day-mode .rehit-dot {
+      background: rgba(0,0,0,0.15);
+    }
+    body.day-mode .rehit-dot.on {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(5,150,105,0.4);
+    }
     
     .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--text); outline: none; }
     .big-input::placeholder { color: var(--text-muted); }
@@ -573,7 +616,7 @@
     
     /* Items */
     .items { margin-bottom: 12px; }
-    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
+    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.15); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
     .item-text { font-size: 13px; }
     .item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
     .item-del:hover { color: var(--accent-pink); }
@@ -880,7 +923,16 @@
         <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
       </div>
       <div class="card movement" id="rehitCard">
-        <div class="card-head"><div class="card-icon">🚴</div><div class="card-title">REHIT</div></div>
+        <div class="card-head">
+          <div class="card-icon">🚴</div>
+          <div class="card-title">REHIT</div>
+          <div class="rehit-dots" id="rehitDots">
+            <div class="rehit-dot"></div>
+            <div class="rehit-dot"></div>
+            <div class="rehit-dot"></div>
+            <div class="rehit-dot"></div>
+          </div>
+        </div>
         <div class="chips" style="margin-top:8px">
           <div class="chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
           <div class="chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
@@ -1198,16 +1250,69 @@
       fill.style.height = pct + '%';
     }
     
+    // REHIT dots - count sessions this week
+    function updateRehitDots() {
+      const dotsContainer = document.getElementById('rehitDots');
+      if (!dotsContainer) return;
+      const dots = dotsContainer.querySelectorAll('.rehit-dot');
+      
+      // Count REHIT sessions this week from chartDataCache if available
+      let weekCount = 0;
+      if (typeof chartDataCache !== 'undefined' && chartDataCache && chartDataCache.length > 0) {
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+        startOfWeek.setHours(0,0,0,0);
+        
+        chartDataCache.forEach(day => {
+          const dayDate = new Date(day.date);
+          if (dayDate >= startOfWeek) {
+            if (day.rehit === '2x10' || day.rehit === '3x10' || day.rehit === true || day.rehit === 'TRUE') {
+              weekCount++;
+            }
+          }
+        });
+      }
+      
+      // Also check current day's checkboxes
+      const rehit2 = document.getElementById('rehit2');
+      const rehit3 = document.getElementById('rehit3');
+      const todayHasRehit = (rehit2 && rehit2.checked) || (rehit3 && rehit3.checked);
+      
+      // Update dots (max 4)
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('on', i < Math.min(weekCount, 4));
+      });
+    }
+    
     // Hook populateForm
     const originalPopulateForm = window.populateForm;
     window.populateForm = function(...args) {
       if (originalPopulateForm) originalPopulateForm.apply(this, args);
-      setTimeout(() => { syncAllChips(); updateWaterBar(); updateRehitDisplay(); updateStepsBar(); }, 100);
+      setTimeout(() => { 
+        syncAllChips(); 
+        updateWaterBar(); 
+        updateRehitDisplay(); 
+        updateStepsBar(); 
+        updateRehitDots();
+      }, 100);
     };
     
     // Hook water display updates
     const origWater=window.updateWaterDisplay;
-    window.updateWaterDisplay=function(){if(origWater)origWater();updateWaterBar()};
+    window.updateWaterDisplay=function(){
+      if(origWater)origWater();
+      updateWaterBar();
+    };
+    
+    // Watch for water count text changes with MutationObserver
+    document.addEventListener('DOMContentLoaded', () => {
+      const waterCount = document.getElementById('waterCount');
+      if (waterCount) {
+        const observer = new MutationObserver(updateWaterBar);
+        observer.observe(waterCount, { childList: true, characterData: true, subtree: true });
+      }
+    });
     
     // Steps input listener
     document.addEventListener('DOMContentLoaded',()=>{
@@ -1216,15 +1321,26 @@
         stepsInput.addEventListener('input', updateStepsBar);
         stepsInput.addEventListener('change', updateStepsBar);
       }
+      
+      // REHIT checkbox listeners for dots
+      const rehit2 = document.getElementById('rehit2');
+      const rehit3 = document.getElementById('rehit3');
+      if(rehit2) rehit2.addEventListener('change', updateRehitDots);
+      if(rehit3) rehit3.addEventListener('change', updateRehitDots);
+      
       // Initialize everything after a delay to let app.js load data
       setTimeout(()=>{ 
         syncAllChips(); 
         updateWaterBar(); 
         updateStepsBar();
+        updateRehitDots();
         // Call app.js phase functions if they exist
         if(typeof updatePhaseInfo === 'function') updatePhaseInfo();
         if(typeof loadPhaseProgress === 'function') loadPhaseProgress();
       }, 800);
+      
+      // Also update after chart data loads (longer delay)
+      setTimeout(updateRehitDots, 2000);
     });
     
     // Section collapse
