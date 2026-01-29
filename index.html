@@ -638,60 +638,10 @@
       cursor: pointer;
     }
     
-    /* Bottom Navigation Bar */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to top, #1a1a1a 0%, #2a2a2a 100%);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 12px 0 max(12px, env(safe-area-inset-bottom));
-      border-top: 1px solid #3a3a3a;
-      z-index: 1000;
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
-    }
-    
-    .bottom-nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 8px 16px;
-      border-radius: 12px;
-      background: none;
-      border: none;
-      color: #888;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .bottom-nav-item.active {
-      color: #52b788;
-    }
-    
-    .bottom-nav-item:active {
-      transform: scale(0.95);
-    }
-    
-    .bottom-nav-icon {
-      font-size: 24px;
-      line-height: 1;
-    }
-    
-    /* Add padding to body to account for bottom nav */
-    body {
-      padding-bottom: 80px;
-    }
-    
-    /* Quick Log FAB - move up above bottom nav */
+    /* Quick Log Floating Action Button */
     .quick-log-fab {
       position: fixed;
-      bottom: 90px;
+      bottom: 24px;
       right: 24px;
       width: 64px;
       height: 64px;
@@ -730,7 +680,7 @@
     /* Quick Log Menu */
     .quick-log-menu {
       position: fixed;
-      bottom: 166px;
+      bottom: 100px;
       right: 24px;
       display: flex;
       flex-direction: column;
@@ -1324,7 +1274,7 @@
       </div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
-      <div style="display: flex; gap: 16px; align-items: center;">
+      <div style="display: flex; gap: 8px; align-items: center;">
         <!-- Daily Completion Ring -->
         <div class="completion-ring-container" id="completionRing">
           <svg class="completion-ring" width="80" height="80" viewBox="0 0 80 80">
@@ -1345,10 +1295,10 @@
         </div>
 
 ```
-    <div style="display: flex; flex-direction: column; gap: 4px;">
-      <a id="chartsBtn" href="#" style="color: #4d9de0; text-decoration: none; font-size: 16px; font-weight: 600;">Charts</a>
-      <a id="biomarkersBtn" href="#" style="color: #ff006e; text-decoration: none; font-size: 16px; font-weight: 600;">Biomarkers</a>
-      <a id="weeklySummaryLink" href="#" style="color: #52b788; text-decoration: none; font-size: 16px; font-weight: 600;">Summary</a>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <a id="chartsBtn" href="#" style="display: block; padding: 8px 12px; background: #4d9de0; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; text-align: center;">📊 Charts</a>
+      <a id="biomarkersBtn" href="#" style="display: block; padding: 8px 12px; background: #ff006e; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; text-align: center;">🧬 Bio</a>
+      <a id="weeklySummaryLink" href="#" style="display: block; padding: 8px 12px; background: #52b788; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; text-align: center;">📈 Summary</a>
     </div>
   </div>
   <div id="statusMessage" class="status-message"></div>
@@ -1910,27 +1860,6 @@
 
   </div>
 </div>
-
-<!-- Bottom Navigation Bar -->
-
-<nav class="bottom-nav">
-  <button class="bottom-nav-item active" id="navHome">
-    <span class="bottom-nav-icon">🏠</span>
-    <span>Today</span>
-  </button>
-  <button class="bottom-nav-item" id="navCharts">
-    <span class="bottom-nav-icon">📊</span>
-    <span>Charts</span>
-  </button>
-  <button class="bottom-nav-item" id="navSummary">
-    <span class="bottom-nav-icon">📈</span>
-    <span>Summary</span>
-  </button>
-  <button class="bottom-nav-item" id="navBiomarkers">
-    <span class="bottom-nav-icon">🧬</span>
-    <span>Bio</span>
-  </button>
-</nav>
 
 <!-- Quick Log FAB -->
 
