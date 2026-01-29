@@ -1743,6 +1743,25 @@
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-header">Update Labs</div>
+    <div class="section-content">
+      <div class="field-group">
+        <label class="field-label">Lab Date (used as new column header)</label>
+        <input type="text" class="input-field" id="biomarkersDate" placeholder="M/D/YY (e.g., 1/25/26)">
+      </div>
+
+      <div class="field-group">
+        <div id="biomarkersTable"></div>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn">Submit Biomarkers</button>
+      <div class="average-display" id="biomarkersSaveStatus" style="margin-top: 10px;"> </div>
+    </div>
+  </div>
+
+</div> <!-- Close biomarkersPage -->
+
 <!-- Weekly Summary Page (hidden by default) -->
 <div id="weeklySummaryPage" style="display:none;">
   <div class="header" style="margin-top: 16px;">
@@ -1811,25 +1830,7 @@
       </div>
     </div>
   </div>
-</div>
-
-  <div class="section">
-    <div class="section-header">Update Labs</div>
-    <div class="section-content">
-      <div class="field-group">
-        <label class="field-label">Lab Date (used as new column header)</label>
-        <input type="text" class="input-field" id="biomarkersDate" placeholder="M/D/YY (e.g., 1/25/26)">
-      </div>
-
-      <div class="field-group">
-        <div id="biomarkersTable"></div>
-      </div>
-
-      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn">Submit Biomarkers</button>
-      <div class="average-display" id="biomarkersSaveStatus" style="margin-top: 10px;"> </div>
-    </div>
-  </div>
-</div>
+</div> <!-- Close weeklySummaryPage -->
 
 <!-- Quick Log FAB -->
 <button id="quickLogFab" class="quick-log-fab" title="Quick Log">+</button>
