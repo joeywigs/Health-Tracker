@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Better empty detection", new Date().toISOString());
+console.log("✅ app.js running - Better empty detection fixed", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
