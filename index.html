@@ -2274,6 +2274,36 @@
           updateCompletionRingAurora();
           if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
         });
+      
+      } else if (type === 'text') {
+        const input = document.getElementById(`${id}_input`);
+        if (input) {
+          input.addEventListener('change', () => {
+            window.customSectionData[id] = window.customSectionData[id] || {};
+            window.customSectionData[id].value = input.value;
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        }
+      
+      } else if (type === 'number') {
+        const input = document.getElementById(`${id}_input`);
+        if (input) {
+          input.addEventListener('change', () => {
+            window.customSectionData[id] = window.customSectionData[id] || {};
+            window.customSectionData[id].value = input.value;
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        }
+      
+      } else if (type === 'time') {
+        const input = document.getElementById(`${id}_input`);
+        if (input) {
+          input.addEventListener('change', () => {
+            window.customSectionData[id] = window.customSectionData[id] || {};
+            window.customSectionData[id].value = input.value;
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        }
       }
     }
     
@@ -2362,6 +2392,126 @@
         }
         if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
       }
+    };
+    
+    // Load custom sections data from server and update UI
+    window.loadCustomSectionsData = function(data) {
+      window.customSectionData = data || {};
+      
+      // Update UI for each custom section
+      appSettings.sections.filter(s => s.custom).forEach(sec => {
+        const sectionData = window.customSectionData[sec.id];
+        if (!sectionData) {
+          window.customSectionData[sec.id] = { value: null, entries: [] };
+          return;
+        }
+        
+        const type = sec.type;
+        const config = sec.config || {};
+        
+        if (type === 'counter') {
+          const val = sectionData.value || 0;
+          const valEl = document.getElementById(`${sec.id}_value`);
+          if (valEl) valEl.textContent = val;
+          
+          if (config.goalType === 'weekly') {
+            // Update dots
+            const dots = document.querySelectorAll(`#${sec.id} .counter-dot`);
+            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+          } else {
+            // Update progress bar
+            const fill = document.getElementById(`${sec.id}_fill`);
+            const goalNum = config.goalNumber || 6;
+            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          }
+        
+        } else if (type === 'checkbox') {
+          const checkboxes = config.checkboxes || ['Done'];
+          checkboxes.forEach((cb, i) => {
+            const input = document.getElementById(`${sec.id}_check_${i}`);
+            const chip = input?.closest('.chip');
+            const isChecked = sectionData.checkboxes?.[i] || false;
+            if (input) {
+              input.checked = isChecked;
+              chip?.classList.toggle('on', isChecked);
+            }
+          });
+        
+        } else if (type === 'text') {
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = sectionData.value || '';
+        
+        } else if (type === 'number') {
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = sectionData.value || '';
+        
+        } else if (type === 'time') {
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = sectionData.value || '';
+        
+        } else if (type === 'rating') {
+          const val = sectionData.value || 0;
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = val;
+          const stars = document.querySelectorAll(`#${sec.id}_stars .star`);
+          stars.forEach((s, i) => {
+            s.textContent = i < val ? '★' : '☆';
+            s.classList.toggle('filled', i < val);
+          });
+        
+        } else if (type === 'toggle') {
+          const input = document.getElementById(`${sec.id}_input`);
+          const chip = document.getElementById(`${sec.id}_toggle`);
+          const isChecked = sectionData.value || false;
+          if (input) {
+            input.checked = isChecked;
+            chip?.classList.toggle('on', isChecked);
+            const textEl = chip?.querySelector('.chip-text');
+            if (textEl) textEl.textContent = isChecked ? 'Yes' : 'No';
+          }
+        
+        } else if (type === 'log') {
+          if (config.fields) {
+            renderLogEntries(sec.id, config.fields);
+          }
+        }
+      });
+      
+      // Update completion ring
+      if (typeof updateCompletionRingAurora === 'function') {
+        updateCompletionRingAurora();
+      }
+    };
+    
+    // Collect custom sections data from UI for saving
+    window.collectCustomSectionsData = function() {
+      appSettings.sections.filter(s => s.custom).forEach(sec => {
+        if (!window.customSectionData[sec.id]) {
+          window.customSectionData[sec.id] = { value: null, entries: [] };
+        }
+        
+        const type = sec.type;
+        const config = sec.config || {};
+        
+        if (type === 'checkbox') {
+          const checkboxes = config.checkboxes || ['Done'];
+          window.customSectionData[sec.id].checkboxes = checkboxes.map((cb, i) => {
+            const input = document.getElementById(`${sec.id}_check_${i}`);
+            return input?.checked || false;
+          });
+        
+        } else if (type === 'text' || type === 'number' || type === 'time') {
+          const input = document.getElementById(`${sec.id}_input`);
+          window.customSectionData[sec.id].value = input?.value || '';
+        
+        } else if (type === 'toggle') {
+          const input = document.getElementById(`${sec.id}_input`);
+          window.customSectionData[sec.id].value = input?.checked || false;
+        }
+        // counter, rating, and log already update customSectionData directly
+      });
+      
+      return window.customSectionData;
     };
     
     // Export/Import settings
