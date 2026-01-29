@@ -616,7 +616,7 @@
     
     /* Items */
     .items { margin-bottom: 12px; }
-    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.15); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
+    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-sm); margin-bottom: 6px; }
     .item-text { font-size: 13px; }
     .item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
     .item-del:hover { color: var(--accent-pink); }
@@ -1217,6 +1217,28 @@
       });
     }
     
+    // Our own completion ring update (since app.js looks for .checkbox-field)
+    function updateCompletionRingAurora() {
+      // Get all checkboxes in chips, excluding Grey's habits
+      const allCheckboxes = document.querySelectorAll('#healthForm .chip input[type="checkbox"]');
+      const checkboxes = Array.from(allCheckboxes).filter(cb => 
+        cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
+      );
+      
+      const total = checkboxes.length;
+      const checked = checkboxes.filter(cb => cb.checked).length;
+      
+      const progress = document.getElementById('completionProgress');
+      const number = document.getElementById('completionNumber');
+      
+      if (progress && number) {
+        const circumference = 2 * Math.PI * 32; // r=32
+        const offset = circumference - (checked / total) * circumference;
+        progress.style.strokeDashoffset = offset;
+        number.textContent = checked;
+      }
+    }
+    
     // Chip toggle
     document.querySelectorAll('.chip').forEach(c=>{
       c.addEventListener('click',e=>{
@@ -1225,7 +1247,12 @@
         if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}))}
       });
       const cb=c.querySelector('input[type="checkbox"]');
-      if(cb)cb.addEventListener('change',()=>c.classList.toggle('on',cb.checked));
+      if(cb) {
+        cb.addEventListener('change', () => {
+          c.classList.toggle('on', cb.checked);
+          updateCompletionRingAurora();
+        });
+      }
     });
     
     // Water progress bar (goal: 6)
@@ -1250,34 +1277,22 @@
       fill.style.height = pct + '%';
     }
     
-    // REHIT dots - count sessions this week
+    // REHIT dots - count sessions this week (goal: 4 sessions per week)
     function updateRehitDots() {
       const dotsContainer = document.getElementById('rehitDots');
       if (!dotsContainer) return;
       const dots = dotsContainer.querySelectorAll('.rehit-dot');
       
-      // Count REHIT sessions this week from chartDataCache if available
+      // Try to get week count from the rehitWeek display (set by app.js)
       let weekCount = 0;
-      if (typeof chartDataCache !== 'undefined' && chartDataCache && chartDataCache.length > 0) {
-        const today = new Date();
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
-        startOfWeek.setHours(0,0,0,0);
-        
-        chartDataCache.forEach(day => {
-          const dayDate = new Date(day.date);
-          if (dayDate >= startOfWeek) {
-            if (day.rehit === '2x10' || day.rehit === '3x10' || day.rehit === true || day.rehit === 'TRUE') {
-              weekCount++;
-            }
-          }
-        });
+      const rehitWeekEl = document.getElementById('rehitWeek');
+      if (rehitWeekEl) {
+        const text = rehitWeekEl.textContent;
+        const match = text.match(/(\d+)/);
+        if (match) {
+          weekCount = parseInt(match[1], 10);
+        }
       }
-      
-      // Also check current day's checkboxes
-      const rehit2 = document.getElementById('rehit2');
-      const rehit3 = document.getElementById('rehit3');
-      const todayHasRehit = (rehit2 && rehit2.checked) || (rehit3 && rehit3.checked);
       
       // Update dots (max 4)
       dots.forEach((dot, i) => {
@@ -1285,25 +1300,54 @@
       });
     }
     
-    // Hook populateForm
-    const originalPopulateForm = window.populateForm;
-    window.populateForm = function(...args) {
-      if (originalPopulateForm) originalPopulateForm.apply(this, args);
-      setTimeout(() => { 
-        syncAllChips(); 
-        updateWaterBar(); 
-        updateRehitDisplay(); 
-        updateStepsBar(); 
-        updateRehitDots();
-      }, 100);
-    };
+    // Hook populateForm - wait for app.js to define it first
+    function setupPopulateFormHook() {
+      if (typeof window.populateForm === 'function' && !window._populateFormHooked) {
+        const originalPopulateForm = window.populateForm;
+        window.populateForm = function(data) {
+          // Call original first
+          originalPopulateForm.call(this, data);
+          
+          // Then sync our UI after a small delay
+          setTimeout(() => { 
+            syncAllChips(); 
+            updateWaterBar(); 
+            updateRehitDisplay(); 
+            updateStepsBar();
+            updateCompletionRingAurora();
+            updateRehitDots();
+          }, 100);
+        };
+        window._populateFormHooked = true;
+        console.log('populateForm hooked successfully');
+      } else if (!window._populateFormHooked) {
+        // Try again in 100ms if app.js hasn't loaded yet
+        setTimeout(setupPopulateFormHook, 100);
+      }
+    }
+    
+    // Start trying to hook after DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      setupPopulateFormHook();
+    });
+    
+    // Also try immediately in case app.js loaded first
+    setupPopulateFormHook();
     
     // Hook water display updates
-    const origWater=window.updateWaterDisplay;
-    window.updateWaterDisplay=function(){
-      if(origWater)origWater();
-      updateWaterBar();
-    };
+    function setupWaterHook() {
+      if (typeof window.updateWaterDisplay === 'function' && !window._waterHooked) {
+        const origWater = window.updateWaterDisplay;
+        window.updateWaterDisplay = function() {
+          origWater.call(this);
+          updateWaterBar();
+        };
+        window._waterHooked = true;
+      } else if (!window._waterHooked) {
+        setTimeout(setupWaterHook, 100);
+      }
+    }
+    setupWaterHook();
     
     // Watch for water count text changes with MutationObserver
     document.addEventListener('DOMContentLoaded', () => {
@@ -1312,36 +1356,93 @@
         const observer = new MutationObserver(updateWaterBar);
         observer.observe(waterCount, { childList: true, characterData: true, subtree: true });
       }
-    });
-    
-    // Steps input listener
-    document.addEventListener('DOMContentLoaded',()=>{
+      
+      // Watch for steps input changes
       const stepsInput = document.getElementById('steps');
-      if(stepsInput) {
+      if (stepsInput) {
         stepsInput.addEventListener('input', updateStepsBar);
         stepsInput.addEventListener('change', updateStepsBar);
+        // Also observe value changes
+        const stepsObserver = new MutationObserver(updateStepsBar);
+        stepsObserver.observe(stepsInput, { attributes: true, attributeFilter: ['value'] });
       }
       
       // REHIT checkbox listeners for dots
       const rehit2 = document.getElementById('rehit2');
       const rehit3 = document.getElementById('rehit3');
-      if(rehit2) rehit2.addEventListener('change', updateRehitDots);
-      if(rehit3) rehit3.addEventListener('change', updateRehitDots);
+      if (rehit2) rehit2.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
+      if (rehit3) rehit3.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
       
-      // Initialize everything after a delay to let app.js load data
-      setTimeout(()=>{ 
+      // Initialize everything after app.js has had time to load data
+      setTimeout(() => { 
         syncAllChips(); 
         updateWaterBar(); 
         updateStepsBar();
         updateRehitDots();
-        // Call app.js phase functions if they exist
-        if(typeof updatePhaseInfo === 'function') updatePhaseInfo();
-        if(typeof loadPhaseProgress === 'function') loadPhaseProgress();
-      }, 800);
+        updateRehitDisplay();
+        updateCompletionRingAurora();
+        // Phase should always show current date - call our fixed version
+        updatePhaseInfoFixed();
+      }, 1000);
       
-      // Also update after chart data loads (longer delay)
-      setTimeout(updateRehitDots, 2000);
+      // Update REHIT dots after chart data loads
+      setTimeout(updateRehitDots, 2500);
     });
+    
+    // Fixed phase info that always uses today's date
+    function updatePhaseInfoFixed() {
+      const PHASE_START = new Date("2026-01-19T00:00:00");
+      const PHASE_LENGTH = 21;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      const diffTime = today - PHASE_START;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        // Before phase start
+        const phaseInfoEl = document.getElementById("phaseInfo");
+        if (phaseInfoEl) phaseInfoEl.textContent = "Starting soon";
+        return;
+      }
+      
+      const phase = Math.floor(diffDays / PHASE_LENGTH) + 1;
+      const dayInPhase = (diffDays % PHASE_LENGTH) + 1;
+      const daysRemaining = PHASE_LENGTH - dayInPhase + 1;
+      
+      const phaseInfoEl = document.getElementById("phaseInfo");
+      if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH}`;
+      
+      const subtitleEl = document.querySelector(".tagline");
+      if (subtitleEl) subtitleEl.innerHTML = `Phase ${phase} · <span id="phaseInfo">Day ${dayInPhase} of ${PHASE_LENGTH}</span>`;
+      
+      const progressBar = document.getElementById("phaseProgressBar");
+      if (progressBar) {
+        const progress = ((dayInPhase - 1) / PHASE_LENGTH) * 100;
+        progressBar.style.width = `${progress}%`;
+      }
+      
+      const remainingEl = document.getElementById("phaseDaysRemaining");
+      if (remainingEl) {
+        if (daysRemaining > 0) {
+          remainingEl.textContent = `${daysRemaining} days left`;
+        } else {
+          remainingEl.textContent = "Phase complete! 🎉";
+        }
+      }
+    }
+    
+    // Override app.js phase functions to use our fixed version
+    window.addEventListener('load', () => {
+      // Replace app.js updatePhaseInfo
+      window.updatePhaseInfo = updatePhaseInfoFixed;
+      window.loadPhaseProgress = updatePhaseInfoFixed;
+      // Run it once
+      updatePhaseInfoFixed();
+    });
+    
+    // Periodically sync chips in case they get out of sync
+    setInterval(syncAllChips, 2000);
     
     // Section collapse
     document.querySelectorAll('.sec-head').forEach(h=>{
