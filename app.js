@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Biomarkers date format", new Date().toISOString());
+console.log("✅ app.js running - Back buttons", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -384,7 +384,10 @@ function setupChartsPage() {
   }
   
   if (chartsCloseBtn) {
-    chartsCloseBtn.addEventListener("click", hideChartsPage);
+    chartsCloseBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      hideChartsPage();
+    });
   }
   
   console.log("✅ Charts page wired");
@@ -1021,7 +1024,10 @@ function setupBiomarkersPage() {
   }
   
   if (bioCloseBtn) {
-    bioCloseBtn.addEventListener("click", hideBiomarkersPage);
+    bioCloseBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      hideBiomarkersPage();
+    });
   }
   
   console.log("✅ Biomarkers page wired");
