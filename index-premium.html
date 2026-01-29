@@ -2302,7 +2302,8 @@
       } else if (type === 'text') {
         const input = document.getElementById(`${id}_input`);
         if (input) {
-          input.addEventListener('change', () => {
+          // Save on blur (when user clicks away) to avoid interrupting typing
+          input.addEventListener('blur', () => {
             window.customSectionData[id] = window.customSectionData[id] || {};
             window.customSectionData[id].value = input.value;
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
