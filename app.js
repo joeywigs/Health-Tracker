@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Chart.js fix", new Date().toISOString());
+console.log("✅ app.js running - Biomarkers restored", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -396,8 +396,18 @@ async function showChartsPage() {
   // Scroll to top
   window.scrollTo(0, 0);
   
+  // Show loading state
+  const subtitle = chartsPage.querySelector(".subtitle");
+  if (subtitle) subtitle.textContent = "Loading data...";
+  
   // Load data and render charts
-  await loadAndRenderCharts();
+  try {
+    await loadAndRenderCharts();
+    if (subtitle) subtitle.textContent = "Last 30 Days";
+  } catch (err) {
+    console.error("Charts error:", err);
+    if (subtitle) subtitle.textContent = "Error loading charts";
+  }
 }
 
 function hideChartsPage() {
