@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Text Input Fixes", new Date().toISOString());
+console.log("✅ app.js running - Text input fixes", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // Show errors on screen
@@ -2537,10 +2537,10 @@ async function populateForm(data) {
   if (carlyEl) carlyEl.value = data?.carly || "";
 
   // Load custom sections data
-  if (data?.customSections && typeof window.loadCustomSectionsData === 'function') {
-    window.loadCustomSectionsData(data.customSections);
-  } else if (data?.customSections) {
-    window.customSectionData = data.customSections;
+  if (typeof window.loadCustomSectionsData === 'function') {
+    window.loadCustomSectionsData(data?.customSections || {});
+  } else {
+    window.customSectionData = data?.customSections || {};
   }
 
   // Optional renders/averages/completion
