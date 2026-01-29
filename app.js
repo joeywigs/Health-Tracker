@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Worker KV", new Date().toISOString());
+console.log("✅ app.js running - No bottom nav", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // Show errors on screen
@@ -441,10 +441,12 @@ function loadPhaseProgress() {
   
   const daysEl = document.getElementById("phaseDaysComplete");
   const barEl = document.getElementById("phaseProgressBar");
+  const summaryBarEl = document.getElementById("summaryPhaseBar");
   const remainingEl = document.getElementById("phaseDaysRemaining");
   
   if (daysEl) daysEl.textContent = Math.min(daysComplete, totalDays);
   if (barEl) barEl.style.width = `${progressPercent}%`;
+  if (summaryBarEl) summaryBarEl.style.width = `${progressPercent}%`;
   if (remainingEl) {
     if (daysRemaining > 0) {
       remainingEl.textContent = `${daysRemaining} days remaining`;
@@ -1466,8 +1468,8 @@ async function handleQuickLog(action, buttonEl) {
 
 async function quickLogMovement() {
   // Prompt for movement type and duration
-  const types = ["Walk", "Stretch", "Stairs", "Exercise", "Other"];
-  const typeChoice = prompt(`Movement type:\n1. Walk\n2. Stretch\n3. Stairs\n4. Exercise\n5. Other\n\nEnter number (1-5):`);
+  const types = ["Walk", "Carol Bike Free Ride", "Stretch", "Stairs", "Exercise", "Other"];
+  const typeChoice = prompt(`Movement type:\n1. Walk\n2. Carol Bike Free Ride\n3. Stretch\n4. Stairs\n5. Exercise\n6. Other\n\nEnter number (1-6):`);
   
   if (!typeChoice) return;
   
@@ -1477,7 +1479,7 @@ async function quickLogMovement() {
     return;
   }
   
-  const duration = prompt("Duration in minutes:", "5");
+  const duration = prompt("Duration in minutes:", "10");
   if (!duration) return;
   
   const mins = parseInt(duration, 10);
@@ -2590,7 +2592,20 @@ function setupMovementUI() {
 }
 
 function promptAddMovement() {
-  const raw = prompt("Movement duration (minutes):");
+  // First ask for movement type
+  const types = ["Walk", "Carol Bike Free Ride", "Stretch", "Stairs", "Exercise", "Other"];
+  const typeChoice = prompt(`Movement type:\n1. Walk\n2. Carol Bike Free Ride\n3. Stretch\n4. Stairs\n5. Exercise\n6. Other\n\nEnter number (1-6):`);
+  
+  if (!typeChoice) return;
+  
+  const typeIndex = parseInt(typeChoice, 10) - 1;
+  if (typeIndex < 0 || typeIndex >= types.length) {
+    alert("Invalid choice. Please enter 1-6.");
+    return;
+  }
+  
+  // Then ask for duration
+  const raw = prompt("Duration (minutes):", "10");
   if (raw === null) return;
 
   const durationNum = parseInt(raw, 10);
@@ -2599,8 +2614,7 @@ function promptAddMovement() {
     return;
   }
 
-  const type = durationNum > 12 ? "Long" : "Short";
-  movements.push({ duration: durationNum, type });
+  movements.push({ duration: durationNum, type: types[typeIndex] });
 
   renderMovements();
   triggerSaveSoon();
