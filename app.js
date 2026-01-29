@@ -512,9 +512,6 @@ async function fetchChartData(maxDays = null, silent = false) {
       if (emptyDaysInARow >= maxEmptyDays) break;
     }
   }
-      if (emptyDaysInARow >= maxEmptyDays) break;
-    }
-  }
   
   if (!silent) {
     hideChartProgress();
