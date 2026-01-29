@@ -75,29 +75,29 @@ const dayCache = new Map();        // key: “M/D/YY” -> loadResult
 document.addEventListener(“DOMContentLoaded”, () => {
 console.log(“Habit Tracker booting…”);
 
-setupDateNav();
-setupCheckboxes();
-setupRehitMutualExclusion();
-setupWaterButtons();
-setupInputAutosave();
-setupCollapsibleSections();
-setupMovementUI();
-setupReadingUI();
-setupBloodPressureCalculator();
-setupSwipeNavigation();
-setupPullToRefresh();
-setupWeeklyReminders();
-setupWeeklySummaryButton();
-setupChartsPage();
-setupChartRangeToggle();
-setupBiomarkersPage();
-setupStickyHeader();
-setupQuickLog();
-setupDopamineBoosts();
+try { setupDateNav(); console.log(“1 ok”); } catch(e) { console.error(“setupDateNav failed:”, e); }
+try { setupCheckboxes(); console.log(“2 ok”); } catch(e) { console.error(“setupCheckboxes failed:”, e); }
+try { setupRehitMutualExclusion(); console.log(“3 ok”); } catch(e) { console.error(“setupRehitMutualExclusion failed:”, e); }
+try { setupWaterButtons(); console.log(“4 ok”); } catch(e) { console.error(“setupWaterButtons failed:”, e); }
+try { setupInputAutosave(); console.log(“5 ok”); } catch(e) { console.error(“setupInputAutosave failed:”, e); }
+try { setupCollapsibleSections(); console.log(“6 ok”); } catch(e) { console.error(“setupCollapsibleSections failed:”, e); }
+try { setupMovementUI(); console.log(“7 ok”); } catch(e) { console.error(“setupMovementUI failed:”, e); }
+try { setupReadingUI(); console.log(“8 ok”); } catch(e) { console.error(“setupReadingUI failed:”, e); }
+try { setupBloodPressureCalculator(); console.log(“9 ok”); } catch(e) { console.error(“setupBloodPressureCalculator failed:”, e); }
+try { setupSwipeNavigation(); console.log(“10 ok”); } catch(e) { console.error(“setupSwipeNavigation failed:”, e); }
+try { setupPullToRefresh(); console.log(“11 ok”); } catch(e) { console.error(“setupPullToRefresh failed:”, e); }
+try { setupWeeklyReminders(); console.log(“12 ok”); } catch(e) { console.error(“setupWeeklyReminders failed:”, e); }
+try { setupWeeklySummaryButton(); console.log(“13 ok”); } catch(e) { console.error(“setupWeeklySummaryButton failed:”, e); }
+try { setupChartsPage(); console.log(“14 ok”); } catch(e) { console.error(“setupChartsPage failed:”, e); }
+try { setupChartRangeToggle(); console.log(“15 ok”); } catch(e) { console.error(“setupChartRangeToggle failed:”, e); }
+try { setupBiomarkersPage(); console.log(“16 ok”); } catch(e) { console.error(“setupBiomarkersPage failed:”, e); }
+try { setupStickyHeader(); console.log(“17 ok”); } catch(e) { console.error(“setupStickyHeader failed:”, e); }
+try { setupQuickLog(); console.log(“18 ok”); } catch(e) { console.error(“setupQuickLog failed:”, e); }
+try { setupDopamineBoosts(); console.log(“19 ok”); } catch(e) { console.error(“setupDopamineBoosts failed:”, e); }
 
-updateDateDisplay();
-updatePhaseInfo();
-loadDataForCurrentDate();
+try { updateDateDisplay(); console.log(“20 ok”); } catch(e) { console.error(“updateDateDisplay failed:”, e); }
+try { updatePhaseInfo(); console.log(“21 ok”); } catch(e) { console.error(“updatePhaseInfo failed:”, e); }
+try { loadDataForCurrentDate(); console.log(“22 ok”); } catch(e) { console.error(“loadDataForCurrentDate failed:”, e); }
 });
 
 const PHASE_START_DATE = new Date(“2026-01-19T00:00:00”); // Phase 1 start (local)
@@ -363,9 +363,14 @@ function updateWeeklySummaryButton() {
 }
 
 async function showWeeklySummaryPage() {
-hideAllPages();
+const mainPage = document.getElementById(“healthForm”);
+const chartsPage = document.getElementById(“chartsPage”);
+const bioPage = document.getElementById(“biomarkersPage”);
 const summaryPage = document.getElementById(“weeklySummaryPage”);
 
+if (mainPage) mainPage.style.display = “none”;
+if (chartsPage) chartsPage.style.display = “none”;
+if (bioPage) bioPage.style.display = “none”;
 if (summaryPage) summaryPage.style.display = “block”;
 
 window.scrollTo(0, 0);
@@ -380,7 +385,6 @@ const summaryPage = document.getElementById(“weeklySummaryPage”);
 if (summaryPage) summaryPage.style.display = “none”;
 if (mainPage) mainPage.style.display = “block”;
 
-setActiveNav(“navHome”);
 window.scrollTo(0, 0);
 }
 
@@ -619,9 +623,10 @@ console.log(“✅ Charts page wired”);
 }
 
 async function showChartsPage() {
-hideAllPages();
+const mainPage = document.getElementById(“healthForm”);
 const chartsPage = document.getElementById(“chartsPage”);
 
+if (mainPage) mainPage.style.display = “none”;
 if (chartsPage) chartsPage.style.display = “block”;
 
 // Scroll to top
@@ -648,7 +653,6 @@ const chartsPage = document.getElementById(“chartsPage”);
 if (chartsPage) chartsPage.style.display = “none”;
 if (mainPage) mainPage.style.display = “block”;
 
-setActiveNav(“navHome”);
 window.scrollTo(0, 0);
 }
 
@@ -1392,63 +1396,15 @@ await handleQuickLog(action, item);
 console.log(“✅ Quick log wired”);
 }
 
-// =====================================
-// BOTTOM NAVIGATION
-// =====================================
-function setupBottomNav() {
-const navHome = document.getElementById(“navHome”);
-const navCharts = document.getElementById(“navCharts”);
-const navSummary = document.getElementById(“navSummary”);
-const navBiomarkers = document.getElementById(“navBiomarkers”);
-
-if (!navHome) {
-console.warn(“Bottom nav not found”);
-return;
-}
-
-navHome.addEventListener(“click”, () => {
-setActiveNav(“navHome”);
-hideAllPages();
-document.getElementById(“healthForm”).style.display = “block”;
-window.scrollTo(0, 0);
-});
-
-navCharts.addEventListener(“click”, () => {
-setActiveNav(“navCharts”);
-showChartsPage();
-});
-
-navSummary.addEventListener(“click”, () => {
-setActiveNav(“navSummary”);
-showWeeklySummaryPage();
-});
-
-navBiomarkers.addEventListener(“click”, () => {
-setActiveNav(“navBiomarkers”);
-showBiomarkersPage();
-});
-
-console.log(“✅ Bottom nav wired”);
-}
-
-function setActiveNav(activeId) {
-document.querySelectorAll(”.bottom-nav-item”).forEach(item => {
-item.classList.toggle(“active”, item.id === activeId);
-});
-}
-
-function hideAllPages() {
-const pages = [“healthForm”, “chartsPage”, “weeklySummaryPage”, “biomarkersPage”];
-pages.forEach(id => {
-const el = document.getElementById(id);
-if (el) el.style.display = “none”;
-});
-}
-
 function showBiomarkersPage() {
-hideAllPages();
+const mainPage = document.getElementById(“healthForm”);
+const chartsPage = document.getElementById(“chartsPage”);
 const bioPage = document.getElementById(“biomarkersPage”);
+
+if (mainPage) mainPage.style.display = “none”;
+if (chartsPage) chartsPage.style.display = “none”;
 if (bioPage) bioPage.style.display = “block”;
+
 window.scrollTo(0, 0);
 loadBiomarkers();
 }
@@ -1826,7 +1782,6 @@ const bioPage = document.getElementById(“biomarkersPage”);
 if (bioPage) bioPage.style.display = “none”;
 if (mainPage) mainPage.style.display = “block”;
 
-setActiveNav(“navHome”);
 window.scrollTo(0, 0);
 }
 
