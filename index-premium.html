@@ -334,7 +334,18 @@
     body > * { position: relative; z-index: 1; }
     
     /* Header */
-    .header { padding: 20px 0; margin-bottom: 20px; }
+    .header { 
+      padding: 20px; 
+      margin-bottom: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius);
+      backdrop-filter: blur(20px);
+    }
+    body.day-mode .header {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
     .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
     .brand { display: flex; align-items: center; gap: 12px; }
     .logo {
@@ -472,6 +483,90 @@
     body.day-mode .rehit-dot.on {
       background: var(--success);
       box-shadow: 0 0 8px rgba(5,150,105,0.4);
+    }
+    
+    /* Counter dots (for weekly goals) */
+    .counter-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: all 0.3s;
+    }
+    .counter-dot.on {
+      background: var(--accent-teal);
+      box-shadow: 0 0 8px var(--glow-teal);
+    }
+    body.day-mode .counter-dot {
+      background: rgba(0,0,0,0.15);
+    }
+    body.day-mode .counter-dot.on {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(5,150,105,0.4);
+    }
+    
+    /* Rating stars */
+    .rating-stars {
+      display: flex;
+      gap: 8px;
+      font-size: 28px;
+    }
+    .star {
+      cursor: pointer;
+      color: rgba(255,255,255,0.3);
+      transition: all 0.2s;
+    }
+    .star:hover, .star.filled {
+      color: var(--accent-orange);
+      text-shadow: 0 0 10px var(--glow-orange);
+    }
+    body.day-mode .star {
+      color: rgba(0,0,0,0.2);
+    }
+    body.day-mode .star:hover, body.day-mode .star.filled {
+      color: var(--accent-orange);
+    }
+    
+    /* Custom log modal */
+    #customLogModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    #customLogModal.show {
+      display: flex;
+    }
+    #customLogModal .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+    }
+    #customLogModal .modal-content {
+      position: relative;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #customLogModal .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    #customLogModal .modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    body.day-mode #customLogModal .modal-content {
+      background: rgba(255,255,255,0.95);
     }
     
     .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--text); outline: none; }
@@ -1175,15 +1270,83 @@
           <label class="field-label">Section Type</label>
           <select class="input" id="newSectionType">
             <option value="text">Text/Notes</option>
-            <option value="checkbox">Checkboxes</option>
+            <option value="checkbox">Checkboxes (multiple)</option>
             <option value="number">Number Input</option>
+            <option value="counter">Counter (+/- with goal)</option>
+            <option value="log">Log (list of entries)</option>
+            <option value="time">Time Input</option>
+            <option value="rating">Rating (1-5 stars)</option>
+            <option value="toggle">Yes/No Toggle</option>
           </select>
         </div>
         <div class="field">
           <label class="field-label">Icon (emoji)</label>
           <input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px">
         </div>
-        <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:8px">Add Section</button>
+        
+        <!-- Dynamic options based on type -->
+        <div id="checkboxOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Checkbox Names (comma-separated)</label>
+            <input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening">
+          </div>
+        </div>
+        
+        <div id="counterOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Goal Type</label>
+            <select class="input" id="counterGoalType">
+              <option value="daily">Daily (progress bar)</option>
+              <option value="weekly">Weekly (dots)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Goal Number</label>
+            <input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20">
+          </div>
+          <div class="field">
+            <label class="field-label">Unit Label</label>
+            <input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times">
+          </div>
+        </div>
+        
+        <div id="logOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Fields per Entry</label>
+            <div id="logFieldsList">
+              <div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" class="input" placeholder="Field name" style="flex:2">
+                <select class="input" style="flex:1">
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="select">Dropdown</option>
+                </select>
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button>
+          </div>
+        </div>
+        
+        <div id="numberOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Unit (optional)</label>
+            <input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc.">
+          </div>
+          <div class="field">
+            <label class="field-label">Placeholder</label>
+            <input type="text" class="input" id="numberPlaceholder" placeholder="0">
+          </div>
+        </div>
+        
+        <div id="ratingOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Rating Label</label>
+            <input type="text" class="input" id="ratingLabel" placeholder="How was your day?">
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
       </div>
     </div>
     
@@ -1620,14 +1783,26 @@
     // =============================================
     
     function openSettingsPage() {
-      document.getElementById('healthForm').style.display = 'none';
-      document.getElementById('settingsPage').style.display = 'block';
-      document.getElementById('quickLogFab').style.display = 'none';
+      // Hide all other pages
+      const mainPage = document.getElementById('healthForm');
+      const chartsPage = document.getElementById('chartsPage');
+      const bioPage = document.getElementById('biomarkersPage');
+      const summaryPage = document.getElementById('weeklySummaryPage');
+      const settingsPage = document.getElementById('settingsPage');
+      const fab = document.getElementById('quickLogFab');
+      
+      if (mainPage) mainPage.style.display = 'none';
+      if (chartsPage) chartsPage.style.display = 'none';
+      if (bioPage) bioPage.style.display = 'none';
+      if (summaryPage) summaryPage.style.display = 'none';
+      if (settingsPage) settingsPage.style.display = 'block';
+      if (fab) fab.style.display = 'none';
       
       // Populate settings
       document.getElementById('dayStartTime').value = appSettings.dayStartTime;
       document.getElementById('nightStartTime').value = appSettings.nightStartTime;
       
+      window.scrollTo(0, 0);
       renderSectionList();
     }
     
@@ -1638,6 +1813,7 @@
       
       // Apply section visibility
       applySectionSettings();
+      window.scrollTo(0, 0);
     }
     
     function renderSectionList() {
@@ -1770,6 +1946,44 @@
       });
     });
     
+    // Show/hide type-specific options
+    document.getElementById('newSectionType')?.addEventListener('change', (e) => {
+      // Hide all options first
+      document.querySelectorAll('.type-options').forEach(opt => opt.style.display = 'none');
+      
+      // Show relevant options
+      const type = e.target.value;
+      if (type === 'checkbox') {
+        document.getElementById('checkboxOptions').style.display = 'block';
+      } else if (type === 'counter') {
+        document.getElementById('counterOptions').style.display = 'block';
+      } else if (type === 'log') {
+        document.getElementById('logOptions').style.display = 'block';
+      } else if (type === 'number') {
+        document.getElementById('numberOptions').style.display = 'block';
+      } else if (type === 'rating') {
+        document.getElementById('ratingOptions').style.display = 'block';
+      }
+    });
+    
+    // Add log field button
+    document.getElementById('addLogFieldBtn')?.addEventListener('click', () => {
+      const list = document.getElementById('logFieldsList');
+      const row = document.createElement('div');
+      row.className = 'log-field-row';
+      row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px';
+      row.innerHTML = `
+        <input type="text" class="input" placeholder="Field name" style="flex:2">
+        <select class="input" style="flex:1">
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="select">Dropdown</option>
+        </select>
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
+      `;
+      list.appendChild(row);
+    });
+    
     // Add custom section
     document.getElementById('addSectionBtn')?.addEventListener('click', () => {
       const name = document.getElementById('newSectionName').value.trim();
@@ -1783,42 +1997,184 @@
       
       const id = 'custom_' + Date.now();
       
+      // Gather type-specific config
+      let config = {};
+      
+      if (type === 'checkbox') {
+        const names = document.getElementById('checkboxNames').value;
+        config.checkboxes = names.split(',').map(n => n.trim()).filter(n => n);
+        if (config.checkboxes.length === 0) {
+          alert('Please enter at least one checkbox name');
+          return;
+        }
+      } else if (type === 'counter') {
+        config.goalType = document.getElementById('counterGoalType').value;
+        config.goalNumber = parseInt(document.getElementById('counterGoalNumber').value) || 6;
+        config.unitLabel = document.getElementById('counterUnitLabel').value || 'times';
+      } else if (type === 'log') {
+        const rows = document.querySelectorAll('#logFieldsList .log-field-row');
+        config.fields = [];
+        rows.forEach(row => {
+          const fname = row.querySelector('input').value.trim();
+          const ftype = row.querySelector('select').value;
+          if (fname) config.fields.push({ name: fname, type: ftype });
+        });
+        if (config.fields.length === 0) {
+          alert('Please add at least one field for the log');
+          return;
+        }
+      } else if (type === 'number') {
+        config.unit = document.getElementById('numberUnit').value || '';
+        config.placeholder = document.getElementById('numberPlaceholder').value || '0';
+      } else if (type === 'rating') {
+        config.label = document.getElementById('ratingLabel').value || 'Rate';
+      }
+      
       appSettings.sections.push({
         id,
         name,
         icon,
         visible: true,
         custom: true,
-        type
+        type,
+        config
       });
       
       saveSettings(appSettings);
       
       // Create the section element
-      createCustomSection(id, name, icon, type);
+      createCustomSection(id, name, icon, type, config);
       
       // Clear inputs
       document.getElementById('newSectionName').value = '';
       document.getElementById('newSectionIcon').value = '';
+      document.getElementById('checkboxNames').value = '';
+      document.getElementById('counterGoalNumber').value = '';
+      document.getElementById('counterUnitLabel').value = '';
+      document.getElementById('logFieldsList').innerHTML = `
+        <div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" class="input" placeholder="Field name" style="flex:2">
+          <select class="input" style="flex:1">
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="select">Dropdown</option>
+          </select>
+          <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
+        </div>
+      `;
+      document.querySelectorAll('.type-options').forEach(opt => opt.style.display = 'none');
+      document.getElementById('newSectionType').value = 'text';
       
       renderSectionList();
     });
     
-    function createCustomSection(id, name, icon, type) {
+    // Store custom section data (for logs, counters, etc.)
+    window.customSectionData = window.customSectionData || {};
+    
+    function createCustomSection(id, name, icon, type, config = {}) {
       const form = document.getElementById('healthForm');
       if (!form) return;
+      
+      // Initialize data storage for this section
+      if (!window.customSectionData[id]) {
+        window.customSectionData[id] = { value: type === 'counter' ? 0 : null, entries: [] };
+      }
       
       const section = document.createElement('div');
       section.className = 'section';
       section.id = id;
       
       let content = '';
+      
       if (type === 'text') {
         content = `<textarea class="input" id="${id}_input" placeholder="Enter notes..."></textarea>`;
+      
       } else if (type === 'checkbox') {
-        content = `<div class="chips"><div class="chip"><input type="checkbox" id="${id}_check"><div class="chip-dot">✓</div><span class="chip-text">Done</span></div></div>`;
+        const checkboxes = config.checkboxes || ['Done'];
+        content = `<div class="chips">${checkboxes.map((cb, i) => `
+          <div class="chip"><input type="checkbox" id="${id}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>
+        `).join('')}</div>`;
+      
       } else if (type === 'number') {
-        content = `<input type="number" class="input" id="${id}_input" placeholder="0">`;
+        const unit = config.unit ? `<span class="card-unit">${config.unit}</span>` : '';
+        content = `<div style="display:flex;align-items:center;gap:8px">
+          <input type="number" class="big-input" id="${id}_input" placeholder="${config.placeholder || '0'}" style="max-width:120px">
+          ${unit}
+        </div>`;
+      
+      } else if (type === 'counter') {
+        const goalNum = config.goalNumber || 6;
+        const unit = config.unitLabel || 'times';
+        const isWeekly = config.goalType === 'weekly';
+        
+        if (isWeekly) {
+          // Weekly goal with dots
+          let dots = '';
+          for (let i = 0; i < goalNum; i++) {
+            dots += `<div class="counter-dot" data-idx="${i}"></div>`;
+          }
+          content = `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
+              <div class="water-num counter-value" id="${id}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
+              <div class="counter-dots" id="${id}_dots" style="display:flex;gap:6px;margin-left:auto">
+                ${dots}
+              </div>
+            </div>
+            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/week</div>
+          `;
+        } else {
+          // Daily goal with progress bar
+          content = `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
+              <div class="water-num counter-value" id="${id}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
+              <div class="water-bar-wrap">
+                <div class="water-bar-track">
+                  <div class="water-bar-fill counter-fill" id="${id}_fill" style="height:0%"></div>
+                </div>
+                <div class="water-bar-goal">${goalNum}</div>
+              </div>
+            </div>
+            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/day</div>
+          `;
+        }
+      
+      } else if (type === 'log') {
+        content = `
+          <div class="items" id="${id}_list"></div>
+          <button type="button" class="btn btn-secondary" id="${id}_addBtn">+ Add Entry</button>
+        `;
+      
+      } else if (type === 'time') {
+        content = `<input type="time" class="input" id="${id}_input">`;
+      
+      } else if (type === 'rating') {
+        const label = config.label || 'Rate';
+        content = `
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${label}</div>
+          <div class="rating-stars" id="${id}_stars">
+            <span class="star" data-val="1">☆</span>
+            <span class="star" data-val="2">☆</span>
+            <span class="star" data-val="3">☆</span>
+            <span class="star" data-val="4">☆</span>
+            <span class="star" data-val="5">☆</span>
+          </div>
+          <input type="hidden" id="${id}_input" value="">
+        `;
+      
+      } else if (type === 'toggle') {
+        content = `
+          <div class="chips">
+            <div class="chip toggle-chip" id="${id}_toggle">
+              <input type="checkbox" id="${id}_input">
+              <div class="chip-dot">✓</div>
+              <span class="chip-text">Yes</span>
+            </div>
+          </div>
+        `;
       }
       
       section.innerHTML = `
@@ -1841,19 +2197,346 @@
         section.querySelector('.sec-content').classList.toggle('collapsed');
       });
       
-      // Wire up chip if checkbox type
+      // Wire up type-specific interactions
+      wireUpCustomSection(section, id, type, config);
+    }
+    
+    function wireUpCustomSection(section, id, type, config) {
       if (type === 'checkbox') {
-        const chip = section.querySelector('.chip');
+        section.querySelectorAll('.chip').forEach(chip => {
+          const cb = chip.querySelector('input');
+          chip.addEventListener('click', (e) => {
+            if (e.target.type !== 'checkbox') {
+              cb.checked = !cb.checked;
+              chip.classList.toggle('on', cb.checked);
+              updateCompletionRingAurora();
+              if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+            }
+          });
+          cb.addEventListener('change', () => {
+            chip.classList.toggle('on', cb.checked);
+            updateCompletionRingAurora();
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        });
+      
+      } else if (type === 'counter') {
+        const goalNum = config.goalNumber || 6;
+        const isWeekly = config.goalType === 'weekly';
+        
+        section.querySelector('.counter-plus')?.addEventListener('click', () => {
+          const valEl = document.getElementById(`${id}_value`);
+          let val = parseInt(valEl.textContent) || 0;
+          val++;
+          valEl.textContent = val;
+          window.customSectionData[id].value = val;
+          
+          if (isWeekly) {
+            // Update dots
+            const dots = section.querySelectorAll('.counter-dot');
+            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+          } else {
+            // Update progress bar
+            const fill = document.getElementById(`${id}_fill`);
+            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          }
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        });
+        
+        section.querySelector('.counter-minus')?.addEventListener('click', () => {
+          const valEl = document.getElementById(`${id}_value`);
+          let val = parseInt(valEl.textContent) || 0;
+          if (val > 0) val--;
+          valEl.textContent = val;
+          window.customSectionData[id].value = val;
+          
+          if (isWeekly) {
+            const dots = section.querySelectorAll('.counter-dot');
+            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+          } else {
+            const fill = document.getElementById(`${id}_fill`);
+            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          }
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        });
+      
+      } else if (type === 'log') {
+        const addBtn = document.getElementById(`${id}_addBtn`);
+        addBtn?.addEventListener('click', () => openLogModal(id, config.fields || []));
+      
+      } else if (type === 'rating') {
+        const stars = section.querySelectorAll('.star');
+        const input = document.getElementById(`${id}_input`);
+        stars.forEach(star => {
+          star.addEventListener('click', () => {
+            const val = parseInt(star.dataset.val);
+            input.value = val;
+            window.customSectionData[id].value = val;
+            stars.forEach((s, i) => {
+              s.textContent = i < val ? '★' : '☆';
+              s.classList.toggle('filled', i < val);
+            });
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        });
+      
+      } else if (type === 'toggle') {
+        const chip = section.querySelector('.toggle-chip');
         const cb = chip.querySelector('input');
         chip.addEventListener('click', (e) => {
           if (e.target.type !== 'checkbox') {
             cb.checked = !cb.checked;
             chip.classList.toggle('on', cb.checked);
+            chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
+            updateCompletionRingAurora();
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
           }
         });
-        cb.addEventListener('change', () => chip.classList.toggle('on', cb.checked));
+        cb.addEventListener('change', () => {
+          chip.classList.toggle('on', cb.checked);
+          chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
+          updateCompletionRingAurora();
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        });
+      
+      } else if (type === 'text') {
+        const input = document.getElementById(`${id}_input`);
+        if (input) {
+          input.addEventListener('change', () => {
+            window.customSectionData[id] = window.customSectionData[id] || {};
+            window.customSectionData[id].value = input.value;
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        }
+      
+      } else if (type === 'number') {
+        const input = document.getElementById(`${id}_input`);
+        if (input) {
+          input.addEventListener('change', () => {
+            window.customSectionData[id] = window.customSectionData[id] || {};
+            window.customSectionData[id].value = input.value;
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        }
+      
+      } else if (type === 'time') {
+        const input = document.getElementById(`${id}_input`);
+        if (input) {
+          input.addEventListener('change', () => {
+            window.customSectionData[id] = window.customSectionData[id] || {};
+            window.customSectionData[id].value = input.value;
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        }
       }
     }
+    
+    // Log modal for custom log sections
+    function openLogModal(sectionId, fields) {
+      // Create modal if doesn't exist
+      let modal = document.getElementById('customLogModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'customLogModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-overlay" onclick="closeLogModal()"></div>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 id="logModalTitle">Add Entry</h3>
+              <button onclick="closeLogModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text)">×</button>
+            </div>
+            <div id="logModalFields"></div>
+            <button class="btn btn-primary" id="logModalSaveBtn" style="width:100%;margin-top:12px">Save</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      
+      // Populate fields
+      const fieldsContainer = document.getElementById('logModalFields');
+      fieldsContainer.innerHTML = fields.map(f => `
+        <div class="field">
+          <label class="field-label">${f.name}</label>
+          ${f.type === 'number' 
+            ? `<input type="number" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="0">`
+            : `<input type="text" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="">`
+          }
+        </div>
+      `).join('');
+      
+      // Wire up save
+      document.getElementById('logModalSaveBtn').onclick = () => {
+        const entry = {};
+        fields.forEach(f => {
+          const input = document.getElementById(`logField_${f.name.replace(/\s/g, '_')}`);
+          entry[f.name] = f.type === 'number' ? (parseFloat(input.value) || 0) : input.value;
+        });
+        
+        if (!window.customSectionData[sectionId]) {
+          window.customSectionData[sectionId] = { entries: [] };
+        }
+        window.customSectionData[sectionId].entries.push(entry);
+        
+        renderLogEntries(sectionId, fields);
+        closeLogModal();
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      };
+      
+      modal.classList.add('show');
+    }
+    
+    function closeLogModal() {
+      document.getElementById('customLogModal')?.classList.remove('show');
+    }
+    
+    function renderLogEntries(sectionId, fields) {
+      const list = document.getElementById(`${sectionId}_list`);
+      if (!list) return;
+      
+      const entries = window.customSectionData[sectionId]?.entries || [];
+      list.innerHTML = entries.map((entry, idx) => {
+        const summary = fields.map(f => entry[f.name]).filter(v => v).join(' · ');
+        return `
+          <div class="item">
+            <span class="item-text">${summary || 'Entry ' + (idx + 1)}</span>
+            <button type="button" class="btn btn-danger" onclick="removeLogEntry('${sectionId}', ${idx})">×</button>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    window.removeLogEntry = function(sectionId, idx) {
+      if (window.customSectionData[sectionId]?.entries) {
+        window.customSectionData[sectionId].entries.splice(idx, 1);
+        // Re-render - need to get fields from config
+        const sec = appSettings.sections.find(s => s.id === sectionId);
+        if (sec?.config?.fields) {
+          renderLogEntries(sectionId, sec.config.fields);
+        }
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      }
+    };
+    
+    // Load custom sections data from server and update UI
+    window.loadCustomSectionsData = function(data) {
+      window.customSectionData = data || {};
+      
+      // Update UI for each custom section
+      appSettings.sections.filter(s => s.custom).forEach(sec => {
+        const sectionData = window.customSectionData[sec.id];
+        if (!sectionData) {
+          window.customSectionData[sec.id] = { value: null, entries: [] };
+          return;
+        }
+        
+        const type = sec.type;
+        const config = sec.config || {};
+        
+        if (type === 'counter') {
+          const val = sectionData.value || 0;
+          const valEl = document.getElementById(`${sec.id}_value`);
+          if (valEl) valEl.textContent = val;
+          
+          if (config.goalType === 'weekly') {
+            // Update dots
+            const dots = document.querySelectorAll(`#${sec.id} .counter-dot`);
+            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+          } else {
+            // Update progress bar
+            const fill = document.getElementById(`${sec.id}_fill`);
+            const goalNum = config.goalNumber || 6;
+            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          }
+        
+        } else if (type === 'checkbox') {
+          const checkboxes = config.checkboxes || ['Done'];
+          checkboxes.forEach((cb, i) => {
+            const input = document.getElementById(`${sec.id}_check_${i}`);
+            const chip = input?.closest('.chip');
+            const isChecked = sectionData.checkboxes?.[i] || false;
+            if (input) {
+              input.checked = isChecked;
+              chip?.classList.toggle('on', isChecked);
+            }
+          });
+        
+        } else if (type === 'text') {
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = sectionData.value || '';
+        
+        } else if (type === 'number') {
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = sectionData.value || '';
+        
+        } else if (type === 'time') {
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = sectionData.value || '';
+        
+        } else if (type === 'rating') {
+          const val = sectionData.value || 0;
+          const input = document.getElementById(`${sec.id}_input`);
+          if (input) input.value = val;
+          const stars = document.querySelectorAll(`#${sec.id}_stars .star`);
+          stars.forEach((s, i) => {
+            s.textContent = i < val ? '★' : '☆';
+            s.classList.toggle('filled', i < val);
+          });
+        
+        } else if (type === 'toggle') {
+          const input = document.getElementById(`${sec.id}_input`);
+          const chip = document.getElementById(`${sec.id}_toggle`);
+          const isChecked = sectionData.value || false;
+          if (input) {
+            input.checked = isChecked;
+            chip?.classList.toggle('on', isChecked);
+            const textEl = chip?.querySelector('.chip-text');
+            if (textEl) textEl.textContent = isChecked ? 'Yes' : 'No';
+          }
+        
+        } else if (type === 'log') {
+          if (config.fields) {
+            renderLogEntries(sec.id, config.fields);
+          }
+        }
+      });
+      
+      // Update completion ring
+      if (typeof updateCompletionRingAurora === 'function') {
+        updateCompletionRingAurora();
+      }
+    };
+    
+    // Collect custom sections data from UI for saving
+    window.collectCustomSectionsData = function() {
+      appSettings.sections.filter(s => s.custom).forEach(sec => {
+        if (!window.customSectionData[sec.id]) {
+          window.customSectionData[sec.id] = { value: null, entries: [] };
+        }
+        
+        const type = sec.type;
+        const config = sec.config || {};
+        
+        if (type === 'checkbox') {
+          const checkboxes = config.checkboxes || ['Done'];
+          window.customSectionData[sec.id].checkboxes = checkboxes.map((cb, i) => {
+            const input = document.getElementById(`${sec.id}_check_${i}`);
+            return input?.checked || false;
+          });
+        
+        } else if (type === 'text' || type === 'number' || type === 'time') {
+          const input = document.getElementById(`${sec.id}_input`);
+          window.customSectionData[sec.id].value = input?.value || '';
+        
+        } else if (type === 'toggle') {
+          const input = document.getElementById(`${sec.id}_input`);
+          window.customSectionData[sec.id].value = input?.checked || false;
+        }
+        // counter, rating, and log already update customSectionData directly
+      });
+      
+      return window.customSectionData;
+    };
     
     // Export/Import settings
     document.getElementById('exportSettingsBtn')?.addEventListener('click', () => {
@@ -1900,7 +2583,7 @@
       // Recreate any custom sections
       appSettings.sections.filter(s => s.custom).forEach(sec => {
         if (!document.getElementById(sec.id)) {
-          createCustomSection(sec.id, sec.name, sec.icon, sec.type);
+          createCustomSection(sec.id, sec.name, sec.icon, sec.type, sec.config || {});
         }
       });
     });
