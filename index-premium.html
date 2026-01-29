@@ -1,1 +1,503 @@
-xxx
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Elevate — Daily Rituals</title>
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f; --bg-card: rgba(255,255,255,0.03); --bg-hover: rgba(255,255,255,0.06);
+      --text: #f5f5f7; --text-dim: rgba(255,255,255,0.6); --text-muted: rgba(255,255,255,0.4);
+      --gold: #f5a623; --gold-glow: rgba(245,166,35,0.3);
+      --success: #34d399; --success-soft: rgba(52,211,153,0.15);
+      --sleep: #a78bfa; --water: #60a5fa; --movement: #f472b6; --nutrition: #4ade80;
+      --border: rgba(255,255,255,0.08); --radius: 20px; --radius-sm: 12px; --radius-pill: 100px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text);
+      padding: 16px; padding-bottom: 120px; font-size: 16px; line-height: 1.5;
+      background-image: radial-gradient(ellipse at top, rgba(167,139,250,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom right, rgba(245,166,35,0.05) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+    
+    /* Header */
+    .header { padding: 20px 0; margin-bottom: 20px; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--gold), #ff6b6b);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      box-shadow: 0 0 30px var(--gold-glow);
+    }
+    .brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+    .brand .tagline { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-link {
+      width: 38px; height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-dim); font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; text-decoration: none;
+      transition: all 0.2s; backdrop-filter: blur(10px);
+    }
+    .nav-link:hover { background: var(--bg-hover); color: var(--gold); border-color: var(--gold); }
+    
+    /* Date Nav */
+    .date-nav {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); backdrop-filter: blur(20px);
+    }
+    .date-btn {
+      width: 42px; height: 42px; border-radius: var(--radius-sm); border: none;
+      background: transparent; color: var(--text-dim); font-size: 18px; cursor: pointer;
+    }
+    .date-btn:hover { color: var(--text); background: var(--bg-hover); }
+    .date-btn:active { transform: scale(0.95); }
+    .date-center { flex: 1; text-align: center; }
+    .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; }
+    .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    
+    /* Progress Ring */
+    .ring-wrap { position: relative; width: 52px; height: 52px; }
+    .ring { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: var(--bg-card); stroke-width: 4; }
+    .ring-progress { fill: none; stroke: var(--gold); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 0.6s; filter: drop-shadow(0 0 4px var(--gold-glow)); }
+    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk'; font-size: 16px; font-weight: 700; color: var(--gold); }
+    
+    /* Phase Bar */
+    .phase { margin-top: 20px; }
+    .phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; }
+    .phase-track { height: 5px; background: var(--bg-card); border-radius: var(--radius-pill); overflow: hidden; }
+    .phase-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #ff6b6b); border-radius: var(--radius-pill); box-shadow: 0 0 10px var(--gold-glow); }
+    
+    /* Quick Cards */
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; position: relative; overflow: hidden; backdrop-filter: blur(20px);
+      transition: all 0.3s;
+    }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); opacity: 0.7; }
+    .card:hover { background: var(--bg-hover); transform: translateY(-2px); }
+    .card.sleep { --accent: var(--sleep); }
+    .card.water { --accent: var(--water); }
+    .card.movement { --accent: var(--movement); }
+    .card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .card-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--accent); }
+    .card-title { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+    .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; }
+    .card-unit { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+    .card-avg { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+    
+    .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--text); outline: none; }
+    .big-input::placeholder { color: var(--text-muted); }
+    .big-input:focus { color: var(--accent, var(--gold)); }
+    
+    /* Water */
+    .water-row { display: flex; align-items: center; gap: 12px; }
+    .water-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--water); background: transparent; color: var(--water); font-size: 18px; cursor: pointer; transition: all 0.2s; }
+    .water-btn:hover { background: var(--water); color: var(--bg); }
+    .water-btn:active { transform: scale(0.9); }
+    .water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; }
+    .drops { display: flex; gap: 3px; margin-top: 8px; }
+    .drop { width: 6px; height: 10px; background: var(--bg-card); border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%; transition: all 0.3s; }
+    .drop.on { background: var(--water); box-shadow: 0 0 6px rgba(96,165,250,0.5); }
+    
+    /* Sections */
+    .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; backdrop-filter: blur(20px); }
+    .section:hover { border-color: rgba(255,255,255,0.12); }
+    .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
+    .sec-title { display: flex; align-items: center; gap: 10px; }
+    .sec-icon { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .sec-name { font-size: 14px; font-weight: 600; }
+    .sec-toggle { color: var(--text-muted); font-size: 11px; transition: transform 0.3s; }
+    .sec-head.collapsed .sec-toggle { transform: rotate(-90deg); }
+    .sec-content { transition: max-height 0.3s, opacity 0.3s; overflow: hidden; }
+    .sec-content.collapsed { max-height: 0; opacity: 0; }
+    
+    /* Chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-pill);
+      cursor: pointer; transition: all 0.25s; user-select: none;
+    }
+    .chip:hover { background: var(--bg-hover); }
+    .chip:active { transform: scale(0.97); }
+    .chip.on { background: var(--success-soft); border-color: var(--success); }
+    .chip-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 9px; transition: all 0.25s; }
+    .chip.on .chip-dot { background: var(--success); border-color: var(--success); color: var(--bg); box-shadow: 0 0 10px rgba(52,211,153,0.4); }
+    .chip-text { font-size: 13px; font-weight: 500; color: var(--text-dim); }
+    .chip.on .chip-text { color: var(--text); }
+    .chip input { display: none; }
+    
+    /* Inputs */
+    .field { margin-bottom: 14px; }
+    .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; display: block; }
+    .input { width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; outline: none; transition: all 0.2s; }
+    .input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+    .input::placeholder { color: var(--text-muted); }
+    textarea.input { min-height: 90px; resize: vertical; font-family: inherit; line-height: 1.5; }
+    
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-secondary { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg-hover); color: var(--text); }
+    .btn-primary { background: linear-gradient(135deg, var(--gold), #ff8a00); color: #000; padding: 12px 20px; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--gold-glow); }
+    
+    /* Items */
+    .items { margin-bottom: 12px; }
+    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
+    .item-text { font-size: 13px; }
+    .item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
+    .item-del:hover { color: #ff6b6b; }
+    
+    /* Body Grid */
+    .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .body-cell { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+    .body-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
+    .body-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--text); outline: none; }
+    .body-pct { font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--success); }
+    
+    /* FAB */
+    .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), #ff8a00); border: none; color: #000; font-size: 22px; cursor: pointer; box-shadow: 0 6px 24px var(--gold-glow); z-index: 100; transition: all 0.3s; }
+    .fab:hover { transform: scale(1.1); }
+    .fab:active { transform: scale(0.95); }
+    .fab.open { transform: rotate(45deg); background: var(--bg-card); }
+    .fab-menu { position: fixed; bottom: 90px; right: 20px; display: flex; flex-direction: column; gap: 8px; opacity: 0; transform: translateY(16px); pointer-events: none; transition: all 0.3s; z-index: 99; }
+    .fab-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .fab-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-pill); backdrop-filter: blur(20px); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .fab-item:hover { background: var(--bg-hover); transform: translateX(-6px); }
+    .fab-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .fab-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    
+    /* Sticky */
+    .sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(10,10,15,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.3s; }
+    .sticky.visible { transform: translateY(0); }
+    .sticky-date { font-size: 13px; font-weight: 600; }
+    .sticky-btns { display: flex; gap: 8px; }
+    .sticky-btns button { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--bg-card); color: var(--text-dim); font-size: 12px; cursor: pointer; }
+    
+    /* Milestone */
+    .milestone { position: fixed; inset: 0; background: rgba(10,10,15,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(8px); }
+    .milestone.show { opacity: 1; pointer-events: auto; }
+    .milestone-box { text-align: center; animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .milestone-emoji { font-size: 64px; animation: bounce 0.6s ease infinite alternate; }
+    @keyframes bounce { 0%{transform:translateY(0)} 100%{transform:translateY(-14px)} }
+    .milestone-title { font-family: 'Space Grotesk'; font-size: 24px; font-weight: 700; margin-top: 14px; }
+    .milestone-sub { font-size: 14px; color: var(--text-dim); margin-top: 6px; }
+    .milestone-btn { margin-top: 24px; padding: 12px 28px; background: linear-gradient(135deg, var(--gold), #ff8a00); border: none; border-radius: var(--radius-pill); font-size: 15px; font-weight: 600; color: #000; cursor: pointer; }
+    
+    /* Pages */
+    .page { display: none; }
+    .page.active { display: block; }
+    
+    /* Responsive */
+    @media (max-width: 430px) {
+      body { padding: 12px; }
+      .quick-grid { gap: 10px; }
+      .card { padding: 14px; }
+      .card-value { font-size: 28px; }
+      .big-input { font-size: 28px; }
+    }
+    @media (min-width: 768px) { body { max-width: 540px; margin: 0 auto; } }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#f5a623"/><stop offset="100%" style="stop-color:#ff6b6b"/></linearGradient></defs></svg>
+
+  <div id="stickyDateBar" class="sticky">
+    <div class="sticky-date" id="stickyDateDisplay">Today</div>
+    <div class="sticky-btns"><button id="stickyPrevBtn">←</button><button id="stickyNextBtn">→</button></div>
+  </div>
+
+  <div id="milestoneOverlay" class="milestone">
+    <div class="milestone-box">
+      <div class="milestone-emoji" id="milestoneEmoji">🎉</div>
+      <div class="milestone-title" id="milestoneTitle">Amazing!</div>
+      <div class="milestone-sub" id="milestoneSubtitle">You did something great!</div>
+      <button class="milestone-btn" onclick="closeMilestone()">Continue</button>
+    </div>
+  </div>
+
+  <header class="header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="logo">✦</div>
+        <div><h1>Elevate</h1><div class="tagline">Phase 1 · Day <span id="phaseInfo">--</span></div></div>
+      </div>
+      <div class="nav-links">
+        <a href="#" id="weeklySummaryLink" class="nav-link">📈</a>
+        <a href="#" id="chartsBtn" class="nav-link">📊</a>
+        <a href="#" id="biomarkersBtn" class="nav-link">🧬</a>
+      </div>
+    </div>
+    <div class="date-nav">
+      <button class="date-btn" id="prevBtn">←</button>
+      <div class="date-center">
+        <div class="date-main" id="dateDisplay"></div>
+        <div class="date-sub">Swipe to change date</div>
+      </div>
+      <div class="ring-wrap">
+        <svg class="ring" width="52" height="52" viewBox="0 0 52 52">
+          <circle class="ring-bg" cx="26" cy="26" r="22"/>
+          <circle class="ring-progress" id="completionProgress" cx="26" cy="26" r="22" stroke-dasharray="138" stroke-dashoffset="138"/>
+        </svg>
+        <div class="ring-text" id="completionNumber">0</div>
+      </div>
+      <button class="date-btn" id="nextBtn">→</button>
+    </div>
+    <div class="phase">
+      <div class="phase-label"><span>Phase Progress</span><span id="phaseDaysRemaining">-- days left</span></div>
+      <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
+    </div>
+  </header>
+
+  <form id="healthForm">
+    <div class="quick-grid">
+      <div class="card sleep" id="sleepSection">
+        <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
+        <div><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
+        <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
+      </div>
+      <div class="card water" id="waterSection">
+        <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
+        <div class="water-row"><button type="button" class="water-btn" id="waterMinus">−</button><div class="water-num" id="waterCount">0</div><button type="button" class="water-btn" id="waterPlus">+</button></div>
+        <div class="drops" id="waterDrops"></div>
+      </div>
+      <div class="card movement">
+        <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
+        <input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0">
+        <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
+      </div>
+      <div class="card movement">
+        <div class="card-head"><div class="card-icon">🚴</div><div class="card-title">REHIT</div></div>
+        <div class="chips" style="margin-top:8px">
+          <div class="chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
+          <div class="chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
+        </div>
+        <div class="card-avg">This week: <span id="rehitWeek">--</span></div>
+      </div>
+    </div>
+
+    <div class="section" id="greysHabitsSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="background:#f4a261">👶</div><span class="sec-name">Grey's Habits</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips">
+          <div class="chip"><input type="checkbox" id="inhalerMorning"><div class="chip-dot">✓</div><span class="chip-text">Inhaler AM</span></div>
+          <div class="chip"><input type="checkbox" id="inhalerEvening"><div class="chip-dot">✓</div><span class="chip-text">Inhaler PM</span></div>
+          <div class="chip"><input type="checkbox" id="multiplication"><div class="chip-dot">✓</div><span class="chip-text">Math</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="nutritionSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="background:var(--nutrition)">💊</div><span class="sec-name">Supplements</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips">
+          <div class="chip"><input type="checkbox" id="creatine"><div class="chip-dot">✓</div><span class="chip-text">Creatine</span></div>
+          <div class="chip"><input type="checkbox" id="vitaminD"><div class="chip-dot">✓</div><span class="chip-text">Vitamin D</span></div>
+          <div class="chip"><input type="checkbox" id="no2"><div class="chip-dot">✓</div><span class="chip-text">NO2</span></div>
+          <div class="chip"><input type="checkbox" id="psyllium"><div class="chip-dot">✓</div><span class="chip-text">Psyllium</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="background:var(--gold)">🍽️</div><span class="sec-name">Meals</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips" style="margin-bottom:12px">
+          <div class="chip"><input type="checkbox" id="breakfast"><div class="chip-dot">✓</div><span class="chip-text">Breakfast</span></div>
+          <div class="chip"><input type="checkbox" id="lunch"><div class="chip-dot">✓</div><span class="chip-text">Lunch</span></div>
+          <div class="chip"><input type="checkbox" id="dinner"><div class="chip-dot">✓</div><span class="chip-text">Dinner</span></div>
+        </div>
+        <div class="chips">
+          <div class="chip"><input type="checkbox" id="daySnacks"><div class="chip-dot">✓</div><span class="chip-text">Day Snacks</span></div>
+          <div class="chip"><input type="checkbox" id="nightSnacks"><div class="chip-dot">✓</div><span class="chip-text">Night Snacks</span></div>
+          <div class="chip"><input type="checkbox" id="noAlcohol"><div class="chip-dot">✓</div><span class="chip-text">No Alcohol</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="movementSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="background:var(--movement)">🚶</div><span class="sec-name">Movement Breaks</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div id="movementList" class="items"></div>
+        <button type="button" class="btn btn-secondary" id="addMovementBtn">+ Add Movement</button>
+        <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span></div>
+      </div>
+    </div>
+
+    <div class="section" id="mentalHabitsSection">
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="background:var(--sleep)">📖</div><span class="sec-name">Reading</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed">
+        <div id="readingList" class="items"></div>
+        <button type="button" class="btn btn-secondary" id="addReadingBtn">+ Add Reading</button>
+      </div>
+    </div>
+
+    <div class="section" id="meditationSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="background:#fbbf24">🧘</div><span class="sec-name">Mindfulness</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips"><div class="chip"><input type="checkbox" id="meditation"><div class="chip-dot">✓</div><span class="chip-text">Meditated</span></div></div>
+      </div>
+    </div>
+
+    <div class="section" id="reflectionsSection">
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="background:#9d4edd">✍️</div><span class="sec-name">Reflections</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed"><textarea class="input" id="reflections" placeholder="What's on your mind?"></textarea></div>
+    </div>
+
+    <div class="section" id="storiesSection">
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="background:#ff6b9d">📝</div><span class="sec-name">Grey & Sloane</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed"><textarea class="input" id="stories" placeholder="Capture their moments..."></textarea></div>
+    </div>
+
+    <div class="section" id="carlySection">
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="background:#ffbe0b">💛</div><span class="sec-name">Carly</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed"><textarea class="input" id="carly" placeholder="Notes..."></textarea></div>
+    </div>
+
+    <div class="section" id="bodyDataSection">
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="background:#06ffa5">⚖️</div><span class="sec-name">Body</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Weight</div><input type="number" inputmode="decimal" class="body-input" id="weight" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Waist</div><input type="number" inputmode="decimal" class="body-input" id="waist" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Lean Mass</div><input type="number" inputmode="decimal" class="body-input" id="leanMass" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Lean %</div><div class="body-pct" id="leanMassPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Body Fat</div><input type="number" inputmode="decimal" class="body-input" id="bodyFat" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Fat %</div><div class="body-pct" id="bodyFatPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Bone Mass</div><input type="number" inputmode="decimal" class="body-input" id="boneMass" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Bone %</div><div class="body-pct" id="boneMassPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Water (lbs)</div><input type="number" inputmode="decimal" class="body-input" id="water" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="waterPercent">--</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="bloodPressureSection">
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="background:#ff006e">❤️</div><span class="sec-name">Blood Pressure</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Systolic</div><input type="number" inputmode="numeric" class="body-input" id="systolic"></div>
+          <div class="body-cell"><div class="body-label">Diastolic</div><input type="number" inputmode="numeric" class="body-input" id="diastolic"></div>
+          <div class="body-cell"><div class="body-label">Heart Rate</div><input type="number" inputmode="numeric" class="body-input" id="heartRate"></div>
+          <div class="body-cell"><div class="body-label">Status</div><div class="body-pct" id="bpStatus">--</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="rehitFields" style="display:none">
+      <div class="section">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Fitness Score</div><input type="number" inputmode="decimal" class="body-input" id="fitnessScore" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Calories</div><input type="number" inputmode="numeric" class="body-input" id="calories"></div>
+          <div class="body-cell"><div class="body-label">Peak Watts</div><input type="number" inputmode="numeric" class="body-input" id="peakWatts"></div>
+          <div class="body-cell"><div class="body-label">Watt Seconds</div><input type="number" inputmode="numeric" class="body-input" id="wattSeconds"></div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div id="chartsPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">📊</div><div><h1>Charts</h1><div class="tagline" id="chartsSubtitle">Last 7 Days</div></div></div>
+        <button type="button" id="chartsCloseBtn" class="nav-link">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="button" class="range-btn btn btn-secondary active" data-range="7">7 Days</button>
+        <button type="button" class="range-btn btn btn-secondary" data-range="30">30 Days</button>
+        <button type="button" class="range-btn btn btn-secondary" data-range="all">All</button>
+      </div>
+    </header>
+    <div class="section"><div class="sec-name">Weight</div><canvas id="weightChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Sleep</div><canvas id="sleepChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Steps</div><canvas id="stepsChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">REHIT</div><canvas id="rehitChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Body Comp</div><canvas id="bodyCompChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Blood Pressure</div><canvas id="bpChart" style="max-height:220px"></canvas></div>
+  </div>
+
+  <div id="biomarkersPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">🧬</div><div><h1>Biomarkers</h1><div class="tagline" id="biomarkersSubtitle">Most recent: --</div></div></div>
+        <button type="button" id="biomarkersCloseBtn" class="nav-link">✕</button>
+      </div>
+    </header>
+    <div class="section">
+      <div class="field"><label class="field-label">Lab Date</label><input type="text" class="input" id="biomarkersDate" placeholder="M/D/YY"></div>
+      <div id="biomarkersTable"></div>
+      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn" style="width:100%;margin-top:14px">Submit</button>
+      <div id="biomarkersSaveStatus" style="text-align:center;margin-top:8px;color:var(--success)"></div>
+    </div>
+  </div>
+
+  <div id="weeklySummaryPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">📈</div><div><h1>Summary</h1><div class="tagline" id="summarySubtitle">This Week</div></div></div>
+        <button type="button" id="summaryCloseBtn" class="nav-link">✕</button>
+      </div>
+    </header>
+    <div class="section" style="text-align:center">
+      <div style="font-family:'Space Grotesk';font-size:44px;font-weight:700;color:var(--gold)" id="phaseDaysComplete">--</div>
+      <div style="font-size:13px;color:var(--text-dim)">days completed</div>
+      <div class="phase-track" style="margin-top:14px"><div class="phase-fill" id="summaryPhaseBar" style="width:0%"></div></div>
+    </div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">This Week</div><div id="weeklyStats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div></div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">Streaks 🔥</div><div id="streaksDisplay"></div></div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">Wins 🏆</div><div id="winsDisplay"></div></div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">vs Last Week</div><div id="weekComparisonDisplay"></div></div>
+  </div>
+
+  <button id="quickLogFab" class="fab">+</button>
+  <div id="quickLogMenu" class="fab-menu">
+    <button class="fab-item quick-log-item" data-action="movement"><div class="fab-icon" style="background:var(--movement)">🚶</div><span class="fab-label">Movement</span></button>
+    <button class="fab-item quick-log-item" data-action="water"><div class="fab-icon" style="background:var(--water)">💧</div><span class="fab-label">Water</span></button>
+    <button class="fab-item quick-log-item" data-action="reading"><div class="fab-icon" style="background:var(--sleep)">📖</div><span class="fab-label">Reading</span></button>
+    <button class="fab-item quick-log-item" data-action="rehit"><div class="fab-icon" style="background:var(--success)">🚴</div><span class="fab-label">REHIT</span></button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+  <script>
+    // Chip toggle
+    document.querySelectorAll('.chip').forEach(c=>{
+      c.addEventListener('click',e=>{
+        if(e.target.type==='checkbox')return;
+        const cb=c.querySelector('input[type="checkbox"]');
+        if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}))}
+      });
+      const cb=c.querySelector('input[type="checkbox"]');
+      if(cb)cb.addEventListener('change',()=>c.classList.toggle('on',cb.checked));
+    });
+    // Water drops
+    function updateDrops(){
+      const n=parseInt(document.getElementById('waterCount')?.textContent||'0',10);
+      const box=document.getElementById('waterDrops');if(!box)return;
+      box.innerHTML='';for(let i=0;i<8;i++){const d=document.createElement('div');d.className='drop'+(i<n?' on':'');box.appendChild(d)}
+    }
+    const origWater=window.updateWaterDisplay;window.updateWaterDisplay=function(){if(origWater)origWater();updateDrops()};
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(updateDrops,100));
+    // Section collapse
+    document.querySelectorAll('.sec-head').forEach(h=>{
+      h.addEventListener('click',()=>{
+        h.classList.toggle('collapsed');
+        const c=h.nextElementSibling;if(c&&c.classList.contains('sec-content'))c.classList.toggle('collapsed');
+      });
+    });
+  </script>
+</body>
+</html>
