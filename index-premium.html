@@ -1232,10 +1232,16 @@
       const number = document.getElementById('completionNumber');
       
       if (progress && number) {
-        const circumference = 2 * Math.PI * 32; // r=32
-        const offset = circumference - (checked / total) * circumference;
+        const circumference = 2 * Math.PI * 32; // r=32 = ~201
+        let offset;
+        if (total === 0) {
+          offset = circumference; // Empty ring
+        } else {
+          offset = circumference - (checked / total) * circumference;
+        }
         progress.style.strokeDashoffset = offset;
         number.textContent = checked;
+        console.log(`Completion ring: ${checked}/${total}, offset=${offset}`);
       }
     }
     
@@ -1357,6 +1363,13 @@
         observer.observe(waterCount, { childList: true, characterData: true, subtree: true });
       }
       
+      // Watch for rehitWeek changes to update dots
+      const rehitWeek = document.getElementById('rehitWeek');
+      if (rehitWeek) {
+        const rehitObserver = new MutationObserver(updateRehitDots);
+        rehitObserver.observe(rehitWeek, { childList: true, characterData: true, subtree: true });
+      }
+      
       // Watch for steps input changes
       const stepsInput = document.getElementById('steps');
       if (stepsInput) {
@@ -1433,16 +1446,26 @@
     }
     
     // Override app.js phase functions to use our fixed version
+    // Run immediately and also on window load
+    window.updatePhaseInfo = updatePhaseInfoFixed;
+    window.loadPhaseProgress = updatePhaseInfoFixed;
+    
     window.addEventListener('load', () => {
-      // Replace app.js updatePhaseInfo
+      // Ensure overrides are in place
       window.updatePhaseInfo = updatePhaseInfoFixed;
       window.loadPhaseProgress = updatePhaseInfoFixed;
       // Run it once
       updatePhaseInfoFixed();
     });
     
-    // Periodically sync chips in case they get out of sync
-    setInterval(syncAllChips, 2000);
+    // Also run phase update periodically to override any app.js changes
+    setInterval(updatePhaseInfoFixed, 3000);
+    
+    // Periodically sync chips and update completion ring
+    setInterval(() => {
+      syncAllChips();
+      updateCompletionRingAurora();
+    }, 2000);
     
     // Section collapse
     document.querySelectorAll('.sec-head').forEach(h=>{
