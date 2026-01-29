@@ -1,25 +1,23 @@
 <!DOCTYPE html>
-
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Health Tracker</title>
-
+  
   <!-- iPhone -->
-
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="icon" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1a1a1a">
   <meta name="mobile-web-app-capable" content="yes">
 
+  
   <!-- iOS Web App Settings -->
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Habits">
-
+  
   <style>
     
     html { -webkit-text-size-adjust: 100%; }
@@ -879,7 +877,6 @@
   }
 }
   </style>
-
 </head>
 <body>
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -898,7 +895,7 @@
       <div id="statusMessage" class="status-message"></div>
     </div>
   </div>
-
+  
   <div class="header">
     <div class="date-nav">
       <button class="date-btn" id="prevBtn">←</button>
@@ -926,324 +923,320 @@
       </div>
     </div>
 
-```
-<!-- Sleep & Water -->
-<div class="sleep-water-grid">
-  <!-- Sleep -->
-  <div class="section" id="sleepSection">
-    <div class="section-header">Sleep</div>
-    <div class="section-content">
-      <div class="field-group" style="margin-bottom: 0;">
-        <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24" style="min-height: 180px; font-size: 56px; font-weight: 700; color: #a393eb; text-align: center;">
-        <div class="average-display">7-day avg: <span id="avgSleep">--</span></div>
+    <!-- Sleep & Water -->
+    <div class="sleep-water-grid">
+      <!-- Sleep -->
+      <div class="section" id="sleepSection">
+        <div class="section-header">Sleep</div>
+        <div class="section-content">
+          <div class="field-group" style="margin-bottom: 0;">
+            <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24" style="min-height: 180px; font-size: 56px; font-weight: 700; color: #a393eb; text-align: center;">
+            <div class="average-display">7-day avg: <span id="avgSleep">--</span></div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Water -->
-  <div class="section" id="waterSection">
-    <div class="section-header">Water</div>
-    <div class="section-content">
-      <div style="display: flex; align-items: stretch; gap: 16px; height: 180px;">
-        <div class="water-counter-value" id="waterCount" style="flex: 1; display: flex; align-items: center; justify-content: center;">0</div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button type="button" class="water-counter-btn" id="waterPlus" style="flex: 1;">+</button>
-          <button type="button" class="water-counter-btn" id="waterMinus" style="flex: 1;">−</button>
+      <!-- Water -->
+      <div class="section" id="waterSection">
+        <div class="section-header">Water</div>
+        <div class="section-content">
+          <div style="display: flex; align-items: stretch; gap: 16px; height: 180px;">
+            <div class="water-counter-value" id="waterCount" style="flex: 1; display: flex; align-items: center; justify-content: center;">0</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button type="button" class="water-counter-btn" id="waterPlus" style="flex: 1;">+</button>
+              <button type="button" class="water-counter-btn" id="waterMinus" style="flex: 1;">−</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Grey's Habits -->
-<div class="section" id="greysHabitsSection">
-  <div class="section-header">Grey's Habits</div>
-  <div class="section-content">
-    <div class="grid-3">
-      <div class="checkbox-field">
-        <input type="checkbox" id="inhalerMorning">
-        <label for="inhalerMorning">Inhaler Morning</label>
-      </div>
-      <div class="checkbox-field">
-        <input type="checkbox" id="inhalerEvening">
-        <label for="inhalerEvening">Inhaler Evening</label>
-      </div>
-      <div class="checkbox-field">
-        <input type="checkbox" id="multiplication">
-        <label for="multiplication">5 min Multiplication</label>
+    <!-- Grey's Habits -->
+    <div class="section" id="greysHabitsSection">
+      <div class="section-header">Grey's Habits</div>
+      <div class="section-content">
+        <div class="grid-3">
+          <div class="checkbox-field">
+            <input type="checkbox" id="inhalerMorning">
+            <label for="inhalerMorning">Inhaler Morning</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="inhalerEvening">
+            <label for="inhalerEvening">Inhaler Evening</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="multiplication">
+            <label for="multiplication">5 min Multiplication</label>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Movement -->
-<div class="section" id="movementSection">
-  <div class="section-header">Movement</div>
-  <div class="section-content">
-    <div class="grid-2">
-      <!-- REHIT buttons row -->
-      <div class="field-group">
-        <label class="field-label">Carol Bike</label>
-        
+    <!-- Movement -->
+    <div class="section" id="movementSection">
+      <div class="section-header">Movement</div>
+      <div class="section-content">
         <div class="grid-2">
-          <div class="checkbox-field">
-            <input type="checkbox" id="rehit2">
-            <label for="rehit2">REHIT 2x10</label>
+          <!-- REHIT buttons row -->
+          <div class="field-group">
+            <label class="field-label">Carol Bike</label>
+            
+            <div class="grid-2">
+              <div class="checkbox-field">
+                <input type="checkbox" id="rehit2">
+                <label for="rehit2">REHIT 2x10</label>
+              </div>
+              
+              <div class="checkbox-field">
+                <input type="checkbox" id="rehit3">
+                <label for="rehit3">REHIT 3x10</label>
+              </div>
+            </div>
+            <div class="average-display">REHIT Sessions this week: <span id="rehitWeek">--</span></div>
           </div>
           
-          <div class="checkbox-field">
-            <input type="checkbox" id="rehit3">
-            <label for="rehit3">REHIT 3x10</label>
+          <!-- Steps -->
+          <div class="field-group">
+            <label class="field-label">Steps</label>
+            <input type="number" inputmode="numeric" class="input-field" id="steps">
+            <div class="average-display">7-day avg: <span id="avgSteps">--</span></div>
           </div>
         </div>
-        <div class="average-display">REHIT Sessions this week: <span id="rehitWeek">--</span></div>
-      </div>
-      
-      <!-- Steps -->
-      <div class="field-group">
-        <label class="field-label">Steps</label>
-        <input type="number" inputmode="numeric" class="input-field" id="steps">
-        <div class="average-display">7-day avg: <span id="avgSteps">--</span></div>
-      </div>
-    </div>
-    <div id="rehitFields" style="display: none;">
-      <div class="grid-2">
-        <div class="field-group">
-          <label class="field-label">Fitness Score</label>
-          <input type="number" inputmode="numeric" class="input-field" id="fitnessScore" step="0.1">
+        <div id="rehitFields" style="display: none;">
+          <div class="grid-2">
+            <div class="field-group">
+              <label class="field-label">Fitness Score</label>
+              <input type="number" inputmode="numeric" class="input-field" id="fitnessScore" step="0.1">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Calories</label>
+              <input type="number" inputmode="numeric" class="input-field" id="calories">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field-group">
+              <label class="field-label">Peak Watts</label>
+              <input type="number" inputmode="numeric" class="input-field" id="peakWatts">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Watt Seconds</label>
+              <input type="number" inputmode="numeric" class="input-field" id="wattSeconds">
+            </div>
+          </div>
         </div>
         <div class="field-group">
-          <label class="field-label">Calories</label>
-          <input type="number" inputmode="numeric" class="input-field" id="calories">
+          <label class="field-label">Movement Breaks</label>
+          <div id="movementList" class="item-list"></div>
+          <button type="button" class="btn btn-secondary btn-smaller" id="addMovementBtn">+ Add Movement Break</button>
+          <div class="average-display" style="margin-top: 12px;">
+            Avg. Movements per Day: <span id="avgMovements">--</span>
+          </div>
         </div>
       </div>
-      <div class="grid-2">
+    </div>
+
+    <!-- Nutrition -->
+    <div class="section" id="nutritionSection">
+      <div class="section-header">Nutrition</div>
+      <div class="section-content">
+        <label class="field-label">Supplements</label>
+        <div class="nutrition-grid">
+          <div class="checkbox-field">
+            <input type="checkbox" id="creatine">
+            <label for="creatine">Creatine Chews</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="vitaminD">
+            <label for="vitaminD">Vitamin D</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="no2">
+            <label for="no2">NO2</label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="psyllium">
+            <label for="psyllium">Psyllium Husk</label>
+          </div>
+        </div>
+        
+        <div class="field-group" style="margin-top: 20px;">
+          <label class="field-label">Meals</label>
+          <div class="meal-grid">
+            <div class="checkbox-field">
+              <input type="checkbox" id="breakfast">
+              <label for="breakfast">Breakfast</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="lunch">
+              <label for="lunch">Lunch</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="dinner">
+              <label for="dinner">Dinner</label>
+            </div>
+          </div>
+        </div>
+        
         <div class="field-group">
-          <label class="field-label">Peak Watts</label>
-          <input type="number" inputmode="numeric" class="input-field" id="peakWatts">
+          <label class="field-label">Snacks & Alcohol</label>
+          <div class="grid-3">
+            <div class="checkbox-field">
+              <input type="checkbox" id="daySnacks">
+              <label for="daySnacks">Healthy Day Snacks</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="nightSnacks">
+              <label for="nightSnacks">Healthy Night Snacks</label>
+            </div>
+            <div class="checkbox-field">
+              <input type="checkbox" id="noAlcohol">
+              <label for="noAlcohol">No Alcohol</label>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Reading Sessions -->
+    <div class="section" id="mentalHabitsSection">
+      <div class="section-header collapsible collapsed">Reading Sessions</div>
+      <div class="section-content collapsed">
         <div class="field-group">
-          <label class="field-label">Watt Seconds</label>
-          <input type="number" inputmode="numeric" class="input-field" id="wattSeconds">
+          <div id="readingList" class="item-list"></div>
+          <button type="button" class="btn btn-secondary btn-smaller" id="addReadingBtn">+ Add Reading</button>
         </div>
       </div>
     </div>
-    <div class="field-group">
-      <label class="field-label">Movement Breaks</label>
-      <div id="movementList" class="item-list"></div>
-      <button type="button" class="btn btn-secondary btn-smaller" id="addMovementBtn">+ Add Movement Break</button>
-      <div class="average-display" style="margin-top: 12px;">
-        Avg. Movements per Day: <span id="avgMovements">--</span>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- Nutrition -->
-<div class="section" id="nutritionSection">
-  <div class="section-header">Nutrition</div>
-  <div class="section-content">
-    <label class="field-label">Supplements</label>
-    <div class="nutrition-grid">
-      <div class="checkbox-field">
-        <input type="checkbox" id="creatine">
-        <label for="creatine">Creatine Chews</label>
-      </div>
-      <div class="checkbox-field">
-        <input type="checkbox" id="vitaminD">
-        <label for="vitaminD">Vitamin D</label>
-      </div>
-      <div class="checkbox-field">
-        <input type="checkbox" id="no2">
-        <label for="no2">NO2</label>
-      </div>
-      <div class="checkbox-field">
-        <input type="checkbox" id="psyllium">
-        <label for="psyllium">Psyllium Husk</label>
-      </div>
-    </div>
-    
-    <div class="field-group" style="margin-top: 20px;">
-      <label class="field-label">Meals</label>
-      <div class="meal-grid">
+    <!-- Meditation -->
+    <div class="section" id="meditationSection">
+      <div class="section-header">Meditation</div>
+      <div class="section-content">
         <div class="checkbox-field">
-          <input type="checkbox" id="breakfast">
-          <label for="breakfast">Breakfast</label>
-        </div>
-        <div class="checkbox-field">
-          <input type="checkbox" id="lunch">
-          <label for="lunch">Lunch</label>
-        </div>
-        <div class="checkbox-field">
-          <input type="checkbox" id="dinner">
-          <label for="dinner">Dinner</label>
+          <input type="checkbox" id="meditation">
+          <label for="meditation">Meditated Today</label>
         </div>
       </div>
     </div>
-    
-    <div class="field-group">
-      <label class="field-label">Snacks & Alcohol</label>
-      <div class="grid-3">
-        <div class="checkbox-field">
-          <input type="checkbox" id="daySnacks">
-          <label for="daySnacks">Healthy Day Snacks</label>
+
+    <!-- Reflections -->
+    <div class="section" id="reflectionsSection">
+      <div class="section-header collapsible collapsed">Reflections</div>
+      <div class="section-content collapsed">
+        <textarea class="input-field" id="reflections" placeholder="Write your reflections..."></textarea>
+      </div>
+    </div>
+
+    <!-- Grey & Sloane Stories -->
+    <div class="section" id="storiesSection">
+      <div class="section-header collapsible collapsed">Grey & Sloane Stories</div>
+      <div class="section-content collapsed">
+        <textarea class="input-field" id="stories" placeholder="Write stories about Grey & Sloane..."></textarea>
+      </div>
+    </div>
+
+    <!-- Carly -->
+    <div class="section" id="carlySection">
+      <div class="section-header collapsible collapsed">Carly</div>
+      <div class="section-content collapsed">
+        <textarea class="input-field" id="carly" placeholder="Write about Carly..."></textarea>
+      </div>
+    </div>
+
+    <!-- Body Data -->
+    <div class="section" id="bodyDataSection">
+      <div class="section-header collapsible collapsed">Body</div>
+      <div class="section-content collapsed">
+        <!-- Weight & Waist Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Weight (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="weight" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Waist (in)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="waist" step="0.1">
+          </div>
         </div>
-        <div class="checkbox-field">
-          <input type="checkbox" id="nightSnacks">
-          <label for="nightSnacks">Healthy Night Snacks</label>
+        
+        <!-- Lean Mass Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Lean Mass (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="leanMass" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Lean Mass %</label>
+            <div class="body-data-percent" id="leanMassPercent">--</div>
+          </div>
         </div>
-        <div class="checkbox-field">
-          <input type="checkbox" id="noAlcohol">
-          <label for="noAlcohol">No Alcohol</label>
+        
+        <!-- Body Fat Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Body Fat (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="bodyFat" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Body Fat %</label>
+            <div class="body-data-percent" id="bodyFatPercent">--</div>
+          </div>
+        </div>
+        
+        <!-- Bone Mass Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Bone Mass (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="boneMass" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Bone Mass %</label>
+            <div class="body-data-percent" id="boneMassPercent">--</div>
+          </div>
+        </div>
+        
+        <!-- Water Row -->
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Water (lbs)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="water" step="0.1">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Water %</label>
+            <div class="body-data-percent" id="waterPercent">--</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Reading Sessions -->
-<div class="section" id="mentalHabitsSection">
-  <div class="section-header collapsible collapsed">Reading Sessions</div>
-  <div class="section-content collapsed">
-    <div class="field-group">
-      <div id="readingList" class="item-list"></div>
-      <button type="button" class="btn btn-secondary btn-smaller" id="addReadingBtn">+ Add Reading</button>
-    </div>
-  </div>
-</div>
-
-<!-- Meditation -->
-<div class="section" id="meditationSection">
-  <div class="section-header">Meditation</div>
-  <div class="section-content">
-    <div class="checkbox-field">
-      <input type="checkbox" id="meditation">
-      <label for="meditation">Meditated Today</label>
-    </div>
-  </div>
-</div>
-
-<!-- Reflections -->
-<div class="section" id="reflectionsSection">
-  <div class="section-header collapsible collapsed">Reflections</div>
-  <div class="section-content collapsed">
-    <textarea class="input-field" id="reflections" placeholder="Write your reflections..."></textarea>
-  </div>
-</div>
-
-<!-- Grey & Sloane Stories -->
-<div class="section" id="storiesSection">
-  <div class="section-header collapsible collapsed">Grey & Sloane Stories</div>
-  <div class="section-content collapsed">
-    <textarea class="input-field" id="stories" placeholder="Write stories about Grey & Sloane..."></textarea>
-  </div>
-</div>
-
-<!-- Carly -->
-<div class="section" id="carlySection">
-  <div class="section-header collapsible collapsed">Carly</div>
-  <div class="section-content collapsed">
-    <textarea class="input-field" id="carly" placeholder="Write about Carly..."></textarea>
-  </div>
-</div>
-
-<!-- Body Data -->
-<div class="section" id="bodyDataSection">
-  <div class="section-header collapsible collapsed">Body</div>
-  <div class="section-content collapsed">
-    <!-- Weight & Waist Row -->
-    <div class="body-data-row">
-      <div class="body-data-cell">
-        <label class="body-data-label">Weight (lbs)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="weight" step="0.1">
-      </div>
-      <div class="body-data-cell">
-        <label class="body-data-label">Waist (in)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="waist" step="0.1">
+    <!-- Blood Pressure -->
+    <div class="section" id="bloodPressureSection">
+      <div class="section-header collapsible collapsed">Blood Pressure</div>
+      <div class="section-content collapsed">
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Systolic (mmHg)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="systolic">
+          </div>
+          <div class="body-data-cell">
+            <label class="body-data-label">Diastolic (mmHg)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="diastolic">
+          </div>
+        </div>
+        <div class="body-data-row">
+          <div class="body-data-cell">
+            <label class="body-data-label">Heart Rate (bpm)</label>
+            <input type="number" inputmode="numeric" class="body-data-input" id="heartRate">
+          </div>
+          <div class="body-data-cell" style="display: flex; align-items: center; justify-content: center;">
+            <div id="bpStatus" class="body-data-input" style="border: none; pointer-events: none;">--</div>
+          </div>
+        </div>
       </div>
     </div>
-    
-    <!-- Lean Mass Row -->
-    <div class="body-data-row">
-      <div class="body-data-cell">
-        <label class="body-data-label">Lean Mass (lbs)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="leanMass" step="0.1">
-      </div>
-      <div class="body-data-cell">
-        <label class="body-data-label">Lean Mass %</label>
-        <div class="body-data-percent" id="leanMassPercent">--</div>
-      </div>
-    </div>
-    
-    <!-- Body Fat Row -->
-    <div class="body-data-row">
-      <div class="body-data-cell">
-        <label class="body-data-label">Body Fat (lbs)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="bodyFat" step="0.1">
-      </div>
-      <div class="body-data-cell">
-        <label class="body-data-label">Body Fat %</label>
-        <div class="body-data-percent" id="bodyFatPercent">--</div>
-      </div>
-    </div>
-    
-    <!-- Bone Mass Row -->
-    <div class="body-data-row">
-      <div class="body-data-cell">
-        <label class="body-data-label">Bone Mass (lbs)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="boneMass" step="0.1">
-      </div>
-      <div class="body-data-cell">
-        <label class="body-data-label">Bone Mass %</label>
-        <div class="body-data-percent" id="boneMassPercent">--</div>
-      </div>
-    </div>
-    
-    <!-- Water Row -->
-    <div class="body-data-row">
-      <div class="body-data-cell">
-        <label class="body-data-label">Water (lbs)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="water" step="0.1">
-      </div>
-      <div class="body-data-cell">
-        <label class="body-data-label">Water %</label>
-        <div class="body-data-percent" id="waterPercent">--</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Blood Pressure -->
-<div class="section" id="bloodPressureSection">
-  <div class="section-header collapsible collapsed">Blood Pressure</div>
-  <div class="section-content collapsed">
-    <div class="body-data-row">
-      <div class="body-data-cell">
-        <label class="body-data-label">Systolic (mmHg)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="systolic">
-      </div>
-      <div class="body-data-cell">
-        <label class="body-data-label">Diastolic (mmHg)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="diastolic">
-      </div>
-    </div>
-    <div class="body-data-row">
-      <div class="body-data-cell">
-        <label class="body-data-label">Heart Rate (bpm)</label>
-        <input type="number" inputmode="numeric" class="body-data-input" id="heartRate">
-      </div>
-      <div class="body-data-cell" style="display: flex; align-items: center; justify-content: center;">
-        <div id="bpStatus" class="body-data-input" style="border: none; pointer-events: none;">--</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
-
   </form>
 
 <!-- Charts Page (hidden by default) -->
-
 <div id="chartsPage" style="display:none;">
   <div class="header" style="margin-top: 16px;">
     <div class="header-top" style="margin-bottom: 0;">
@@ -1258,7 +1251,6 @@
   </div>
 
   <!-- Weight Trend -->
-
   <div class="section">
     <div class="section-header">Weight Trend</div>
     <div class="section-content">
@@ -1267,7 +1259,6 @@
   </div>
 
   <!-- Sleep Pattern -->
-
   <div class="section">
     <div class="section-header">Sleep Pattern</div>
     <div class="section-content">
@@ -1276,7 +1267,6 @@
   </div>
 
   <!-- Steps Average -->
-
   <div class="section">
     <div class="section-header">Daily Steps</div>
     <div class="section-content">
@@ -1285,7 +1275,6 @@
   </div>
 
   <!-- REHIT Frequency -->
-
   <div class="section">
     <div class="section-header">REHIT Sessions</div>
     <div class="section-content">
@@ -1294,7 +1283,6 @@
   </div>
 
   <!-- Body Composition -->
-
   <div class="section">
     <div class="section-header">Body Composition</div>
     <div class="section-content">
@@ -1303,7 +1291,6 @@
   </div>
 
   <!-- Blood Pressure -->
-
   <div class="section">
     <div class="section-header">Blood Pressure</div>
     <div class="section-content">
@@ -1313,7 +1300,6 @@
 </div>
 
 <!-- Biomarkers Page (hidden by default) -->
-
 <div id="biomarkersPage" style="display:none;">
   <div class="header" style="margin-top: 16px;">
     <div class="header-top" style="margin-bottom: 0;">
@@ -1335,22 +1321,17 @@
         <input type="text" class="input-field" id="biomarkersDate" placeholder="M/D/YY (e.g., 1/25/26)">
       </div>
 
-```
-  <div class="field-group">
-    <div id="biomarkersTable"></div>
-  </div>
+      <div class="field-group">
+        <div id="biomarkersTable"></div>
+      </div>
 
-  <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn">Submit Biomarkers</button>
-  <div class="average-display" id="biomarkersSaveStatus" style="margin-top: 10px;"> </div>
-</div>
-```
-
+      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn">Submit Biomarkers</button>
+      <div class="average-display" id="biomarkersSaveStatus" style="margin-top: 10px;"> </div>
+    </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <script src="app.js" defer></script>
-
 </body>
 </html>
