@@ -11,7 +11,6 @@
  **********************************************/
 
 console.log("✅ app.js running - Biomarkers cache bust", new Date().toISOString());
-console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
 // =====================================
