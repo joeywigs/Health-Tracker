@@ -2244,8 +2244,13 @@ function setupWaterButtons() {
 function setupInputAutosave() {
   document.querySelectorAll("input, textarea").forEach(el => {
     if (el.type === "checkbox") return; // handled separately
-    el.addEventListener("change", triggerSaveSoon);
-    if (el.tagName === "TEXTAREA") el.addEventListener("input", triggerSaveSoon);
+    
+    if (el.tagName === "TEXTAREA") {
+      // Textareas only save on blur to avoid interrupting typing
+      el.addEventListener("blur", triggerSaveSoon);
+    } else {
+      el.addEventListener("change", triggerSaveSoon);
+    }
   });
 
   console.log("✅ Input autosave wired");
