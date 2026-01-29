@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Better errors, data check", new Date().toISOString());
+console.log("✅ app.js running - Biomarkers cache bust", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -1114,7 +1114,8 @@ function hideBiomarkersPage() {
 async function loadBiomarkers() {
   try {
     console.log("Loading biomarkers...");
-    const result = await apiGet("biomarkers_load", {});
+    // Add timestamp to bust any caching
+    const result = await apiGet("biomarkers_load", { _t: Date.now() });
     console.log("Biomarkers result:", result);
     
     if (result?.error) {
