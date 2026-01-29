@@ -520,7 +520,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
   <script src="app.js" defer></script>
   <script>
-    // Chip toggle
+    // Sync all chip visuals with their checkbox state
+    function syncAllChips() {
+      document.querySelectorAll('.chip').forEach(c => {
+        const cb = c.querySelector('input[type="checkbox"]');
+        if (cb) c.classList.toggle('on', cb.checked);
+      });
+    }
+    
+    // Chip toggle on click
     document.querySelectorAll('.chip').forEach(c=>{
       c.addEventListener('click',e=>{
         if(e.target.type==='checkbox')return;
@@ -530,14 +538,38 @@
       const cb=c.querySelector('input[type="checkbox"]');
       if(cb)cb.addEventListener('change',()=>c.classList.toggle('on',cb.checked));
     });
+    
     // Water drops
     function updateDrops(){
       const n=parseInt(document.getElementById('waterCount')?.textContent||'0',10);
       const box=document.getElementById('waterDrops');if(!box)return;
       box.innerHTML='';for(let i=0;i<8;i++){const d=document.createElement('div');d.className='drop'+(i<n?' on':'');box.appendChild(d)}
     }
-    const origWater=window.updateWaterDisplay;window.updateWaterDisplay=function(){if(origWater)origWater();updateDrops()};
-    document.addEventListener('DOMContentLoaded',()=>setTimeout(updateDrops,100));
+    
+    // Hook into populateForm to sync chips and drops after data loads
+    const originalPopulateForm = window.populateForm;
+    window.populateForm = function(...args) {
+      if (originalPopulateForm) originalPopulateForm.apply(this, args);
+      // Sync after a small delay to ensure DOM is updated
+      setTimeout(() => {
+        syncAllChips();
+        updateDrops();
+        updateRehitDisplay();
+      }, 50);
+    };
+    
+    // Also hook into updateWaterDisplay
+    const origWater=window.updateWaterDisplay;
+    window.updateWaterDisplay=function(){if(origWater)origWater();updateDrops()};
+    
+    // Initial load
+    document.addEventListener('DOMContentLoaded',()=>{
+      setTimeout(()=>{
+        syncAllChips();
+        updateDrops();
+      }, 500);
+    });
+    
     // Section collapse
     document.querySelectorAll('.sec-head').forEach(h=>{
       h.addEventListener('click',()=>{
