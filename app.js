@@ -1120,9 +1120,9 @@ function renderRehitChart(dataPoints) {
   const labels = dataPoints.map(d => d.date);
   const rehitData = dataPoints.map(d => {
     const val = d.daily["REHIT 2x10"];
-    if (val === "2x10") return 1;
+    if (val === "2x10" || val === true || val === "TRUE") return 1;
     if (val === "3x10") return 2;
-    return 0;
+    return 0; // handles "", false, "FALSE", null, undefined
   });
   
   rehitChart = new Chart(ctx, {
@@ -2081,7 +2081,12 @@ function buildPayloadFromUI() {
     honeyDos,
     reflections: document.getElementById("reflections")?.value || "",
     stories: document.getElementById("stories")?.value || "",
-    carly: document.getElementById("carly")?.value || ""
+    carly: document.getElementById("carly")?.value || "",
+    
+    // Custom sections data - collect from UI first
+    customSections: typeof window.collectCustomSectionsData === 'function' 
+      ? window.collectCustomSectionsData() 
+      : (window.customSectionData || {})
   };
 }
 
@@ -2501,6 +2506,13 @@ async function populateForm(data) {
 
   const carlyEl = document.getElementById("carly");
   if (carlyEl) carlyEl.value = data?.carly || "";
+
+  // Load custom sections data
+  if (data?.customSections && typeof window.loadCustomSectionsData === 'function') {
+    window.loadCustomSectionsData(data.customSections);
+  } else if (data?.customSections) {
+    window.customSectionData = data.customSections;
+  }
 
   // Optional renders/averages/completion
   if (typeof updateAverages === "function") updateAverages(data?.averages);
