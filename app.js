@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Biomarkers restored", new Date().toISOString());
+console.log("✅ app.js running - Chart range, sticky header", new Date().toISOString());
 console.log("******* Added Waist & Blood Pressure ******");
 window.__APP_JS_OK__ = true;
 
@@ -90,7 +90,9 @@ document.addEventListener("DOMContentLoaded", () => {
   setupWeeklyReminders();
   setupWeeklySummaryButton();
   setupChartsPage();
+  setupChartRangeToggle();
   setupBiomarkersPage();
+  setupStickyHeader();
 
   updateDateDisplay();
   updatePhaseInfo();
@@ -145,6 +147,9 @@ function updateDateDisplay() {
   const el = document.getElementById("dateDisplay");
   if (!el) return;
   el.textContent = currentDate.toDateString();
+  
+  // Also update sticky header
+  updateStickyDate();
 }
 
 function setupDateNav() {
@@ -421,35 +426,172 @@ function hideChartsPage() {
   window.scrollTo(0, 0);
 }
 
-async function loadAndRenderCharts() {
-  // Fetch last 30 days of data
-  const days = 30;
-  const dataPoints = [];
+// Store prefetched chart data
+let chartDataCache = null;
+let chartDataLoading = false;
+let currentChartRange = 7; // Default to 7 days
+
+async function prefetchChartData() {
+  if (chartDataCache || chartDataLoading) return;
   
-  for (let i = days - 1; i >= 0; i--) {
+  chartDataLoading = true;
+  console.log("📊 Prefetching chart data in background...");
+  
+  try {
+    chartDataCache = await fetchChartData(null, true); // silent mode for background
+    console.log(`📊 Prefetched ${chartDataCache.length} days of chart data`);
+  } catch (err) {
+    console.error("Prefetch failed:", err);
+  }
+  
+  chartDataLoading = false;
+}
+
+function updateChartProgress(current, total, message) {
+  const bar = document.getElementById("chartLoadingBar");
+  const fill = document.getElementById("chartProgressFill");
+  const text = document.getElementById("chartProgressText");
+  
+  if (bar) bar.style.display = "block";
+  if (fill) fill.style.width = `${(current / total) * 100}%`;
+  if (text) text.textContent = message || `Loading day ${current} of ${total}...`;
+}
+
+function hideChartProgress() {
+  const bar = document.getElementById("chartLoadingBar");
+  if (bar) bar.style.display = "none";
+}
+
+async function fetchChartData(maxDays = null, silent = false) {
+  const dataPoints = [];
+  let emptyDaysInARow = 0;
+  const maxEmptyDays = 3; // Stop after 3 consecutive empty days
+  const absoluteMax = maxDays || 365; // Use provided max or go up to a year
+  
+  for (let i = 0; i < absoluteMax; i++) {
     const date = new Date();
     date.setDate(date.getDate() - i);
     const dateStr = formatDateForAPI(date);
     
+    if (!silent) {
+      updateChartProgress(i + 1, Math.min(absoluteMax, 60), `Loading ${dateStr}...`);
+    }
+    
     try {
       const result = await apiGet("load", { date: dateStr });
-      dataPoints.push({
-        date: dateStr,
-        daily: result?.daily || {},
-        averages: result?.averages || {}
-      });
+      const daily = result?.daily;
+      
+      // Check if this day has any meaningful data
+      const hasData = daily && (
+        daily["Hours of Sleep"] ||
+        daily["Steps"] ||
+        daily["Weight (lbs)"] ||
+        daily["REHIT 2x10"]
+      );
+      
+      if (hasData) {
+        emptyDaysInARow = 0;
+        dataPoints.push({
+          date: dateStr,
+          daily: daily || {},
+          averages: result?.averages || {}
+        });
+      } else {
+        emptyDaysInARow++;
+        if (emptyDaysInARow >= maxEmptyDays) {
+          console.log(`📊 Stopping at ${dateStr} - ${maxEmptyDays} empty days in a row`);
+          break;
+        }
+      }
     } catch (err) {
       console.error(`Failed to load ${dateStr}:`, err);
+      emptyDaysInARow++;
+      if (emptyDaysInARow >= maxEmptyDays) break;
+    }
+  }
+  
+  if (!silent) {
+    hideChartProgress();
+  }
+  
+  // Reverse so oldest is first (for charts)
+  return dataPoints.reverse();
+}
+
+function filterChartDataByRange(allData, range) {
+  if (range === 'all' || !range) return allData;
+  
+  const days = parseInt(range, 10);
+  if (isNaN(days)) return allData;
+  
+  // Return only the last N days
+  return allData.slice(-days);
+}
+
+async function loadAndRenderCharts() {
+  // Check if Chart.js is loaded
+  if (typeof Chart === 'undefined') {
+    console.error("Chart.js not loaded yet");
+    alert("Charts are still loading. Please try again in a moment.");
+    return;
+  }
+  
+  // Use cached data if available, otherwise fetch
+  let allData;
+  if (chartDataCache && chartDataCache.length > 0) {
+    allData = chartDataCache;
+    console.log(`📊 Using cached chart data (${allData.length} days)`);
+  } else {
+    allData = await fetchChartData();
+    chartDataCache = allData;
+  }
+  
+  if (allData.length === 0) {
+    console.log("No data to chart");
+    const subtitle = document.getElementById("chartsSubtitle");
+    if (subtitle) subtitle.textContent = "No data available";
+    return;
+  }
+  
+  // Filter by selected range
+  const dataPoints = filterChartDataByRange(allData, currentChartRange);
+  
+  // Update subtitle
+  const subtitle = document.getElementById("chartsSubtitle");
+  if (subtitle) {
+    if (currentChartRange === 'all') {
+      subtitle.textContent = `All Time (${dataPoints.length} days)`;
+    } else {
+      subtitle.textContent = `Last ${currentChartRange} Days (${dataPoints.length} with data)`;
     }
   }
   
   // Render each chart
-  renderWeightChart(dataPoints);
-  renderSleepChart(dataPoints);
-  renderStepsChart(dataPoints);
-  renderRehitChart(dataPoints);
-  renderBodyCompositionChart(dataPoints);
-  renderBloodPressureChart(dataPoints);
+  try {
+    renderWeightChart(dataPoints);
+    renderSleepChart(dataPoints);
+    renderStepsChart(dataPoints);
+    renderRehitChart(dataPoints);
+    renderBodyCompositionChart(dataPoints);
+    renderBloodPressureChart(dataPoints);
+  } catch (err) {
+    console.error("Error rendering charts:", err);
+  }
+}
+
+function setupChartRangeToggle() {
+  const buttons = document.querySelectorAll('.range-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Update active state
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Update range and re-render
+      currentChartRange = btn.dataset.range;
+      loadAndRenderCharts();
+    });
+  });
 }
 
 let weightChart, sleepChart, stepsChart, rehitChart, bodyCompChart;
@@ -532,23 +674,49 @@ function renderSleepChart(dataPoints) {
   const labels = dataPoints.map(d => d.date);
   const sleep = dataPoints.map(d => parseFloat(d.daily["Hours of Sleep"]) || null);
   
+  // Calculate average (excluding nulls)
+  const validSleep = sleep.filter(s => s !== null && !isNaN(s));
+  const avgSleep = validSleep.length > 0 
+    ? validSleep.reduce((a, b) => a + b, 0) / validSleep.length 
+    : null;
+  
+  // Create average line data (same value for all points)
+  const avgLine = avgSleep ? labels.map(() => avgSleep) : [];
+  
   sleepChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: labels,
-      datasets: [{
-        label: 'Hours of Sleep',
-        data: sleep,
-        backgroundColor: '#a393eb',
-        borderColor: '#a393eb',
-        borderWidth: 1
-      }]
+      datasets: [
+        {
+          label: 'Hours of Sleep',
+          data: sleep,
+          backgroundColor: '#a393eb',
+          borderColor: '#a393eb',
+          borderWidth: 1,
+          order: 2
+        },
+        {
+          label: `Average (${avgSleep ? avgSleep.toFixed(1) : '--'}h)`,
+          data: avgLine,
+          type: 'line',
+          borderColor: '#e0e0e0',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false,
+          order: 1
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: false }
+        legend: { 
+          display: true,
+          labels: { color: '#e0e0e0' }
+        }
       },
       scales: {
         x: { 
@@ -834,6 +1002,64 @@ function setupBiomarkersPage() {
   console.log("✅ Biomarkers page wired");
 }
 
+// =====================================
+// STICKY HEADER
+// =====================================
+function setupStickyHeader() {
+  const stickyBar = document.getElementById("stickyDateBar");
+  const stickyDate = document.getElementById("stickyDateDisplay");
+  const stickyPrev = document.getElementById("stickyPrevBtn");
+  const stickyNext = document.getElementById("stickyNextBtn");
+  const mainHeader = document.querySelector(".header");
+  
+  if (!stickyBar || !mainHeader) return;
+  
+  // Wire up sticky nav buttons
+  if (stickyPrev) {
+    stickyPrev.addEventListener("click", () => changeDate(-1));
+  }
+  if (stickyNext) {
+    stickyNext.addEventListener("click", () => changeDate(1));
+  }
+  
+  // Handle scroll to show/hide sticky bar
+  let lastScrollY = 0;
+  const headerBottom = mainHeader.offsetTop + mainHeader.offsetHeight;
+  
+  window.addEventListener("scroll", () => {
+    const scrollY = window.scrollY;
+    
+    // Show sticky bar when scrolled past the main header
+    if (scrollY > headerBottom + 50) {
+      stickyBar.classList.add("visible");
+    } else {
+      stickyBar.classList.remove("visible");
+    }
+    
+    lastScrollY = scrollY;
+  }, { passive: true });
+  
+  console.log("✅ Sticky header wired");
+}
+
+function updateStickyDate() {
+  const stickyDate = document.getElementById("stickyDateDisplay");
+  if (!stickyDate) return;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const cur = new Date(currentDate);
+  cur.setHours(0, 0, 0, 0);
+  
+  if (cur.getTime() === today.getTime()) {
+    stickyDate.textContent = "Today";
+  } else {
+    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    stickyDate.textContent = cur.toLocaleDateString('en-US', options);
+  }
+}
+
 async function showBiomarkersPage() {
   const mainPage = document.getElementById("healthForm");
   const chartsPage = document.getElementById("chartsPage");
@@ -959,6 +1185,9 @@ async function loadDataForCurrentDate(options = {}) {
   if (cached && !cached?.error && !options.force) {
     await populateForm(cached);
     prefetchAround(currentDate);
+    
+    // Start background prefetch for charts
+    setTimeout(() => prefetchChartData(), 500);
     return;
   }
 
@@ -975,6 +1204,9 @@ async function loadDataForCurrentDate(options = {}) {
 
     // 3) Prefetch neighbors so next/prev is fast
     prefetchAround(currentDate);
+    
+    // 4) Start background prefetch for charts after a short delay
+    setTimeout(() => prefetchChartData(), 1000);
 
     dataChanged = false;
   } catch (err) {
