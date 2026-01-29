@@ -1638,9 +1638,15 @@ function createConfetti(element) {
 }
 
 function updateCompletionRing() {
-  const checkboxes = document.querySelectorAll('#healthForm .checkbox-field input[type="checkbox"]');
+  const allCheckboxes = document.querySelectorAll('#healthForm .checkbox-field input[type="checkbox"]');
+  
+  // Exclude Grey's inhaler checkboxes and multiplication
+  const checkboxes = Array.from(allCheckboxes).filter(cb => 
+    cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
+  );
+  
   const total = checkboxes.length;
-  const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+  const checked = checkboxes.filter(cb => cb.checked).length;
   
   const progress = document.getElementById('completionProgress');
   const number = document.getElementById('completionNumber');
