@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Elevate — Daily Rituals</title>
+  <title>Habits — Daily Rituals</title>
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -53,84 +53,86 @@
         radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
     }
     
-    /* === DAY MODE - Sunny Orange Base === */
+    /* === DAY MODE - Soft Cantaloupe === */
     body.day-mode {
-      --bg-deep: #f97316;
-      --bg-mid: #fb923c;
-      --bg-card: rgba(255,255,255,0.2);
-      --bg-card-hover: rgba(255,255,255,0.3);
+      --bg-deep: #ffeaa7;
+      --bg-mid: #fdcb6e;
+      --bg-card: rgba(255,255,255,0.6);
+      --bg-card-hover: rgba(255,255,255,0.8);
       
-      --text: #ffffff;
-      --text-dim: rgba(255,255,255,0.9);
-      --text-muted: rgba(255,255,255,0.7);
+      /* Dark text for contrast on light background */
+      --text: #1a1a2e;
+      --text-dim: rgba(26,26,46,0.8);
+      --text-muted: rgba(26,26,46,0.6);
       
-      /* Contrasting accents - use deep purple/blue to pop against orange */
-      --accent-pink: #db2777;
-      --accent-orange: #dc2626;
-      --accent-yellow: #fbbf24;
+      /* Vibrant accents to pop against yellow-orange background */
+      --accent-pink: #e11d48;
+      --accent-orange: #ea580c;
+      --accent-yellow: #ca8a04;
       --accent-teal: #0d9488;
-      --accent-purple: #7c3aed;
+      --accent-purple: #6366f1;
       
-      --glow-pink: rgba(219,39,119,0.4);
-      --glow-orange: rgba(220,38,38,0.4);
-      --glow-teal: rgba(13,148,136,0.4);
-      --glow-purple: rgba(124,58,237,0.5);
+      --glow-pink: rgba(225,29,72,0.3);
+      --glow-orange: rgba(234,88,12,0.3);
+      --glow-teal: rgba(13,148,136,0.3);
+      --glow-purple: rgba(99,102,241,0.4);
       
-      --success: #10b981;
-      --success-soft: rgba(16,185,129,0.25);
+      --success: #059669;
+      --success-soft: rgba(5,150,105,0.15);
       
-      --sleep: #7c3aed;
+      --sleep: #6366f1;
       --water: #0d9488;
-      --movement: #db2777;
-      --nutrition: #10b981;
+      --movement: #e11d48;
+      --nutrition: #059669;
       
-      --border: rgba(255,255,255,0.3);
+      --border: rgba(0,0,0,0.1);
       
-      --bg-gradient: linear-gradient(135deg, #f97316 0%, #fb923c 30%, #f59e0b 70%, #f97316 100%);
-      --bg-aurora: 
-        radial-gradient(ellipse at 30% 0%, rgba(251,191,36,0.3) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 100%, rgba(249,115,22,0.2) 0%, transparent 50%);
+      /* Soft Cantaloupe gradient */
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 30%, #f9a825 70%, #fdcb6e 100%) !important;
     }
     
-    /* Day mode specific overrides - purple/teal buttons to contrast with orange */
+    body.day-mode::before {
+      background: radial-gradient(ellipse at 30% 20%, rgba(255,234,167,0.5) 0%, transparent 50%) !important;
+    }
+    
+    /* Day mode specific overrides - indigo/purple buttons on cantaloupe background */
     body.day-mode .logo {
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
-      box-shadow: 0 0 30px var(--glow-purple);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      box-shadow: 0 0 20px var(--glow-purple);
     }
     body.day-mode .date-btn {
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
       box-shadow: 0 4px 15px var(--glow-purple);
+      color: white;
     }
     body.day-mode .phase-fill {
-      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-teal));
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
     }
     body.day-mode .fab {
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
-      box-shadow: 0 8px 30px var(--glow-purple);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      box-shadow: 0 8px 25px var(--glow-purple);
+      color: white;
     }
     body.day-mode .btn-primary {
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white;
     }
     body.day-mode .ring-progress {
-      stroke: var(--accent-purple);
+      stroke: #6366f1;
     }
     body.day-mode .ring-text {
-      color: var(--accent-purple);
+      color: #6366f1;
     }
     body.day-mode .chip.on {
       background: var(--success-soft);
       border-color: var(--success);
-      box-shadow: 0 0 12px rgba(16,185,129,0.4);
+      box-shadow: 0 0 10px rgba(5,150,105,0.3);
     }
     body.day-mode .chip.on .chip-dot {
       background: var(--success);
       border-color: var(--success);
-      box-shadow: 0 0 8px rgba(16,185,129,0.5);
-    }
-    body.day-mode .drop.on {
-      background: var(--accent-teal);
-      box-shadow: 0 0 8px var(--glow-teal);
+      color: white;
+      box-shadow: 0 0 8px rgba(5,150,105,0.4);
     }
     body.day-mode .water-btn {
       border-color: var(--accent-teal);
@@ -140,35 +142,69 @@
       background: var(--accent-teal);
       color: white;
     }
+    body.day-mode .water-num {
+      color: var(--text);
+    }
     body.day-mode .milestone-title {
-      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-teal));
+      background: linear-gradient(90deg, var(--accent-orange), var(--accent-pink), var(--accent-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     body.day-mode .card {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.day-mode .card-title {
+      color: var(--text-muted);
+    }
+    body.day-mode .card-avg {
+      color: var(--text-muted);
     }
     body.day-mode .section {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.day-mode .sec-name {
+      color: var(--text);
     }
     body.day-mode .nav-link {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.3);
-      color: white;
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.1);
+      color: var(--text-dim);
     }
     body.day-mode .nav-link:hover {
-      background: rgba(255,255,255,0.3);
-      color: var(--accent-purple);
-      border-color: var(--accent-purple);
+      background: rgba(255,255,255,0.8);
+      color: var(--accent-orange);
+      border-color: var(--accent-orange);
     }
     body.day-mode .date-nav {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.day-mode .date-main,
+    body.day-mode .date-sub {
+      color: var(--text);
     }
     body.day-mode .steps-bar-fill {
-      background: linear-gradient(to top, var(--accent-purple), var(--accent-pink), var(--accent-yellow));
+      background: linear-gradient(to top, #6366f1, #8b5cf6, #a855f7);
+    }
+    body.day-mode .water-bar-fill {
+      background: linear-gradient(to top, var(--accent-teal), #14b8a6, #5eead4);
+    }
+    body.day-mode .big-input {
+      color: var(--text);
+    }
+    body.day-mode .big-input::placeholder {
+      color: var(--text-muted);
+    }
+    body.day-mode .chip-text {
+      color: var(--text-dim);
+    }
+    body.day-mode .chip.on .chip-text {
+      color: var(--text);
+    }
+    body.day-mode .chip-dot {
+      border-color: var(--text-muted);
     }
     
     /* === SUNSET TRANSITION MODE === */
@@ -216,52 +252,6 @@
     }
     
     body > * { position: relative; z-index: 1; }
-    
-    /* Day mode specific overrides */
-    body.day-mode .logo {
-      background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
-      box-shadow: 0 0 30px var(--glow-orange);
-    }
-    body.day-mode .date-btn {
-      background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
-      box-shadow: 0 4px 15px var(--glow-orange);
-    }
-    body.day-mode .phase-fill {
-      background: linear-gradient(90deg, var(--accent-orange), var(--accent-yellow), var(--accent-teal));
-    }
-    body.day-mode .fab {
-      background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
-      box-shadow: 0 8px 30px var(--glow-orange);
-    }
-    body.day-mode .btn-primary {
-      background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
-      color: #1a1a2e;
-    }
-    body.day-mode .ring-progress {
-      stroke: var(--accent-orange);
-    }
-    body.day-mode .ring-text {
-      color: var(--accent-orange);
-    }
-    body.day-mode .chip.on {
-      background: var(--success-soft);
-      border-color: var(--success);
-      box-shadow: 0 0 12px rgba(16,185,129,0.3);
-    }
-    body.day-mode .chip.on .chip-dot {
-      background: var(--success);
-      border-color: var(--success);
-      box-shadow: 0 0 8px rgba(16,185,129,0.4);
-    }
-    body.day-mode .drop.on {
-      background: var(--water);
-      box-shadow: 0 0 8px var(--glow-teal);
-    }
-    body.day-mode .milestone-title {
-      background: linear-gradient(90deg, var(--accent-orange), var(--accent-yellow), var(--accent-teal));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
     
     /* Theme indicator */
     .theme-indicator {
@@ -824,7 +814,7 @@
     <div class="header-top">
       <div class="brand">
         <div class="logo">✦</div>
-        <div><h1>Elevate</h1><div class="tagline">Phase 1 · Day <span id="phaseInfo">--</span></div></div>
+        <div><h1>Habits</h1><div class="tagline">Phase 1 · <span id="phaseInfo">--</span></div></div>
       </div>
       <div class="nav-links">
         <a href="#" id="weeklySummaryLink" class="nav-link">📈</a>
@@ -837,7 +827,6 @@
       <button class="date-btn" id="prevBtn">←</button>
       <div class="date-center">
         <div class="date-main" id="dateDisplay"></div>
-        <div class="date-sub">Swipe to change date</div>
       </div>
       <div class="ring-wrap">
         <svg class="ring" width="72" height="72" viewBox="0 0 72 72">
@@ -1286,8 +1275,8 @@
     
     // Default settings
     const defaultSettings = {
-      dayStartTime: '06:00',
-      nightStartTime: '18:00',
+      dayStartTime: '05:00',
+      nightStartTime: '17:00',
       sections: [
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
