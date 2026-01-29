@@ -2430,14 +2430,21 @@
     
     // Load custom sections data from server and update UI
     window.loadCustomSectionsData = function(data) {
-      window.customSectionData = data || {};
+      // Reset all custom section data first
+      window.customSectionData = {};
+      
+      // Then load new data if provided
+      if (data && typeof data === 'object') {
+        window.customSectionData = data;
+      }
       
       // Update UI for each custom section
       appSettings.sections.filter(s => s.custom).forEach(sec => {
-        const sectionData = window.customSectionData[sec.id];
-        if (!sectionData) {
+        const sectionData = window.customSectionData[sec.id] || {};
+        
+        // Ensure data structure exists
+        if (!window.customSectionData[sec.id]) {
           window.customSectionData[sec.id] = { value: null, entries: [] };
-          return;
         }
         
         const type = sec.type;
@@ -2473,7 +2480,10 @@
         
         } else if (type === 'text') {
           const input = document.getElementById(`${sec.id}_input`);
-          if (input) input.value = sectionData.value || '';
+          if (input) {
+            input.value = sectionData.value || '';
+            console.log(`Loading text for ${sec.id}:`, sectionData.value);
+          }
         
         } else if (type === 'number') {
           const input = document.getElementById(`${sec.id}_input`);
@@ -2515,6 +2525,8 @@
       if (typeof updateCompletionRingAurora === 'function') {
         updateCompletionRingAurora();
       }
+      
+      console.log('✅ loadCustomSectionsData ran', window.customSectionData);
     };
     
     // Collect custom sections data from UI for saving
