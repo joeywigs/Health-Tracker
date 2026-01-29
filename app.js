@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Rate limit delay", new Date().toISOString());
+console.log("✅ app.js running - Dopamine boosts!", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -92,6 +92,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupChartRangeToggle();
   setupBiomarkersPage();
   setupStickyHeader();
+  setupQuickLog();
+  setupDopamineBoosts();
 
   updateDateDisplay();
   updatePhaseInfo();
@@ -326,47 +328,300 @@ function hideWeighReminder() {
 // WEEKLY SUMMARY
 // =====================================
 function setupWeeklySummaryButton() {
-  updateWeeklySummaryButton();
-  console.log("✅ Weekly summary button wired");
+  // Remove the old Sunday-only button logic
+  const oldBtn = document.getElementById("weeklySummaryBtn");
+  if (oldBtn) oldBtn.remove();
+  
+  // Setup the header link
+  const summaryLink = document.getElementById("weeklySummaryLink");
+  const summaryCloseBtn = document.getElementById("summaryCloseBtn");
+  
+  if (summaryLink) {
+    summaryLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      showWeeklySummaryPage();
+    });
+  }
+  
+  if (summaryCloseBtn) {
+    summaryCloseBtn.addEventListener("click", hideWeeklySummaryPage);
+  }
+  
+  console.log("✅ Weekly summary wired");
 }
 
 function updateWeeklySummaryButton() {
-  const today = new Date(currentDate);
-  const dayOfWeek = today.getDay(); // 0 = Sunday
+  // No longer needed - link is always visible
+}
+
+async function showWeeklySummaryPage() {
+  const mainPage = document.getElementById("healthForm");
+  const chartsPage = document.getElementById("chartsPage");
+  const bioPage = document.getElementById("biomarkersPage");
+  const summaryPage = document.getElementById("weeklySummaryPage");
   
-  let summaryBtn = document.getElementById("weeklySummaryBtn");
+  if (mainPage) mainPage.style.display = "none";
+  if (chartsPage) chartsPage.style.display = "none";
+  if (bioPage) bioPage.style.display = "none";
+  if (summaryPage) summaryPage.style.display = "block";
   
-  // Only show on Sundays
-  if (dayOfWeek === 0) {
-    if (!summaryBtn) {
-      summaryBtn = document.createElement("button");
-      summaryBtn.id = "weeklySummaryBtn";
-      summaryBtn.className = "btn btn-primary";
-      summaryBtn.textContent = "📊 View Week Summary";
-      summaryBtn.style.marginBottom = "20px";
-      summaryBtn.addEventListener("click", showWeeklySummary);
-      
-      const form = document.getElementById("healthForm");
-      if (form) {
-        form.parentNode.insertBefore(summaryBtn, form);
-      }
-    }
+  window.scrollTo(0, 0);
+  
+  await loadWeeklySummary();
+}
+
+function hideWeeklySummaryPage() {
+  const mainPage = document.getElementById("healthForm");
+  const summaryPage = document.getElementById("weeklySummaryPage");
+  
+  if (summaryPage) summaryPage.style.display = "none";
+  if (mainPage) mainPage.style.display = "block";
+  
+  window.scrollTo(0, 0);
+}
+
+async function loadWeeklySummary() {
+  // Calculate week boundaries (Sun-Sat)
+  const today = new Date();
+  const currentDay = today.getDay();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - currentDay);
+  weekStart.setHours(0, 0, 0, 0);
+  
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  
+  // Update subtitle
+  const subtitle = document.getElementById("summarySubtitle");
+  if (subtitle) {
+    const startStr = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const endStr = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    subtitle.textContent = `${startStr} - ${endStr}`;
+  }
+  
+  // Load phase progress
+  loadPhaseProgress();
+  
+  // Use cached chart data if available
+  if (chartDataCache && chartDataCache.length > 0) {
+    renderWeeklyStats(chartDataCache);
+    renderStreaks(chartDataCache);
+    renderWins(chartDataCache);
+    renderWeekComparison(chartDataCache);
   } else {
-    if (summaryBtn) summaryBtn.remove();
+    // Show loading state
+    document.getElementById("weeklyStats").innerHTML = '<div style="color: #999;">Loading...</div>';
   }
 }
 
-async function showWeeklySummary() {
-  // Calculate the week: Sunday to Saturday
-  const sunday = new Date(currentDate);
-  sunday.setDate(sunday.getDate() - sunday.getDay()); // Go back to Sunday
+function loadPhaseProgress() {
+  const phaseStart = new Date("2026-01-19");
+  phaseStart.setHours(0, 0, 0, 0);
   
-  const saturday = new Date(sunday);
-  saturday.setDate(sunday.getDate() + 6);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   
-  alert(`Weekly Summary\n${formatDateForAPI(sunday)} to ${formatDateForAPI(saturday)}\n\nComing soon with detailed stats!`);
+  const daysComplete = Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1;
+  const totalDays = 21;
+  const daysRemaining = Math.max(0, totalDays - daysComplete);
+  const progressPercent = Math.min(100, (daysComplete / totalDays) * 100);
   
-  // TODO: Implement full weekly summary modal with charts
+  const daysEl = document.getElementById("phaseDaysComplete");
+  const barEl = document.getElementById("phaseProgressBar");
+  const remainingEl = document.getElementById("phaseDaysRemaining");
+  
+  if (daysEl) daysEl.textContent = Math.min(daysComplete, totalDays);
+  if (barEl) barEl.style.width = `${progressPercent}%`;
+  if (remainingEl) {
+    if (daysRemaining > 0) {
+      remainingEl.textContent = `${daysRemaining} days remaining`;
+    } else {
+      remainingEl.textContent = "Phase complete! 🎉";
+      remainingEl.style.color = "#52b788";
+    }
+  }
+}
+
+function renderWeeklyStats(data) {
+  const statsEl = document.getElementById("weeklyStats");
+  if (!statsEl) return;
+  
+  // Get this week's data
+  const today = new Date();
+  const currentDay = today.getDay();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - currentDay);
+  weekStart.setHours(0, 0, 0, 0);
+  
+  const thisWeekData = data.filter(d => {
+    const date = new Date(d.date);
+    return date >= weekStart;
+  });
+  
+  // Calculate stats
+  const sleepValues = thisWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
+  const stepsValues = thisWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
+  const rehitCount = thisWeekData.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
+  
+  const avgSleep = sleepValues.length ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : "--";
+  const avgSteps = stepsValues.length ? Math.round(stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length).toLocaleString() : "--";
+  const daysLogged = thisWeekData.length;
+  
+  statsEl.innerHTML = `
+    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
+      <div style="font-size: 32px; font-weight: bold; color: #a393eb;">${avgSleep}</div>
+      <div style="font-size: 14px; color: #999;">Avg Sleep (hrs)</div>
+    </div>
+    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
+      <div style="font-size: 32px; font-weight: bold; color: #4d9de0;">${avgSteps}</div>
+      <div style="font-size: 14px; color: #999;">Avg Steps</div>
+    </div>
+    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
+      <div style="font-size: 32px; font-weight: bold; color: #52b788;">${rehitCount}</div>
+      <div style="font-size: 14px; color: #999;">REHIT Sessions</div>
+    </div>
+    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
+      <div style="font-size: 32px; font-weight: bold; color: #e0e0e0;">${daysLogged}/7</div>
+      <div style="font-size: 14px; color: #999;">Days Logged</div>
+    </div>
+  `;
+}
+
+function renderStreaks(data) {
+  const streaksEl = document.getElementById("streaksDisplay");
+  if (!streaksEl) return;
+  
+  // Calculate streaks (consecutive days with data)
+  let currentStreak = 0;
+  const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  for (let i = 0; i < sortedData.length; i++) {
+    const d = sortedData[i];
+    const hasData = d.daily["Hours of Sleep"] || d.daily["Steps"];
+    if (hasData) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
+  
+  // Calculate REHIT streak
+  let rehitStreak = 0;
+  // Count consecutive weeks with at least 2 REHIT sessions
+  // (simplified for now)
+  
+  streaksEl.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #2a2a2a; border-radius: 12px; margin-bottom: 8px;">
+      <div style="font-size: 32px;">🔥</div>
+      <div>
+        <div style="font-size: 24px; font-weight: bold; color: #ff6b35;">${currentStreak} days</div>
+        <div style="font-size: 14px; color: #999;">Logging streak</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderWins(data) {
+  const winsEl = document.getElementById("winsDisplay");
+  if (!winsEl) return;
+  
+  const wins = [];
+  
+  // Get this week's data
+  const today = new Date();
+  const currentDay = today.getDay();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - currentDay);
+  weekStart.setHours(0, 0, 0, 0);
+  
+  const thisWeekData = data.filter(d => {
+    const date = new Date(d.date);
+    return date >= weekStart;
+  });
+  
+  // Check for wins
+  const sleepValues = thisWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
+  const avgSleep = sleepValues.length ? sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length : 0;
+  
+  if (avgSleep >= 7) wins.push("🌙 Averaged 7+ hours of sleep");
+  
+  const rehitCount = thisWeekData.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
+  if (rehitCount >= 3) wins.push("💪 Hit 3+ REHIT sessions");
+  if (rehitCount >= 2) wins.push("🚴 Got in 2+ REHIT sessions");
+  
+  if (thisWeekData.length >= 5) wins.push("📝 Logged 5+ days this week");
+  if (thisWeekData.length === 7) wins.push("⭐ Perfect week of logging!");
+  
+  const stepsValues = thisWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
+  const avgSteps = stepsValues.length ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
+  if (avgSteps >= 10000) wins.push("👟 Averaged 10k+ steps");
+  if (avgSteps >= 7500) wins.push("🚶 Averaged 7.5k+ steps");
+  
+  if (wins.length === 0) {
+    wins.push("Keep going! You're building great habits.");
+  }
+  
+  winsEl.innerHTML = wins.slice(0, 4).map(w => `
+    <div style="padding: 8px 0; border-bottom: 1px solid #3a3a3a;">${w}</div>
+  `).join('');
+}
+
+function renderWeekComparison(data) {
+  const compEl = document.getElementById("weekComparisonDisplay");
+  if (!compEl) return;
+  
+  // Get this week and last week data
+  const today = new Date();
+  const currentDay = today.getDay();
+  
+  const thisWeekStart = new Date(today);
+  thisWeekStart.setDate(today.getDate() - currentDay);
+  thisWeekStart.setHours(0, 0, 0, 0);
+  
+  const lastWeekStart = new Date(thisWeekStart);
+  lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+  
+  const lastWeekEnd = new Date(thisWeekStart);
+  lastWeekEnd.setDate(thisWeekStart.getDate() - 1);
+  
+  const thisWeekData = data.filter(d => new Date(d.date) >= thisWeekStart);
+  const lastWeekData = data.filter(d => {
+    const date = new Date(d.date);
+    return date >= lastWeekStart && date <= lastWeekEnd;
+  });
+  
+  // Calculate comparisons
+  const thisWeekSleep = thisWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
+  const lastWeekSleep = lastWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
+  
+  const thisAvgSleep = thisWeekSleep.length ? thisWeekSleep.reduce((a,b) => a+b, 0) / thisWeekSleep.length : null;
+  const lastAvgSleep = lastWeekSleep.length ? lastWeekSleep.reduce((a,b) => a+b, 0) / lastWeekSleep.length : null;
+  
+  const thisWeekSteps = thisWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
+  const lastWeekSteps = lastWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
+  
+  const thisAvgSteps = thisWeekSteps.length ? thisWeekSteps.reduce((a,b) => a+b, 0) / thisWeekSteps.length : null;
+  const lastAvgSteps = lastWeekSteps.length ? lastWeekSteps.reduce((a,b) => a+b, 0) / lastWeekSteps.length : null;
+  
+  const formatDiff = (current, last, unit, decimals = 0) => {
+    if (current === null || last === null) return '<span style="color: #999;">--</span>';
+    const diff = current - last;
+    const sign = diff >= 0 ? "↑" : "↓";
+    const color = diff >= 0 ? "#52b788" : "#e63946";
+    const formatted = decimals > 0 ? Math.abs(diff).toFixed(decimals) : Math.round(Math.abs(diff)).toLocaleString();
+    return `<span style="color: ${color}">${sign} ${formatted}${unit}</span>`;
+  };
+  
+  compEl.innerHTML = `
+    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #3a3a3a;">
+      <span>Sleep</span>
+      ${formatDiff(thisAvgSleep, lastAvgSleep, 'h', 1)}
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #3a3a3a;">
+      <span>Steps</span>
+      ${formatDiff(thisAvgSteps, lastAvgSteps, '')}
+    </div>
+  `;
 }
 
 // =====================================
@@ -1111,6 +1366,426 @@ function updateStickyDate() {
   } else {
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
     stickyDate.textContent = cur.toLocaleDateString('en-US', options);
+  }
+}
+
+// =====================================
+// QUICK LOG FAB
+// =====================================
+function setupQuickLog() {
+  const fab = document.getElementById("quickLogFab");
+  const menu = document.getElementById("quickLogMenu");
+  
+  if (!fab || !menu) {
+    console.warn("Quick log elements not found");
+    return;
+  }
+  
+  let isOpen = false;
+  
+  fab.addEventListener("click", () => {
+    isOpen = !isOpen;
+    fab.classList.toggle("open", isOpen);
+    fab.textContent = isOpen ? "✕" : "+";
+    menu.classList.toggle("open", isOpen);
+  });
+  
+  // Close menu when clicking outside
+  document.addEventListener("click", (e) => {
+    if (isOpen && !fab.contains(e.target) && !menu.contains(e.target)) {
+      isOpen = false;
+      fab.classList.remove("open");
+      fab.textContent = "+";
+      menu.classList.remove("open");
+    }
+  });
+  
+  // Handle quick log actions
+  menu.querySelectorAll(".quick-log-item").forEach(item => {
+    item.addEventListener("click", async (e) => {
+      const action = item.dataset.action;
+      await handleQuickLog(action, item);
+    });
+  });
+  
+  console.log("✅ Quick log wired");
+}
+
+async function handleQuickLog(action, buttonEl) {
+  // Visual feedback
+  buttonEl.classList.add("success");
+  setTimeout(() => buttonEl.classList.remove("success"), 500);
+  
+  switch (action) {
+    case "movement":
+      await quickLogMovement();
+      break;
+    case "water":
+      await quickLogWater();
+      break;
+    case "reading":
+      await quickLogReading();
+      break;
+    case "rehit":
+      await quickLogRehit();
+      break;
+  }
+  
+  // Close the menu after action
+  const fab = document.getElementById("quickLogFab");
+  const menu = document.getElementById("quickLogMenu");
+  fab.classList.remove("open");
+  fab.textContent = "+";
+  menu.classList.remove("open");
+}
+
+async function quickLogMovement() {
+  // Prompt for movement type and duration
+  const types = ["Walk", "Stretch", "Stairs", "Exercise", "Other"];
+  const typeChoice = prompt(`Movement type:\n1. Walk\n2. Stretch\n3. Stairs\n4. Exercise\n5. Other\n\nEnter number (1-5):`);
+  
+  if (!typeChoice) return;
+  
+  const typeIndex = parseInt(typeChoice, 10) - 1;
+  if (typeIndex < 0 || typeIndex >= types.length) {
+    alert("Invalid choice");
+    return;
+  }
+  
+  const duration = prompt("Duration in minutes:", "5");
+  if (!duration) return;
+  
+  const mins = parseInt(duration, 10);
+  if (isNaN(mins) || mins <= 0) {
+    alert("Please enter a valid number of minutes");
+    return;
+  }
+  
+  // Add to movements array and save
+  movements.push({ duration: mins, type: types[typeIndex] });
+  renderMovements();
+  triggerSaveSoon();
+  
+  // Show confirmation
+  showQuickConfirmation(`✓ Logged ${mins} min ${types[typeIndex]}`);
+}
+
+async function quickLogWater() {
+  // Increment water count
+  waterCount++;
+  const waterEl = document.getElementById("waterCount");
+  if (waterEl) waterEl.textContent = waterCount;
+  
+  triggerSaveSoon();
+  showQuickConfirmation(`✓ Water: ${waterCount} glasses`);
+}
+
+async function quickLogReading() {
+  const duration = prompt("Reading duration (minutes):", "15");
+  if (!duration) return;
+  
+  const mins = parseInt(duration, 10);
+  if (isNaN(mins) || mins <= 0) {
+    alert("Please enter a valid number of minutes");
+    return;
+  }
+  
+  const book = prompt("Book title:", lastBookTitle);
+  if (book === null) return;
+  
+  const bookTitle = book.trim() || lastBookTitle;
+  
+  readings.push({ duration: mins, book: bookTitle });
+  lastBookTitle = bookTitle;
+  renderReadings();
+  triggerSaveSoon();
+  
+  showQuickConfirmation(`✓ Logged ${mins} min reading`);
+}
+
+async function quickLogRehit() {
+  const choice = prompt("REHIT type:\n1. 2x10\n2. 3x10\n\nEnter number:");
+  
+  if (!choice) return;
+  
+  const rehit2 = document.getElementById("rehit2");
+  const rehit3 = document.getElementById("rehit3");
+  
+  if (choice === "1" && rehit2) {
+    rehit2.checked = true;
+    if (rehit3) rehit3.checked = false;
+    syncCheckboxVisual(rehit2);
+    if (rehit3) syncCheckboxVisual(rehit3);
+    triggerSaveSoon();
+    showQuickConfirmation("✓ REHIT 2x10 logged");
+  } else if (choice === "2" && rehit3) {
+    rehit3.checked = true;
+    if (rehit2) rehit2.checked = false;
+    syncCheckboxVisual(rehit3);
+    if (rehit2) syncCheckboxVisual(rehit2);
+    triggerSaveSoon();
+    showQuickConfirmation("✓ REHIT 3x10 logged");
+  } else {
+    alert("Invalid choice");
+  }
+}
+
+function showQuickConfirmation(message) {
+  // Create a toast notification
+  const toast = document.createElement("div");
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #52b788 0%, #40916c 100%);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(82, 183, 136, 0.4);
+    z-index: 1001;
+    animation: toast-in 0.3s ease, toast-out 0.3s ease 1.7s forwards;
+  `;
+  toast.textContent = message;
+  
+  // Add animation keyframes if not already present
+  if (!document.getElementById("toast-styles")) {
+    const style = document.createElement("style");
+    style.id = "toast-styles";
+    style.textContent = `
+      @keyframes toast-in {
+        from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+      @keyframes toast-out {
+        from { opacity: 1; transform: translateX(-50%) translateY(0); }
+        to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(toast);
+  
+  // Remove after animation
+  setTimeout(() => toast.remove(), 2000);
+}
+
+// =====================================
+// DOPAMINE BOOSTS
+// =====================================
+let lastCompletionCount = 0;
+let personalBests = {};
+
+function setupDopamineBoosts() {
+  // Add confetti to all checkboxes
+  document.querySelectorAll('.checkbox-field input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        createConfetti(e.target);
+        updateCompletionRing();
+        checkForMilestones();
+      } else {
+        updateCompletionRing();
+      }
+    });
+  });
+  
+  // Track number inputs for personal bests
+  document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('change', () => {
+      checkPersonalBest(input);
+    });
+  });
+  
+  // Initial completion ring update
+  setTimeout(updateCompletionRing, 500);
+  
+  console.log("✅ Dopamine boosts wired");
+}
+
+function createConfetti(element) {
+  const rect = element.getBoundingClientRect();
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  container.style.left = rect.left + rect.width / 2 + 'px';
+  container.style.top = rect.top + rect.height / 2 + 'px';
+  document.body.appendChild(container);
+  
+  const colors = ['#52b788', '#ff9f1c', '#4d9de0', '#a393eb', '#ff006e', '#ffd700'];
+  
+  for (let i = 0; i < 12; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    const angle = (i / 12) * Math.PI * 2;
+    const distance = 30 + Math.random() * 30;
+    confetti.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+    confetti.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+    
+    container.appendChild(confetti);
+  }
+  
+  setTimeout(() => container.remove(), 600);
+}
+
+function updateCompletionRing() {
+  const checkboxes = document.querySelectorAll('#healthForm .checkbox-field input[type="checkbox"]');
+  const total = checkboxes.length;
+  const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+  
+  const progress = document.getElementById('completionProgress');
+  const number = document.getElementById('completionNumber');
+  
+  if (progress && number) {
+    const circumference = 2 * Math.PI * 32; // r=32
+    const offset = circumference - (checked / total) * circumference;
+    progress.style.strokeDashoffset = offset;
+    
+    // Animate number change
+    if (checked !== lastCompletionCount) {
+      number.classList.add('bumping');
+      setTimeout(() => number.classList.remove('bumping'), 300);
+    }
+    
+    number.textContent = checked;
+    lastCompletionCount = checked;
+    
+    // Check for all complete
+    if (checked === total && total > 0) {
+      showMilestone('🌟', 'All Habits Complete!', 'You crushed it today!');
+    }
+  }
+}
+
+function checkForMilestones() {
+  // Check streak milestones
+  const streakCount = calculateCurrentStreak();
+  
+  if (streakCount === 7) {
+    setTimeout(() => showMilestone('🔥', '7 Day Streak!', 'One week of consistency!'), 500);
+  } else if (streakCount === 14) {
+    setTimeout(() => showMilestone('🔥🔥', '14 Day Streak!', 'Two weeks strong!'), 500);
+  } else if (streakCount === 21) {
+    setTimeout(() => showMilestone('🏆', '21 Day Streak!', 'Habit officially formed!'), 500);
+  }
+}
+
+function calculateCurrentStreak() {
+  // Simple streak calculation from cached chart data
+  if (!chartDataCache || chartDataCache.length === 0) return 0;
+  
+  let streak = 0;
+  const sortedData = [...chartDataCache].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  for (const d of sortedData) {
+    const hasData = d.daily["Hours of Sleep"] || d.daily["Steps"];
+    if (hasData) streak++;
+    else break;
+  }
+  
+  return streak;
+}
+
+function checkPersonalBest(input) {
+  const id = input.id;
+  const value = parseFloat(input.value);
+  
+  if (isNaN(value) || value <= 0) return;
+  
+  // Check against chart data for personal bests
+  if (!chartDataCache || chartDataCache.length === 0) return;
+  
+  let fieldKey = null;
+  let isHigherBetter = true;
+  
+  if (id === 'steps') {
+    fieldKey = 'Steps';
+    isHigherBetter = true;
+  } else if (id === 'sleepHours') {
+    fieldKey = 'Hours of Sleep';
+    isHigherBetter = true;
+  }
+  
+  if (!fieldKey) return;
+  
+  const allValues = chartDataCache
+    .map(d => parseFloat(d.daily[fieldKey]))
+    .filter(v => !isNaN(v) && v > 0);
+  
+  if (allValues.length === 0) return;
+  
+  const currentBest = isHigherBetter ? Math.max(...allValues) : Math.min(...allValues);
+  
+  if ((isHigherBetter && value > currentBest) || (!isHigherBetter && value < currentBest)) {
+    // Personal best!
+    input.classList.add('personal-best');
+    setTimeout(() => input.classList.remove('personal-best'), 3000);
+    
+    showMilestone('🏅', 'Personal Best!', `New ${fieldKey.toLowerCase()} record: ${value.toLocaleString()}`);
+  }
+}
+
+function showMilestone(emoji, title, subtitle) {
+  const overlay = document.getElementById('milestoneOverlay');
+  const emojiEl = document.getElementById('milestoneEmoji');
+  const titleEl = document.getElementById('milestoneTitle');
+  const subtitleEl = document.getElementById('milestoneSubtitle');
+  
+  if (overlay && emojiEl && titleEl && subtitleEl) {
+    emojiEl.textContent = emoji;
+    titleEl.textContent = title;
+    subtitleEl.textContent = subtitle;
+    overlay.classList.add('show');
+    
+    // Create celebration confetti
+    createCelebrationConfetti();
+  }
+}
+
+function closeMilestone() {
+  const overlay = document.getElementById('milestoneOverlay');
+  if (overlay) {
+    overlay.classList.remove('show');
+  }
+}
+
+function createCelebrationConfetti() {
+  const colors = ['#52b788', '#ff9f1c', '#4d9de0', '#a393eb', '#ff006e', '#ffd700'];
+  
+  for (let i = 0; i < 50; i++) {
+    setTimeout(() => {
+      const confetti = document.createElement('div');
+      confetti.style.cssText = `
+        position: fixed;
+        width: ${8 + Math.random() * 8}px;
+        height: ${8 + Math.random() * 8}px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        left: ${Math.random() * 100}vw;
+        top: -20px;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        z-index: 2001;
+        animation: confetti-fall ${2 + Math.random() * 2}s linear forwards;
+      `;
+      
+      if (!document.getElementById('confetti-fall-style')) {
+        const style = document.createElement('style');
+        style.id = 'confetti-fall-style';
+        style.textContent = `
+          @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 4000);
+    }, i * 30);
   }
 }
 
