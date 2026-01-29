@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Dopamine boosts!", new Date().toISOString());
+console.log("✅ app.js running - Summary fix", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -402,15 +402,20 @@ async function loadWeeklySummary() {
   // Load phase progress
   loadPhaseProgress();
   
-  // Use cached chart data if available
+  // If chart data not cached, fetch it now
+  if (!chartDataCache || chartDataCache.length === 0) {
+    document.getElementById("weeklyStats").innerHTML = '<div style="color: #999;">Loading data...</div>';
+    chartDataCache = await fetchChartData(null, true);
+  }
+  
+  // Now render with the data
   if (chartDataCache && chartDataCache.length > 0) {
     renderWeeklyStats(chartDataCache);
     renderStreaks(chartDataCache);
     renderWins(chartDataCache);
     renderWeekComparison(chartDataCache);
   } else {
-    // Show loading state
-    document.getElementById("weeklyStats").innerHTML = '<div style="color: #999;">Loading...</div>';
+    document.getElementById("weeklyStats").innerHTML = '<div style="color: #999;">No data available</div>';
   }
 }
 
@@ -2050,7 +2055,7 @@ function buildPayloadFromUI() {
     leanMass: document.getElementById("leanMass")?.value || "",
     bodyFat: document.getElementById("bodyFat")?.value || "",
     boneMass: document.getElementById("boneMass")?.value || "",
-    water: document.getElementById("water")?.value || "",
+    waterLbs: document.getElementById("water")?.value || "",
 
     // Blood Pressure
     systolic: document.getElementById("systolic")?.value || "",
