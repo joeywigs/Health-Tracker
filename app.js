@@ -1820,21 +1820,6 @@ confetti.style.cssText = `position: fixed; width: ${8 + Math.random() * 8}px; he
 }
 }
 
-async function showBiomarkersPage() {
-const mainPage = document.getElementById(“healthForm”);
-const chartsPage = document.getElementById(“chartsPage”);
-const bioPage = document.getElementById(“biomarkersPage”);
-
-if (mainPage) mainPage.style.display = “none”;
-if (chartsPage) chartsPage.style.display = “none”;
-if (bioPage) bioPage.style.display = “block”;
-
-window.scrollTo(0, 0);
-
-// Load biomarkers data
-await loadBiomarkers();
-}
-
 function hideBiomarkersPage() {
 const mainPage = document.getElementById(“healthForm”);
 const bioPage = document.getElementById(“biomarkersPage”);
