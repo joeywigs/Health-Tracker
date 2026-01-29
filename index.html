@@ -3,1858 +3,2416 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Health Tracker</title>
-  
-  <!-- iPhone -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-  <link rel="icon" href="icons/apple-touch-icon.png">
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#1a1a1a">
-  <meta name="mobile-web-app-capable" content="yes">
-
-  
-  <!-- iOS Web App Settings -->
+  <title>Habits — Daily Rituals</title>
+  <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Habits">
-  
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    
-    html { -webkit-text-size-adjust: 100%; }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    :root {
+      /* === NIGHT MODE (Default - Aurora/Twilight) === */
+      --bg-deep: #1a1a2e;
+      --bg-mid: #16213e;
+      --bg-card: rgba(255,255,255,0.08);
+      --bg-card-hover: rgba(255,255,255,0.12);
+      
+      --text: #ffffff;
+      --text-dim: rgba(255,255,255,0.85);
+      --text-muted: rgba(255,255,255,0.6);
+      
+      --accent-pink: #ff6b9d;
+      --accent-orange: #ffa552;
+      --accent-yellow: #ffd93d;
+      --accent-teal: #6dd5ed;
+      --accent-purple: #c471ed;
+      
+      --glow-pink: rgba(255,107,157,0.4);
+      --glow-orange: rgba(255,165,82,0.4);
+      --glow-teal: rgba(109,213,237,0.4);
+      --glow-purple: rgba(196,113,237,0.4);
+      
+      --success: #6dd5ed;
+      --success-soft: rgba(109,213,237,0.2);
+      
+      --sleep: #c471ed;
+      --water: #6dd5ed;
+      --movement: #ff6b9d;
+      --nutrition: #6dd5ed;
+      
+      --border: rgba(255,255,255,0.2);
+      --radius: 20px;
+      --radius-sm: 12px;
+      --radius-pill: 100px;
+      
+      /* Gradient backgrounds */
+      --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #1a1a2e 50%, #2d1b4e 75%, #1a1a2e 100%);
+      --bg-aurora: 
+        radial-gradient(ellipse at 20% 20%, rgba(196,113,237,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
     }
+    
+    /* === DAY MODE - Soft Cantaloupe === */
+    body.day-mode {
+      --bg-deep: #ffeaa7;
+      --bg-mid: #fdcb6e;
+      --bg-card: rgba(255,255,255,0.6);
+      --bg-card-hover: rgba(255,255,255,0.8);
+      
+      /* Dark text for contrast on light background */
+      --text: #1a1a2e;
+      --text-dim: rgba(26,26,46,0.8);
+      --text-muted: rgba(26,26,46,0.6);
+      
+      /* Vibrant accents to pop against yellow-orange background */
+      --accent-pink: #e11d48;
+      --accent-orange: #ea580c;
+      --accent-yellow: #ca8a04;
+      --accent-teal: #0d9488;
+      --accent-purple: #6366f1;
+      
+      --glow-pink: rgba(225,29,72,0.3);
+      --glow-orange: rgba(234,88,12,0.3);
+      --glow-teal: rgba(13,148,136,0.3);
+      --glow-purple: rgba(99,102,241,0.4);
+      
+      --success: #059669;
+      --success-soft: rgba(5,150,105,0.15);
+      
+      --sleep: #6366f1;
+      --water: #0d9488;
+      --movement: #e11d48;
+      --nutrition: #059669;
+      
+      --border: rgba(0,0,0,0.1);
+      
+      /* Soft Cantaloupe gradient */
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 30%, #f9a825 70%, #fdcb6e 100%) !important;
+    }
+    
+    body.day-mode::before {
+      background: radial-gradient(ellipse at 30% 20%, rgba(255,234,167,0.5) 0%, transparent 50%) !important;
+    }
+    
+    /* Day mode specific overrides - indigo/purple buttons on cantaloupe background */
+    body.day-mode .logo {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      box-shadow: 0 0 20px var(--glow-purple);
+    }
+    body.day-mode .date-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      box-shadow: 0 4px 15px var(--glow-purple);
+      color: white;
+    }
+    body.day-mode .phase-fill {
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+    }
+    body.day-mode .fab {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      box-shadow: 0 8px 25px var(--glow-purple);
+      color: white;
+    }
+    body.day-mode .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+    }
+    body.day-mode .ring-progress {
+      stroke: #6366f1;
+    }
+    body.day-mode .ring-text {
+      color: #6366f1;
+    }
+    body.day-mode .chip.on {
+      background: var(--success-soft);
+      border-color: var(--success);
+      box-shadow: 0 0 10px rgba(5,150,105,0.3);
+    }
+    body.day-mode .chip.on .chip-dot {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+      box-shadow: 0 0 8px rgba(5,150,105,0.4);
+    }
+    body.day-mode .water-btn {
+      border-color: var(--accent-teal);
+      color: var(--accent-teal);
+    }
+    body.day-mode .water-btn:hover {
+      background: var(--accent-teal);
+      color: white;
+    }
+    body.day-mode .water-num {
+      color: var(--text);
+    }
+    body.day-mode .milestone-title {
+      background: linear-gradient(90deg, var(--accent-orange), var(--accent-pink), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    body.day-mode .card {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.day-mode .card-title {
+      color: var(--text-muted);
+    }
+    body.day-mode .card-avg {
+      color: var(--text-muted);
+    }
+    body.day-mode .section {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.day-mode .sec-name {
+      color: var(--text);
+    }
+    body.day-mode .nav-link {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.1);
+      color: var(--text-dim);
+    }
+    body.day-mode .nav-link:hover {
+      background: rgba(255,255,255,0.8);
+      color: var(--accent-orange);
+      border-color: var(--accent-orange);
+    }
+    body.day-mode .date-nav {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.day-mode .date-main,
+    body.day-mode .date-sub {
+      color: var(--text);
+    }
+    body.day-mode .steps-bar-fill {
+      background: linear-gradient(to top, #6366f1, #8b5cf6, #a855f7);
+    }
+    body.day-mode .water-bar-fill {
+      background: linear-gradient(to top, var(--accent-teal), #14b8a6, #5eead4);
+    }
+    body.day-mode .big-input {
+      color: var(--text);
+    }
+    body.day-mode .big-input::placeholder {
+      color: var(--text-muted);
+    }
+    body.day-mode .chip-text {
+      color: var(--text-dim);
+    }
+    body.day-mode .chip.on .chip-text {
+      color: var(--text);
+    }
+    body.day-mode .chip-dot {
+      border-color: var(--text-muted);
+    }
+    /* Dark empty progress bars in day mode */
+    body.day-mode .steps-bar-track,
+    body.day-mode .water-bar-track {
+      background: rgba(0,0,0,0.15);
+    }
+    body.day-mode .ring-bg {
+      stroke: rgba(0,0,0,0.15);
+    }
+    body.day-mode .phase-track {
+      background: rgba(0,0,0,0.12);
+    }
+    /* Darker collapse arrows */
+    body.day-mode .sec-toggle {
+      color: var(--text-dim);
+    }
+    /* Movement/Reading items shading */
+    body.day-mode .item {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    
+    /* === SUNSET TRANSITION MODE === */
+    body.sunset-mode {
+      --bg-deep: #2d1b4e;
+      --bg-mid: #1a1a2e;
+      --bg-card: rgba(255,255,255,0.06);
+      --bg-card-hover: rgba(255,255,255,0.1);
+      
+      --text: #f0f0f0;
+      --text-dim: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.5);
+      
+      --bg-gradient: linear-gradient(135deg, #2d1b4e 0%, #4a1942 30%, #1a1a2e 70%, #16213e 100%);
+      --bg-aurora: 
+        radial-gradient(ellipse at 50% 0%, rgba(255,107,157,0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 30% 50%, rgba(255,165,82,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(196,113,237,0.15) 0%, transparent 50%);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      padding: 20px;
-      padding-bottom: 40px;
-      font-size: 72px;
-      transition: background-color 0.3s ease;
-    }
-    
-    body.past-date {
-      background: #0f0f0f;
-    }
-    
-    .header {
-      background: #2a2a2a;
-      padding: 32px;
-      border-radius: 32px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    
-    .title {
-      font-size: 70px;
-      font-weight: 700;
-      color: #ffffff;
-      line-height: 1;
-    }
-    
-    .subtitle {
-      font-size: 52.5px;
-      font-weight: 600;
-      color: #999;
-      margin-top: 8px;
-    }
-    
-    .date-nav {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    
-    .date-btn {
-      width: 100px;
-      height: 100px;
-      border: none;
-      background: #52b788;
-      color: #1a1a1a;
-      border-radius: 24px;
-      font-size: 48px;
-      font-weight: bold;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    
-    .date-btn:active {
-      background: #40916c;
-    }
-    
-    .date-display {
-      flex: 1;
-      text-align: center;
-      font-size: 44px;
-      font-weight: 600;
-      color: #e0e0e0;
-    }
-    
-    .section {
-      background: #2a2a2a;
-      padding: 32px;
-      border-radius: 32px;
-      margin-bottom: 28px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-      transition: background-color 0.3s ease;
-    }
-    
-    .section.completed {
-      background: #1b4332;
-    }
-    
-    .section.incomplete {
-      background: #5c2828;
-    }
-    
-    /* Section-specific accent colors */
-    #todosSection .section-header { color: #e76f51; }
-    #sleepSection .section-header { color: #a393eb; }
-    #greysHabitsSection .section-header { color: #f4a261; }
-    #movementSection .section-header { color: #4d9de0; }
-    #nutritionSection .section-header { color: #52b788; }
-    #waterSection .section-header { color: #4cc9f0; }
-    #mentalHabitsSection .section-header { color: #f48c06; }
-    #meditationSection .section-header { color: #d4a373; }
-    #reflectionsSection .section-header { color: #9d4edd; }
-    #storiesSection .section-header { color: #ff6b9d; }
-    #carlySection .section-header { color: #ffbe0b; }
-    #bodyDataSection .section-header { color: #06ffa5; }
-    #bloodPressureSection .section-header { color: #ff006e; }
-    
-    .section-header {
-      font-size: 59px;
-      font-weight: 700;
-      margin-bottom: 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-    }
-    
-    .section-header.collapsible::after {
-      content: '▼';
-      font-size: 45px;
-      transition: transform 0.3s;
-    }
-    
-    .section-header.collapsed::after {
-      transform: rotate(-90deg);
-    }
-    
-    .section-content {
-      max-height: 5000px;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
-    
-    .section-content.collapsed {
-      max-height: 0;
-    }
-    
-    .field-group {
-      margin-bottom: 28px;
-    }
-    
-    .field-label {
-      display: block;
-      font-size: 54px;
-      font-weight: 600;
-      color: #999;
-      margin-bottom: 16px;
-    }
-    
-    .input-field {
-      width: 100%;
-      padding: 24px;
-      font-size: 36px;
-      border: 3px solid #444;
-      border-radius: 20px;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      min-height: 120px;
-      box-sizing: border-box;
-    }
-    
-    .input-field:focus {
-      outline: none;
-      border-color: #81c995;
-    }
-    
-    .checkbox-field {
-      display: flex;
-      align-items: center;
-      padding: 32px;
-      margin-bottom: 16px;
-      border: 3px solid #3a3a3a;
-      border-radius: 24px;
-      cursor: pointer;
-      user-select: none;
-      min-height: 120px;
-      background: #1a1a1a;
-    }
-    
-    .checkbox-field:active {
-      background: #2a2a2a;
-    }
-    
-    .checkbox-field.checked {
-      border-color: #52b788;
-      background: #1b4332;
-    }
-    
-    .checkbox-field input[type="checkbox"] {
-      display: none;
-    }
-    
-    .checkbox-field label {
-      flex: 1;
-      font-size: 36px;
-      cursor: pointer;
-      color: #e0e0e0;
-    }
-    
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    
-    .grid-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 16px;
-    }
-    
-    .nutrition-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    
-    .body-data-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    
-    .body-data-cell {
-      display: flex;
-      flex-direction: column;
-      padding: 32px;
-      border: 3px solid #3a3a3a;
-      border-radius: 24px;
-      background: #1a1a1a;
-      min-height: 140px;
-      justify-content: center;
-    }
-    
-    .body-data-label {
-      font-size: 32px;
-      font-weight: 600;
-      color: #999;
-      margin-bottom: 16px;
-    }
-    
-    .body-data-input {
-      width: 100%;
-      padding: 20px;
-      font-size: 56px;
-      border: none;
-      border-radius: 16px;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      text-align: center;
-    }
-    
-    .body-data-input:focus {
-      outline: none;
-      background: #1a1a1a;
-    }
-    
-    .body-data-percent {
-      font-size: 56px;
-      font-weight: 700;
-      color: #52b788;
-      text-align: center;
-      padding: 20px;
-    }
-    
-    .water-counter {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 32px;
-      padding: 32px;
-    }
-    
-    .water-counter-btn {
-      width: 120px;
-      height: 120px;
-      font-size: 56px;
-      background: #4cc9f0;
-      color: white;
-      border: none;
-      border-radius: 28px;
-      cursor: pointer;
-      font-weight: bold;
-      line-height: 1;
-    }
-    
-    .water-counter-btn:active {
-      background: #3aa8d0;
-    }
-    
-    .water-counter-value {
-      font-size: 56px;
-      font-weight: 700;
-      color: #4cc9f0;
-      min-width: 180px;
-      text-align: center;
-      padding: 32px;
-      background: #1a1a1a;
-      border-radius: 24px;
-      border: 3px solid #3a3a3a;
-    }
-    
-    .meal-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-    }
-    
-    .snack-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    
-    .inhaler-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    
-    .item-list {
-      margin-top: 16px;
-    }
-    
-    .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 32px;
-      background: #1a1a1a;
-      border-radius: 20px;
-      margin-bottom: 16px;
-      min-height: 120px;
-      border: 2px solid #3a3a3a;
-    }
-    
-    .item-text {
-      flex: 1;
-      font-size: 42px;
-      color: #e0e0e0;
-    }
-    
-    .btn {
-      padding: 32px 40px;
-      font-size: 64px;
-      font-weight: 600;
-      border: none;
-      border-radius: 24px;
-      cursor: pointer;
-      min-height: 140px;
-    }
-    
-    .btn-primary {
-      background: #52b788;
-      color: #1a1a1a;
-      width: 100%;
-      padding: 40px;
-      font-size: 72px;
-      min-height: 160px;
-    }
-    
-    .btn-secondary {
-      background: #4d9de0;
-      color: #1a1a1a;
-      width: 100%;
-    }
-    
-    .btn-smaller {
-      font-size: 48px;
-    }
-    
-    .btn-danger {
-      background: #3a3a3a;
-      color: #e0e0e0;
-      padding: 16px 32px;
-      font-size: 64px;
-      font-weight: bold;
-      min-width: 100px;
-      height: 100px;
-      line-height: 1;
-      flex-shrink: 0;
-      border-radius: 20px;
-    }
-    
-    .btn:active {
-      opacity: 0.8;
-    }
-    
-    .btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    
-    
-    .test-btn {
-      position: fixed;
-      bottom: 180px;
-      right: 20px;
-      padding: 12px 16px;
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      color: var(--text);
+      padding: 16px;
+      padding-bottom: 120px;
       font-size: 16px;
-      background: #ddd;
-      color: #666;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      opacity: 0.5;
-      z-index: 999;
-    }
-    
-    .test-btn:active {
-      opacity: 0.8;
-    }
-    
-    .status-message {
-      padding: 12px 20px;
-      border-radius: 20px;
-      text-align: right;
-      font-weight: 600;
-      font-size: 24px;
-      display: none;
-      max-width: 300px;
-      background: #2a2a2a;
-    }
-    
-    .refresh-btn {
-      width: 60px;
-      height: 60px;
-      border: none;
-      background: #52b788;
-      color: #1a1a1a;
-      border-radius: 50%;
-      font-size: 48px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      padding: 0;
-    }
-    
-    .refresh-btn:active {
-      background: #40916c;
-      transform: rotate(180deg);
-      transition: transform 0.3s;
-    }
-    
-    .status-message.success {
-      background: #2a2a2a;
-      color: #52b788;
-      border: none;
-    }
-    
-    .status-message.error {
-      background: #2a2a2a;
-      color: #e63946;
-      border: none;
-    }
-    
-    .status-message.loading {
-      background: #2a2a2a;
-      color: #4d9de0;
-      border: none;
-    }
-    
-    textarea.input-field {
-      min-height: 300px;
-      resize: vertical;
-      font-family: inherit;
-    }
-    
-    .calc-field {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 32px;
-      background: #f5f5f5;
-      border-radius: 12px;
-      margin-bottom: 28px;
-    }
-    
-    .calc-label {
-      font-size: 60px;
-      font-weight: 600;
-      color: #999;
-    }
-    
-    .calc-value {
-      font-size: 68px;
-      font-weight: 700;
-      color: #52b788;
-      margin-left: auto;
-    }
-    
-    .average-display {
-      font-size: 19px;
-      color: #666;
-      margin-top: 8px;
-      padding-left: 4px;
-    }
-    
-    .phase-progress {
-      width: 100%;
-      height: 24px;
-      background: #1a1a1a;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 40px;
-    }
-    
-    .phase-progress-bar {
-      height: 100%;
-      background: #4d9de0;
-      transition: width 0.3s ease;
-    }
-    
-    .reminder-banner {
-      background: #4d9de0;
-      color: #1a1a1a;
-      padding: 16px 20px;
-      border-radius: 16px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 16px;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(77, 157, 224, 0.3);
-    }
-    
-    .reminder-banner button {
-      background: transparent;
-      border: none;
-      color: #1a1a1a;
-      font-size: 24px;
-      cursor: pointer;
-      padding: 4px 8px;
-      line-height: 1;
-    }
-    
-    .range-btn {
-      flex: 1;
-      padding: 12px 16px;
-      border: 2px solid #3a3a3a;
-      background: #1a1a1a;
-      color: #999;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .range-btn.active {
-      border-color: #4d9de0;
-      background: #4d9de0;
-      color: #1a1a1a;
-    }
-    
-    .range-btn:not(.active):active {
-      background: #2a2a2a;
-    }
-    
-    /* Sticky collapsed header */
-    .sticky-date-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: #2a2a2a;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      transform: translateY(-100%);
-      transition: transform 0.3s ease;
-    }
-    
-    .sticky-date-bar.visible {
-      transform: translateY(0);
-    }
-    
-    .sticky-date-bar .sticky-date {
-      font-size: 18px;
-      font-weight: 600;
-      color: #e0e0e0;
-    }
-    
-    .sticky-date-bar .sticky-nav {
-      display: flex;
-      gap: 12px;
-    }
-    
-    .sticky-date-bar .sticky-nav button {
-      width: 40px;
-      height: 40px;
-      border: none;
-      background: #52b788;
-      color: #1a1a1a;
-      border-radius: 10px;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    
-    /* Quick Log Floating Action Button */
-    .quick-log-fab {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ff9f1c 0%, #ff6b35 100%);
-      border: none;
-      color: #fff;
-      font-size: 28px;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(255, 159, 28, 0.4);
-      z-index: 999;
-      transition: transform 0.2s, box-shadow 0.2s;
-      animation: fab-pulse 2s infinite;
-    }
-    
-    .quick-log-fab:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 28px rgba(255, 159, 28, 0.5);
-    }
-    
-    .quick-log-fab:active {
-      transform: scale(0.95);
-    }
-    
-    .quick-log-fab.open {
-      background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-      animation: none;
-    }
-    
-    @keyframes fab-pulse {
-      0%, 100% { box-shadow: 0 4px 20px rgba(255, 159, 28, 0.4); }
-      50% { box-shadow: 0 4px 30px rgba(255, 159, 28, 0.6); }
-    }
-    
-    /* Quick Log Menu */
-    .quick-log-menu {
-      position: fixed;
-      bottom: 100px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      z-index: 998;
-      opacity: 0;
-      transform: translateY(20px);
-      pointer-events: none;
-      transition: opacity 0.2s, transform 0.2s;
-    }
-    
-    .quick-log-menu.open {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-    
-    .quick-log-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
-      background: #2a2a2a;
-      border: 2px solid #3a3a3a;
-      border-radius: 50px;
-      color: #e0e0e0;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    
-    .quick-log-item:hover {
-      transform: translateX(-8px);
-      border-color: #52b788;
-    }
-    
-    .quick-log-item:active {
-      transform: scale(0.95);
-    }
-    
-    .quick-log-item .icon {
-      font-size: 20px;
-    }
-    
-    .quick-log-item.movement { border-color: #ff9f1c; }
-    .quick-log-item.movement:hover { background: rgba(255, 159, 28, 0.15); }
-    
-    .quick-log-item.water { border-color: #4d9de0; }
-    .quick-log-item.water:hover { background: rgba(77, 157, 224, 0.15); }
-    
-    .quick-log-item.reading { border-color: #a393eb; }
-    .quick-log-item.reading:hover { background: rgba(163, 147, 235, 0.15); }
-    
-    .quick-log-item.rehit { border-color: #52b788; }
-    .quick-log-item.rehit:hover { background: rgba(82, 183, 136, 0.15); }
-    
-    /* Success flash animation */
-    @keyframes success-flash {
-      0% { background: rgba(82, 183, 136, 0); }
-      50% { background: rgba(82, 183, 136, 0.3); }
-      100% { background: rgba(82, 183, 136, 0); }
-    }
-    
-    .quick-log-item.success {
-      animation: success-flash 0.5s ease;
-    }
-    
-    /* ===== DOPAMINE BOOSTERS ===== */
-    
-    /* Checkbox bounce animation */
-    @keyframes checkbox-bounce {
-      0% { transform: scale(1); }
-      30% { transform: scale(1.3); }
-      50% { transform: scale(0.9); }
-      70% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-    
-    .checkbox-field input[type="checkbox"]:checked + label::before {
-      animation: checkbox-bounce 0.4s ease;
-    }
-    
-    /* Confetti burst for checkboxes */
-    .confetti-container {
-      position: fixed;
-      pointer-events: none;
-      z-index: 9999;
-    }
-    
-    .confetti {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      animation: confetti-burst 0.6s ease-out forwards;
-    }
-    
-    @keyframes confetti-burst {
-      0% { transform: translate(0, 0) scale(1); opacity: 1; }
-      100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-    }
-    
-    /* Daily completion ring */
-    .completion-ring-container {
+      line-height: 1.5;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
       position: relative;
-      width: 80px;
-      height: 80px;
+      transition: background 1s ease, color 0.5s ease;
     }
     
-    .completion-ring {
-      transform: rotate(-90deg);
-    }
-    
-    .completion-ring-bg {
-      fill: none;
-      stroke: #3a3a3a;
-      stroke-width: 8;
-    }
-    
-    .completion-ring-progress {
-      fill: none;
-      stroke: url(#completion-gradient);
-      stroke-width: 8;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 0.5s ease;
-    }
-    
-    .completion-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-    }
-    
-    .completion-number {
-      font-size: 24px;
-      font-weight: bold;
-      color: #52b788;
-    }
-    
-    .completion-label {
-      font-size: 10px;
-      color: #999;
-      text-transform: uppercase;
-    }
-    
-    /* Milestone celebration overlay */
-    .milestone-overlay {
+    body::before {
+      content: '';
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-aurora);
+      pointer-events: none;
+      z-index: 0;
+      transition: background 1s ease;
+    }
+    
+    body > * { position: relative; z-index: 1; }
+    
+    /* Theme indicator */
+    .theme-indicator {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1001;
+      backdrop-filter: blur(10px);
+    }
+    .theme-indicator.show {
+      opacity: 1;
+    }
+      --radius-pill: 100px;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      color: var(--text);
+      padding: 16px;
+      padding-bottom: 120px;
+      font-size: 16px;
+      line-height: 1.5;
+      
+      /* Aurora gradient background */
+      background: linear-gradient(135deg, 
+        #1a1a2e 0%, 
+        #16213e 25%, 
+        #1a1a2e 50%,
+        #2d1b4e 75%,
+        #1a1a2e 100%
+      );
+      background-attachment: fixed;
+      position: relative;
+    }
+    
+    /* Animated aurora glow overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(196,113,237,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    body > * { position: relative; z-index: 1; }
+    
+    /* Header */
+    .header { padding: 20px 0; margin-bottom: 20px; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+      box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px var(--glow-pink), 0 0 40px var(--glow-purple); }
+      50% { box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple); }
+    }
+    .brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+    .brand .tagline { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-link {
+      width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-dim); font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; text-decoration: none;
+      transition: all 0.3s; backdrop-filter: blur(10px);
+    }
+    .nav-link:hover { 
+      background: var(--bg-card-hover); 
+      color: var(--accent-teal); 
+      border-color: var(--accent-teal);
+      box-shadow: 0 0 20px var(--glow-teal);
+    }
+    
+    /* Date Nav - Glassmorphism */
+    .date-nav {
+      display: flex; align-items: center; gap: 12px; padding: 16px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .date-btn {
+      width: 44px; height: 44px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      color: white; font-size: 18px; font-weight: 600;
+      cursor: pointer; transition: all 0.3s;
+      box-shadow: 0 4px 15px var(--glow-purple);
+    }
+    .date-btn:hover { transform: scale(1.1); box-shadow: 0 6px 25px var(--glow-pink); }
+    .date-btn:active { transform: scale(0.95); }
+    .date-center { flex: 1; text-align: center; }
+    .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; }
+    .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    
+    /* Progress Ring - Glowing */
+    .ring-wrap { position: relative; width: 72px; height: 72px; }
+    .ring { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 5; }
+    .ring-progress { 
+      fill: none; 
+      stroke: url(#auroraGrad); 
+      stroke-width: 5; 
+      stroke-linecap: round; 
+      transition: stroke-dashoffset 0.6s;
+      filter: drop-shadow(0 0 6px var(--glow-teal));
+    }
+    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
+    
+    /* Phase Bar */
+    .phase { margin-top: 20px; }
+    .phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
+    .phase-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: var(--radius-pill); overflow: hidden; }
+    .phase-fill { 
+      height: 100%; 
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange)); 
+      border-radius: var(--radius-pill); 
+      box-shadow: 0 0 20px var(--glow-pink);
+      transition: width 0.6s;
+    }
+    
+    /* Cards - Glowing borders on hover */
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .card {
+      background: rgba(255,255,255,0.06); 
+      border: 1px solid rgba(255,255,255,0.15); 
+      border-radius: var(--radius);
+      padding: 18px; 
+      position: relative; 
+      overflow: hidden; 
+      backdrop-filter: blur(20px);
+      transition: all 0.3s;
       display: flex;
+      flex-direction: column;
+      min-height: 140px;
+    }
+    .card::before { 
+      content: ''; 
+      position: absolute; 
+      top: 0; left: 0; right: 0; 
+      height: 3px; 
+      background: linear-gradient(90deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink))); 
+      opacity: 0.8; 
+    }
+    .card:hover { 
+      border-color: rgba(255,255,255,0.25);
+      box-shadow: 0 0 30px var(--card-glow, var(--glow-purple));
+      transform: translateY(-2px);
+    }
+    .card.sleep { --accent-start: var(--accent-purple); --accent-end: var(--accent-pink); --card-glow: var(--glow-purple); }
+    .card.water { --accent-start: var(--accent-teal); --accent-end: var(--accent-purple); --card-glow: var(--glow-teal); }
+    .card.movement { --accent-start: var(--accent-pink); --accent-end: var(--accent-orange); --card-glow: var(--glow-pink); }
+    
+    .card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .card-icon { 
+      width: 32px; height: 32px; border-radius: 50%; 
+      display: flex; align-items: center; justify-content: center; font-size: 15px; 
+      background: linear-gradient(135deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink)));
+      box-shadow: 0 0 15px var(--card-glow, var(--glow-purple));
+    }
+    .card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
+    .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
+    .card-unit { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: 4px; }
+    .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
+    
+    /* REHIT Dots */
+    .rehit-dots { display: flex; gap: 6px; margin-left: auto; }
+    .rehit-dot { 
+      width: 10px; height: 10px; 
+      border-radius: 50%; 
+      background: rgba(255,255,255,0.2); 
+      transition: all 0.3s;
+    }
+    .rehit-dot.on { 
+      background: var(--accent-teal); 
+      box-shadow: 0 0 8px var(--glow-teal);
+    }
+    body.day-mode .rehit-dot {
+      background: rgba(0,0,0,0.15);
+    }
+    body.day-mode .rehit-dot.on {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(5,150,105,0.4);
+    }
+    
+    /* Counter dots (for weekly goals) */
+    .counter-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: all 0.3s;
+    }
+    .counter-dot.on {
+      background: var(--accent-teal);
+      box-shadow: 0 0 8px var(--glow-teal);
+    }
+    body.day-mode .counter-dot {
+      background: rgba(0,0,0,0.15);
+    }
+    body.day-mode .counter-dot.on {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(5,150,105,0.4);
+    }
+    
+    /* Rating stars */
+    .rating-stars {
+      display: flex;
+      gap: 8px;
+      font-size: 28px;
+    }
+    .star {
+      cursor: pointer;
+      color: rgba(255,255,255,0.3);
+      transition: all 0.2s;
+    }
+    .star:hover, .star.filled {
+      color: var(--accent-orange);
+      text-shadow: 0 0 10px var(--glow-orange);
+    }
+    body.day-mode .star {
+      color: rgba(0,0,0,0.2);
+    }
+    body.day-mode .star:hover, body.day-mode .star.filled {
+      color: var(--accent-orange);
+    }
+    
+    /* Custom log modal */
+    #customLogModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
       align-items: center;
       justify-content: center;
-      z-index: 2000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
+    }
+    #customLogModal.show {
+      display: flex;
+    }
+    #customLogModal .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+    }
+    #customLogModal .modal-content {
+      position: relative;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #customLogModal .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    #customLogModal .modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    body.day-mode #customLogModal .modal-content {
+      background: rgba(255,255,255,0.95);
     }
     
-    .milestone-overlay.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--text); outline: none; }
+    .big-input::placeholder { color: var(--text-muted); }
+    .big-input:focus { color: var(--accent-teal); }
     
-    .milestone-content {
-      text-align: center;
-      animation: milestone-pop 0.5s ease;
+    /* Steps Progress Bar */
+    .steps-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .steps-bar-track { 
+      width: 12px; height: 60px; 
+      background: rgba(255,255,255,0.1); 
+      border-radius: 6px; 
+      overflow: hidden;
+      position: relative;
     }
-    
-    @keyframes milestone-pop {
-      0% { transform: scale(0.5); opacity: 0; }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); opacity: 1; }
+    .steps-bar-fill { 
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, var(--accent-pink), var(--accent-orange), var(--accent-yellow)); 
+      border-radius: 6px;
+      transition: height 0.5s ease;
+      box-shadow: 0 0 10px var(--glow-orange);
     }
+    .steps-bar-goal { font-size: 9px; color: var(--text-muted); font-weight: 600; }
     
-    .milestone-emoji {
-      font-size: 80px;
-      animation: milestone-bounce 0.6s ease infinite;
+    /* Water */
+    .water-row { display: flex; align-items: center; gap: 12px; }
+    .water-btn { 
+      width: 38px; height: 38px; border-radius: 50%; 
+      border: 2px solid var(--accent-teal); background: transparent; 
+      color: var(--accent-teal); font-size: 18px; cursor: pointer; transition: all 0.3s; 
     }
-    
-    @keyframes milestone-bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-20px); }
+    .water-btn:hover { 
+      background: var(--accent-teal); 
+      color: var(--bg-deep); 
+      box-shadow: 0 0 20px var(--glow-teal);
     }
+    .water-btn:active { transform: scale(0.9); }
+    .water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: #ffffff; }
     
-    .milestone-title {
-      font-size: 28px;
-      font-weight: bold;
-      color: #fff;
-      margin-top: 16px;
+    /* Water Progress Bar */
+    .water-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .water-bar-track { 
+      width: 12px; height: 60px; 
+      background: rgba(255,255,255,0.1); 
+      border-radius: 6px; 
+      overflow: hidden;
+      position: relative;
     }
+    .water-bar-fill { 
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, var(--accent-teal), #6dd5ed, #a5f3fc); 
+      border-radius: 6px;
+      transition: height 0.5s ease;
+      box-shadow: 0 0 10px var(--glow-teal);
+    }
+    .water-bar-goal { font-size: 9px; color: rgba(255,255,255,0.6); font-weight: 600; }
     
-    .milestone-subtitle {
+    /* Sections */
+    .section { 
+      background: rgba(255,255,255,0.06); 
+      border: 1px solid rgba(255,255,255,0.15); 
+      border-radius: var(--radius); 
+      padding: 18px; 
+      margin-bottom: 12px; 
+      backdrop-filter: blur(20px); 
+      transition: all 0.3s;
+    }
+    .section:hover { border-color: rgba(255,255,255,0.2); }
+    .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
+    .sec-title { display: flex; align-items: center; gap: 10px; }
+    .sec-icon { 
+      width: 28px; height: 28px; border-radius: 50%; 
+      display: flex; align-items: center; justify-content: center; font-size: 13px; 
+      background: linear-gradient(135deg, var(--icon-start, var(--accent-purple)), var(--icon-end, var(--accent-pink)));
+      box-shadow: 0 0 12px var(--icon-glow, var(--glow-purple));
+    }
+    .sec-name { font-size: 14px; font-weight: 600; color: #ffffff; }
+    .sec-toggle { color: rgba(255,255,255,0.5); font-size: 11px; transition: transform 0.3s; }
+    .sec-head.collapsed .sec-toggle { transform: rotate(-90deg); }
+    .sec-content { transition: max-height 0.3s, opacity 0.3s; overflow: hidden; }
+    .sec-content.collapsed { max-height: 0; opacity: 0; }
+    
+    /* Chips - Glowing when active */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-pill);
+      cursor: pointer; transition: all 0.3s; user-select: none;
+    }
+    .chip:hover { background: rgba(255,255,255,0.1); }
+    .chip:active { transform: scale(0.97); }
+    .chip.on { 
+      background: var(--success-soft); 
+      border-color: var(--success); 
+      box-shadow: 0 0 15px var(--glow-teal);
+    }
+    .chip-dot { 
+      width: 18px; height: 18px; border-radius: 50%; 
+      border: 2px solid var(--text-muted); 
+      display: flex; align-items: center; justify-content: center; 
+      font-size: 10px; transition: all 0.3s; 
+    }
+    .chip.on .chip-dot { 
+      background: var(--success); 
+      border-color: var(--success); 
+      color: var(--bg-deep); 
+      box-shadow: 0 0 10px var(--glow-teal);
+    }
+    .chip-text { font-size: 13px; font-weight: 500; color: var(--text-dim); transition: color 0.3s; }
+    .chip.on .chip-text { color: var(--text); }
+    .chip input { display: none; }
+    
+    /* Inputs */
+    .field { margin-bottom: 14px; }
+    .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; display: block; }
+    .input { 
+      width: 100%; padding: 14px; 
+      background: rgba(255,255,255,0.05); 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius-sm); 
+      color: var(--text); font-size: 15px; outline: none; transition: all 0.3s; 
+    }
+    .input:focus { 
+      border-color: var(--accent-teal); 
+      box-shadow: 0 0 20px var(--glow-teal);
+    }
+    .input::placeholder { color: var(--text-muted); }
+    textarea.input { min-height: 90px; resize: vertical; font-family: inherit; line-height: 1.5; }
+    
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; }
+    .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+    .btn-primary { 
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
+      color: white; padding: 14px 24px; 
+      box-shadow: 0 4px 20px var(--glow-purple);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--glow-pink); }
+    
+    /* Items */
+    .items { margin-bottom: 12px; }
+    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-sm); margin-bottom: 6px; }
+    .item-text { font-size: 13px; }
+    .item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
+    .item-del:hover { color: var(--accent-pink); }
+    
+    /* Body Grid */
+    .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .body-cell { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+    .body-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
+    .body-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--text); outline: none; }
+    .body-pct { font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--accent-teal); }
+    
+    /* FAB - Glowing */
+    .fab { 
+      position: fixed; bottom: 24px; right: 24px; 
+      width: 60px; height: 60px; border-radius: 50%; 
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
+      border: none; color: white; font-size: 24px; cursor: pointer; 
+      box-shadow: 0 8px 30px var(--glow-purple);
+      z-index: 100; transition: all 0.3s; 
+      animation: fab-pulse 2s ease-in-out infinite;
+    }
+    @keyframes fab-pulse {
+      0%, 100% { box-shadow: 0 8px 30px var(--glow-purple); }
+      50% { box-shadow: 0 8px 40px var(--glow-pink), 0 0 60px var(--glow-purple); }
+    }
+    .fab:hover { transform: scale(1.1); }
+    .fab:active { transform: scale(0.95); }
+    .fab.open { transform: rotate(45deg); background: var(--bg-card); animation: none; }
+    
+    .fab-menu { position: fixed; bottom: 100px; right: 24px; display: flex; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.3s; z-index: 99; }
+    .fab-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .fab-item { 
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px; 
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-pill); 
+      backdrop-filter: blur(20px); cursor: pointer; transition: all 0.3s; white-space: nowrap; 
+    }
+    .fab-item:hover { background: var(--bg-card-hover); transform: translateX(-8px); box-shadow: 0 0 20px var(--glow-purple); }
+    .fab-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .fab-label { font-size: 14px; font-weight: 600; color: var(--text); }
+    
+    /* Sticky */
+    .sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(26,26,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.3s; }
+    .sticky.visible { transform: translateY(0); }
+    .sticky-date { font-size: 14px; font-weight: 600; }
+    .sticky-btns { display: flex; gap: 8px; }
+    .sticky-btns button { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-dim); font-size: 13px; cursor: pointer; }
+    
+    /* Milestone - Aurora themed */
+    .milestone { position: fixed; inset: 0; background: rgba(26,26,46,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(10px); }
+    .milestone.show { opacity: 1; pointer-events: auto; }
+    .milestone-box { text-align: center; animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .milestone-emoji { font-size: 72px; animation: float 2s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
+    .milestone-title { font-family: 'Space Grotesk'; font-size: 26px; font-weight: 700; margin-top: 16px; background: linear-gradient(90deg, var(--accent-teal), var(--accent-purple), var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .milestone-sub { font-size: 15px; color: var(--text-dim); margin-top: 8px; }
+    .milestone-btn { margin-top: 28px; padding: 14px 32px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); border: none; border-radius: var(--radius-pill); font-size: 16px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 8px 30px var(--glow-purple); }
+    
+    /* Modal */
+    .modal { position: fixed; inset: 0; background: rgba(26,26,46,0.9); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(10px); padding: 16px; }
+    .modal.show { opacity: 1; pointer-events: auto; }
+    .modal-content { background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 360px; animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 18px; border-bottom: 1px solid var(--border); }
+    .modal-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: var(--text-muted); font-size: 16px; cursor: pointer; transition: all 0.3s; }
+    .modal-close:hover { background: rgba(255,255,255,0.15); color: var(--text); }
+    .modal-body { padding: 18px; }
+    .modal-footer { padding: 18px; border-top: 1px solid var(--border); }
+    
+    /* Responsive */
+    @media (max-width: 430px) {
+      body { padding: 12px; }
+      .quick-grid { gap: 10px; }
+      .card { padding: 14px; }
+      .card-value { font-size: 28px; }
+      .big-input { font-size: 28px; }
+    }
+    @media (min-width: 768px) { body { max-width: 540px; margin: 0 auto; } }
+    
+    /* Settings Page Styles */
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { flex: 1; }
+    .setting-title { display: block; font-size: 14px; font-weight: 600; color: var(--text); }
+    .setting-desc { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    
+    .time-input {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none;
+    }
+    .time-input:focus { border-color: var(--accent-teal); }
+    
+    .theme-preview { display: flex; gap: 8px; }
+    .theme-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg-card);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .theme-btn:hover { border-color: var(--accent-teal); transform: scale(1.1); }
+    .theme-btn.active { border-color: var(--accent-teal); box-shadow: 0 0 15px var(--glow-teal); }
+    
+    /* Section List for Drag & Drop */
+    .section-list { }
+    .section-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      cursor: grab;
+      transition: all 0.2s;
+    }
+    .section-item:active { cursor: grabbing; }
+    .section-item.dragging {
+      opacity: 0.5;
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .section-item.drag-over {
+      border-color: var(--accent-teal);
+      background: var(--success-soft);
+    }
+    .section-item-drag {
+      color: var(--text-muted);
       font-size: 16px;
-      color: #999;
-      margin-top: 8px;
+      cursor: grab;
     }
-    
-    /* Number count-up effect */
-    .count-up {
+    .section-item-icon { font-size: 18px; }
+    .section-item-name { flex: 1; font-size: 14px; font-weight: 500; }
+    .section-item-toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--bg-deep);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .section-item-toggle.on { background: var(--success); }
+    .section-item-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
       transition: transform 0.2s;
     }
-    
-    .count-up.bumping {
-      animation: number-bump 0.3s ease;
+    .section-item-toggle.on::after { transform: translateX(20px); }
+    .section-item-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      opacity: 0.5;
+      transition: all 0.2s;
     }
-    
-    @keyframes number-bump {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2); color: #52b788; }
-      100% { transform: scale(1); }
-    }
-    
-    /* Streak fire animation */
-    .streak-fire {
-      display: inline-block;
-      animation: fire-flicker 0.5s ease infinite alternate;
-    }
-    
-    @keyframes fire-flicker {
-      0% { transform: scale(1) rotate(-2deg); }
-      100% { transform: scale(1.1) rotate(2deg); }
-    }
-    
-    /* Personal best glow */
-    .personal-best {
-      animation: pb-glow 1s ease infinite alternate;
-    }
-    
-    @keyframes pb-glow {
-      0% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
-      100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
-    }
-    
-    /* Button press effect */
-    .btn, .date-btn, .water-counter-btn, .range-btn {
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-    
-    .btn:active, .date-btn:active, .water-counter-btn:active, .range-btn:active {
-      transform: scale(0.95);
-    }
-    
-    /* Input focus glow */
-    .input-field:focus, .body-data-input:focus {
-      box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.3);
-      border-color: #52b788;
-    }
-    
-    /* Section completion indicator */
-    .section-header.completed::after {
-      content: " ✓";
-      color: #52b788;
-    }
-    
-    .sleep-water-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 28px;
-      margin-bottom: 28px;
-    }
-    
-    /* Desktop Layout - Fit everything on one screen */
-    @media (min-width: 1024px) {
-      body {
-        font-size: 16px;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-        padding-bottom: 20px;
-      }
-      
-      .header {
-        padding: 16px;
-      }
-      
-      .title {
-        font-size: 28px;
-      }
-      
-      .date-display {
-        font-size: 20px;
-      }
-      
-      .date-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-      }
-      
-      .refresh-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 24px;
-      }
-      
-      .section {
-        padding: 16px;
-        margin-bottom: 12px;
-      }
-      
-      .section-header {
-        font-size: 22px;
-        margin-bottom: 12px;
-      }
-      
-      .section-header.collapsible::after {
-        font-size: 18px;
-      }
-      
-      .field-label {
-        font-size: 16px;
-        margin-bottom: 6px;
-      }
-      
-      .input-field {
-        padding: 8px;
-        font-size: 16px;
-      }
-      
-      .checkbox-field {
-        padding: 12px;
-        min-height: 50px;
-        margin-bottom: 8px;
-      }
-      
-      .checkbox-field label {
-        font-size: 16px;
-      }
-      
-      .item-text {
-        font-size: 16px;
-      }
-      
-      .item {
-        padding: 12px;
-        min-height: 50px;
-        margin-bottom: 8px;
-      }
-      
-      .btn {
-        padding: 12px 16px;
-        font-size: 16px;
-        min-height: 48px;
-      }
-      
-      .btn-primary {
-        padding: 16px;
-        font-size: 18px;
-        min-height: 60px;
-      }
-      
-      .btn-danger {
-        padding: 8px 12px;
-        font-size: 18px;
-        min-width: 40px;
-        height: 40px;
-      }
-      
-      .calc-field {
-        padding: 12px;
-        margin-bottom: 12px;
-      }
-      
-      .calc-label {
-        font-size: 16px;
-      }
-      
-      .calc-value {
-        font-size: 18px;
-      }
-      
-      .average-display {
-        font-size: 11px;
-        margin-top: 4px;
-      }
-      
-      .counter-btn {
-        width: 60px;
-        height: 60px;
-        font-size: 40px;
-      }
-      
-      .counter-value {
-        font-size: 48px;
-        min-width: 80px;
-      }
-      
-      .water-counter {
-        padding: 16px;
-        gap: 16px;
-      }
-      
-      textarea.input-field {
-        min-height: 100px;
-      }
-      
-      
-      .field-group {
-        margin-bottom: 12px;
-      }
-      .input-field.saved {
-      border-color: #52b788 !important;
-      }
-
-    }
-    /* iPhone sizing (phones / small screens) */
-@media (max-width: 430px) {
-  body {
-    padding: 14px;
-    padding-bottom: 24px;
-    font-size: 16px; /* override the 72px base */
-  }
-
-  .header,
-  .section {
-    padding: 16px;
-    border-radius: 20px;
-  }
-
-  .title {
-    font-size: 28px;
-  }
-
-  .subtitle {
-    font-size: 18px;
-  }
-
-  .date-display {
-    font-size: 18px;
-  }
-
-  .date-btn {
-    width: 52px;
-    height: 52px;
-    font-size: 22px;
-    border-radius: 14px;
-  }
-
-  .section-header {
-    font-size: 20px;
-    margin-bottom: 12px;
-  }
-
-  .section-header.collapsible::after {
-    font-size: 16px;
-  }
-
-  .field-label {
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
-
-  .input-field {
-    padding: 12px;
-    font-size: 16px;
-    min-height: 52px;
-    border-radius: 14px;
-  }
-
-  textarea.input-field {
-    min-height: 140px;
-  }
-
-  .checkbox-field {
-    padding: 12px;
-    min-height: 52px;
-    border-radius: 16px;
-    margin-bottom: 10px;
-  }
-
-  .checkbox-field label {
-    font-size: 16px;
-  }
-
-  .water-counter {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .water-counter-btn {
-    width: 56px;
-    height: 56px;
-    font-size: 28px;
-    border-radius: 14px;
-  }
-
-  .water-counter-value {
-    font-size: 22px;
-    min-width: 90px;
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .btn {
-    padding: 12px 14px;
-    font-size: 16px;
-    min-height: 48px;
-    border-radius: 16px;
-  }
-
-  .btn-primary {
-    font-size: 18px;
-    min-height: 56px;
-    padding: 14px;
-  }
-
-  .btn-danger {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    font-size: 20px;
-    padding: 0;
-    border-radius: 12px;
-  }
-
-  .item {
-    padding: 12px;
-    min-height: 52px;
-    border-radius: 16px;
-  }
-
-  .item-text {
-    font-size: 16px;
-  }
-
-  .body-data-cell {
-    padding: 14px;
-    min-height: 100px;
-    border-radius: 16px;
-  }
-
-  .body-data-label {
-    font-size: 13px;
-    margin-bottom: 8px;
-  }
-
-  .body-data-input {
-    font-size: 20px;
-    padding: 12px;
-  }
-
-  .body-data-percent {
-    font-size: 20px;
-    padding: 12px;
-  }
-  
-  .sleep-water-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  
-  #sleepHours {
-    min-height: 78px !important;
-    font-size: 20px !important;
-  }
-  
-  .sleep-water-grid #waterSection .section-content > div {
-    height: 78px !important;
-  }
-}
+    .section-item-delete:hover { color: var(--accent-pink); opacity: 1; }
   </style>
 </head>
 <body>
-  <!-- Sticky collapsed header for scrolling -->
-  <div id="stickyDateBar" class="sticky-date-bar">
+  <div class="theme-indicator" id="themeIndicator">☀️ Day Mode</div>
+  
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <linearGradient id="auroraGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#c471ed"/>
+        <stop offset="50%" style="stop-color:#ff6b9d"/>
+        <stop offset="100%" style="stop-color:#6dd5ed"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div id="stickyDateBar" class="sticky">
     <div class="sticky-date" id="stickyDateDisplay">Today</div>
-    <div class="sticky-nav">
-      <button id="stickyPrevBtn">←</button>
-      <button id="stickyNextBtn">→</button>
+    <div class="sticky-btns"><button id="stickyPrevBtn">←</button><button id="stickyNextBtn">→</button></div>
+  </div>
+
+  <div id="milestoneOverlay" class="milestone">
+    <div class="milestone-box">
+      <div class="milestone-emoji" id="milestoneEmoji">✨</div>
+      <div class="milestone-title" id="milestoneTitle">Amazing!</div>
+      <div class="milestone-sub" id="milestoneSubtitle">You did something great!</div>
+      <button class="milestone-btn" onclick="closeMilestone()">Continue</button>
     </div>
   </div>
 
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <div style="display: flex; align-items: center; gap: 16px;">
-      <img src="https://i.imgur.com/ACLnzvO.png" 
-           style="width: 80px; height: 80px; border-radius: 12px;" 
-           alt="Habit Tracker Icon">
-      <div>
-        <div class="title">Habit Tracker</div>
-        <div class="subtitle">Phase 1 v1.0</div>
-      </div>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <!-- Daily Completion Ring -->
-        <div class="completion-ring-container" id="completionRing">
-          <svg class="completion-ring" width="80" height="80" viewBox="0 0 80 80">
-            <defs>
-              <linearGradient id="completion-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:#52b788"/>
-                <stop offset="100%" style="stop-color:#40916c"/>
-              </linearGradient>
-            </defs>
-            <circle class="completion-ring-bg" cx="40" cy="40" r="32"/>
-            <circle class="completion-ring-progress" id="completionProgress" cx="40" cy="40" r="32" 
-                    stroke-dasharray="201" stroke-dashoffset="201"/>
-          </svg>
-          <div class="completion-text">
-            <div class="completion-number" id="completionNumber">0</div>
-            <div class="completion-label">done</div>
+  <!-- REHIT Modal -->
+  <div id="rehitModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--accent-orange));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-pink)">🚴</div>
+          <div>
+            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">REHIT Stats</div>
+            <div style="font-size:12px;color:var(--text-muted)">Enter your workout data</div>
           </div>
         </div>
-        
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <a id="chartsBtn" href="#" style="display: block; padding: 8px 12px; background: #4d9de0; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; text-align: center;">📊 Charts</a>
-          <a id="biomarkersBtn" href="#" style="display: block; padding: 8px 12px; background: #ff006e; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; text-align: center;">🧬 Bio</a>
-          <a id="weeklySummaryLink" href="#" style="display: block; padding: 8px 12px; background: #52b788; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; text-align: center;">📈 Summary</a>
+        <button class="modal-close" onclick="closeRehitModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Fitness Score</div><input type="number" inputmode="decimal" class="body-input" id="fitnessScore" step="0.1" placeholder="0.0"></div>
+          <div class="body-cell"><div class="body-label">Calories</div><input type="number" inputmode="numeric" class="body-input" id="calories" placeholder="0"></div>
+          <div class="body-cell"><div class="body-label">Peak Watts</div><input type="number" inputmode="numeric" class="body-input" id="peakWatts" placeholder="0"></div>
+          <div class="body-cell"><div class="body-label">Watt Seconds</div><input type="number" inputmode="numeric" class="body-input" id="wattSeconds" placeholder="0"></div>
         </div>
       </div>
-      <div id="statusMessage" class="status-message"></div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="saveRehitAndClose()" style="width:100%">Save Stats</button>
+      </div>
     </div>
   </div>
 
-<!-- Milestone Celebration Overlay -->
-<div id="milestoneOverlay" class="milestone-overlay">
-  <div class="milestone-content">
-    <div class="milestone-emoji" id="milestoneEmoji">🎉</div>
-    <div class="milestone-title" id="milestoneTitle">Amazing!</div>
-    <div class="milestone-subtitle" id="milestoneSubtitle">You did something great!</div>
-    <button onclick="closeMilestone()" style="margin-top: 24px; padding: 12px 32px; background: linear-gradient(135deg, #52b788, #40916c); border: none; border-radius: 50px; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;">Continue</button>
-  </div>
-</div>
-  
-  <div class="header">
+  <header class="header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="logo">✦</div>
+        <div><h1>Habits</h1><div class="tagline">Phase 1 · <span id="phaseInfo">--</span></div></div>
+      </div>
+      <div class="nav-links">
+        <a href="#" id="weeklySummaryLink" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="1" fill="currentColor"/><path d="M10.5 9H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="12" r="1" fill="currentColor"/><path d="M10.5 12H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1" fill="currentColor"/><path d="M10.5 15H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
+        <a href="#" id="chartsBtn" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.5 17.5V7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.5 17.5H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 14.5L11.2 11.8L13.6 13.4L17.3 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="14.5" r="0.9" fill="currentColor"/><circle cx="11.2" cy="11.8" r="0.9" fill="currentColor"/><circle cx="13.6" cy="13.4" r="0.9" fill="currentColor"/><circle cx="17.3" cy="9.7" r="0.9" fill="currentColor"/></svg></a>
+        <a href="#" id="biomarkersBtn" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 7H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10 7V15.2C10 16.9 11.3 18.2 13 18.2C14.7 18.2 16 16.9 16 15.2V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.8 13.2H15.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
+        <a href="#" id="settingsBtn" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.4" stroke="currentColor" stroke-width="1.8"/><path d="M12 6.8V8.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 15.4V17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.8 12H8.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.4 12H17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.4 8.4L9.7 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14.3 14.3L15.6 15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.6 8.4L14.3 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.7 14.3L8.4 15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
+      </div>
+    </div>
     <div class="date-nav">
       <button class="date-btn" id="prevBtn">←</button>
-      <div style="flex: 1; text-align: center;">
-        <div class="date-display" id="dateDisplay"></div>
-        <div class="average-display" id="phaseInfo" style="margin-top: 4px;"></div>
+      <div class="date-center">
+        <div class="date-main" id="dateDisplay"></div>
+      </div>
+      <div class="ring-wrap">
+        <svg class="ring" width="72" height="72" viewBox="0 0 72 72">
+          <circle class="ring-bg" cx="36" cy="36" r="32"/>
+          <circle class="ring-progress" id="completionProgress" cx="36" cy="36" r="32" stroke-dasharray="201" stroke-dashoffset="201"/>
+        </svg>
+        <div class="ring-text" id="completionNumber">0</div>
       </div>
       <button class="date-btn" id="nextBtn">→</button>
     </div>
-    <div class="phase-progress">
-      <div class="phase-progress-bar" id="phaseProgressBar"></div>
+    <div class="phase">
+      <div class="phase-label"><span>Phase Progress</span><span id="phaseDaysRemaining">-- days left</span></div>
+      <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
     </div>
-  </div>
+  </header>
 
   <form id="healthForm">
-    <!-- To-Do's -->
-    <div class="section" id="todosSection">
-      <div class="section-header collapsible collapsed" id="todosHeader">To-Do's (0)</div>
-      <div class="section-content collapsed">
-        <div class="field-group">
-          <label class="field-label">Important Tasks</label>
-          <div id="honeyDoList" class="item-list"></div>
-          <button type="button" class="btn btn-secondary" id="addHoneyDoBtn">+ Add Task</button>
-        </div>
+    <div class="quick-grid">
+      <div class="card sleep" id="sleepSection">
+        <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
+        <div><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
+        <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
       </div>
-    </div>
-
-    <!-- Sleep & Water -->
-    <div class="sleep-water-grid">
-      <!-- Sleep -->
-      <div class="section" id="sleepSection">
-        <div class="section-header">Sleep</div>
-        <div class="section-content">
-          <div class="field-group" style="margin-bottom: 0;">
-            <input type="number" inputmode="decimal" class="input-field" id="sleepHours" step="0.01" min="0" max="24" style="min-height: 180px; font-size: 56px; font-weight: 700; color: #a393eb; text-align: center;">
-            <div class="average-display">7-day avg: <span id="avgSleep">--</span></div>
+      <div class="card water" id="waterSection">
+        <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="water-row" style="flex:1">
+            <button type="button" class="water-btn" id="waterMinus">−</button>
+            <div class="water-num" id="waterCount">0</div>
+            <button type="button" class="water-btn" id="waterPlus">+</button>
           </div>
-        </div>
-      </div>
-
-      <!-- Water -->
-      <div class="section" id="waterSection">
-        <div class="section-header">Water</div>
-        <div class="section-content">
-          <div style="display: flex; align-items: stretch; gap: 16px; height: 180px;">
-            <div class="water-counter-value" id="waterCount" style="flex: 1; display: flex; align-items: center; justify-content: center;">0</div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              <button type="button" class="water-counter-btn" id="waterPlus" style="flex: 1;">+</button>
-              <button type="button" class="water-counter-btn" id="waterMinus" style="flex: 1;">−</button>
+          <div class="water-bar-wrap">
+            <div class="water-bar-track">
+              <div class="water-bar-fill" id="waterBarFill"></div>
             </div>
+            <div class="water-bar-goal">6</div>
           </div>
         </div>
       </div>
+      <div class="card movement">
+        <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0" style="flex:1">
+          <div class="steps-bar-wrap">
+            <div class="steps-bar-track">
+              <div class="steps-bar-fill" id="stepsBarFill"></div>
+            </div>
+            <div class="steps-bar-goal">7.5k</div>
+          </div>
+        </div>
+        <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
+      </div>
+      <div class="card movement" id="rehitCard">
+        <div class="card-head">
+          <div class="card-icon">🚴</div>
+          <div class="card-title">REHIT</div>
+          <div class="rehit-dots" id="rehitDots">
+            <div class="rehit-dot"></div>
+            <div class="rehit-dot"></div>
+            <div class="rehit-dot"></div>
+            <div class="rehit-dot"></div>
+          </div>
+        </div>
+        <div class="chips" style="margin-top:8px">
+          <div class="chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
+          <div class="chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
+        </div>
+        <div id="rehitStats" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;">
+            <div><span style="color:var(--text-muted)">Score:</span> <span id="rehitScoreDisplay" style="color:var(--accent-teal);font-weight:600">--</span></div>
+            <div><span style="color:var(--text-muted)">Cals:</span> <span id="rehitCalsDisplay" style="color:var(--accent-orange);font-weight:600">--</span></div>
+            <div><span style="color:var(--text-muted)">Watts:</span> <span id="rehitWattsDisplay" style="color:var(--accent-pink);font-weight:600">--</span></div>
+            <div><span style="color:var(--text-muted)">W-Sec:</span> <span id="rehitWsDisplay" style="color:var(--accent-purple);font-weight:600">--</span></div>
+          </div>
+          <button type="button" class="btn btn-secondary" id="editRehitBtn" style="width:100%;margin-top:8px;font-size:12px;padding:6px 10px;">Edit Stats</button>
+        </div>
+        <div class="card-avg">This week: <span id="rehitWeek">--</span></div>
+      </div>
     </div>
 
-    <!-- Grey's Habits -->
     <div class="section" id="greysHabitsSection">
-      <div class="section-header">Grey's Habits</div>
-      <div class="section-content">
-        <div class="grid-3">
-          <div class="checkbox-field">
-            <input type="checkbox" id="inhalerMorning">
-            <label for="inhalerMorning">Inhaler Morning</label>
-          </div>
-          <div class="checkbox-field">
-            <input type="checkbox" id="inhalerEvening">
-            <label for="inhalerEvening">Inhaler Evening</label>
-          </div>
-          <div class="checkbox-field">
-            <input type="checkbox" id="multiplication">
-            <label for="multiplication">5 min Multiplication</label>
-          </div>
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ffd93d;--icon-glow:var(--glow-orange)">👶</div><span class="sec-name">Grey's Habits</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips">
+          <div class="chip"><input type="checkbox" id="inhalerMorning"><div class="chip-dot">✓</div><span class="chip-text">Inhaler AM</span></div>
+          <div class="chip"><input type="checkbox" id="inhalerEvening"><div class="chip-dot">✓</div><span class="chip-text">Inhaler PM</span></div>
+          <div class="chip"><input type="checkbox" id="multiplication"><div class="chip-dot">✓</div><span class="chip-text">Math</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Movement -->
-    <div class="section" id="movementSection">
-      <div class="section-header">Movement</div>
-      <div class="section-content">
-        <div class="grid-2">
-          <!-- REHIT buttons row -->
-          <div class="field-group">
-            <label class="field-label">Carol Bike</label>
-            
-            <div class="grid-2">
-              <div class="checkbox-field">
-                <input type="checkbox" id="rehit2">
-                <label for="rehit2">REHIT 2x10</label>
-              </div>
-              
-              <div class="checkbox-field">
-                <input type="checkbox" id="rehit3">
-                <label for="rehit3">REHIT 3x10</label>
-              </div>
-            </div>
-            <div class="average-display">REHIT Sessions this week: <span id="rehitWeek">--</span></div>
-          </div>
-          
-          <!-- Steps -->
-          <div class="field-group">
-            <label class="field-label">Steps</label>
-            <input type="number" inputmode="numeric" class="input-field" id="steps">
-            <div class="average-display">7-day avg: <span id="avgSteps">--</span></div>
-          </div>
-        </div>
-        <div id="rehitFields" style="display: none;">
-          <div class="grid-2">
-            <div class="field-group">
-              <label class="field-label">Fitness Score</label>
-              <input type="number" inputmode="numeric" class="input-field" id="fitnessScore" step="0.1">
-            </div>
-            <div class="field-group">
-              <label class="field-label">Calories</label>
-              <input type="number" inputmode="numeric" class="input-field" id="calories">
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="field-group">
-              <label class="field-label">Peak Watts</label>
-              <input type="number" inputmode="numeric" class="input-field" id="peakWatts">
-            </div>
-            <div class="field-group">
-              <label class="field-label">Watt Seconds</label>
-              <input type="number" inputmode="numeric" class="input-field" id="wattSeconds">
-            </div>
-          </div>
-        </div>
-        <div class="field-group">
-          <label class="field-label">Movement Breaks</label>
-          <div id="movementList" class="item-list"></div>
-          <button type="button" class="btn btn-secondary btn-smaller" id="addMovementBtn">+ Add Movement Break</button>
-          <div class="average-display" style="margin-top: 12px;">
-            Avg. Movements per Day: <span id="avgMovements">--</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Nutrition -->
     <div class="section" id="nutritionSection">
-      <div class="section-header">Nutrition</div>
-      <div class="section-content">
-        <label class="field-label">Supplements</label>
-        <div class="nutrition-grid">
-          <div class="checkbox-field">
-            <input type="checkbox" id="creatine">
-            <label for="creatine">Creatine Chews</label>
-          </div>
-          <div class="checkbox-field">
-            <input type="checkbox" id="vitaminD">
-            <label for="vitaminD">Vitamin D</label>
-          </div>
-          <div class="checkbox-field">
-            <input type="checkbox" id="no2">
-            <label for="no2">NO2</label>
-          </div>
-          <div class="checkbox-field">
-            <input type="checkbox" id="psyllium">
-            <label for="psyllium">Psyllium Husk</label>
-          </div>
-        </div>
-        
-        <div class="field-group" style="margin-top: 20px;">
-          <label class="field-label">Meals</label>
-          <div class="meal-grid">
-            <div class="checkbox-field">
-              <input type="checkbox" id="breakfast">
-              <label for="breakfast">Breakfast</label>
-            </div>
-            <div class="checkbox-field">
-              <input type="checkbox" id="lunch">
-              <label for="lunch">Lunch</label>
-            </div>
-            <div class="checkbox-field">
-              <input type="checkbox" id="dinner">
-              <label for="dinner">Dinner</label>
-            </div>
-          </div>
-        </div>
-        
-        <div class="field-group">
-          <label class="field-label">Snacks & Alcohol</label>
-          <div class="grid-3">
-            <div class="checkbox-field">
-              <input type="checkbox" id="daySnacks">
-              <label for="daySnacks">Healthy Day Snacks</label>
-            </div>
-            <div class="checkbox-field">
-              <input type="checkbox" id="nightSnacks">
-              <label for="nightSnacks">Healthy Night Snacks</label>
-            </div>
-            <div class="checkbox-field">
-              <input type="checkbox" id="noAlcohol">
-              <label for="noAlcohol">No Alcohol</label>
-            </div>
-          </div>
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#c471ed;--icon-glow:var(--glow-teal)">💊</div><span class="sec-name">Supplements</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips">
+          <div class="chip"><input type="checkbox" id="creatine"><div class="chip-dot">✓</div><span class="chip-text">Creatine</span></div>
+          <div class="chip"><input type="checkbox" id="vitaminD"><div class="chip-dot">✓</div><span class="chip-text">Vitamin D</span></div>
+          <div class="chip"><input type="checkbox" id="no2"><div class="chip-dot">✓</div><span class="chip-text">NO2</span></div>
+          <div class="chip"><input type="checkbox" id="psyllium"><div class="chip-dot">✓</div><span class="chip-text">Psyllium</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Reading Sessions -->
+    <div class="section" id="mealsSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">🍽️</div><span class="sec-name">Meals</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips" style="margin-bottom:12px">
+          <div class="chip"><input type="checkbox" id="breakfast"><div class="chip-dot">✓</div><span class="chip-text">Breakfast</span></div>
+          <div class="chip"><input type="checkbox" id="lunch"><div class="chip-dot">✓</div><span class="chip-text">Lunch</span></div>
+          <div class="chip"><input type="checkbox" id="dinner"><div class="chip-dot">✓</div><span class="chip-text">Dinner</span></div>
+        </div>
+        <div class="chips">
+          <div class="chip"><input type="checkbox" id="daySnacks"><div class="chip-dot">✓</div><span class="chip-text">Day Snacks</span></div>
+          <div class="chip"><input type="checkbox" id="nightSnacks"><div class="chip-dot">✓</div><span class="chip-text">Night Snacks</span></div>
+          <div class="chip"><input type="checkbox" id="noAlcohol"><div class="chip-dot">✓</div><span class="chip-text">No Alcohol</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="movementSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">🚶</div><span class="sec-name">Movement Breaks</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div id="movementList" class="items"></div>
+        <button type="button" class="btn btn-secondary" id="addMovementBtn">+ Add Movement</button>
+        <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span></div>
+      </div>
+    </div>
+
     <div class="section" id="mentalHabitsSection">
-      <div class="section-header collapsible collapsed">Reading Sessions</div>
-      <div class="section-content collapsed">
-        <div class="field-group">
-          <div id="readingList" class="item-list"></div>
-          <button type="button" class="btn btn-secondary btn-smaller" id="addReadingBtn">+ Add Reading</button>
-        </div>
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#6dd5ed;--icon-glow:var(--glow-purple)">📖</div><span class="sec-name">Reading</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed">
+        <div id="readingList" class="items"></div>
+        <button type="button" class="btn btn-secondary" id="addReadingBtn">+ Add Reading</button>
       </div>
     </div>
 
-    <!-- Meditation -->
     <div class="section" id="meditationSection">
-      <div class="section-header">Meditation</div>
-      <div class="section-content">
-        <div class="checkbox-field">
-          <input type="checkbox" id="meditation">
-          <label for="meditation">Meditated Today</label>
-        </div>
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ffa552;--icon-glow:var(--glow-orange)">🧘</div><span class="sec-name">Mindfulness</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="chips"><div class="chip"><input type="checkbox" id="meditation"><div class="chip-dot">✓</div><span class="chip-text">Meditated</span></div></div>
       </div>
     </div>
 
-    <!-- Reflections -->
     <div class="section" id="reflectionsSection">
-      <div class="section-header collapsible collapsed">Reflections</div>
-      <div class="section-content collapsed">
-        <textarea class="input-field" id="reflections" placeholder="Write your reflections..."></textarea>
-      </div>
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#ff6b9d;--icon-glow:var(--glow-purple)">✍️</div><span class="sec-name">Reflections</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed"><textarea class="input" id="reflections" placeholder="What's on your mind?"></textarea></div>
     </div>
 
-    <!-- Grey & Sloane Stories -->
     <div class="section" id="storiesSection">
-      <div class="section-header collapsible collapsed">Grey & Sloane Stories</div>
-      <div class="section-content collapsed">
-        <textarea class="input-field" id="stories" placeholder="Write stories about Grey & Sloane..."></textarea>
-      </div>
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">📝</div><span class="sec-name">Grey & Sloane</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed"><textarea class="input" id="stories" placeholder="Capture their moments..."></textarea></div>
     </div>
 
-    <!-- Carly -->
     <div class="section" id="carlySection">
-      <div class="section-header collapsible collapsed">Carly</div>
-      <div class="section-content collapsed">
-        <textarea class="input-field" id="carly" placeholder="Write about Carly..."></textarea>
-      </div>
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">💛</div><span class="sec-name">Carly</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed"><textarea class="input" id="carly" placeholder="Notes..."></textarea></div>
     </div>
 
-    <!-- Body Data -->
     <div class="section" id="bodyDataSection">
-      <div class="section-header collapsible collapsed">Body</div>
-      <div class="section-content collapsed">
-        <!-- Weight & Waist Row -->
-        <div class="body-data-row">
-          <div class="body-data-cell">
-            <label class="body-data-label">Weight (lbs)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="weight" step="0.1">
-          </div>
-          <div class="body-data-cell">
-            <label class="body-data-label">Waist (in)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="waist" step="0.1">
-          </div>
-        </div>
-        
-        <!-- Lean Mass Row -->
-        <div class="body-data-row">
-          <div class="body-data-cell">
-            <label class="body-data-label">Lean Mass (lbs)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="leanMass" step="0.1">
-          </div>
-          <div class="body-data-cell">
-            <label class="body-data-label">Lean Mass %</label>
-            <div class="body-data-percent" id="leanMassPercent">--</div>
-          </div>
-        </div>
-        
-        <!-- Body Fat Row -->
-        <div class="body-data-row">
-          <div class="body-data-cell">
-            <label class="body-data-label">Body Fat (lbs)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="bodyFat" step="0.1">
-          </div>
-          <div class="body-data-cell">
-            <label class="body-data-label">Body Fat %</label>
-            <div class="body-data-percent" id="bodyFatPercent">--</div>
-          </div>
-        </div>
-        
-        <!-- Bone Mass Row -->
-        <div class="body-data-row">
-          <div class="body-data-cell">
-            <label class="body-data-label">Bone Mass (lbs)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="boneMass" step="0.1">
-          </div>
-          <div class="body-data-cell">
-            <label class="body-data-label">Bone Mass %</label>
-            <div class="body-data-percent" id="boneMassPercent">--</div>
-          </div>
-        </div>
-        
-        <!-- Water Row -->
-        <div class="body-data-row">
-          <div class="body-data-cell">
-            <label class="body-data-label">Water (lbs)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="water" step="0.1">
-          </div>
-          <div class="body-data-cell">
-            <label class="body-data-label">Water %</label>
-            <div class="body-data-percent" id="waterPercent">--</div>
-          </div>
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#c471ed;--icon-glow:var(--glow-teal)">⚖️</div><span class="sec-name">Body</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Weight</div><input type="number" inputmode="decimal" class="body-input" id="weight" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Waist</div><input type="number" inputmode="decimal" class="body-input" id="waist" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Lean Mass</div><input type="number" inputmode="decimal" class="body-input" id="leanMass" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Lean %</div><div class="body-pct" id="leanMassPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Body Fat</div><input type="number" inputmode="decimal" class="body-input" id="bodyFat" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Fat %</div><div class="body-pct" id="bodyFatPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Bone Mass</div><input type="number" inputmode="decimal" class="body-input" id="boneMass" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Bone %</div><div class="body-pct" id="boneMassPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Water (lbs)</div><input type="number" inputmode="decimal" class="body-input" id="water" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="waterPercent">--</div></div>
         </div>
       </div>
     </div>
 
-    <!-- Blood Pressure -->
     <div class="section" id="bloodPressureSection">
-      <div class="section-header collapsible collapsed">Blood Pressure</div>
-      <div class="section-content collapsed">
-        <div class="body-data-row">
-          <div class="body-data-cell">
-            <label class="body-data-label">Systolic (mmHg)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="systolic">
-          </div>
-          <div class="body-data-cell">
-            <label class="body-data-label">Diastolic (mmHg)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="diastolic">
-          </div>
-        </div>
-        <div class="body-data-row">
-          <div class="body-data-cell">
-            <label class="body-data-label">Heart Rate (bpm)</label>
-            <input type="number" inputmode="numeric" class="body-data-input" id="heartRate">
-          </div>
-          <div class="body-data-cell" style="display: flex; align-items: center; justify-content: center;">
-            <div id="bpStatus" class="body-data-input" style="border: none; pointer-events: none;">--</div>
-          </div>
+      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">❤️</div><span class="sec-name">Blood Pressure</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content collapsed">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Systolic</div><input type="number" inputmode="numeric" class="body-input" id="systolic"></div>
+          <div class="body-cell"><div class="body-label">Diastolic</div><input type="number" inputmode="numeric" class="body-input" id="diastolic"></div>
+          <div class="body-cell"><div class="body-label">Heart Rate</div><input type="number" inputmode="numeric" class="body-input" id="heartRate"></div>
+          <div class="body-cell"><div class="body-label">Status</div><div class="body-pct" id="bpStatus">--</div></div>
         </div>
       </div>
     </div>
   </form>
 
-<!-- Charts Page (hidden by default) -->
-<div id="chartsPage" style="display:none;">
-  <div class="header" style="margin-top: 16px;">
-    <div class="header-top" style="margin-bottom: 0;">
-      <div>
-        <div class="title">Charts & Trends</div>
-        <div class="subtitle" id="chartsSubtitle" style="margin-top: 6px;">Last 7 Days</div>
+  <div id="chartsPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">📊</div><div><h1>Charts</h1><div class="tagline" id="chartsSubtitle">Last 7 Days</div></div></div>
+        <button type="button" id="chartsCloseBtn" class="nav-link">✕</button>
       </div>
-      <div style="display:flex; gap:12px; align-items: center;">
-        <button type="button" id="chartsCloseBtn" style="background: #4d9de0; border: none; color: #1a1a1a; width: 44px; height: 44px; border-radius: 12px; font-size: 24px; font-weight: bold; cursor: pointer;">✕</button>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="button" class="range-btn btn btn-secondary active" data-range="7">7 Days</button>
+        <button type="button" class="range-btn btn btn-secondary" data-range="30">30 Days</button>
+        <button type="button" class="range-btn btn btn-secondary" data-range="all">All</button>
       </div>
+    </header>
+    <div class="section"><div class="sec-name">Weight</div><canvas id="weightChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Sleep</div><canvas id="sleepChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Steps</div><canvas id="stepsChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">REHIT</div><canvas id="rehitChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Body Comp</div><canvas id="bodyCompChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Blood Pressure</div><canvas id="bpChart" style="max-height:220px"></canvas></div>
+  </div>
+
+  <div id="biomarkersPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">🧬</div><div><h1>Biomarkers</h1><div class="tagline" id="biomarkersSubtitle">Most recent: --</div></div></div>
+        <button type="button" id="biomarkersCloseBtn" class="nav-link">✕</button>
+      </div>
+    </header>
+    <div class="section">
+      <div class="field"><label class="field-label">Lab Date</label><input type="text" class="input" id="biomarkersDate" placeholder="M/D/YY"></div>
+      <div id="biomarkersTable"></div>
+      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn" style="width:100%;margin-top:14px">Submit</button>
+      <div id="biomarkersSaveStatus" style="text-align:center;margin-top:8px;color:var(--accent-teal)"></div>
     </div>
+  </div>
+
+  <div id="weeklySummaryPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">📈</div><div><h1>Summary</h1><div class="tagline" id="summarySubtitle">This Week</div></div></div>
+        <button type="button" id="summaryCloseBtn" class="nav-link">✕</button>
+      </div>
+    </header>
+    <div class="section" style="text-align:center">
+      <div style="font-family:'Space Grotesk';font-size:48px;font-weight:700;background:linear-gradient(90deg,var(--accent-teal),var(--accent-purple),var(--accent-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="phaseDaysComplete">--</div>
+      <div style="font-size:13px;color:var(--text-dim)">days completed</div>
+      <div class="phase-track" style="margin-top:14px"><div class="phase-fill" id="summaryPhaseBar" style="width:0%"></div></div>
+    </div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">This Week</div><div id="weeklyStats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div></div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">Streaks 🔥</div><div id="streaksDisplay"></div></div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">Wins 🏆</div><div id="winsDisplay"></div></div>
+    <div class="section"><div class="sec-name" style="margin-bottom:12px">vs Last Week</div><div id="weekComparisonDisplay"></div></div>
+  </div>
+
+  <!-- Settings Page -->
+  <div id="settingsPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">⚙️</div><div><h1>Settings</h1><div class="tagline">Customize your experience</div></div></div>
+        <button type="button" id="settingsCloseBtn" class="nav-link">✕</button>
+      </div>
+    </header>
     
-    <!-- Time Range Toggle -->
-    <div id="chartRangeToggle" style="display: flex; gap: 8px; margin-top: 16px;">
-      <button type="button" class="range-btn active" data-range="7">7 Days</button>
-      <button type="button" class="range-btn" data-range="30">30 Days</button>
-      <button type="button" class="range-btn" data-range="all">All Time</button>
-    </div>
-    
-    <!-- Progress Bar -->
-    <div id="chartLoadingBar" style="display: none; margin-top: 16px;">
-      <div style="background: #3a3a3a; border-radius: 8px; height: 8px; overflow: hidden;">
-        <div id="chartProgressFill" style="background: #4d9de0; height: 100%; width: 0%; transition: width 0.3s;"></div>
-      </div>
-      <div id="chartProgressText" style="font-size: 14px; color: #999; margin-top: 4px; text-align: center;">Loading...</div>
-    </div>
-  </div>
-
-  <!-- Weight Trend -->
-  <div class="section">
-    <div class="section-header">Weight Trend</div>
-    <div class="section-content">
-      <canvas id="weightChart" style="max-height: 300px;"></canvas>
-    </div>
-  </div>
-
-  <!-- Sleep Pattern -->
-  <div class="section">
-    <div class="section-header">Sleep Pattern</div>
-    <div class="section-content">
-      <canvas id="sleepChart" style="max-height: 300px;"></canvas>
-    </div>
-  </div>
-
-  <!-- Steps Average -->
-  <div class="section">
-    <div class="section-header">Daily Steps</div>
-    <div class="section-content">
-      <canvas id="stepsChart" style="max-height: 300px;"></canvas>
-    </div>
-  </div>
-
-  <!-- REHIT Frequency -->
-  <div class="section">
-    <div class="section-header">REHIT Sessions</div>
-    <div class="section-content">
-      <canvas id="rehitChart" style="max-height: 300px;"></canvas>
-    </div>
-  </div>
-
-  <!-- Body Composition -->
-  <div class="section">
-    <div class="section-header">Body Composition</div>
-    <div class="section-content">
-      <canvas id="bodyCompChart" style="max-height: 300px;"></canvas>
-    </div>
-  </div>
-
-  <!-- Blood Pressure -->
-  <div class="section">
-    <div class="section-header">Blood Pressure</div>
-    <div class="section-content">
-      <canvas id="bpChart" style="max-height: 300px;"></canvas>
-    </div>
-  </div>
-</div>
-
-<!-- Biomarkers Page (hidden by default) -->
-<div id="biomarkersPage" style="display:none;">
-  <div class="header" style="margin-top: 16px;">
-    <div class="header-top" style="margin-bottom: 0;">
-      <div>
-        <div class="title">Biomarkers</div>
-        <div class="subtitle" id="biomarkersSubtitle" style="margin-top: 6px;">Most recent: --</div>
-      </div>
-      <div style="display:flex; gap:12px; align-items: center;">
-        <button type="button" id="biomarkersCloseBtn" style="background: #ff006e; border: none; color: #fff; width: 44px; height: 44px; border-radius: 12px; font-size: 24px; font-weight: bold; cursor: pointer;">✕</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-header">Update Labs</div>
-    <div class="section-content">
-      <div class="field-group">
-        <label class="field-label">Lab Date (used as new column header)</label>
-        <input type="text" class="input-field" id="biomarkersDate" placeholder="M/D/YY (e.g., 1/25/26)">
-      </div>
-
-      <div class="field-group">
-        <div id="biomarkersTable"></div>
-      </div>
-
-      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn">Submit Biomarkers</button>
-      <div class="average-display" id="biomarkersSaveStatus" style="margin-top: 10px;"> </div>
-    </div>
-  </div>
-
-</div> <!-- Close biomarkersPage -->
-
-<!-- Weekly Summary Page (hidden by default) -->
-<div id="weeklySummaryPage" style="display:none;">
-  <div class="header" style="margin-top: 16px;">
-    <div class="header-top" style="margin-bottom: 0;">
-      <div>
-        <div class="title">Weekly Summary</div>
-        <div class="subtitle" id="summarySubtitle" style="margin-top: 6px;">This Week</div>
-      </div>
-      <div style="display:flex; gap:12px; align-items: center;">
-        <button type="button" id="summaryCloseBtn" style="background: #52b788; border: none; color: #1a1a1a; width: 44px; height: 44px; border-radius: 12px; font-size: 24px; font-weight: bold; cursor: pointer;">✕</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Phase Progress -->
-  <div class="section">
-    <div class="section-header">Phase Progress</div>
-    <div class="section-content">
-      <div id="phaseProgressSummary" style="text-align: center;">
-        <div style="font-size: 48px; font-weight: bold; color: #52b788;" id="phaseDaysComplete">--</div>
-        <div style="font-size: 16px; color: #999;">days completed in Phase 1</div>
-        <div style="background: #3a3a3a; border-radius: 8px; height: 12px; margin-top: 16px; overflow: hidden;">
-          <div id="phaseProgressBar" style="background: #52b788; height: 100%; width: 0%; transition: width 0.5s;"></div>
+    <!-- Theme Settings -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-orange);--icon-end:var(--accent-yellow);--icon-glow:var(--glow-orange)">🌗</div><span class="sec-name">Theme Schedule</span></div></div>
+      <div class="sec-content">
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">☀️ Day Mode Starts</span>
+            <span class="setting-desc">When to switch to bright theme</span>
+          </div>
+          <input type="time" class="time-input" id="dayStartTime" value="06:00">
         </div>
-        <div style="font-size: 14px; color: #999; margin-top: 8px;" id="phaseDaysRemaining">-- days remaining</div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">🌙 Night Mode Starts</span>
+            <span class="setting-desc">When to switch to dark theme</span>
+          </div>
+          <input type="time" class="time-input" id="nightStartTime" value="18:00">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">Current Theme</span>
+            <span class="setting-desc" id="currentThemeDisplay">Auto</span>
+          </div>
+          <div class="theme-preview">
+            <button type="button" class="theme-btn" data-theme="day" title="Day">☀️</button>
+            <button type="button" class="theme-btn" data-theme="night" title="Night">🌙</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Section Management -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
+      <div class="sec-content">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Drag to reorder • Toggle to show/hide</p>
+        <div id="sectionList" class="section-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Add Custom Section -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">➕</div><span class="sec-name">Add Custom Section</span></div></div>
+      <div class="sec-content">
+        <div class="field">
+          <label class="field-label">Section Name</label>
+          <input type="text" class="input" id="newSectionName" placeholder="e.g., Gratitude, Goals, etc.">
+        </div>
+        <div class="field">
+          <label class="field-label">Section Type</label>
+          <select class="input" id="newSectionType">
+            <option value="text">Text/Notes</option>
+            <option value="checkbox">Checkboxes (multiple)</option>
+            <option value="number">Number Input</option>
+            <option value="counter">Counter (+/- with goal)</option>
+            <option value="log">Log (list of entries)</option>
+            <option value="time">Time Input</option>
+            <option value="rating">Rating (1-5 stars)</option>
+            <option value="toggle">Yes/No Toggle</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Icon (emoji)</label>
+          <input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px">
+        </div>
+        
+        <!-- Dynamic options based on type -->
+        <div id="checkboxOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Checkbox Names (comma-separated)</label>
+            <input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening">
+          </div>
+        </div>
+        
+        <div id="counterOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Goal Type</label>
+            <select class="input" id="counterGoalType">
+              <option value="daily">Daily (progress bar)</option>
+              <option value="weekly">Weekly (dots)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Goal Number</label>
+            <input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20">
+          </div>
+          <div class="field">
+            <label class="field-label">Unit Label</label>
+            <input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times">
+          </div>
+        </div>
+        
+        <div id="logOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Fields per Entry</label>
+            <div id="logFieldsList">
+              <div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" class="input" placeholder="Field name" style="flex:2">
+                <select class="input" style="flex:1">
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="select">Dropdown</option>
+                </select>
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button>
+          </div>
+        </div>
+        
+        <div id="numberOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Unit (optional)</label>
+            <input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc.">
+          </div>
+          <div class="field">
+            <label class="field-label">Placeholder</label>
+            <input type="text" class="input" id="numberPlaceholder" placeholder="0">
+          </div>
+        </div>
+        
+        <div id="ratingOptions" class="type-options" style="display:none">
+          <div class="field">
+            <label class="field-label">Rating Label</label>
+            <input type="text" class="input" id="ratingLabel" placeholder="How was your day?">
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
+      </div>
+    </div>
+    
+    <!-- Data Management -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-pink);--icon-end:var(--accent-orange);--icon-glow:var(--glow-pink)">💾</div><span class="sec-name">Data</span></div></div>
+      <div class="sec-content">
+        <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
+        <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%">Import Settings</button>
+        <input type="file" id="importSettingsFile" accept=".json" style="display:none">
       </div>
     </div>
   </div>
 
-  <!-- This Week Stats -->
-  <div class="section">
-    <div class="section-header">This Week's Stats</div>
-    <div class="section-content">
-      <div id="weeklyStats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-        <!-- Stats will be populated by JS -->
-      </div>
-    </div>
+  <button id="quickLogFab" class="fab">+</button>
+  <div id="quickLogMenu" class="fab-menu">
+    <button class="fab-item quick-log-item" data-action="movement"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple))">🚶</div><span class="fab-label">Movement</span></button>
+    <button class="fab-item quick-log-item" data-action="water"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-teal),var(--accent-purple))">💧</div><span class="fab-label">Water</span></button>
+    <button class="fab-item quick-log-item" data-action="reading"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink))">📖</div><span class="fab-label">Reading</span></button>
+    <button class="fab-item quick-log-item" data-action="rehit"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-orange),var(--accent-pink))">🚴</div><span class="fab-label">REHIT</span></button>
   </div>
 
-  <!-- Streaks -->
-  <div class="section">
-    <div class="section-header">Current Streaks 🔥</div>
-    <div class="section-content">
-      <div id="streaksDisplay">
-        <!-- Streaks will be populated by JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Wins This Week -->
-  <div class="section">
-    <div class="section-header">Wins This Week 🏆</div>
-    <div class="section-content">
-      <div id="winsDisplay" style="color: #999;">
-        <!-- Wins will be populated by JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Week vs Last Week -->
-  <div class="section">
-    <div class="section-header">vs Last Week</div>
-    <div class="section-content">
-      <div id="weekComparisonDisplay">
-        <!-- Comparison will be populated by JS -->
-      </div>
-    </div>
-  </div>
-</div> <!-- Close weeklySummaryPage -->
-
-<!-- Quick Log FAB -->
-<button id="quickLogFab" class="quick-log-fab" title="Quick Log">+</button>
-
-<div id="quickLogMenu" class="quick-log-menu">
-  <button class="quick-log-item movement" data-action="movement">
-    <span class="icon">🚶</span>
-    <span>Movement Break</span>
-  </button>
-  <button class="quick-log-item water" data-action="water">
-    <span class="icon">💧</span>
-    <span>Water (+1)</span>
-  </button>
-  <button class="quick-log-item reading" data-action="reading">
-    <span class="icon">📖</span>
-    <span>Reading Session</span>
-  </button>
-  <button class="quick-log-item rehit" data-action="rehit">
-    <span class="icon">🚴</span>
-    <span>REHIT Done</span>
-  </button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-<script src="app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+  <script>
+    // Sync all chip visuals
+    function syncAllChips() {
+      document.querySelectorAll('.chip').forEach(c => {
+        const cb = c.querySelector('input[type="checkbox"]');
+        if (cb) c.classList.toggle('on', cb.checked);
+      });
+    }
+    
+    // Our own completion ring update (since app.js looks for .checkbox-field)
+    function updateCompletionRingAurora() {
+      // Get all checkboxes in chips, excluding Grey's habits
+      const allCheckboxes = document.querySelectorAll('#healthForm .chip input[type="checkbox"]');
+      const checkboxes = Array.from(allCheckboxes).filter(cb => 
+        cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
+      );
+      
+      const total = checkboxes.length;
+      const checked = checkboxes.filter(cb => cb.checked).length;
+      
+      const progress = document.getElementById('completionProgress');
+      const number = document.getElementById('completionNumber');
+      
+      if (progress && number) {
+        const circumference = 2 * Math.PI * 32; // r=32 = ~201
+        let offset;
+        if (total === 0) {
+          offset = circumference; // Empty ring
+        } else {
+          offset = circumference - (checked / total) * circumference;
+        }
+        progress.style.strokeDashoffset = offset;
+        number.textContent = checked;
+        console.log(`Completion ring: ${checked}/${total}, offset=${offset}`);
+      }
+    }
+    
+    // Chip toggle
+    document.querySelectorAll('.chip').forEach(c=>{
+      c.addEventListener('click',e=>{
+        if(e.target.type==='checkbox')return;
+        const cb=c.querySelector('input[type="checkbox"]');
+        if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}))}
+      });
+      const cb=c.querySelector('input[type="checkbox"]');
+      if(cb) {
+        cb.addEventListener('change', () => {
+          c.classList.toggle('on', cb.checked);
+          updateCompletionRingAurora();
+        });
+      }
+    });
+    
+    // Water progress bar (goal: 6)
+    function updateWaterBar(){
+      const waterCount = document.getElementById('waterCount');
+      const fill = document.getElementById('waterBarFill');
+      if(!waterCount || !fill) return;
+      const count = parseInt(waterCount.textContent) || 0;
+      const goal = 6;
+      const pct = Math.min(100, (count / goal) * 100);
+      fill.style.height = pct + '%';
+    }
+    
+    // Steps progress bar (goal: 7500)
+    function updateStepsBar(){
+      const stepsInput = document.getElementById('steps');
+      const fill = document.getElementById('stepsBarFill');
+      if(!stepsInput || !fill) return;
+      const steps = parseInt(stepsInput.value) || 0;
+      const goal = 7500;
+      const pct = Math.min(100, (steps / goal) * 100);
+      fill.style.height = pct + '%';
+    }
+    
+    // REHIT dots - count sessions this week (goal: 4 sessions per week)
+    function updateRehitDots() {
+      const dotsContainer = document.getElementById('rehitDots');
+      if (!dotsContainer) return;
+      const dots = dotsContainer.querySelectorAll('.rehit-dot');
+      
+      // Try to get week count from the rehitWeek display (set by app.js)
+      let weekCount = 0;
+      const rehitWeekEl = document.getElementById('rehitWeek');
+      if (rehitWeekEl) {
+        const text = rehitWeekEl.textContent;
+        const match = text.match(/(\d+)/);
+        if (match) {
+          weekCount = parseInt(match[1], 10);
+        }
+      }
+      
+      // Update dots (max 4)
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('on', i < Math.min(weekCount, 4));
+      });
+    }
+    
+    // Hook populateForm - wait for app.js to define it first
+    function setupPopulateFormHook() {
+      if (typeof window.populateForm === 'function' && !window._populateFormHooked) {
+        const originalPopulateForm = window.populateForm;
+        window.populateForm = function(data) {
+          // Call original first
+          originalPopulateForm.call(this, data);
+          
+          // Then sync our UI after a small delay
+          setTimeout(() => { 
+            syncAllChips(); 
+            updateWaterBar(); 
+            updateRehitDisplay(); 
+            updateStepsBar();
+            updateCompletionRingAurora();
+            updateRehitDots();
+          }, 100);
+        };
+        window._populateFormHooked = true;
+        console.log('populateForm hooked successfully');
+      } else if (!window._populateFormHooked) {
+        // Try again in 100ms if app.js hasn't loaded yet
+        setTimeout(setupPopulateFormHook, 100);
+      }
+    }
+    
+    // Start trying to hook after DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      setupPopulateFormHook();
+    });
+    
+    // Also try immediately in case app.js loaded first
+    setupPopulateFormHook();
+    
+    // Hook water display updates
+    function setupWaterHook() {
+      if (typeof window.updateWaterDisplay === 'function' && !window._waterHooked) {
+        const origWater = window.updateWaterDisplay;
+        window.updateWaterDisplay = function() {
+          origWater.call(this);
+          updateWaterBar();
+        };
+        window._waterHooked = true;
+      } else if (!window._waterHooked) {
+        setTimeout(setupWaterHook, 100);
+      }
+    }
+    setupWaterHook();
+    
+    // Watch for water count text changes with MutationObserver
+    document.addEventListener('DOMContentLoaded', () => {
+      const waterCount = document.getElementById('waterCount');
+      if (waterCount) {
+        const observer = new MutationObserver(updateWaterBar);
+        observer.observe(waterCount, { childList: true, characterData: true, subtree: true });
+      }
+      
+      // Watch for rehitWeek changes to update dots
+      const rehitWeek = document.getElementById('rehitWeek');
+      if (rehitWeek) {
+        const rehitObserver = new MutationObserver(updateRehitDots);
+        rehitObserver.observe(rehitWeek, { childList: true, characterData: true, subtree: true });
+      }
+      
+      // Watch for steps input changes
+      const stepsInput = document.getElementById('steps');
+      if (stepsInput) {
+        stepsInput.addEventListener('input', updateStepsBar);
+        stepsInput.addEventListener('change', updateStepsBar);
+        // Also observe value changes
+        const stepsObserver = new MutationObserver(updateStepsBar);
+        stepsObserver.observe(stepsInput, { attributes: true, attributeFilter: ['value'] });
+      }
+      
+      // REHIT checkbox listeners for dots
+      const rehit2 = document.getElementById('rehit2');
+      const rehit3 = document.getElementById('rehit3');
+      if (rehit2) rehit2.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
+      if (rehit3) rehit3.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
+      
+      // Initialize everything after app.js has had time to load data
+      setTimeout(() => { 
+        syncAllChips(); 
+        updateWaterBar(); 
+        updateStepsBar();
+        updateRehitDots();
+        updateRehitDisplay();
+        updateCompletionRingAurora();
+        // Phase should always show current date - call our fixed version
+        updatePhaseInfoFixed();
+      }, 1000);
+      
+      // Update REHIT dots after chart data loads
+      setTimeout(updateRehitDots, 2500);
+    });
+    
+    // Fixed phase info that always uses today's date
+    function updatePhaseInfoFixed() {
+      const PHASE_START = new Date("2026-01-19T00:00:00");
+      const PHASE_LENGTH = 21;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      const diffTime = today - PHASE_START;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        // Before phase start
+        const phaseInfoEl = document.getElementById("phaseInfo");
+        if (phaseInfoEl) phaseInfoEl.textContent = "Starting soon";
+        return;
+      }
+      
+      const phase = Math.floor(diffDays / PHASE_LENGTH) + 1;
+      const dayInPhase = (diffDays % PHASE_LENGTH) + 1;
+      const daysRemaining = PHASE_LENGTH - dayInPhase + 1;
+      
+      const phaseInfoEl = document.getElementById("phaseInfo");
+      if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH}`;
+      
+      const subtitleEl = document.querySelector(".tagline");
+      if (subtitleEl) subtitleEl.innerHTML = `Phase ${phase} · <span id="phaseInfo">Day ${dayInPhase} of ${PHASE_LENGTH}</span>`;
+      
+      const progressBar = document.getElementById("phaseProgressBar");
+      if (progressBar) {
+        const progress = ((dayInPhase - 1) / PHASE_LENGTH) * 100;
+        progressBar.style.width = `${progress}%`;
+      }
+      
+      const remainingEl = document.getElementById("phaseDaysRemaining");
+      if (remainingEl) {
+        if (daysRemaining > 0) {
+          remainingEl.textContent = `${daysRemaining} days left`;
+        } else {
+          remainingEl.textContent = "Phase complete! 🎉";
+        }
+      }
+    }
+    
+    // Override app.js phase functions to use our fixed version
+    // Run immediately and also on window load
+    window.updatePhaseInfo = updatePhaseInfoFixed;
+    window.loadPhaseProgress = updatePhaseInfoFixed;
+    
+    window.addEventListener('load', () => {
+      // Ensure overrides are in place
+      window.updatePhaseInfo = updatePhaseInfoFixed;
+      window.loadPhaseProgress = updatePhaseInfoFixed;
+      // Run it once
+      updatePhaseInfoFixed();
+    });
+    
+    // Also run phase update periodically to override any app.js changes
+    setInterval(updatePhaseInfoFixed, 3000);
+    
+    // Periodically sync chips and update completion ring
+    setInterval(() => {
+      syncAllChips();
+      updateCompletionRingAurora();
+    }, 2000);
+    
+    // Section collapse
+    document.querySelectorAll('.sec-head').forEach(h=>{
+      h.addEventListener('click',()=>{
+        h.classList.toggle('collapsed');
+        const c=h.nextElementSibling;if(c&&c.classList.contains('sec-content'))c.classList.toggle('collapsed');
+      });
+    });
+    
+    // REHIT Modal
+    function openRehitModal() { document.getElementById('rehitModal').classList.add('show'); }
+    function closeRehitModal() { document.getElementById('rehitModal').classList.remove('show'); }
+    function saveRehitAndClose() { updateRehitDisplay(); closeRehitModal(); if(typeof triggerSaveSoon==='function')triggerSaveSoon(); }
+    
+    function updateRehitDisplay() {
+      const score=document.getElementById('fitnessScore')?.value;
+      const cals=document.getElementById('calories')?.value;
+      const watts=document.getElementById('peakWatts')?.value;
+      const ws=document.getElementById('wattSeconds')?.value;
+      const rehit2=document.getElementById('rehit2')?.checked;
+      const rehit3=document.getElementById('rehit3')?.checked;
+      const statsDiv=document.getElementById('rehitStats');
+      if(statsDiv){const hasData=score||cals||watts||ws;const isChecked=rehit2||rehit3;statsDiv.style.display=(isChecked||hasData)?'block':'none'}
+      document.getElementById('rehitScoreDisplay').textContent=score||'--';
+      document.getElementById('rehitCalsDisplay').textContent=cals||'--';
+      document.getElementById('rehitWattsDisplay').textContent=watts||'--';
+      document.getElementById('rehitWsDisplay').textContent=ws?parseInt(ws).toLocaleString():'--';
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const rehit2=document.getElementById('rehit2');
+      const rehit3=document.getElementById('rehit3');
+      const editBtn=document.getElementById('editRehitBtn');
+      const showModal=(e)=>{if(e.target.checked)setTimeout(openRehitModal,300);updateRehitDisplay()};
+      if(rehit2)rehit2.addEventListener('change',showModal);
+      if(rehit3)rehit3.addEventListener('change',showModal);
+      if(editBtn)editBtn.addEventListener('click',openRehitModal);
+      ['fitnessScore','calories','peakWatts','wattSeconds'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',updateRehitDisplay)});
+      setTimeout(updateRehitDisplay,1000);
+    });
+    
+    document.getElementById('rehitModal')?.addEventListener('click',(e)=>{if(e.target.id==='rehitModal')closeRehitModal()});
+    
+    // =============================================
+    // SETTINGS & THEME SYSTEM
+    // =============================================
+    
+    // Default settings
+    const defaultSettings = {
+      dayStartTime: '05:00',
+      nightStartTime: '17:00',
+      sections: [
+        { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
+        { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
+        { id: 'mealsSection', name: 'Meals', icon: '🍽️', visible: true, custom: false },
+        { id: 'movementSection', name: 'Movement Breaks', icon: '🚶', visible: true, custom: false },
+        { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
+        { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: true, custom: false },
+        { id: 'reflectionsSection', name: 'Reflections', icon: '✍️', visible: true, custom: false },
+        { id: 'storiesSection', name: 'Grey & Sloane', icon: '📝', visible: true, custom: false },
+        { id: 'carlySection', name: 'Carly', icon: '💛', visible: true, custom: false },
+        { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
+        { id: 'bloodPressureSection', name: 'Blood Pressure', icon: '❤️', visible: true, custom: false },
+      ]
+    };
+    
+    // Load settings from localStorage
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem('elevateSettings');
+        if (saved) {
+          return { ...defaultSettings, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.error('Error loading settings:', e);
+      }
+      return { ...defaultSettings };
+    }
+    
+    // Save settings to localStorage
+    function saveSettings(settings) {
+      try {
+        localStorage.setItem('elevateSettings', JSON.stringify(settings));
+      } catch (e) {
+        console.error('Error saving settings:', e);
+      }
+    }
+    
+    let appSettings = loadSettings();
+    
+    // Theme functions
+    function getCurrentTheme() {
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      const [dayH, dayM] = appSettings.dayStartTime.split(':').map(Number);
+      const [nightH, nightM] = appSettings.nightStartTime.split(':').map(Number);
+      
+      const dayStart = dayH * 60 + dayM;
+      const nightStart = nightH * 60 + nightM;
+      
+      if (currentTime >= dayStart && currentTime < nightStart) {
+        return 'day';
+      } else {
+        return 'night';
+      }
+    }
+    
+    function applyTheme(theme, showIndicator = false) {
+      const body = document.body;
+      const indicator = document.getElementById('themeIndicator');
+      
+      body.classList.remove('day-mode', 'sunset-mode');
+      
+      if (theme === 'day') {
+        body.classList.add('day-mode');
+        if (indicator) indicator.innerHTML = '☀️ Day Mode';
+      } else {
+        if (indicator) indicator.innerHTML = '🌙 Night Mode';
+      }
+      
+      // Update theme buttons
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+      
+      // Update display
+      const display = document.getElementById('currentThemeDisplay');
+      if (display) display.textContent = theme === 'day' ? 'Day Mode' : 'Night Mode';
+      
+      if (showIndicator && indicator) {
+        indicator.classList.add('show');
+        setTimeout(() => indicator.classList.remove('show'), 2000);
+      }
+    }
+    
+    // Initialize theme
+    let currentTheme = getCurrentTheme();
+    applyTheme(currentTheme, false);
+    
+    // Check for theme changes every minute
+    setInterval(() => {
+      const newTheme = getCurrentTheme();
+      if (newTheme !== currentTheme) {
+        currentTheme = newTheme;
+        applyTheme(newTheme, true);
+      }
+    }, 60000);
+    
+    // =============================================
+    // SETTINGS PAGE
+    // =============================================
+    
+    function openSettingsPage() {
+      document.getElementById('healthForm').style.display = 'none';
+      document.getElementById('settingsPage').style.display = 'block';
+      document.getElementById('quickLogFab').style.display = 'none';
+      
+      // Populate settings
+      document.getElementById('dayStartTime').value = appSettings.dayStartTime;
+      document.getElementById('nightStartTime').value = appSettings.nightStartTime;
+      
+      renderSectionList();
+    }
+    
+    function closeSettingsPage() {
+      document.getElementById('settingsPage').style.display = 'none';
+      document.getElementById('healthForm').style.display = 'block';
+      document.getElementById('quickLogFab').style.display = 'block';
+      
+      // Apply section visibility
+      applySectionSettings();
+    }
+    
+    function renderSectionList() {
+      const list = document.getElementById('sectionList');
+      if (!list) return;
+      
+      list.innerHTML = appSettings.sections.map((sec, idx) => `
+        <div class="section-item" draggable="true" data-idx="${idx}" data-id="${sec.id}">
+          <span class="section-item-drag">⋮⋮</span>
+          <span class="section-item-icon">${sec.icon}</span>
+          <span class="section-item-name">${sec.name}</span>
+          <div class="section-item-toggle ${sec.visible ? 'on' : ''}" data-idx="${idx}"></div>
+          ${sec.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
+        </div>
+      `).join('');
+      
+      // Add event listeners
+      list.querySelectorAll('.section-item-toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+          const idx = parseInt(toggle.dataset.idx);
+          appSettings.sections[idx].visible = !appSettings.sections[idx].visible;
+          toggle.classList.toggle('on');
+          saveSettings(appSettings);
+        });
+      });
+      
+      list.querySelectorAll('.section-item-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.idx);
+          if (confirm('Delete this section?')) {
+            appSettings.sections.splice(idx, 1);
+            saveSettings(appSettings);
+            renderSectionList();
+          }
+        });
+      });
+      
+      // Drag and drop
+      setupDragAndDrop();
+    }
+    
+    function setupDragAndDrop() {
+      const items = document.querySelectorAll('.section-item');
+      let draggedItem = null;
+      
+      items.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          draggedItem = item;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          document.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
+          draggedItem = null;
+        });
+        
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (item !== draggedItem) {
+            item.classList.add('drag-over');
+          }
+        });
+        
+        item.addEventListener('dragleave', () => {
+          item.classList.remove('drag-over');
+        });
+        
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (item !== draggedItem && draggedItem) {
+            const fromIdx = parseInt(draggedItem.dataset.idx);
+            const toIdx = parseInt(item.dataset.idx);
+            
+            // Reorder array
+            const [moved] = appSettings.sections.splice(fromIdx, 1);
+            appSettings.sections.splice(toIdx, 0, moved);
+            
+            saveSettings(appSettings);
+            renderSectionList();
+            applySectionSettings();
+          }
+        });
+      });
+    }
+    
+    function applySectionSettings() {
+      const form = document.getElementById('healthForm');
+      if (!form) return;
+      
+      // Apply visibility and order
+      appSettings.sections.forEach((sec, idx) => {
+        const el = document.getElementById(sec.id);
+        if (el) {
+          el.style.display = sec.visible ? '' : 'none';
+          el.style.order = idx;
+        }
+      });
+    }
+    
+    // Wire up settings page
+    document.getElementById('settingsBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSettingsPage();
+    });
+    
+    document.getElementById('settingsCloseBtn')?.addEventListener('click', closeSettingsPage);
+    
+    // Time inputs
+    document.getElementById('dayStartTime')?.addEventListener('change', (e) => {
+      appSettings.dayStartTime = e.target.value;
+      saveSettings(appSettings);
+      currentTheme = getCurrentTheme();
+      applyTheme(currentTheme, true);
+    });
+    
+    document.getElementById('nightStartTime')?.addEventListener('change', (e) => {
+      appSettings.nightStartTime = e.target.value;
+      saveSettings(appSettings);
+      currentTheme = getCurrentTheme();
+      applyTheme(currentTheme, true);
+    });
+    
+    // Theme preview buttons
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentTheme = btn.dataset.theme;
+        applyTheme(currentTheme, true);
+      });
+    });
+    
+    // Show/hide type-specific options
+    document.getElementById('newSectionType')?.addEventListener('change', (e) => {
+      // Hide all options first
+      document.querySelectorAll('.type-options').forEach(opt => opt.style.display = 'none');
+      
+      // Show relevant options
+      const type = e.target.value;
+      if (type === 'checkbox') {
+        document.getElementById('checkboxOptions').style.display = 'block';
+      } else if (type === 'counter') {
+        document.getElementById('counterOptions').style.display = 'block';
+      } else if (type === 'log') {
+        document.getElementById('logOptions').style.display = 'block';
+      } else if (type === 'number') {
+        document.getElementById('numberOptions').style.display = 'block';
+      } else if (type === 'rating') {
+        document.getElementById('ratingOptions').style.display = 'block';
+      }
+    });
+    
+    // Add log field button
+    document.getElementById('addLogFieldBtn')?.addEventListener('click', () => {
+      const list = document.getElementById('logFieldsList');
+      const row = document.createElement('div');
+      row.className = 'log-field-row';
+      row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px';
+      row.innerHTML = `
+        <input type="text" class="input" placeholder="Field name" style="flex:2">
+        <select class="input" style="flex:1">
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="select">Dropdown</option>
+        </select>
+        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
+      `;
+      list.appendChild(row);
+    });
+    
+    // Add custom section
+    document.getElementById('addSectionBtn')?.addEventListener('click', () => {
+      const name = document.getElementById('newSectionName').value.trim();
+      const type = document.getElementById('newSectionType').value;
+      const icon = document.getElementById('newSectionIcon').value || '📝';
+      
+      if (!name) {
+        alert('Please enter a section name');
+        return;
+      }
+      
+      const id = 'custom_' + Date.now();
+      
+      // Gather type-specific config
+      let config = {};
+      
+      if (type === 'checkbox') {
+        const names = document.getElementById('checkboxNames').value;
+        config.checkboxes = names.split(',').map(n => n.trim()).filter(n => n);
+        if (config.checkboxes.length === 0) {
+          alert('Please enter at least one checkbox name');
+          return;
+        }
+      } else if (type === 'counter') {
+        config.goalType = document.getElementById('counterGoalType').value;
+        config.goalNumber = parseInt(document.getElementById('counterGoalNumber').value) || 6;
+        config.unitLabel = document.getElementById('counterUnitLabel').value || 'times';
+      } else if (type === 'log') {
+        const rows = document.querySelectorAll('#logFieldsList .log-field-row');
+        config.fields = [];
+        rows.forEach(row => {
+          const fname = row.querySelector('input').value.trim();
+          const ftype = row.querySelector('select').value;
+          if (fname) config.fields.push({ name: fname, type: ftype });
+        });
+        if (config.fields.length === 0) {
+          alert('Please add at least one field for the log');
+          return;
+        }
+      } else if (type === 'number') {
+        config.unit = document.getElementById('numberUnit').value || '';
+        config.placeholder = document.getElementById('numberPlaceholder').value || '0';
+      } else if (type === 'rating') {
+        config.label = document.getElementById('ratingLabel').value || 'Rate';
+      }
+      
+      appSettings.sections.push({
+        id,
+        name,
+        icon,
+        visible: true,
+        custom: true,
+        type,
+        config
+      });
+      
+      saveSettings(appSettings);
+      
+      // Create the section element
+      createCustomSection(id, name, icon, type, config);
+      
+      // Clear inputs
+      document.getElementById('newSectionName').value = '';
+      document.getElementById('newSectionIcon').value = '';
+      document.getElementById('checkboxNames').value = '';
+      document.getElementById('counterGoalNumber').value = '';
+      document.getElementById('counterUnitLabel').value = '';
+      document.getElementById('logFieldsList').innerHTML = `
+        <div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" class="input" placeholder="Field name" style="flex:2">
+          <select class="input" style="flex:1">
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="select">Dropdown</option>
+          </select>
+          <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
+        </div>
+      `;
+      document.querySelectorAll('.type-options').forEach(opt => opt.style.display = 'none');
+      document.getElementById('newSectionType').value = 'text';
+      
+      renderSectionList();
+    });
+    
+    // Store custom section data (for logs, counters, etc.)
+    window.customSectionData = window.customSectionData || {};
+    
+    function createCustomSection(id, name, icon, type, config = {}) {
+      const form = document.getElementById('healthForm');
+      if (!form) return;
+      
+      // Initialize data storage for this section
+      if (!window.customSectionData[id]) {
+        window.customSectionData[id] = { value: type === 'counter' ? 0 : null, entries: [] };
+      }
+      
+      const section = document.createElement('div');
+      section.className = 'section';
+      section.id = id;
+      
+      let content = '';
+      
+      if (type === 'text') {
+        content = `<textarea class="input" id="${id}_input" placeholder="Enter notes..."></textarea>`;
+      
+      } else if (type === 'checkbox') {
+        const checkboxes = config.checkboxes || ['Done'];
+        content = `<div class="chips">${checkboxes.map((cb, i) => `
+          <div class="chip"><input type="checkbox" id="${id}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>
+        `).join('')}</div>`;
+      
+      } else if (type === 'number') {
+        const unit = config.unit ? `<span class="card-unit">${config.unit}</span>` : '';
+        content = `<div style="display:flex;align-items:center;gap:8px">
+          <input type="number" class="big-input" id="${id}_input" placeholder="${config.placeholder || '0'}" style="max-width:120px">
+          ${unit}
+        </div>`;
+      
+      } else if (type === 'counter') {
+        const goalNum = config.goalNumber || 6;
+        const unit = config.unitLabel || 'times';
+        const isWeekly = config.goalType === 'weekly';
+        
+        if (isWeekly) {
+          // Weekly goal with dots
+          let dots = '';
+          for (let i = 0; i < goalNum; i++) {
+            dots += `<div class="counter-dot" data-idx="${i}"></div>`;
+          }
+          content = `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
+              <div class="water-num counter-value" id="${id}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
+              <div class="counter-dots" id="${id}_dots" style="display:flex;gap:6px;margin-left:auto">
+                ${dots}
+              </div>
+            </div>
+            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/week</div>
+          `;
+        } else {
+          // Daily goal with progress bar
+          content = `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
+              <div class="water-num counter-value" id="${id}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
+              <div class="water-bar-wrap">
+                <div class="water-bar-track">
+                  <div class="water-bar-fill counter-fill" id="${id}_fill" style="height:0%"></div>
+                </div>
+                <div class="water-bar-goal">${goalNum}</div>
+              </div>
+            </div>
+            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/day</div>
+          `;
+        }
+      
+      } else if (type === 'log') {
+        content = `
+          <div class="items" id="${id}_list"></div>
+          <button type="button" class="btn btn-secondary" id="${id}_addBtn">+ Add Entry</button>
+        `;
+      
+      } else if (type === 'time') {
+        content = `<input type="time" class="input" id="${id}_input">`;
+      
+      } else if (type === 'rating') {
+        const label = config.label || 'Rate';
+        content = `
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${label}</div>
+          <div class="rating-stars" id="${id}_stars">
+            <span class="star" data-val="1">☆</span>
+            <span class="star" data-val="2">☆</span>
+            <span class="star" data-val="3">☆</span>
+            <span class="star" data-val="4">☆</span>
+            <span class="star" data-val="5">☆</span>
+          </div>
+          <input type="hidden" id="${id}_input" value="">
+        `;
+      
+      } else if (type === 'toggle') {
+        content = `
+          <div class="chips">
+            <div class="chip toggle-chip" id="${id}_toggle">
+              <input type="checkbox" id="${id}_input">
+              <div class="chip-dot">✓</div>
+              <span class="chip-text">Yes</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      section.innerHTML = `
+        <div class="sec-head collapsed">
+          <div class="sec-title">
+            <div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink)">${icon}</div>
+            <span class="sec-name">${name}</span>
+          </div>
+          <span class="sec-toggle">▼</span>
+        </div>
+        <div class="sec-content collapsed">${content}</div>
+      `;
+      
+      form.appendChild(section);
+      
+      // Wire up collapse
+      const head = section.querySelector('.sec-head');
+      head.addEventListener('click', () => {
+        head.classList.toggle('collapsed');
+        section.querySelector('.sec-content').classList.toggle('collapsed');
+      });
+      
+      // Wire up type-specific interactions
+      wireUpCustomSection(section, id, type, config);
+    }
+    
+    function wireUpCustomSection(section, id, type, config) {
+      if (type === 'checkbox') {
+        section.querySelectorAll('.chip').forEach(chip => {
+          const cb = chip.querySelector('input');
+          chip.addEventListener('click', (e) => {
+            if (e.target.type !== 'checkbox') {
+              cb.checked = !cb.checked;
+              chip.classList.toggle('on', cb.checked);
+              updateCompletionRingAurora();
+              if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+            }
+          });
+          cb.addEventListener('change', () => {
+            chip.classList.toggle('on', cb.checked);
+            updateCompletionRingAurora();
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        });
+      
+      } else if (type === 'counter') {
+        const goalNum = config.goalNumber || 6;
+        const isWeekly = config.goalType === 'weekly';
+        
+        section.querySelector('.counter-plus')?.addEventListener('click', () => {
+          const valEl = document.getElementById(`${id}_value`);
+          let val = parseInt(valEl.textContent) || 0;
+          val++;
+          valEl.textContent = val;
+          window.customSectionData[id].value = val;
+          
+          if (isWeekly) {
+            // Update dots
+            const dots = section.querySelectorAll('.counter-dot');
+            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+          } else {
+            // Update progress bar
+            const fill = document.getElementById(`${id}_fill`);
+            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          }
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        });
+        
+        section.querySelector('.counter-minus')?.addEventListener('click', () => {
+          const valEl = document.getElementById(`${id}_value`);
+          let val = parseInt(valEl.textContent) || 0;
+          if (val > 0) val--;
+          valEl.textContent = val;
+          window.customSectionData[id].value = val;
+          
+          if (isWeekly) {
+            const dots = section.querySelectorAll('.counter-dot');
+            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+          } else {
+            const fill = document.getElementById(`${id}_fill`);
+            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          }
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        });
+      
+      } else if (type === 'log') {
+        const addBtn = document.getElementById(`${id}_addBtn`);
+        addBtn?.addEventListener('click', () => openLogModal(id, config.fields || []));
+      
+      } else if (type === 'rating') {
+        const stars = section.querySelectorAll('.star');
+        const input = document.getElementById(`${id}_input`);
+        stars.forEach(star => {
+          star.addEventListener('click', () => {
+            const val = parseInt(star.dataset.val);
+            input.value = val;
+            window.customSectionData[id].value = val;
+            stars.forEach((s, i) => {
+              s.textContent = i < val ? '★' : '☆';
+              s.classList.toggle('filled', i < val);
+            });
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        });
+      
+      } else if (type === 'toggle') {
+        const chip = section.querySelector('.toggle-chip');
+        const cb = chip.querySelector('input');
+        chip.addEventListener('click', (e) => {
+          if (e.target.type !== 'checkbox') {
+            cb.checked = !cb.checked;
+            chip.classList.toggle('on', cb.checked);
+            chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
+            updateCompletionRingAurora();
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          }
+        });
+        cb.addEventListener('change', () => {
+          chip.classList.toggle('on', cb.checked);
+          chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
+          updateCompletionRingAurora();
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        });
+      }
+    }
+    
+    // Log modal for custom log sections
+    function openLogModal(sectionId, fields) {
+      // Create modal if doesn't exist
+      let modal = document.getElementById('customLogModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'customLogModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-overlay" onclick="closeLogModal()"></div>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 id="logModalTitle">Add Entry</h3>
+              <button onclick="closeLogModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text)">×</button>
+            </div>
+            <div id="logModalFields"></div>
+            <button class="btn btn-primary" id="logModalSaveBtn" style="width:100%;margin-top:12px">Save</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      
+      // Populate fields
+      const fieldsContainer = document.getElementById('logModalFields');
+      fieldsContainer.innerHTML = fields.map(f => `
+        <div class="field">
+          <label class="field-label">${f.name}</label>
+          ${f.type === 'number' 
+            ? `<input type="number" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="0">`
+            : `<input type="text" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="">`
+          }
+        </div>
+      `).join('');
+      
+      // Wire up save
+      document.getElementById('logModalSaveBtn').onclick = () => {
+        const entry = {};
+        fields.forEach(f => {
+          const input = document.getElementById(`logField_${f.name.replace(/\s/g, '_')}`);
+          entry[f.name] = f.type === 'number' ? (parseFloat(input.value) || 0) : input.value;
+        });
+        
+        if (!window.customSectionData[sectionId]) {
+          window.customSectionData[sectionId] = { entries: [] };
+        }
+        window.customSectionData[sectionId].entries.push(entry);
+        
+        renderLogEntries(sectionId, fields);
+        closeLogModal();
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      };
+      
+      modal.classList.add('show');
+    }
+    
+    function closeLogModal() {
+      document.getElementById('customLogModal')?.classList.remove('show');
+    }
+    
+    function renderLogEntries(sectionId, fields) {
+      const list = document.getElementById(`${sectionId}_list`);
+      if (!list) return;
+      
+      const entries = window.customSectionData[sectionId]?.entries || [];
+      list.innerHTML = entries.map((entry, idx) => {
+        const summary = fields.map(f => entry[f.name]).filter(v => v).join(' · ');
+        return `
+          <div class="item">
+            <span class="item-text">${summary || 'Entry ' + (idx + 1)}</span>
+            <button type="button" class="btn btn-danger" onclick="removeLogEntry('${sectionId}', ${idx})">×</button>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    window.removeLogEntry = function(sectionId, idx) {
+      if (window.customSectionData[sectionId]?.entries) {
+        window.customSectionData[sectionId].entries.splice(idx, 1);
+        // Re-render - need to get fields from config
+        const sec = appSettings.sections.find(s => s.id === sectionId);
+        if (sec?.config?.fields) {
+          renderLogEntries(sectionId, sec.config.fields);
+        }
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      }
+    };
+    
+    // Export/Import settings
+    document.getElementById('exportSettingsBtn')?.addEventListener('click', () => {
+      const data = JSON.stringify(appSettings, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'elevate-settings.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    
+    document.getElementById('importSettingsBtn')?.addEventListener('click', () => {
+      document.getElementById('importSettingsFile').click();
+    });
+    
+    document.getElementById('importSettingsFile')?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const imported = JSON.parse(evt.target.result);
+          appSettings = { ...defaultSettings, ...imported };
+          saveSettings(appSettings);
+          renderSectionList();
+          applySectionSettings();
+          currentTheme = getCurrentTheme();
+          applyTheme(currentTheme, true);
+          alert('Settings imported successfully!');
+        } catch (err) {
+          alert('Error importing settings: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+    
+    // Initialize section settings on load
+    document.addEventListener('DOMContentLoaded', () => {
+      applySectionSettings();
+      
+      // Recreate any custom sections
+      appSettings.sections.filter(s => s.custom).forEach(sec => {
+        if (!document.getElementById(sec.id)) {
+          createCustomSection(sec.id, sec.name, sec.icon, sec.type, sec.config || {});
+        }
+      });
+    });
+  </script>
 </body>
 </html>
