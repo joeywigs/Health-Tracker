@@ -377,10 +377,19 @@
     
     /* Date Nav - Glassmorphism */
     .date-nav {
-      display: flex; align-items: center; gap: 12px; padding: 16px;
+      display: grid; 
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center; 
+      gap: 12px; 
+      padding: 16px;
       background: var(--bg-card); border: 1px solid var(--border);
       border-radius: var(--radius); backdrop-filter: blur(20px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .date-nav .phase {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
     }
     .date-btn {
       width: 44px; height: 44px; border-radius: 50%; border: none;
@@ -410,7 +419,7 @@
     .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
     
     /* Phase Bar */
-    .phase { margin-top: 20px; }
+    .phase { margin-top: 0; }
     .phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
     .phase-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: var(--radius-pill); overflow: hidden; }
     .phase-fill { 
@@ -974,10 +983,10 @@
         <div class="ring-text" id="completionNumber">0</div>
       </div>
       <button class="date-btn" id="nextBtn">→</button>
-    </div>
-    <div class="phase">
-      <div class="phase-label"><span>Phase Progress</span><span id="phaseDaysRemaining">-- days left</span></div>
-      <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
+      <div class="phase" style="grid-column: 1 / -1;">
+        <div class="phase-label"><span>Phase Progress</span><span id="phaseDaysRemaining">-- days left</span></div>
+        <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
+      </div>
     </div>
   </header>
 
