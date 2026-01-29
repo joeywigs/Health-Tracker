@@ -10,8 +10,16 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Summary fix 3", new Date().toISOString());
+console.log("✅ app.js running - No bottom nav", new Date().toISOString());
 window.__APP_JS_OK__ = true;
+
+// Show errors on screen
+window.onerror = function(msg, url, line) {
+  document.body.insertAdjacentHTML('afterbegin', 
+    '<div style="background:red;color:white;padding:20px;font-size:16px;position:fixed;top:0;left:0;right:0;z-index:99999;">' +
+    'ERROR: ' + msg + ' (Line ' + line + ')' +
+    '</div>');
+};
 
 // =====================================
 // CONFIG
@@ -75,29 +83,29 @@ const dayCache = new Map();        // key: "M/D/YY" -> loadResult
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Habit Tracker booting…");
 
-  setupDateNav();
-  setupCheckboxes();
-  setupRehitMutualExclusion();
-  setupWaterButtons();
-  setupInputAutosave();
-  setupCollapsibleSections();
-  setupMovementUI();
-  setupReadingUI();
-  setupBloodPressureCalculator();
-  setupSwipeNavigation();
-  setupPullToRefresh();
-  setupWeeklyReminders();
-  setupWeeklySummaryButton();
-  setupChartsPage();
-  setupChartRangeToggle();
-  setupBiomarkersPage();
-  setupStickyHeader();
-  setupQuickLog();
-  setupDopamineBoosts();
+  try { setupDateNav(); console.log("1 ok"); } catch(e) { console.error("setupDateNav failed:", e); }
+  try { setupCheckboxes(); console.log("2 ok"); } catch(e) { console.error("setupCheckboxes failed:", e); }
+  try { setupRehitMutualExclusion(); console.log("3 ok"); } catch(e) { console.error("setupRehitMutualExclusion failed:", e); }
+  try { setupWaterButtons(); console.log("4 ok"); } catch(e) { console.error("setupWaterButtons failed:", e); }
+  try { setupInputAutosave(); console.log("5 ok"); } catch(e) { console.error("setupInputAutosave failed:", e); }
+  try { setupCollapsibleSections(); console.log("6 ok"); } catch(e) { console.error("setupCollapsibleSections failed:", e); }
+  try { setupMovementUI(); console.log("7 ok"); } catch(e) { console.error("setupMovementUI failed:", e); }
+  try { setupReadingUI(); console.log("8 ok"); } catch(e) { console.error("setupReadingUI failed:", e); }
+  try { setupBloodPressureCalculator(); console.log("9 ok"); } catch(e) { console.error("setupBloodPressureCalculator failed:", e); }
+  try { setupSwipeNavigation(); console.log("10 ok"); } catch(e) { console.error("setupSwipeNavigation failed:", e); }
+  try { setupPullToRefresh(); console.log("11 ok"); } catch(e) { console.error("setupPullToRefresh failed:", e); }
+  try { setupWeeklyReminders(); console.log("12 ok"); } catch(e) { console.error("setupWeeklyReminders failed:", e); }
+  try { setupWeeklySummaryButton(); console.log("13 ok"); } catch(e) { console.error("setupWeeklySummaryButton failed:", e); }
+  try { setupChartsPage(); console.log("14 ok"); } catch(e) { console.error("setupChartsPage failed:", e); }
+  try { setupChartRangeToggle(); console.log("15 ok"); } catch(e) { console.error("setupChartRangeToggle failed:", e); }
+  try { setupBiomarkersPage(); console.log("16 ok"); } catch(e) { console.error("setupBiomarkersPage failed:", e); }
+  try { setupStickyHeader(); console.log("17 ok"); } catch(e) { console.error("setupStickyHeader failed:", e); }
+  try { setupQuickLog(); console.log("18 ok"); } catch(e) { console.error("setupQuickLog failed:", e); }
+  try { setupDopamineBoosts(); console.log("19 ok"); } catch(e) { console.error("setupDopamineBoosts failed:", e); }
 
-  updateDateDisplay();
-  updatePhaseInfo();
-  loadDataForCurrentDate();
+  try { updateDateDisplay(); console.log("20 ok"); } catch(e) { console.error("updateDateDisplay failed:", e); }
+  try { updatePhaseInfo(); console.log("21 ok"); } catch(e) { console.error("updatePhaseInfo failed:", e); }
+  try { loadDataForCurrentDate(); console.log("22 ok"); } catch(e) { console.error("loadDataForCurrentDate failed:", e); }
 });
 
 const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
@@ -681,7 +689,6 @@ function hideChartsPage() {
   if (chartsPage) chartsPage.style.display = "none";
   if (mainPage) mainPage.style.display = "block";
   
-  // Scroll to top
   window.scrollTo(0, 0);
 }
 
@@ -1416,6 +1423,19 @@ function setupQuickLog() {
   console.log("✅ Quick log wired");
 }
 
+function showBiomarkersPage() {
+  const mainPage = document.getElementById("healthForm");
+  const chartsPage = document.getElementById("chartsPage");
+  const bioPage = document.getElementById("biomarkersPage");
+  
+  if (mainPage) mainPage.style.display = "none";
+  if (chartsPage) chartsPage.style.display = "none";
+  if (bioPage) bioPage.style.display = "block";
+  
+  window.scrollTo(0, 0);
+  loadBiomarkers();
+}
+
 async function handleQuickLog(action, buttonEl) {
   // Visual feedback
   buttonEl.classList.add("success");
@@ -1800,21 +1820,6 @@ function createCelebrationConfetti() {
   }
 }
 
-async function showBiomarkersPage() {
-  const mainPage = document.getElementById("healthForm");
-  const chartsPage = document.getElementById("chartsPage");
-  const bioPage = document.getElementById("biomarkersPage");
-  
-  if (mainPage) mainPage.style.display = "none";
-  if (chartsPage) chartsPage.style.display = "none";
-  if (bioPage) bioPage.style.display = "block";
-  
-  window.scrollTo(0, 0);
-  
-  // Load biomarkers data
-  await loadBiomarkers();
-}
-
 function hideBiomarkersPage() {
   const mainPage = document.getElementById("healthForm");
   const bioPage = document.getElementById("biomarkersPage");
@@ -2133,19 +2138,29 @@ function setupCheckboxes() {
 }
 
 // =====================================
-// REHIT Mutual Exclusion
+// REHIT Mutual Exclusion + Fields Toggle
 // =====================================
 function setupRehitMutualExclusion() {
   const rehit2 = document.getElementById("rehit2");
   const rehit3 = document.getElementById("rehit3");
+  const rehitFields = document.getElementById("rehitFields");
   
   if (!rehit2 || !rehit3) return;
+  
+  // Function to show/hide REHIT metric fields
+  function toggleRehitFields() {
+    if (rehitFields) {
+      const showFields = rehit2.checked || rehit3.checked;
+      rehitFields.style.display = showFields ? "block" : "none";
+    }
+  }
   
   rehit2.addEventListener("change", () => {
     if (rehit2.checked && rehit3.checked) {
       rehit3.checked = false;
       syncCheckboxVisual(rehit3);
     }
+    toggleRehitFields();
   });
   
   rehit3.addEventListener("change", () => {
@@ -2153,7 +2168,11 @@ function setupRehitMutualExclusion() {
       rehit2.checked = false;
       syncCheckboxVisual(rehit2);
     }
+    toggleRehitFields();
   });
+  
+  // Initial state
+  toggleRehitFields();
   
   console.log("✅ REHIT mutual exclusion wired");
 }
@@ -2411,6 +2430,13 @@ async function populateForm(data) {
   const rehitVal = d["REHIT 2x10"] ?? d["REHIT"] ?? "";
   setCheckbox("rehit2", rehitVal === "2x10" || rehitVal === true || rehitVal === "TRUE");
   setCheckbox("rehit3", rehitVal === "3x10");
+  
+  // Show REHIT fields if either is checked
+  const rehitFields = document.getElementById("rehitFields");
+  if (rehitFields) {
+    const showRehit = rehitVal === "2x10" || rehitVal === "3x10" || rehitVal === true || rehitVal === "TRUE";
+    rehitFields.style.display = showRehit ? "block" : "none";
+  }
 
   setCheckbox("creatine", d["Creatine Chews"] ?? d["Creatine"]);
   setCheckbox("vitaminD", d["Vitamin D"]);
