@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Summary fix 2", new Date().toISOString());
+console.log("✅ app.js running - Summary fix 3", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
