@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Fixed Worker", new Date().toISOString());
+console.log("✅ app.js running - Biomarkers date format", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -1133,7 +1133,14 @@ async function loadBiomarkers() {
     
     const subtitle = document.getElementById("biomarkersSubtitle");
     if (subtitle) {
-      subtitle.textContent = result.latestDate ? `Most recent: ${result.latestDate}` : "No data yet";
+      if (result.latestDate) {
+        // Format the date nicely: "Jan 25, 2026"
+        const d = new Date(result.latestDate);
+        const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        subtitle.textContent = `Most recent: ${formatted}`;
+      } else {
+        subtitle.textContent = "No data yet";
+      }
     }
     
     renderBiomarkersTable(result.definition || [], result.latestValues || []);
@@ -1152,13 +1159,16 @@ function renderBiomarkersTable(definition, latestValues) {
   table.innerHTML = "";
   
   definition.forEach((item, idx) => {
+    const prevValue = latestValues[idx] || '';
     const div = document.createElement("div");
     div.style.marginBottom = "16px";
     div.innerHTML = `
       <label class="field-label">${item.biomarker} (${item.units})</label>
-      <div style="font-size: 14px; color: #999; margin-bottom: 4px;">Optimal: ${item.optimal}</div>
+      <div style="font-size: 14px; color: #999; margin-bottom: 4px;">
+        Optimal: ${item.optimal}${prevValue ? ` • Previous: <span style="color: #4d9de0;">${prevValue}</span>` : ''}
+      </div>
       <input type="text" class="input-field biomarker-input" data-index="${idx}" 
-             placeholder="Enter value" value="${latestValues[idx] || ''}">
+             placeholder="${prevValue ? 'Enter new value' : 'Enter value'}" value="">
     `;
     table.appendChild(div);
   });
