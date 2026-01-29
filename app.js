@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Back buttons", new Date().toISOString());
+console.log("✅ app.js running - Better empty detection", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // =====================================
@@ -96,6 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
   updateDateDisplay();
   updatePhaseInfo();
   loadDataForCurrentDate();
+  
+  // Start loading chart data in background immediately
+  setTimeout(() => prefetchChartData(), 500);
 });
 
 const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
@@ -384,10 +387,7 @@ function setupChartsPage() {
   }
   
   if (chartsCloseBtn) {
-    chartsCloseBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      hideChartsPage();
-    });
+    chartsCloseBtn.addEventListener("click", hideChartsPage);
   }
   
   console.log("✅ Charts page wired");
@@ -467,7 +467,7 @@ function hideChartProgress() {
 async function fetchChartData(maxDays = null, silent = false) {
   const dataPoints = [];
   let emptyDaysInARow = 0;
-  const maxEmptyDays = 3; // Stop after 3 consecutive empty days
+  const maxEmptyDays = 2; // Stop after 2 consecutive empty days (was 3)
   const absoluteMax = maxDays || 365; // Use provided max or go up to a year
   
   for (let i = 0; i < absoluteMax; i++) {
@@ -483,12 +483,12 @@ async function fetchChartData(maxDays = null, silent = false) {
       const result = await apiGet("load", { date: dateStr });
       const daily = result?.daily;
       
-      // Check if this day has any meaningful data
-      const hasData = daily && (
-        daily["Hours of Sleep"] ||
-        daily["Steps"] ||
-        daily["Weight (lbs)"] ||
-        daily["REHIT 2x10"]
+      // Check if this day has any meaningful data (more robust check)
+      const hasData = daily && Object.keys(daily).length > 0 && (
+        (daily["Hours of Sleep"] && daily["Hours of Sleep"] !== "") ||
+        (daily["Steps"] && daily["Steps"] !== "" && daily["Steps"] !== 0) ||
+        (daily["Weight (lbs)"] && daily["Weight (lbs)"] !== "") ||
+        (daily["REHIT 2x10"] && daily["REHIT 2x10"] !== "")
       );
       
       if (hasData) {
@@ -500,14 +500,18 @@ async function fetchChartData(maxDays = null, silent = false) {
         });
       } else {
         emptyDaysInARow++;
+        console.log(`📊 Empty day ${emptyDaysInARow}/${maxEmptyDays}: ${dateStr}`);
         if (emptyDaysInARow >= maxEmptyDays) {
-          console.log(`📊 Stopping at ${dateStr} - ${maxEmptyDays} empty days in a row`);
+          console.log(`📊 Stopping - ${maxEmptyDays} empty days in a row`);
           break;
         }
       }
     } catch (err) {
       console.error(`Failed to load ${dateStr}:`, err);
       emptyDaysInARow++;
+      if (emptyDaysInARow >= maxEmptyDays) break;
+    }
+  }
       if (emptyDaysInARow >= maxEmptyDays) break;
     }
   }
@@ -1024,10 +1028,7 @@ function setupBiomarkersPage() {
   }
   
   if (bioCloseBtn) {
-    bioCloseBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      hideBiomarkersPage();
-    });
+    bioCloseBtn.addEventListener("click", hideBiomarkersPage);
   }
   
   console.log("✅ Biomarkers page wired");
@@ -1038,12 +1039,13 @@ function setupBiomarkersPage() {
 // =====================================
 function setupStickyHeader() {
   const stickyBar = document.getElementById("stickyDateBar");
-  const stickyDate = document.getElementById("stickyDateDisplay");
   const stickyPrev = document.getElementById("stickyPrevBtn");
   const stickyNext = document.getElementById("stickyNextBtn");
-  const mainHeader = document.querySelector(".header");
   
-  if (!stickyBar || !mainHeader) return;
+  if (!stickyBar) {
+    console.warn("Sticky bar not found");
+    return;
+  }
   
   // Wire up sticky nav buttons
   if (stickyPrev) {
@@ -1054,20 +1056,15 @@ function setupStickyHeader() {
   }
   
   // Handle scroll to show/hide sticky bar
-  let lastScrollY = 0;
-  const headerBottom = mainHeader.offsetTop + mainHeader.offsetHeight;
-  
   window.addEventListener("scroll", () => {
     const scrollY = window.scrollY;
     
-    // Show sticky bar when scrolled past the main header
-    if (scrollY > headerBottom + 50) {
+    // Show sticky bar when scrolled past 150px
+    if (scrollY > 150) {
       stickyBar.classList.add("visible");
     } else {
       stickyBar.classList.remove("visible");
     }
-    
-    lastScrollY = scrollY;
   }, { passive: true });
   
   console.log("✅ Sticky header wired");
@@ -1239,9 +1236,6 @@ async function loadDataForCurrentDate(options = {}) {
   if (cached && !cached?.error && !options.force) {
     await populateForm(cached);
     prefetchAround(currentDate);
-    
-    // Start background prefetch for charts
-    setTimeout(() => prefetchChartData(), 500);
     return;
   }
 
@@ -1258,9 +1252,6 @@ async function loadDataForCurrentDate(options = {}) {
 
     // 3) Prefetch neighbors so next/prev is fast
     prefetchAround(currentDate);
-    
-    // 4) Start background prefetch for charts after a short delay
-    setTimeout(() => prefetchChartData(), 1000);
 
     dataChanged = false;
   } catch (err) {
