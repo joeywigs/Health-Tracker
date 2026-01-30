@@ -1199,6 +1199,128 @@
       box-shadow: 0 0 8px rgba(5, 150, 105, 0.3);
     }
     
+    /* REHIT Calendar */
+    .rehit-calendar {
+      user-select: none;
+    }
+    .rehit-cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .rehit-cal-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .rehit-cal-nav {
+      display: flex;
+      gap: 8px;
+    }
+    .rehit-cal-nav button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .rehit-cal-nav button:hover {
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+    }
+    .rehit-cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .rehit-cal-weekday {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px;
+    }
+    .rehit-cal-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .rehit-cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    .rehit-cal-day.other-month {
+      color: var(--text-muted);
+      opacity: 0.3;
+    }
+    .rehit-cal-day.today {
+      background: var(--accent-orange);
+      color: white;
+      font-weight: 700;
+    }
+    .rehit-cal-day.has-rehit {
+      border: 2px solid var(--accent-pink);
+      color: var(--text);
+    }
+    .rehit-cal-day.has-rehit.rehit-2x10 {
+      border-color: var(--accent-teal);
+      box-shadow: 0 0 8px var(--glow-teal);
+    }
+    .rehit-cal-day.has-rehit.rehit-3x10 {
+      border-color: var(--accent-pink);
+      background: rgba(255, 107, 157, 0.2);
+      box-shadow: 0 0 8px var(--glow-pink);
+    }
+    .rehit-cal-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      justify-content: center;
+    }
+    .rehit-cal-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .rehit-cal-legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+    .rehit-cal-legend-dot.dot-2x10 {
+      border-color: var(--accent-teal);
+    }
+    .rehit-cal-legend-dot.dot-3x10 {
+      border-color: var(--accent-pink);
+      background: rgba(255, 107, 157, 0.2);
+    }
+    body.day-mode .rehit-cal-day {
+      color: #6b7280;
+    }
+    body.day-mode .rehit-cal-day.has-rehit {
+      color: #1f2937;
+    }
+    body.day-mode .rehit-cal-day.today {
+      color: white;
+    }
+    
     /* Body Grid */
     .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .body-cell { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
@@ -1471,7 +1593,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v2.0</span></h1>
+          <h1>Habits <span class="version">v2.1</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1684,7 +1806,8 @@
     <div class="section"><div class="sec-name">Weight</div><canvas id="weightChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Sleep</div><canvas id="sleepChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Steps</div><canvas id="stepsChart" style="max-height:220px"></canvas></div>
-    <div class="section"><div class="sec-name">REHIT</div><canvas id="rehitChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">REHIT Calendar</div><div id="rehitCalendar" class="rehit-calendar"></div></div>
+    <div class="section"><div class="sec-name">Peak Watts</div><canvas id="peakWattsChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Body Comp</div><canvas id="bodyCompChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Blood Pressure</div><canvas id="bpChart" style="max-height:220px"></canvas></div>
   </div>
