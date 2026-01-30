@@ -356,8 +356,9 @@ body.day-mode .header {
   0%, 100% { box-shadow: 0 0 20px var(--glow-pink), 0 0 40px var(--glow-purple); }
   50% { box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple); }
 }
-.brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-.brand .tagline { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: white; margin: 0; }
+.brand .tagline { font-size: 16px; font-weight: 600; color: var(--accent-pink); margin-top: 2px; }
+.phase-day { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .nav-links { display: flex; gap: 8px; }
 .nav-link {
   width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
@@ -398,7 +399,7 @@ body.day-mode .header {
 .date-btn:hover { transform: scale(1.1); box-shadow: 0 6px 25px var(--glow-pink); }
 .date-btn:active { transform: scale(0.95); }
 .date-center { flex: 1; text-align: center; }
-.date-main { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; }
+.date-main { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: white; }
 .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* Progress Ring - Glowing */
@@ -737,7 +738,7 @@ body.day-mode #customLogModal .modal-content {
   box-shadow: 0 0 10px var(--glow-teal);
 }
 .mini-supp:has(input:checked) span {
-  color: var(--text);
+  color: white;
 }
 body.day-mode .mini-supp {
   background: rgba(0,0,0,0.05);
@@ -750,6 +751,29 @@ body.day-mode .mini-supp:has(input:checked) {
   --accent-start: var(--accent-teal);
   --accent-end: var(--accent-purple);
   --card-glow: var(--glow-teal);
+}
+.mini-supps-grid.three-col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Horizontal Progress Bars (same style as phase bar) */
+.progress-bar-h {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 10px;
+}
+.progress-bar-h-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange));
+  border-radius: var(--radius-pill);
+  box-shadow: 0 0 10px var(--glow-pink);
+  transition: width 0.5s ease;
+  width: 0%;
+}
+body.day-mode .progress-bar-h {
+  background: rgba(0,0,0,0.1);
 }
 
 /* Movement Modal */
@@ -922,31 +946,12 @@ body.day-mode .duration-custom-row input {
   background: rgba(255,255,255,0.5);
 }
 
-.big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--text); outline: none; }
+.big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: white; outline: none; }
 .big-input::placeholder { color: var(--text-muted); }
 .big-input:focus { color: var(--accent-teal); }
 
-/* Steps Progress Bar */
-.steps-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.steps-bar-track { 
-  width: 12px; height: 60px; 
-  background: rgba(255,255,255,0.1); 
-  border-radius: 6px; 
-  overflow: hidden;
-  position: relative;
-}
-.steps-bar-fill { 
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: linear-gradient(to top, var(--accent-pink), var(--accent-orange), var(--accent-yellow)); 
-  border-radius: 6px;
-  transition: height 0.5s ease;
-  box-shadow: 0 0 10px var(--glow-orange);
-}
-.steps-bar-goal { font-size: 9px; color: var(--text-muted); font-weight: 600; }
-
 /* Water */
-.water-row { display: flex; align-items: center; gap: 12px; }
+.water-row { display: flex; align-items: center; gap: 12px; justify-content: center; }
 .water-btn { 
   width: 38px; height: 38px; border-radius: 50%; 
   border: 2px solid var(--accent-teal); background: transparent; 
@@ -958,26 +963,7 @@ body.day-mode .duration-custom-row input {
   box-shadow: 0 0 20px var(--glow-teal);
 }
 .water-btn:active { transform: scale(0.9); }
-.water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: #ffffff; }
-
-/* Water Progress Bar */
-.water-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.water-bar-track { 
-  width: 12px; height: 60px; 
-  background: rgba(255,255,255,0.1); 
-  border-radius: 6px; 
-  overflow: hidden;
-  position: relative;
-}
-.water-bar-fill { 
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: linear-gradient(to top, var(--accent-teal), #6dd5ed, #a5f3fc); 
-  border-radius: 6px;
-  transition: height 0.5s ease;
-  box-shadow: 0 0 10px var(--glow-teal);
-}
-.water-bar-goal { font-size: 9px; color: rgba(255,255,255,0.6); font-weight: 600; }
+.water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: white; }
 
 /* Sections */
 .section { 
@@ -1027,7 +1013,7 @@ body.day-mode .duration-custom-row input {
 .chip.on .chip-dot { 
   background: var(--success); 
   border-color: var(--success); 
-  color: var(--bg-deep); 
+  color: white; 
   box-shadow: 0 0 10px var(--glow-teal);
 }
 .chip-text { font-size: 13px; font-weight: 500; color: var(--text-dim); transition: color 0.3s; }
@@ -1073,7 +1059,7 @@ textarea.input { min-height: 90px; resize: vertical; font-family: inherit; line-
   margin-bottom: 6px;
   box-shadow: 0 0 10px var(--glow-teal);
 }
-.item-text { font-size: 13px; color: var(--text); }
+.item-text { font-size: 13px; color: white; }
 .item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
 .item-del:hover { color: var(--accent-pink); }
 body.day-mode .item {
@@ -1320,8 +1306,11 @@ body.day-mode .item {
   <header class="header">
     <div class="header-top">
       <div class="brand">
-        <div class="logo">✦</div>
-        <div><h1>Habits</h1><div class="tagline">Phase 1 · <span id="phaseInfo">--</span></div></div>
+        <div>
+          <h1>Habits</h1>
+          <div class="tagline">Phase 1</div>
+          <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
+        </div>
       </div>
       <div class="nav-links">
         <a href="#" id="weeklySummaryLink" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="1" fill="currentColor"/><path d="M10.5 9H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="12" r="1" fill="currentColor"/><path d="M10.5 12H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1" fill="currentColor"/><path d="M10.5 15H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
@@ -1335,6 +1324,7 @@ body.day-mode .item {
       <div class="date-center">
         <div class="date-main" id="dateDisplay"></div>
       </div>
+      <button class="date-btn" id="nextBtn">→</button>
       <div class="ring-wrap">
         <svg class="ring" width="72" height="72" viewBox="0 0 72 72">
           <circle class="ring-bg" cx="36" cy="36" r="32"/>
@@ -1342,9 +1332,7 @@ body.day-mode .item {
         </svg>
         <div class="ring-text" id="completionNumber">0</div>
       </div>
-      <button class="date-btn" id="nextBtn">→</button>
       <div class="phase" style="grid-column: 1 / -1;">
-        <div class="phase-label"><span>Phase Progress</span><span id="phaseDaysRemaining">-- days left</span></div>
         <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
       </div>
     </div>
@@ -1359,18 +1347,13 @@ body.day-mode .item {
       </div>
       <div class="card water" id="waterSection">
         <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div class="water-row" style="flex:1">
-            <button type="button" class="water-btn" id="waterMinus">−</button>
-            <div class="water-num" id="waterCount">0</div>
-            <button type="button" class="water-btn" id="waterPlus">+</button>
-          </div>
-          <div class="water-bar-wrap">
-            <div class="water-bar-track">
-              <div class="water-bar-fill" id="waterBarFill"></div>
-            </div>
-            <div class="water-bar-goal">6</div>
-          </div>
+        <div class="water-row">
+          <button type="button" class="water-btn" id="waterMinus">−</button>
+          <div class="water-num" id="waterCount">0</div>
+          <button type="button" class="water-btn" id="waterPlus">+</button>
+        </div>
+        <div class="progress-bar-h">
+          <div class="progress-bar-h-fill" id="waterBarFill"></div>
         </div>
       </div>
       <div class="card supplements">
@@ -1384,14 +1367,9 @@ body.day-mode .item {
       </div>
       <div class="card movement">
         <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0" style="flex:1">
-          <div class="steps-bar-wrap">
-            <div class="steps-bar-track">
-              <div class="steps-bar-fill" id="stepsBarFill"></div>
-            </div>
-            <div class="steps-bar-goal">7.5k</div>
-          </div>
+        <div><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
+        <div class="progress-bar-h">
+          <div class="progress-bar-h-fill" id="stepsBarFill"></div>
         </div>
         <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
       </div>
@@ -1432,10 +1410,10 @@ body.day-mode .item {
 <div class="section" id="greysHabitsSection">
   <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ffd93d;--icon-glow:var(--glow-orange)">👶</div><span class="sec-name">Grey's Habits</span></div><span class="sec-toggle">▼</span></div>
   <div class="sec-content">
-    <div class="chips">
-      <div class="chip"><input type="checkbox" id="inhalerMorning"><div class="chip-dot">✓</div><span class="chip-text">Inhaler AM</span></div>
-      <div class="chip"><input type="checkbox" id="inhalerEvening"><div class="chip-dot">✓</div><span class="chip-text">Inhaler PM</span></div>
-      <div class="chip"><input type="checkbox" id="multiplication"><div class="chip-dot">✓</div><span class="chip-text">Math</span></div>
+    <div class="mini-supps-grid three-col">
+      <div class="mini-supp" title="Inhaler Morning"><input type="checkbox" id="inhalerMorning"><span>Inhaler AM</span></div>
+      <div class="mini-supp" title="Inhaler Evening"><input type="checkbox" id="inhalerEvening"><span>Inhaler PM</span></div>
+      <div class="mini-supp" title="Math"><input type="checkbox" id="multiplication"><span>Math</span></div>
     </div>
   </div>
 </div>
@@ -1443,15 +1421,15 @@ body.day-mode .item {
 <div class="section" id="mealsSection">
   <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">🍽️</div><span class="sec-name">Meals</span></div><span class="sec-toggle">▼</span></div>
   <div class="sec-content">
-    <div class="chips" style="margin-bottom:12px">
-      <div class="chip"><input type="checkbox" id="breakfast"><div class="chip-dot">✓</div><span class="chip-text">Breakfast</span></div>
-      <div class="chip"><input type="checkbox" id="lunch"><div class="chip-dot">✓</div><span class="chip-text">Lunch</span></div>
-      <div class="chip"><input type="checkbox" id="dinner"><div class="chip-dot">✓</div><span class="chip-text">Dinner</span></div>
+    <div class="mini-supps-grid three-col" style="margin-bottom:10px">
+      <div class="mini-supp"><input type="checkbox" id="breakfast"><span>Breakfast</span></div>
+      <div class="mini-supp"><input type="checkbox" id="lunch"><span>Lunch</span></div>
+      <div class="mini-supp"><input type="checkbox" id="dinner"><span>Dinner</span></div>
     </div>
-    <div class="chips">
-      <div class="chip"><input type="checkbox" id="daySnacks"><div class="chip-dot">✓</div><span class="chip-text">Day Snacks</span></div>
-      <div class="chip"><input type="checkbox" id="nightSnacks"><div class="chip-dot">✓</div><span class="chip-text">Night Snacks</span></div>
-      <div class="chip"><input type="checkbox" id="noAlcohol"><div class="chip-dot">✓</div><span class="chip-text">No Alcohol</span></div>
+    <div class="mini-supps-grid three-col">
+      <div class="mini-supp"><input type="checkbox" id="daySnacks"><span>Day Snacks</span></div>
+      <div class="mini-supp"><input type="checkbox" id="nightSnacks"><span>Night Snacks</span></div>
+      <div class="mini-supp"><input type="checkbox" id="noAlcohol"><span>No Alcohol</span></div>
     </div>
   </div>
 </div>
@@ -1476,7 +1454,9 @@ body.day-mode .item {
 <div class="section" id="meditationSection">
   <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ffa552;--icon-glow:var(--glow-orange)">🧘</div><span class="sec-name">Mindfulness</span></div><span class="sec-toggle">▼</span></div>
   <div class="sec-content">
-    <div class="chips"><div class="chip"><input type="checkbox" id="meditation"><div class="chip-dot">✓</div><span class="chip-text">Meditated</span></div></div>
+    <div class="mini-supps-grid" style="grid-template-columns: 1fr;">
+      <div class="mini-supp"><input type="checkbox" id="meditation"><span>Meditated</span></div>
+    </div>
   </div>
 </div>
 
@@ -1810,9 +1790,12 @@ body.day-mode .item {
     
     // Our own completion ring update (since app.js looks for .checkbox-field)
     function updateCompletionRingAurora() {
-      // Get all checkboxes in chips, excluding Grey's habits
-      const allCheckboxes = document.querySelectorAll('#healthForm .chip input[type="checkbox"]');
-      const checkboxes = Array.from(allCheckboxes).filter(cb => 
+      // Get all checkboxes in chips AND mini-supps, excluding Grey's habits
+      const chipCheckboxes = document.querySelectorAll('#healthForm .chip input[type="checkbox"]');
+      const miniSuppCheckboxes = document.querySelectorAll('#healthForm .mini-supp input[type="checkbox"]');
+      const allCheckboxes = [...chipCheckboxes, ...miniSuppCheckboxes];
+      
+      const checkboxes = allCheckboxes.filter(cb => 
         cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
       );
       
@@ -1832,7 +1815,6 @@ body.day-mode .item {
         }
         progress.style.strokeDashoffset = offset;
         number.textContent = checked;
-        console.log(`Completion ring: ${checked}/${total}, offset=${offset}`);
       }
     }
     
@@ -1860,7 +1842,7 @@ body.day-mode .item {
       const count = parseInt(waterCount.textContent) || 0;
       const goal = 6;
       const pct = Math.min(100, (count / goal) * 100);
-      fill.style.height = pct + '%';
+      fill.style.width = pct + '%';
     }
     
     // Steps progress bar (goal: 7500)
@@ -1871,7 +1853,7 @@ body.day-mode .item {
       const steps = parseInt(stepsInput.value) || 0;
       const goal = 7500;
       const pct = Math.min(100, (steps / goal) * 100);
-      fill.style.height = pct + '%';
+      fill.style.width = pct + '%';
     }
     
     // REHIT dots - count sessions this week (goal: 4 sessions per week)
@@ -2100,8 +2082,8 @@ body.day-mode .item {
       
       if (diffDays < 0) {
         // Before phase start
-        const phaseInfoEl = document.getElementById("phaseInfo");
-        if (phaseInfoEl) phaseInfoEl.textContent = "Starting soon";
+        const phaseDayEl = document.getElementById("phaseDayCount");
+        if (phaseDayEl) phaseDayEl.textContent = "Starting soon";
         return;
       }
       
@@ -2109,25 +2091,19 @@ body.day-mode .item {
       const dayInPhase = (diffDays % PHASE_LENGTH) + 1;
       const daysRemaining = PHASE_LENGTH - dayInPhase + 1;
       
-      const phaseInfoEl = document.getElementById("phaseInfo");
-      if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH}`;
+      // Update the day counter under Phase title
+      const phaseDayEl = document.getElementById("phaseDayCount");
+      if (phaseDayEl) phaseDayEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH}`;
       
+      // Update tagline to show current phase number
       const subtitleEl = document.querySelector(".tagline");
-      if (subtitleEl) subtitleEl.innerHTML = `Phase ${phase} · <span id="phaseInfo">Day ${dayInPhase} of ${PHASE_LENGTH}</span>`;
+      if (subtitleEl) subtitleEl.textContent = `Phase ${phase}`;
       
+      // Update progress bar
       const progressBar = document.getElementById("phaseProgressBar");
       if (progressBar) {
         const progress = ((dayInPhase - 1) / PHASE_LENGTH) * 100;
         progressBar.style.width = `${progress}%`;
-      }
-      
-      const remainingEl = document.getElementById("phaseDaysRemaining");
-      if (remainingEl) {
-        if (daysRemaining > 0) {
-          remainingEl.textContent = `${daysRemaining} days left`;
-        } else {
-          remainingEl.textContent = "Phase complete! 🎉";
-        }
       }
     }
     
@@ -2153,12 +2129,16 @@ body.day-mode .item {
       updateCompletionRingAurora();
     }, 2000);
     
-    // Section collapse
-    document.querySelectorAll('.sec-head').forEach(h=>{
-      h.addEventListener('click',()=>{
-        h.classList.toggle('collapsed');
-        const c=h.nextElementSibling;if(c&&c.classList.contains('sec-content'))c.classList.toggle('collapsed');
+    // Section collapse - must be in DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.sec-head').forEach(h=>{
+        h.addEventListener('click',()=>{
+          h.classList.toggle('collapsed');
+          const c=h.nextElementSibling;
+          if(c && c.classList.contains('sec-content')) c.classList.toggle('collapsed');
+        });
       });
+      console.log('✅ Section collapse wired');
     });
     
     // REHIT Modal
