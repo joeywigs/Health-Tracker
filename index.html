@@ -1818,22 +1818,6 @@ body.day-mode .item {
       }
     }
     
-    // Chip toggle
-    document.querySelectorAll('.chip').forEach(c=>{
-      c.addEventListener('click',e=>{
-        if(e.target.type==='checkbox')return;
-        const cb=c.querySelector('input[type="checkbox"]');
-        if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}))}
-      });
-      const cb=c.querySelector('input[type="checkbox"]');
-      if(cb) {
-        cb.addEventListener('change', () => {
-          c.classList.toggle('on', cb.checked);
-          updateCompletionRingAurora();
-        });
-      }
-    });
-    
     // Water progress bar (goal: 6)
     function updateWaterBar(){
       const waterCount = document.getElementById('waterCount');
@@ -1905,9 +1889,34 @@ body.day-mode .item {
       }
     }
     
-    // Start trying to hook after DOM is ready
+    // =============================================
+    // MAIN DOM READY SETUP
+    // =============================================
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM Ready - Setting up Aurora UI');
+      
+      // Setup populateForm hook
       setupPopulateFormHook();
+      
+      // Wire up chip toggles
+      document.querySelectorAll('.chip').forEach(c => {
+        c.addEventListener('click', e => {
+          if(e.target.type === 'checkbox') return;
+          const cb = c.querySelector('input[type="checkbox"]');
+          if(cb) {
+            cb.checked = !cb.checked;
+            cb.dispatchEvent(new Event('change', {bubbles: true}));
+          }
+        });
+        const cb = c.querySelector('input[type="checkbox"]');
+        if(cb) {
+          cb.addEventListener('change', () => {
+            c.classList.toggle('on', cb.checked);
+            updateCompletionRingAurora();
+            if(typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          });
+        }
+      });
       
       // Wire up mini supplements
       document.querySelectorAll('.mini-supp').forEach(supp => {
@@ -1915,11 +1924,61 @@ body.day-mode .item {
           const cb = supp.querySelector('input[type="checkbox"]');
           if (cb) {
             cb.checked = !cb.checked;
+            updateCompletionRingAurora();
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-            if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
           }
         });
       });
+      
+      // Section collapse toggles
+      document.querySelectorAll('.sec-head').forEach(h => {
+        h.addEventListener('click', () => {
+          h.classList.toggle('collapsed');
+          const c = h.nextElementSibling;
+          if(c && c.classList.contains('sec-content')) c.classList.toggle('collapsed');
+        });
+      });
+      
+      // Water count observer
+      const waterCount = document.getElementById('waterCount');
+      if (waterCount) {
+        const observer = new MutationObserver(updateWaterBar);
+        observer.observe(waterCount, { childList: true, characterData: true, subtree: true });
+      }
+      
+      // Steps input listener
+      const stepsInput = document.getElementById('steps');
+      if (stepsInput) {
+        stepsInput.addEventListener('input', updateStepsBar);
+        stepsInput.addEventListener('change', updateStepsBar);
+      }
+      
+      // REHIT week observer
+      const rehitWeek = document.getElementById('rehitWeek');
+      if (rehitWeek) {
+        const rehitObserver = new MutationObserver(updateRehitDots);
+        rehitObserver.observe(rehitWeek, { childList: true, characterData: true, subtree: true });
+      }
+      
+      // REHIT checkbox listeners
+      const rehit2 = document.getElementById('rehit2');
+      const rehit3 = document.getElementById('rehit3');
+      if (rehit2) rehit2.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
+      if (rehit3) rehit3.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
+      
+      // Initial update after app.js loads data
+      setTimeout(() => { 
+        syncAllChips(); 
+        updateWaterBar(); 
+        updateStepsBar();
+        updateRehitDots();
+        updateRehitDisplay();
+        updateCompletionRingAurora();
+        updatePhaseInfoFixed();
+        console.log('Initial UI sync complete');
+      }, 1500);
+      
+      console.log('Aurora UI setup complete');
     });
     
     // =============================================
@@ -2023,53 +2082,6 @@ body.day-mode .item {
     }
     setupWaterHook();
     
-    // Watch for water count text changes with MutationObserver
-    document.addEventListener('DOMContentLoaded', () => {
-      const waterCount = document.getElementById('waterCount');
-      if (waterCount) {
-        const observer = new MutationObserver(updateWaterBar);
-        observer.observe(waterCount, { childList: true, characterData: true, subtree: true });
-      }
-      
-      // Watch for rehitWeek changes to update dots
-      const rehitWeek = document.getElementById('rehitWeek');
-      if (rehitWeek) {
-        const rehitObserver = new MutationObserver(updateRehitDots);
-        rehitObserver.observe(rehitWeek, { childList: true, characterData: true, subtree: true });
-      }
-      
-      // Watch for steps input changes
-      const stepsInput = document.getElementById('steps');
-      if (stepsInput) {
-        stepsInput.addEventListener('input', updateStepsBar);
-        stepsInput.addEventListener('change', updateStepsBar);
-        // Also observe value changes
-        const stepsObserver = new MutationObserver(updateStepsBar);
-        stepsObserver.observe(stepsInput, { attributes: true, attributeFilter: ['value'] });
-      }
-      
-      // REHIT checkbox listeners for dots
-      const rehit2 = document.getElementById('rehit2');
-      const rehit3 = document.getElementById('rehit3');
-      if (rehit2) rehit2.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
-      if (rehit3) rehit3.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
-      
-      // Initialize everything after app.js has had time to load data
-      setTimeout(() => { 
-        syncAllChips(); 
-        updateWaterBar(); 
-        updateStepsBar();
-        updateRehitDots();
-        updateRehitDisplay();
-        updateCompletionRingAurora();
-        // Phase should always show current date - call our fixed version
-        updatePhaseInfoFixed();
-      }, 1000);
-      
-      // Update REHIT dots after chart data loads
-      setTimeout(updateRehitDots, 2500);
-    });
-    
     // Fixed phase info that always uses today's date
     function updatePhaseInfoFixed() {
       const PHASE_START = new Date("2026-01-19T00:00:00");
@@ -2128,18 +2140,6 @@ body.day-mode .item {
       syncAllChips();
       updateCompletionRingAurora();
     }, 2000);
-    
-    // Section collapse - must be in DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.sec-head').forEach(h=>{
-        h.addEventListener('click',()=>{
-          h.classList.toggle('collapsed');
-          const c=h.nextElementSibling;
-          if(c && c.classList.contains('sec-content')) c.classList.toggle('collapsed');
-        });
-      });
-      console.log('✅ Section collapse wired');
-    });
     
     // REHIT Modal
     function openRehitModal() { document.getElementById('rehitModal').classList.add('show'); }
