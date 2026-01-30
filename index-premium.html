@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
   <meta charset="UTF-8">
@@ -16,1066 +17,1239 @@
       --bg-mid: #16213e;
       --bg-card: rgba(255,255,255,0.08);
       --bg-card-hover: rgba(255,255,255,0.12);
-      
-      --text: #ffffff;
-      --text-dim: rgba(255,255,255,0.85);
-      --text-muted: rgba(255,255,255,0.6);
-      
-      --accent-pink: #ff6b9d;
-      --accent-orange: #ffa552;
-      --accent-yellow: #ffd93d;
-      --accent-teal: #6dd5ed;
-      --accent-purple: #c471ed;
-      
-      --glow-pink: rgba(255,107,157,0.4);
-      --glow-orange: rgba(255,165,82,0.4);
-      --glow-teal: rgba(109,213,237,0.4);
-      --glow-purple: rgba(196,113,237,0.4);
-      
-      --success: #6dd5ed;
-      --success-soft: rgba(109,213,237,0.2);
-      
-      --sleep: #c471ed;
-      --water: #6dd5ed;
-      --movement: #ff6b9d;
-      --nutrition: #6dd5ed;
-      
-      --border: rgba(255,255,255,0.2);
-      --radius: 20px;
-      --radius-sm: 12px;
-      --radius-pill: 100px;
-      
-      /* Gradient backgrounds */
-      --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #1a1a2e 50%, #2d1b4e 75%, #1a1a2e 100%);
-      --bg-aurora: 
-        radial-gradient(ellipse at 20% 20%, rgba(196,113,237,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.1) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
-    }
-    
-    /* === DAY MODE - Soft Cantaloupe === */
-    body.day-mode {
-      --bg-deep: #ffeaa7;
-      --bg-mid: #fdcb6e;
-      --bg-card: rgba(255,255,255,0.6);
-      --bg-card-hover: rgba(255,255,255,0.8);
-      
-      /* Dark text for contrast on light background */
-      --text: #1a1a2e;
-      --text-dim: rgba(26,26,46,0.8);
-      --text-muted: rgba(26,26,46,0.6);
-      
-      /* Vibrant accents to pop against yellow-orange background */
-      --accent-pink: #e11d48;
-      --accent-orange: #ea580c;
-      --accent-yellow: #ca8a04;
-      --accent-teal: #0d9488;
-      --accent-purple: #6366f1;
-      
-      --glow-pink: rgba(225,29,72,0.3);
-      --glow-orange: rgba(234,88,12,0.3);
-      --glow-teal: rgba(13,148,136,0.3);
-      --glow-purple: rgba(99,102,241,0.4);
-      
-      --success: #059669;
-      --success-soft: rgba(5,150,105,0.15);
-      
-      --sleep: #6366f1;
-      --water: #0d9488;
-      --movement: #e11d48;
-      --nutrition: #059669;
-      
-      --border: rgba(0,0,0,0.1);
-      
-      /* Soft Cantaloupe gradient */
-      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 30%, #f9a825 70%, #fdcb6e 100%) !important;
-    }
-    
-    body.day-mode::before {
-      background: radial-gradient(ellipse at 30% 20%, rgba(255,234,167,0.5) 0%, transparent 50%) !important;
-    }
-    
-    /* Day mode specific overrides - indigo/purple buttons on cantaloupe background */
-    body.day-mode .logo {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      box-shadow: 0 0 20px var(--glow-purple);
-    }
-    body.day-mode .date-btn {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      box-shadow: 0 4px 15px var(--glow-purple);
-      color: white;
-    }
-    body.day-mode .phase-fill {
-      background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
-    }
-    body.day-mode .fab {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      box-shadow: 0 8px 25px var(--glow-purple);
-      color: white;
-    }
-    body.day-mode .btn-primary {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-    }
-    body.day-mode .ring-progress {
-      stroke: #6366f1;
-    }
-    body.day-mode .ring-text {
-      color: #6366f1;
-    }
-    body.day-mode .chip.on {
-      background: var(--success-soft);
-      border-color: var(--success);
-      box-shadow: 0 0 10px rgba(5,150,105,0.3);
-    }
-    body.day-mode .chip.on .chip-dot {
-      background: var(--success);
-      border-color: var(--success);
-      color: white;
-      box-shadow: 0 0 8px rgba(5,150,105,0.4);
-    }
-    body.day-mode .water-btn {
-      border-color: var(--accent-teal);
-      color: var(--accent-teal);
-    }
-    body.day-mode .water-btn:hover {
-      background: var(--accent-teal);
-      color: white;
-    }
-    body.day-mode .water-num {
-      color: var(--text);
-    }
-    body.day-mode .milestone-title {
-      background: linear-gradient(90deg, var(--accent-orange), var(--accent-pink), var(--accent-purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    body.day-mode .card {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
-    }
-    body.day-mode .card-title {
-      color: var(--text-muted);
-    }
-    body.day-mode .card-avg {
-      color: var(--text-muted);
-    }
-    body.day-mode .section {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
-    }
-    body.day-mode .sec-name {
-      color: var(--text);
-    }
-    body.day-mode .nav-link {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.1);
-      color: var(--text-dim);
-    }
-    body.day-mode .nav-link:hover {
-      background: rgba(255,255,255,0.8);
-      color: var(--accent-orange);
-      border-color: var(--accent-orange);
-    }
-    body.day-mode .date-nav {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
-    }
-    body.day-mode .date-main,
-    body.day-mode .date-sub {
-      color: var(--text);
-    }
-    body.day-mode .steps-bar-fill {
-      background: linear-gradient(to top, #6366f1, #8b5cf6, #a855f7);
-    }
-    body.day-mode .water-bar-fill {
-      background: linear-gradient(to top, var(--accent-teal), #14b8a6, #5eead4);
-    }
-    body.day-mode .big-input {
-      color: var(--text);
-    }
-    body.day-mode .big-input::placeholder {
-      color: var(--text-muted);
-    }
-    body.day-mode .chip-text {
-      color: var(--text-dim);
-    }
-    body.day-mode .chip.on .chip-text {
-      color: var(--text);
-    }
-    body.day-mode .chip-dot {
-      border-color: var(--text-muted);
-    }
-    /* Dark empty progress bars in day mode */
-    body.day-mode .steps-bar-track,
-    body.day-mode .water-bar-track {
-      background: rgba(0,0,0,0.15);
-    }
-    body.day-mode .ring-bg {
-      stroke: rgba(0,0,0,0.15);
-    }
-    body.day-mode .phase-track {
-      background: rgba(0,0,0,0.12);
-    }
-    /* Darker collapse arrows */
-    body.day-mode .sec-toggle {
-      color: var(--text-dim);
-    }
-    /* Movement/Reading items shading */
-    body.day-mode .item {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
-    }
-    
-    /* === SUNSET TRANSITION MODE === */
-    body.sunset-mode {
-      --bg-deep: #2d1b4e;
-      --bg-mid: #1a1a2e;
-      --bg-card: rgba(255,255,255,0.06);
-      --bg-card-hover: rgba(255,255,255,0.1);
-      
-      --text: #f0f0f0;
-      --text-dim: rgba(255,255,255,0.7);
-      --text-muted: rgba(255,255,255,0.5);
-      
-      --bg-gradient: linear-gradient(135deg, #2d1b4e 0%, #4a1942 30%, #1a1a2e 70%, #16213e 100%);
-      --bg-aurora: 
-        radial-gradient(ellipse at 50% 0%, rgba(255,107,157,0.2) 0%, transparent 50%),
-        radial-gradient(ellipse at 30% 50%, rgba(255,165,82,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 80%, rgba(196,113,237,0.15) 0%, transparent 50%);
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      min-height: 100vh;
-      color: var(--text);
-      padding: 16px;
-      padding-bottom: 120px;
-      font-size: 16px;
-      line-height: 1.5;
-      background: var(--bg-gradient);
-      background-attachment: fixed;
-      position: relative;
-      transition: background 1s ease, color 0.5s ease;
-    }
-    
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--bg-aurora);
-      pointer-events: none;
-      z-index: 0;
-      transition: background 1s ease;
-    }
-    
-    body > * { position: relative; z-index: 1; }
-    
-    /* Theme indicator */
-    .theme-indicator {
-      position: fixed;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      color: var(--text-muted);
-      background: var(--bg-card);
-      padding: 4px 12px;
-      border-radius: var(--radius-pill);
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 1001;
-      backdrop-filter: blur(10px);
-    }
-    .theme-indicator.show {
-      opacity: 1;
-    }
-      --radius-pill: 100px;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      min-height: 100vh;
-      color: var(--text);
-      padding: 16px;
-      padding-bottom: 120px;
-      font-size: 16px;
-      line-height: 1.5;
-      
-      /* Aurora gradient background */
-      background: linear-gradient(135deg, 
-        #1a1a2e 0%, 
-        #16213e 25%, 
-        #1a1a2e 50%,
-        #2d1b4e 75%,
-        #1a1a2e 100%
-      );
-      background-attachment: fixed;
-      position: relative;
-    }
-    
-    /* Animated aurora glow overlay */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: 
-        radial-gradient(ellipse at 20% 20%, rgba(196,113,237,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.1) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    
-    body > * { position: relative; z-index: 1; }
-    
-    /* Header */
-    .header { 
-      padding: 20px; 
-      margin-bottom: 20px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: var(--radius);
-      backdrop-filter: blur(20px);
-    }
-    body.day-mode .header {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
-    }
-    .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .logo {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      display: flex; align-items: center; justify-content: center; font-size: 22px;
-      box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple);
-      animation: pulse-glow 3s ease-in-out infinite;
-    }
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 20px var(--glow-pink), 0 0 40px var(--glow-purple); }
-      50% { box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple); }
-    }
-    .brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-    .brand .tagline { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
-    .nav-links { display: flex; gap: 8px; }
-    .nav-link {
-      width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
-      background: var(--bg-card); color: var(--text-dim); font-size: 15px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; text-decoration: none;
-      transition: all 0.3s; backdrop-filter: blur(10px);
-    }
-    .nav-link:hover { 
-      background: var(--bg-card-hover); 
-      color: var(--accent-teal); 
-      border-color: var(--accent-teal);
-      box-shadow: 0 0 20px var(--glow-teal);
-    }
-    
-    /* Date Nav - Glassmorphism */
-    .date-nav {
-      display: grid; 
-      grid-template-columns: auto 1fr auto auto;
-      align-items: center; 
-      gap: 12px; 
-      padding: 16px;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); backdrop-filter: blur(20px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    }
-    .date-nav .phase {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-    .date-btn {
-      width: 44px; height: 44px; border-radius: 50%; border: none;
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
-      color: white; font-size: 18px; font-weight: 600;
-      cursor: pointer; transition: all 0.3s;
-      box-shadow: 0 4px 15px var(--glow-purple);
-    }
-    .date-btn:hover { transform: scale(1.1); box-shadow: 0 6px 25px var(--glow-pink); }
-    .date-btn:active { transform: scale(0.95); }
-    .date-center { flex: 1; text-align: center; }
-    .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; }
-    .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    
-    /* Progress Ring - Glowing */
-    .ring-wrap { position: relative; width: 72px; height: 72px; }
-    .ring { transform: rotate(-90deg); }
-    .ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 5; }
-    .ring-progress { 
-      fill: none; 
-      stroke: url(#auroraGrad); 
-      stroke-width: 5; 
-      stroke-linecap: round; 
-      transition: stroke-dashoffset 0.6s;
-      filter: drop-shadow(0 0 6px var(--glow-teal));
-    }
-    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
-    
-    /* Phase Bar */
-    .phase { margin-top: 0; }
-    .phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
-    .phase-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: var(--radius-pill); overflow: hidden; }
-    .phase-fill { 
-      height: 100%; 
-      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange)); 
-      border-radius: var(--radius-pill); 
-      box-shadow: 0 0 20px var(--glow-pink);
-      transition: width 0.6s;
-    }
-    
-    /* Cards - Glowing borders on hover */
-    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .card {
-      background: rgba(255,255,255,0.06); 
-      border: 1px solid rgba(255,255,255,0.15); 
-      border-radius: var(--radius);
-      padding: 18px; 
-      position: relative; 
-      overflow: hidden; 
-      backdrop-filter: blur(20px);
-      transition: all 0.3s;
-      display: flex;
-      flex-direction: column;
-      min-height: 140px;
-    }
-    .card::before { 
-      content: ''; 
-      position: absolute; 
-      top: 0; left: 0; right: 0; 
-      height: 3px; 
-      background: linear-gradient(90deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink))); 
-      opacity: 0.8; 
-    }
-    .card:hover { 
-      border-color: rgba(255,255,255,0.25);
-      box-shadow: 0 0 30px var(--card-glow, var(--glow-purple));
-      transform: translateY(-2px);
-    }
-    .card.sleep { --accent-start: var(--accent-purple); --accent-end: var(--accent-pink); --card-glow: var(--glow-purple); }
-    .card.water { --accent-start: var(--accent-teal); --accent-end: var(--accent-purple); --card-glow: var(--glow-teal); }
-    .card.movement { --accent-start: var(--accent-pink); --accent-end: var(--accent-orange); --card-glow: var(--glow-pink); }
-    
-    .card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .card-icon { 
-      width: 32px; height: 32px; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center; font-size: 15px; 
-      background: linear-gradient(135deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink)));
-      box-shadow: 0 0 15px var(--card-glow, var(--glow-purple));
-    }
-    .card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
-    .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
-    .card-unit { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: 4px; }
-    .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
-    
-    /* REHIT Dots */
-    .rehit-dots { display: flex; gap: 6px; margin-left: auto; }
-    .rehit-dot { 
-      width: 10px; height: 10px; 
-      border-radius: 50%; 
-      background: rgba(255,255,255,0.2); 
-      transition: all 0.3s;
-    }
-    .rehit-dot.on { 
-      background: var(--accent-teal); 
-      box-shadow: 0 0 8px var(--glow-teal);
-    }
-    body.day-mode .rehit-dot {
-      background: rgba(0,0,0,0.15);
-    }
-    body.day-mode .rehit-dot.on {
-      background: var(--success);
-      box-shadow: 0 0 8px rgba(5,150,105,0.4);
-    }
-    
-    /* Counter dots (for weekly goals) */
-    .counter-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      transition: all 0.3s;
-    }
-    .counter-dot.on {
-      background: var(--accent-teal);
-      box-shadow: 0 0 8px var(--glow-teal);
-    }
-    body.day-mode .counter-dot {
-      background: rgba(0,0,0,0.15);
-    }
-    body.day-mode .counter-dot.on {
-      background: var(--success);
-      box-shadow: 0 0 8px rgba(5,150,105,0.4);
-    }
-    
-    /* Rating stars */
-    .rating-stars {
-      display: flex;
-      gap: 8px;
-      font-size: 28px;
-    }
-    .star {
-      cursor: pointer;
-      color: rgba(255,255,255,0.3);
-      transition: all 0.2s;
-    }
-    .star:hover, .star.filled {
-      color: var(--accent-orange);
-      text-shadow: 0 0 10px var(--glow-orange);
-    }
-    body.day-mode .star {
-      color: rgba(0,0,0,0.2);
-    }
-    body.day-mode .star:hover, body.day-mode .star.filled {
-      color: var(--accent-orange);
-    }
-    
-    /* Custom log modal */
-    #customLogModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-    }
-    #customLogModal.show {
-      display: flex;
-    }
-    #customLogModal .modal-overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-    }
-    #customLogModal .modal-content {
-      position: relative;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      width: 90%;
-      max-width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    #customLogModal .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    #customLogModal .modal-header h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-    body.day-mode #customLogModal .modal-content {
-      background: rgba(255,255,255,0.95);
-    }
-    
-    /* Movement Modal */
-    #movementModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-    }
-    #movementModal.show {
-      display: flex;
-    }
-    #movementModal .modal-overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-    }
-    #movementModal .modal-content {
-      position: relative;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      width: 90%;
-      max-width: 320px;
-    }
-    #movementModal .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    #movementModal .modal-header h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-    }
-    #movementModal .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: var(--text-dim);
-      padding: 0;
-      line-height: 1;
-    }
-    .movement-types {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .movement-type-btn {
-      padding: 20px 10px;
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--bg-card);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-    .movement-type-btn .type-icon {
-      font-size: 28px;
-    }
-    .movement-type-btn.selected {
-      border-color: var(--accent-teal);
-      background: rgba(45, 212, 191, 0.15);
-      box-shadow: 0 0 20px var(--glow-teal);
-    }
-    .duration-section {
-      margin-bottom: 24px;
-    }
-    .duration-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-    .duration-presets {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .duration-preset {
-      flex: 1;
-      min-width: 50px;
-      padding: 12px 8px;
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--bg-card);
-      color: var(--text);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-    .duration-preset.selected {
-      border-color: var(--accent-pink);
-      background: rgba(236, 72, 153, 0.15);
-      box-shadow: 0 0 15px var(--glow-pink);
-    }
-    .duration-preset.custom-active {
-      border-color: var(--accent-pink);
-    }
-    .duration-custom-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .duration-custom-row input {
-      width: 80px;
-      padding: 10px;
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--bg-card);
-      color: var(--text);
-      font-size: 18px;
-      font-weight: 600;
-      text-align: center;
-    }
-    .duration-custom-row input:focus {
-      outline: none;
-      border-color: var(--accent-pink);
-    }
-    .duration-custom-row span {
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-    #movementModal .btn-save {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      color: white;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 15px var(--glow-pink);
-    }
-    #movementModal .btn-save:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--glow-pink);
-    }
-    #movementModal .btn-save:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    body.day-mode #movementModal .modal-content {
-      background: rgba(255,255,255,0.95);
-    }
-    body.day-mode .movement-type-btn,
-    body.day-mode .duration-preset,
-    body.day-mode .duration-custom-row input {
-      background: rgba(255,255,255,0.5);
-    }
-    
-    .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--text); outline: none; }
-    .big-input::placeholder { color: var(--text-muted); }
-    .big-input:focus { color: var(--accent-teal); }
-    
-    /* Steps Progress Bar */
-    .steps-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .steps-bar-track { 
-      width: 12px; height: 60px; 
-      background: rgba(255,255,255,0.1); 
-      border-radius: 6px; 
-      overflow: hidden;
-      position: relative;
-    }
-    .steps-bar-fill { 
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, var(--accent-pink), var(--accent-orange), var(--accent-yellow)); 
-      border-radius: 6px;
-      transition: height 0.5s ease;
-      box-shadow: 0 0 10px var(--glow-orange);
-    }
-    .steps-bar-goal { font-size: 9px; color: var(--text-muted); font-weight: 600; }
-    
-    /* Water */
-    .water-row { display: flex; align-items: center; gap: 12px; }
-    .water-btn { 
-      width: 38px; height: 38px; border-radius: 50%; 
-      border: 2px solid var(--accent-teal); background: transparent; 
-      color: var(--accent-teal); font-size: 18px; cursor: pointer; transition: all 0.3s; 
-    }
-    .water-btn:hover { 
-      background: var(--accent-teal); 
-      color: var(--bg-deep); 
-      box-shadow: 0 0 20px var(--glow-teal);
-    }
-    .water-btn:active { transform: scale(0.9); }
-    .water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: #ffffff; }
-    
-    /* Water Progress Bar */
-    .water-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .water-bar-track { 
-      width: 12px; height: 60px; 
-      background: rgba(255,255,255,0.1); 
-      border-radius: 6px; 
-      overflow: hidden;
-      position: relative;
-    }
-    .water-bar-fill { 
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, var(--accent-teal), #6dd5ed, #a5f3fc); 
-      border-radius: 6px;
-      transition: height 0.5s ease;
-      box-shadow: 0 0 10px var(--glow-teal);
-    }
-    .water-bar-goal { font-size: 9px; color: rgba(255,255,255,0.6); font-weight: 600; }
-    
-    /* Sections */
-    .section { 
-      background: rgba(255,255,255,0.06); 
-      border: 1px solid rgba(255,255,255,0.15); 
-      border-radius: var(--radius); 
-      padding: 18px; 
-      margin-bottom: 12px; 
-      backdrop-filter: blur(20px); 
-      transition: all 0.3s;
-    }
-    .section:hover { border-color: rgba(255,255,255,0.2); }
-    .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
-    .sec-title { display: flex; align-items: center; gap: 10px; }
-    .sec-icon { 
-      width: 28px; height: 28px; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center; font-size: 13px; 
-      background: linear-gradient(135deg, var(--icon-start, var(--accent-purple)), var(--icon-end, var(--accent-pink)));
-      box-shadow: 0 0 12px var(--icon-glow, var(--glow-purple));
-    }
-    .sec-name { font-size: 14px; font-weight: 600; color: #ffffff; }
-    .sec-toggle { color: rgba(255,255,255,0.5); font-size: 11px; transition: transform 0.3s; }
-    .sec-head.collapsed .sec-toggle { transform: rotate(-90deg); }
-    .sec-content { transition: max-height 0.3s, opacity 0.3s; overflow: hidden; }
-    .sec-content.collapsed { max-height: 0; opacity: 0; }
-    
-    /* Chips - Glowing when active */
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      display: flex; align-items: center; gap: 6px; padding: 8px 14px;
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-pill);
-      cursor: pointer; transition: all 0.3s; user-select: none;
-    }
-    .chip:hover { background: rgba(255,255,255,0.1); }
-    .chip:active { transform: scale(0.97); }
-    .chip.on { 
-      background: var(--success-soft); 
-      border-color: var(--success); 
-      box-shadow: 0 0 15px var(--glow-teal);
-    }
-    .chip-dot { 
-      width: 18px; height: 18px; border-radius: 50%; 
-      border: 2px solid var(--text-muted); 
-      display: flex; align-items: center; justify-content: center; 
-      font-size: 10px; transition: all 0.3s; 
-    }
-    .chip.on .chip-dot { 
-      background: var(--success); 
-      border-color: var(--success); 
-      color: var(--bg-deep); 
-      box-shadow: 0 0 10px var(--glow-teal);
-    }
-    .chip-text { font-size: 13px; font-weight: 500; color: var(--text-dim); transition: color 0.3s; }
-    .chip.on .chip-text { color: var(--text); }
-    .chip input { display: none; }
-    
-    /* Inputs */
-    .field { margin-bottom: 14px; }
-    .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; display: block; }
-    .input { 
-      width: 100%; padding: 14px; 
-      background: rgba(255,255,255,0.05); 
-      border: 1px solid var(--border); 
-      border-radius: var(--radius-sm); 
-      color: var(--text); font-size: 15px; outline: none; transition: all 0.3s; 
-    }
-    .input:focus { 
-      border-color: var(--accent-teal); 
-      box-shadow: 0 0 20px var(--glow-teal);
-    }
-    .input::placeholder { color: var(--text-muted); }
-    textarea.input { min-height: 90px; resize: vertical; font-family: inherit; line-height: 1.5; }
-    
-    /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; }
-    .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-dim); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: rgba(255,255,255,0.12); color: var(--text); }
-    .btn-primary { 
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
-      color: white; padding: 14px 24px; 
-      box-shadow: 0 4px 20px var(--glow-purple);
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--glow-pink); }
-    
-    /* Items */
-    .items { margin-bottom: 12px; }
-    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-sm); margin-bottom: 6px; }
-    .item-text { font-size: 13px; }
-    .item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
-    .item-del:hover { color: var(--accent-pink); }
-    
-    /* Body Grid */
-    .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .body-cell { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
-    .body-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
-    .body-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--text); outline: none; }
-    .body-pct { font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--accent-teal); }
-    
-    /* FAB - Glowing */
-    .fab { 
-      position: fixed; bottom: 24px; right: 24px; 
-      width: 60px; height: 60px; border-radius: 50%; 
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
-      border: none; color: white; font-size: 24px; cursor: pointer; 
-      box-shadow: 0 8px 30px var(--glow-purple);
-      z-index: 100; transition: all 0.3s; 
-      animation: fab-pulse 2s ease-in-out infinite;
-    }
-    @keyframes fab-pulse {
-      0%, 100% { box-shadow: 0 8px 30px var(--glow-purple); }
-      50% { box-shadow: 0 8px 40px var(--glow-pink), 0 0 60px var(--glow-purple); }
-    }
-    .fab:hover { transform: scale(1.1); }
-    .fab:active { transform: scale(0.95); }
-    .fab.open { transform: rotate(45deg); background: var(--bg-card); animation: none; }
-    
-    .fab-menu { position: fixed; bottom: 100px; right: 24px; display: flex; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.3s; z-index: 99; }
-    .fab-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .fab-item { 
-      display: flex; align-items: center; gap: 10px; padding: 10px 16px; 
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-pill); 
-      backdrop-filter: blur(20px); cursor: pointer; transition: all 0.3s; white-space: nowrap; 
-    }
-    .fab-item:hover { background: var(--bg-card-hover); transform: translateX(-8px); box-shadow: 0 0 20px var(--glow-purple); }
-    .fab-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-    .fab-label { font-size: 14px; font-weight: 600; color: var(--text); }
-    
-    /* Sticky */
-    .sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(26,26,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.3s; }
-    .sticky.visible { transform: translateY(0); }
-    .sticky-date { font-size: 14px; font-weight: 600; }
-    .sticky-btns { display: flex; gap: 8px; }
-    .sticky-btns button { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-dim); font-size: 13px; cursor: pointer; }
-    
-    /* Milestone - Aurora themed */
-    .milestone { position: fixed; inset: 0; background: rgba(26,26,46,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(10px); }
-    .milestone.show { opacity: 1; pointer-events: auto; }
-    .milestone-box { text-align: center; animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
-    @keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
-    .milestone-emoji { font-size: 72px; animation: float 2s ease-in-out infinite; }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
-    .milestone-title { font-family: 'Space Grotesk'; font-size: 26px; font-weight: 700; margin-top: 16px; background: linear-gradient(90deg, var(--accent-teal), var(--accent-purple), var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .milestone-sub { font-size: 15px; color: var(--text-dim); margin-top: 8px; }
-    .milestone-btn { margin-top: 28px; padding: 14px 32px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); border: none; border-radius: var(--radius-pill); font-size: 16px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 8px 30px var(--glow-purple); }
-    
-    /* Modal */
-    .modal { position: fixed; inset: 0; background: rgba(26,26,46,0.9); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(10px); padding: 16px; }
-    .modal.show { opacity: 1; pointer-events: auto; }
-    .modal-content { background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 360px; animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 18px; border-bottom: 1px solid var(--border); }
-    .modal-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: var(--text-muted); font-size: 16px; cursor: pointer; transition: all 0.3s; }
-    .modal-close:hover { background: rgba(255,255,255,0.15); color: var(--text); }
-    .modal-body { padding: 18px; }
-    .modal-footer { padding: 18px; border-top: 1px solid var(--border); }
-    
-    /* Responsive */
-    @media (max-width: 430px) {
-      body { padding: 12px; }
-      .quick-grid { gap: 10px; }
-      .card { padding: 14px; }
-      .card-value { font-size: 28px; }
-      .big-input { font-size: 28px; }
-    }
-    @media (min-width: 768px) { body { max-width: 540px; margin: 0 auto; } }
-    
-    /* Settings Page Styles */
-    .setting-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .setting-row:last-child { border-bottom: none; }
-    .setting-label { flex: 1; }
-    .setting-title { display: block; font-size: 14px; font-weight: 600; color: var(--text); }
-    .setting-desc { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    
-    .time-input {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      color: var(--text);
-      font-size: 14px;
-      font-family: 'Space Grotesk', sans-serif;
-      outline: none;
-    }
-    .time-input:focus { border-color: var(--accent-teal); }
-    
-    .theme-preview { display: flex; gap: 8px; }
-    .theme-btn {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: var(--bg-card);
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .theme-btn:hover { border-color: var(--accent-teal); transform: scale(1.1); }
-    .theme-btn.active { border-color: var(--accent-teal); box-shadow: 0 0 15px var(--glow-teal); }
-    
-    /* Section List for Drag & Drop */
-    .section-list { }
-    .section-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      margin-bottom: 8px;
-      cursor: grab;
-      transition: all 0.2s;
-    }
-    .section-item:active { cursor: grabbing; }
-    .section-item.dragging {
-      opacity: 0.5;
-      transform: scale(1.02);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    }
-    .section-item.drag-over {
-      border-color: var(--accent-teal);
-      background: var(--success-soft);
-    }
-    .section-item-drag {
-      color: var(--text-muted);
-      font-size: 16px;
-      cursor: grab;
-    }
-    .section-item-icon { font-size: 18px; }
-    .section-item-name { flex: 1; font-size: 14px; font-weight: 500; }
-    .section-item-toggle {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      background: var(--bg-deep);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .section-item-toggle.on { background: var(--success); }
-    .section-item-toggle::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      transition: transform 0.2s;
-    }
-    .section-item-toggle.on::after { transform: translateX(20px); }
-    .section-item-delete {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 16px;
-      cursor: pointer;
-      padding: 4px;
-      opacity: 0.5;
-      transition: all 0.2s;
-    }
-    .section-item-delete:hover { color: var(--accent-pink); opacity: 1; }
+
+```
+  --text: #ffffff;
+  --text-dim: rgba(255,255,255,0.85);
+  --text-muted: rgba(255,255,255,0.6);
+  
+  --accent-pink: #ff6b9d;
+  --accent-orange: #ffa552;
+  --accent-yellow: #ffd93d;
+  --accent-teal: #6dd5ed;
+  --accent-purple: #c471ed;
+  
+  --glow-pink: rgba(255,107,157,0.4);
+  --glow-orange: rgba(255,165,82,0.4);
+  --glow-teal: rgba(109,213,237,0.4);
+  --glow-purple: rgba(196,113,237,0.4);
+  
+  --success: #6dd5ed;
+  --success-soft: rgba(109,213,237,0.2);
+  
+  --sleep: #c471ed;
+  --water: #6dd5ed;
+  --movement: #ff6b9d;
+  --nutrition: #6dd5ed;
+  
+  --border: rgba(255,255,255,0.2);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-pill: 100px;
+  
+  /* Gradient backgrounds */
+  --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #1a1a2e 50%, #2d1b4e 75%, #1a1a2e 100%);
+  --bg-aurora: 
+    radial-gradient(ellipse at 20% 20%, rgba(196,113,237,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
+}
+
+/* === DAY MODE - Soft Cantaloupe === */
+body.day-mode {
+  --bg-deep: #ffeaa7;
+  --bg-mid: #fdcb6e;
+  --bg-card: rgba(255,255,255,0.6);
+  --bg-card-hover: rgba(255,255,255,0.8);
+  
+  /* Dark text for contrast on light background */
+  --text: #1a1a2e;
+  --text-dim: rgba(26,26,46,0.8);
+  --text-muted: rgba(26,26,46,0.6);
+  
+  /* Vibrant accents to pop against yellow-orange background */
+  --accent-pink: #e11d48;
+  --accent-orange: #ea580c;
+  --accent-yellow: #ca8a04;
+  --accent-teal: #0d9488;
+  --accent-purple: #6366f1;
+  
+  --glow-pink: rgba(225,29,72,0.3);
+  --glow-orange: rgba(234,88,12,0.3);
+  --glow-teal: rgba(13,148,136,0.3);
+  --glow-purple: rgba(99,102,241,0.4);
+  
+  --success: #059669;
+  --success-soft: rgba(5,150,105,0.15);
+  
+  --sleep: #6366f1;
+  --water: #0d9488;
+  --movement: #e11d48;
+  --nutrition: #059669;
+  
+  --border: rgba(0,0,0,0.1);
+  
+  /* Soft Cantaloupe gradient */
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 30%, #f9a825 70%, #fdcb6e 100%) !important;
+}
+
+body.day-mode::before {
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,234,167,0.5) 0%, transparent 50%) !important;
+}
+
+/* Day mode specific overrides - indigo/purple buttons on cantaloupe background */
+body.day-mode .logo {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 0 20px var(--glow-purple);
+}
+body.day-mode .date-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 4px 15px var(--glow-purple);
+  color: white;
+}
+body.day-mode .phase-fill {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+}
+body.day-mode .fab {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 8px 25px var(--glow-purple);
+  color: white;
+}
+body.day-mode .btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+}
+body.day-mode .ring-progress {
+  stroke: #6366f1;
+}
+body.day-mode .ring-text {
+  color: #6366f1;
+}
+body.day-mode .chip.on {
+  background: var(--success-soft);
+  border-color: var(--success);
+  box-shadow: 0 0 10px rgba(5,150,105,0.3);
+}
+body.day-mode .chip.on .chip-dot {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+  box-shadow: 0 0 8px rgba(5,150,105,0.4);
+}
+body.day-mode .water-btn {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+}
+body.day-mode .water-btn:hover {
+  background: var(--accent-teal);
+  color: white;
+}
+body.day-mode .water-num {
+  color: var(--text);
+}
+body.day-mode .milestone-title {
+  background: linear-gradient(90deg, var(--accent-orange), var(--accent-pink), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+body.day-mode .card {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+body.day-mode .card-title {
+  color: var(--text-muted);
+}
+body.day-mode .card-avg {
+  color: var(--text-muted);
+}
+body.day-mode .section {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+body.day-mode .sec-name {
+  color: var(--text);
+}
+body.day-mode .nav-link {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.1);
+  color: var(--text-dim);
+}
+body.day-mode .nav-link:hover {
+  background: rgba(255,255,255,0.8);
+  color: var(--accent-orange);
+  border-color: var(--accent-orange);
+}
+body.day-mode .date-nav {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+body.day-mode .date-main,
+body.day-mode .date-sub {
+  color: var(--text);
+}
+body.day-mode .steps-bar-fill {
+  background: linear-gradient(to top, #6366f1, #8b5cf6, #a855f7);
+}
+body.day-mode .water-bar-fill {
+  background: linear-gradient(to top, var(--accent-teal), #14b8a6, #5eead4);
+}
+body.day-mode .big-input {
+  color: var(--text);
+}
+body.day-mode .big-input::placeholder {
+  color: var(--text-muted);
+}
+body.day-mode .chip-text {
+  color: var(--text-dim);
+}
+body.day-mode .chip.on .chip-text {
+  color: var(--text);
+}
+body.day-mode .chip-dot {
+  border-color: var(--text-muted);
+}
+/* Dark empty progress bars in day mode */
+body.day-mode .steps-bar-track,
+body.day-mode .water-bar-track {
+  background: rgba(0,0,0,0.15);
+}
+body.day-mode .ring-bg {
+  stroke: rgba(0,0,0,0.15);
+}
+body.day-mode .phase-track {
+  background: rgba(0,0,0,0.12);
+}
+/* Darker collapse arrows */
+body.day-mode .sec-toggle {
+  color: var(--text-dim);
+}
+
+/* === SUNSET TRANSITION MODE === */
+body.sunset-mode {
+  --bg-deep: #2d1b4e;
+  --bg-mid: #1a1a2e;
+  --bg-card: rgba(255,255,255,0.06);
+  --bg-card-hover: rgba(255,255,255,0.1);
+  
+  --text: #f0f0f0;
+  --text-dim: rgba(255,255,255,0.7);
+  --text-muted: rgba(255,255,255,0.5);
+  
+  --bg-gradient: linear-gradient(135deg, #2d1b4e 0%, #4a1942 30%, #1a1a2e 70%, #16213e 100%);
+  --bg-aurora: 
+    radial-gradient(ellipse at 50% 0%, rgba(255,107,157,0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 50%, rgba(255,165,82,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(196,113,237,0.15) 0%, transparent 50%);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  color: var(--text);
+  padding: 16px;
+  padding-bottom: 120px;
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  position: relative;
+  transition: background 1s ease, color 0.5s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-aurora);
+  pointer-events: none;
+  z-index: 0;
+  transition: background 1s ease;
+}
+
+body > * { position: relative; z-index: 1; }
+
+/* Theme indicator */
+.theme-indicator {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 1001;
+  backdrop-filter: blur(10px);
+}
+.theme-indicator.show {
+  opacity: 1;
+}
+  --radius-pill: 100px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  color: var(--text);
+  padding: 16px;
+  padding-bottom: 120px;
+  font-size: 16px;
+  line-height: 1.5;
+  
+  /* Aurora gradient background */
+  background: linear-gradient(135deg, 
+    #1a1a2e 0%, 
+    #16213e 25%, 
+    #1a1a2e 50%,
+    #2d1b4e 75%,
+    #1a1a2e 100%
+  );
+  background-attachment: fixed;
+  position: relative;
+}
+
+/* Animated aurora glow overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(196,113,237,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body > * { position: relative; z-index: 1; }
+
+/* Header */
+.header { 
+  padding: 20px; 
+  margin-bottom: 20px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius);
+  backdrop-filter: blur(20px);
+}
+body.day-mode .header {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--glow-pink), 0 0 40px var(--glow-purple); }
+  50% { box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple); }
+}
+.brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.brand .tagline { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.nav-links { display: flex; gap: 8px; }
+.nav-link {
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--bg-card); color: var(--text-dim); font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; text-decoration: none;
+  transition: all 0.3s; backdrop-filter: blur(10px);
+}
+.nav-link:hover { 
+  background: var(--bg-card-hover); 
+  color: var(--accent-teal); 
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 20px var(--glow-teal);
+}
+
+/* Date Nav - Glassmorphism */
+.date-nav {
+  display: grid; 
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center; 
+  gap: 12px; 
+  padding: 16px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.date-nav .phase {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.date-btn {
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+  color: white; font-size: 18px; font-weight: 600;
+  cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 4px 15px var(--glow-purple);
+}
+.date-btn:hover { transform: scale(1.1); box-shadow: 0 6px 25px var(--glow-pink); }
+.date-btn:active { transform: scale(0.95); }
+.date-center { flex: 1; text-align: center; }
+.date-main { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; }
+.date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Progress Ring - Glowing */
+.ring-wrap { position: relative; width: 72px; height: 72px; }
+.ring { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 5; }
+.ring-progress { 
+  fill: none; 
+  stroke: url(#auroraGrad); 
+  stroke-width: 5; 
+  stroke-linecap: round; 
+  transition: stroke-dashoffset 0.6s;
+  filter: drop-shadow(0 0 6px var(--glow-teal));
+}
+.ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
+
+/* Phase Bar */
+.phase { margin-top: 0; }
+.phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
+.phase-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: var(--radius-pill); overflow: hidden; }
+.phase-fill { 
+  height: 100%; 
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange)); 
+  border-radius: var(--radius-pill); 
+  box-shadow: 0 0 20px var(--glow-pink);
+  transition: width 0.6s;
+}
+
+/* Cards - Glowing borders on hover */
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+/* REHIT full-width card */
+.rehit-full {
+  margin-bottom: 16px;
+  min-height: auto;
+}
+.rehit-dots-row {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 14px 0;
+}
+.rehit-dots-row .rehit-dot {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.15);
+  transition: all 0.3s;
+}
+.rehit-dots-row .rehit-dot.on {
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
+  box-shadow: 0 0 10px var(--glow-pink);
+}
+.rehit-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+.rehit-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rehit-chips {
+  flex-direction: column;
+  gap: 8px;
+}
+.rehit-chip {
+  padding: 10px 16px;
+}
+.rehit-chip .chip-dot {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+.rehit-chip .chip-text {
+  font-size: 15px;
+  font-weight: 600;
+}
+.rehit-week-count {
+  margin-top: auto;
+  padding-top: 0;
+}
+.rehit-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-left: 20px;
+  border-left: 1px solid var(--border);
+}
+.rehit-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+.rehit-stat {
+  text-align: center;
+}
+.rehit-stat-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.rehit-stat-value {
+  display: block;
+  font-family: 'Space Grotesk';
+  font-size: 20px;
+  font-weight: 700;
+}
+.rehit-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.06);
+  color: var(--text-dim);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rehit-edit-btn .chip-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--accent-pink);
+  transition: all 0.3s;
+}
+.rehit-edit-btn:hover {
+  background: rgba(236, 72, 153, 0.1);
+  border-color: var(--accent-pink);
+}
+.rehit-edit-btn:hover .chip-dot {
+  background: var(--accent-pink);
+  color: white;
+  box-shadow: 0 0 10px var(--glow-pink);
+}
+body.day-mode .rehit-edit-btn {
+  background: rgba(0,0,0,0.05);
+}
+
+.card {
+  background: rgba(255,255,255,0.06); 
+  border: 1px solid rgba(255,255,255,0.15); 
+  border-radius: var(--radius);
+  padding: 18px; 
+  position: relative; 
+  overflow: hidden; 
+  backdrop-filter: blur(20px);
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  min-height: 140px;
+}
+.card::before { 
+  content: ''; 
+  position: absolute; 
+  top: 0; left: 0; right: 0; 
+  height: 3px; 
+  background: linear-gradient(90deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink))); 
+  opacity: 0.8; 
+}
+.card:hover { 
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 0 30px var(--card-glow, var(--glow-purple));
+  transform: translateY(-2px);
+}
+.card.sleep { --accent-start: var(--accent-purple); --accent-end: var(--accent-pink); --card-glow: var(--glow-purple); }
+.card.water { --accent-start: var(--accent-teal); --accent-end: var(--accent-purple); --card-glow: var(--glow-teal); }
+.card.movement { --accent-start: var(--accent-pink); --accent-end: var(--accent-orange); --card-glow: var(--glow-pink); }
+
+.card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.card-icon { 
+  width: 32px; height: 32px; border-radius: 50%; 
+  display: flex; align-items: center; justify-content: center; font-size: 15px; 
+  background: linear-gradient(135deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink)));
+  box-shadow: 0 0 15px var(--card-glow, var(--glow-purple));
+}
+.card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
+.card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
+.card-unit { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: 4px; }
+.card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
+
+/* REHIT Dots */
+.rehit-dots { display: flex; gap: 6px; margin-left: auto; }
+.rehit-dot { 
+  width: 10px; height: 10px; 
+  border-radius: 50%; 
+  background: rgba(255,255,255,0.2); 
+  transition: all 0.3s;
+}
+.rehit-dot.on { 
+  background: var(--accent-teal); 
+  box-shadow: 0 0 8px var(--glow-teal);
+}
+body.day-mode .rehit-dot {
+  background: rgba(0,0,0,0.15);
+}
+body.day-mode .rehit-dot.on {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(5,150,105,0.4);
+}
+body.day-mode .rehit-dots-row .rehit-dot {
+  background: rgba(0,0,0,0.1);
+}
+body.day-mode .rehit-dots-row .rehit-dot.on {
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
+  box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+}
+
+/* Counter dots (for weekly goals) */
+.counter-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.3s;
+}
+.counter-dot.on {
+  background: var(--accent-teal);
+  box-shadow: 0 0 8px var(--glow-teal);
+}
+body.day-mode .counter-dot {
+  background: rgba(0,0,0,0.15);
+}
+body.day-mode .counter-dot.on {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(5,150,105,0.4);
+}
+
+/* Rating stars */
+.rating-stars {
+  display: flex;
+  gap: 8px;
+  font-size: 28px;
+}
+.star {
+  cursor: pointer;
+  color: rgba(255,255,255,0.3);
+  transition: all 0.2s;
+}
+.star:hover, .star.filled {
+  color: var(--accent-orange);
+  text-shadow: 0 0 10px var(--glow-orange);
+}
+body.day-mode .star {
+  color: rgba(0,0,0,0.2);
+}
+body.day-mode .star:hover, body.day-mode .star.filled {
+  color: var(--accent-orange);
+}
+
+/* Custom log modal */
+#customLogModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+#customLogModal.show {
+  display: flex;
+}
+#customLogModal .modal-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+}
+#customLogModal .modal-content {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+#customLogModal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+#customLogModal .modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+body.day-mode #customLogModal .modal-content {
+  background: rgba(255,255,255,0.95);
+}
+
+/* Mini Supplements (in own card) */
+.mini-supps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.mini-supp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mini-supp input {
+  display: none;
+}
+.mini-supp span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.mini-supp:has(input:checked) {
+  background: var(--success-soft);
+  border-color: var(--success);
+  box-shadow: 0 0 10px var(--glow-teal);
+}
+.mini-supp:has(input:checked) span {
+  color: white;
+}
+body.day-mode .mini-supp {
+  background: rgba(0,0,0,0.05);
+}
+body.day-mode .mini-supp:has(input:checked) {
+  background: rgba(5, 150, 105, 0.15);
+  box-shadow: 0 0 8px rgba(5, 150, 105, 0.3);
+}
+.card.supplements {
+  --accent-start: var(--accent-teal);
+  --accent-end: var(--accent-purple);
+  --card-glow: var(--glow-teal);
+}
+.mini-supps-grid.three-col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Horizontal Progress Bars (same style as phase bar) */
+.progress-bar-h {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 10px;
+}
+.progress-bar-h-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange));
+  border-radius: var(--radius-pill);
+  box-shadow: 0 0 10px var(--glow-pink);
+  transition: width 0.5s ease;
+  width: 0%;
+}
+body.day-mode .progress-bar-h {
+  background: rgba(0,0,0,0.1);
+}
+
+/* Movement Modal */
+#movementModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+#movementModal.show {
+  display: flex;
+}
+#movementModal .modal-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+}
+#movementModal .modal-content {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: 90%;
+  max-width: 320px;
+}
+#movementModal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+#movementModal .modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+#movementModal .modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-dim);
+  padding: 0;
+  line-height: 1;
+}
+.movement-types {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.movement-type-btn {
+  padding: 20px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.movement-type-btn .type-icon {
+  font-size: 28px;
+}
+.movement-type-btn.selected {
+  border-color: var(--accent-teal);
+  background: rgba(45, 212, 191, 0.15);
+  box-shadow: 0 0 20px var(--glow-teal);
+}
+.duration-section {
+  margin-bottom: 24px;
+}
+.duration-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.duration-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.duration-preset {
+  flex: 1;
+  min-width: 50px;
+  padding: 12px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.duration-preset.selected {
+  border-color: var(--accent-pink);
+  background: rgba(236, 72, 153, 0.15);
+  box-shadow: 0 0 15px var(--glow-pink);
+}
+.duration-preset.custom-active {
+  border-color: var(--accent-pink);
+}
+.duration-custom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.duration-custom-row input {
+  width: 80px;
+  padding: 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+.duration-custom-row input:focus {
+  outline: none;
+  border-color: var(--accent-pink);
+}
+.duration-custom-row span {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+#movementModal .btn-save {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px var(--glow-pink);
+}
+#movementModal .btn-save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--glow-pink);
+}
+#movementModal .btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+body.day-mode #movementModal .modal-content {
+  background: rgba(255,255,255,0.95);
+}
+body.day-mode .movement-type-btn,
+body.day-mode .duration-preset,
+body.day-mode .duration-custom-row input {
+  background: rgba(255,255,255,0.5);
+}
+
+.big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: white; outline: none; }
+.big-input::placeholder { color: var(--text-muted); }
+.big-input:focus { color: var(--accent-teal); }
+
+/* Water */
+.water-row { display: flex; align-items: center; gap: 12px; justify-content: center; }
+.water-btn { 
+  width: 38px; height: 38px; border-radius: 50%; 
+  border: 2px solid var(--accent-teal); background: transparent; 
+  color: var(--accent-teal); font-size: 18px; cursor: pointer; transition: all 0.3s; 
+}
+.water-btn:hover { 
+  background: var(--accent-teal); 
+  color: var(--bg-deep); 
+  box-shadow: 0 0 20px var(--glow-teal);
+}
+.water-btn:active { transform: scale(0.9); }
+.water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: white; }
+
+/* Sections */
+.section { 
+  background: rgba(255,255,255,0.06); 
+  border: 1px solid rgba(255,255,255,0.15); 
+  border-radius: var(--radius); 
+  padding: 18px; 
+  margin-bottom: 12px; 
+  backdrop-filter: blur(20px); 
+  transition: all 0.3s;
+}
+.section:hover { border-color: rgba(255,255,255,0.2); }
+.sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
+.sec-title { display: flex; align-items: center; gap: 10px; }
+.sec-icon { 
+  width: 28px; height: 28px; border-radius: 50%; 
+  display: flex; align-items: center; justify-content: center; font-size: 13px; 
+  background: linear-gradient(135deg, var(--icon-start, var(--accent-purple)), var(--icon-end, var(--accent-pink)));
+  box-shadow: 0 0 12px var(--icon-glow, var(--glow-purple));
+}
+.sec-name { font-size: 14px; font-weight: 600; color: #ffffff; }
+.sec-toggle { color: rgba(255,255,255,0.5); font-size: 11px; transition: transform 0.3s; }
+.sec-head.collapsed .sec-toggle { transform: rotate(-90deg); }
+.sec-content { transition: max-height 0.3s, opacity 0.3s; overflow: hidden; }
+.sec-content.collapsed { max-height: 0; opacity: 0; }
+
+/* Chips - Glowing when active */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-pill);
+  cursor: pointer; transition: all 0.3s; user-select: none;
+}
+.chip:hover { background: rgba(255,255,255,0.1); }
+.chip:active { transform: scale(0.97); }
+.chip.on { 
+  background: var(--success-soft); 
+  border-color: var(--success); 
+  box-shadow: 0 0 15px var(--glow-teal);
+}
+.chip-dot { 
+  width: 18px; height: 18px; border-radius: 50%; 
+  border: 2px solid var(--text-muted); 
+  display: flex; align-items: center; justify-content: center; 
+  font-size: 10px; transition: all 0.3s; 
+}
+.chip.on .chip-dot { 
+  background: var(--success); 
+  border-color: var(--success); 
+  color: white; 
+  box-shadow: 0 0 10px var(--glow-teal);
+}
+.chip-text { font-size: 13px; font-weight: 500; color: var(--text-dim); transition: color 0.3s; }
+.chip.on .chip-text { color: var(--text); }
+.chip input { display: none; }
+
+/* Inputs */
+.field { margin-bottom: 14px; }
+.field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; display: block; }
+.input { 
+  width: 100%; padding: 14px; 
+  background: rgba(255,255,255,0.05); 
+  border: 1px solid var(--border); 
+  border-radius: var(--radius-sm); 
+  color: var(--text); font-size: 15px; outline: none; transition: all 0.3s; 
+}
+.input:focus { 
+  border-color: var(--accent-teal); 
+  box-shadow: 0 0 20px var(--glow-teal);
+}
+.input::placeholder { color: var(--text-muted); }
+textarea.input { min-height: 90px; resize: vertical; font-family: inherit; line-height: 1.5; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; }
+.btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-dim); border: 1px solid var(--border); }
+.btn-secondary:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+.btn-primary { 
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
+  color: white; padding: 14px 24px; 
+  box-shadow: 0 4px 20px var(--glow-purple);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--glow-pink); }
+
+/* Items */
+.items { margin-bottom: 12px; }
+.item { 
+  display: flex; align-items: center; justify-content: space-between; 
+  padding: 12px 14px; 
+  background: var(--success-soft); 
+  border: 1px solid var(--success); 
+  border-radius: var(--radius-sm); 
+  margin-bottom: 6px;
+  box-shadow: 0 0 10px var(--glow-teal);
+}
+.item-text { font-size: 13px; color: var(--text); }
+.item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
+.item-del:hover { color: var(--accent-pink); }
+body.day-mode .item {
+  background: rgba(5, 150, 105, 0.15);
+  border-color: var(--success);
+  box-shadow: 0 0 8px rgba(5, 150, 105, 0.3);
+}
+
+/* Body Grid */
+.body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.body-cell { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+.body-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
+.body-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--text); outline: none; }
+.body-pct { font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--accent-teal); }
+
+/* FAB - Glowing */
+.fab { 
+  position: fixed; bottom: 24px; right: 24px; 
+  width: 60px; height: 60px; border-radius: 50%; 
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
+  border: none; color: white; font-size: 24px; cursor: pointer; 
+  box-shadow: 0 8px 30px var(--glow-purple);
+  z-index: 100; transition: all 0.3s; 
+  animation: fab-pulse 2s ease-in-out infinite;
+}
+@keyframes fab-pulse {
+  0%, 100% { box-shadow: 0 8px 30px var(--glow-purple); }
+  50% { box-shadow: 0 8px 40px var(--glow-pink), 0 0 60px var(--glow-purple); }
+}
+.fab:hover { transform: scale(1.1); }
+.fab:active { transform: scale(0.95); }
+.fab.open { transform: rotate(45deg); background: var(--bg-card); animation: none; }
+
+.fab-menu { position: fixed; bottom: 100px; right: 24px; display: flex; flex-direction: column; gap: 10px; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.3s; z-index: 99; }
+.fab-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.fab-item { 
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px; 
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-pill); 
+  backdrop-filter: blur(20px); cursor: pointer; transition: all 0.3s; white-space: nowrap; 
+}
+.fab-item:hover { background: var(--bg-card-hover); transform: translateX(-8px); box-shadow: 0 0 20px var(--glow-purple); }
+.fab-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.fab-label { font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* Sticky */
+.sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(26,26,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.3s; }
+.sticky.visible { transform: translateY(0); }
+.sticky-date { font-size: 14px; font-weight: 600; }
+.sticky-btns { display: flex; gap: 8px; }
+.sticky-btns button { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-dim); font-size: 13px; cursor: pointer; }
+
+/* Milestone - Aurora themed */
+.milestone { position: fixed; inset: 0; background: rgba(26,26,46,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(10px); }
+.milestone.show { opacity: 1; pointer-events: auto; }
+.milestone-box { text-align: center; animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+.milestone-emoji { font-size: 72px; animation: float 2s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
+.milestone-title { font-family: 'Space Grotesk'; font-size: 26px; font-weight: 700; margin-top: 16px; background: linear-gradient(90deg, var(--accent-teal), var(--accent-purple), var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.milestone-sub { font-size: 15px; color: var(--text-dim); margin-top: 8px; }
+.milestone-btn { margin-top: 28px; padding: 14px 32px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); border: none; border-radius: var(--radius-pill); font-size: 16px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 8px 30px var(--glow-purple); }
+
+/* Modal */
+.modal { position: fixed; inset: 0; background: rgba(26,26,46,0.9); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(10px); padding: 16px; }
+.modal.show { opacity: 1; pointer-events: auto; }
+.modal-content { background: var(--bg-mid); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 360px; animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 18px; border-bottom: 1px solid var(--border); }
+.modal-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: var(--text-muted); font-size: 16px; cursor: pointer; transition: all 0.3s; }
+.modal-close:hover { background: rgba(255,255,255,0.15); color: var(--text); }
+.modal-body { padding: 18px; }
+.modal-footer { padding: 18px; border-top: 1px solid var(--border); }
+
+/* Responsive */
+@media (max-width: 430px) {
+  body { padding: 12px; }
+  .quick-grid { gap: 10px; }
+  .card { padding: 14px; }
+  .card-value { font-size: 28px; }
+  .big-input { font-size: 28px; }
+}
+@media (min-width: 768px) { body { max-width: 540px; margin: 0 auto; } }
+
+/* Settings Page Styles */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-label { flex: 1; }
+.setting-title { display: block; font-size: 14px; font-weight: 600; color: var(--text); }
+.setting-desc { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.time-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  outline: none;
+}
+.time-input:focus { border-color: var(--accent-teal); }
+
+.theme-preview { display: flex; gap: 8px; }
+.theme-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.theme-btn:hover { border-color: var(--accent-teal); transform: scale(1.1); }
+.theme-btn.active { border-color: var(--accent-teal); box-shadow: 0 0 15px var(--glow-teal); }
+
+/* Section List for Drag & Drop */
+.section-list { }
+.section-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  cursor: grab;
+  transition: all 0.2s;
+}
+.section-item:active { cursor: grabbing; }
+.section-item.dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+.section-item.drag-over {
+  border-color: var(--accent-teal);
+  background: var(--success-soft);
+}
+.section-item-drag {
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: grab;
+}
+.section-item-icon { font-size: 18px; }
+.section-item-name { flex: 1; font-size: 14px; font-weight: 500; }
+.section-item-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--bg-deep);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.section-item-toggle.on { background: var(--success); }
+.section-item-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.section-item-toggle.on::after { transform: translateX(20px); }
+.section-item-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.5;
+  transition: all 0.2s;
+}
+.section-item-delete:hover { color: var(--accent-pink); opacity: 1; }
+```
+
   </style>
 </head>
 <body>
   <div class="theme-indicator" id="themeIndicator">☀️ Day Mode</div>
-  
+
   <svg width="0" height="0" style="position:absolute">
     <defs>
       <linearGradient id="auroraGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1101,6 +1275,7 @@
   </div>
 
   <!-- REHIT Modal -->
+
   <div id="rehitModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -1169,168 +1344,165 @@
       </div>
       <div class="card water" id="waterSection">
         <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div class="water-row" style="flex:1">
-            <button type="button" class="water-btn" id="waterMinus">−</button>
-            <div class="water-num" id="waterCount">0</div>
-            <button type="button" class="water-btn" id="waterPlus">+</button>
-          </div>
-          <div class="water-bar-wrap">
-            <div class="water-bar-track">
-              <div class="water-bar-fill" id="waterBarFill"></div>
-            </div>
-            <div class="water-bar-goal">6</div>
-          </div>
+        <div class="water-row">
+          <button type="button" class="water-btn" id="waterMinus">−</button>
+          <div class="water-num" id="waterCount">0</div>
+          <button type="button" class="water-btn" id="waterPlus">+</button>
+        </div>
+        <div class="progress-bar-h">
+          <div class="progress-bar-h-fill" id="waterBarFill"></div>
+        </div>
+      </div>
+      <div class="card supplements">
+        <div class="card-head"><div class="card-icon">💊</div><div class="card-title">Supps</div></div>
+        <div class="mini-supps-grid">
+          <div class="mini-supp" title="Creatine"><input type="checkbox" id="creatine"><span>Creatine</span></div>
+          <div class="mini-supp" title="Vitamin D"><input type="checkbox" id="vitaminD"><span>Vit D</span></div>
+          <div class="mini-supp" title="NO2"><input type="checkbox" id="no2"><span>NO2</span></div>
+          <div class="mini-supp" title="Psyllium"><input type="checkbox" id="psyllium"><span>Psyllium</span></div>
         </div>
       </div>
       <div class="card movement">
         <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0" style="flex:1">
-          <div class="steps-bar-wrap">
-            <div class="steps-bar-track">
-              <div class="steps-bar-fill" id="stepsBarFill"></div>
-            </div>
-            <div class="steps-bar-goal">7.5k</div>
-          </div>
+        <div><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
+        <div class="progress-bar-h">
+          <div class="progress-bar-h-fill" id="stepsBarFill"></div>
         </div>
         <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
       </div>
-      <div class="card movement" id="rehitCard">
-        <div class="card-head">
-          <div class="card-icon">🚴</div>
-          <div class="card-title">REHIT</div>
-          <div class="rehit-dots" id="rehitDots">
-            <div class="rehit-dot"></div>
-            <div class="rehit-dot"></div>
-            <div class="rehit-dot"></div>
-            <div class="rehit-dot"></div>
-          </div>
-        </div>
-        <div class="chips" style="margin-top:8px">
-          <div class="chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
-          <div class="chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
-        </div>
-        <div id="rehitStats" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;">
-            <div><span style="color:var(--text-muted)">Score:</span> <span id="rehitScoreDisplay" style="color:var(--accent-teal);font-weight:600">--</span></div>
-            <div><span style="color:var(--text-muted)">Cals:</span> <span id="rehitCalsDisplay" style="color:var(--accent-orange);font-weight:600">--</span></div>
-            <div><span style="color:var(--text-muted)">Watts:</span> <span id="rehitWattsDisplay" style="color:var(--accent-pink);font-weight:600">--</span></div>
-            <div><span style="color:var(--text-muted)">W-Sec:</span> <span id="rehitWsDisplay" style="color:var(--accent-purple);font-weight:600">--</span></div>
-          </div>
-          <button type="button" class="btn btn-secondary" id="editRehitBtn" style="width:100%;margin-top:8px;font-size:12px;padding:6px 10px;">Edit Stats</button>
-        </div>
-        <div class="card-avg">This week: <span id="rehitWeek">--</span></div>
+    </div>
+
+```
+<div class="card movement rehit-full" id="rehitCard">
+  <div class="card-head" style="margin-bottom:0">
+    <div class="card-icon">🚴</div>
+    <div class="card-title">REHIT</div>
+  </div>
+  <div class="rehit-dots-row" id="rehitDots">
+    <div class="rehit-dot"></div>
+    <div class="rehit-dot"></div>
+    <div class="rehit-dot"></div>
+    <div class="rehit-dot"></div>
+  </div>
+  <div class="rehit-layout">
+    <div class="rehit-left">
+      <div class="chips rehit-chips">
+        <div class="chip rehit-chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
+        <div class="chip rehit-chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
       </div>
+      <div class="card-avg rehit-week-count">This week: <span id="rehitWeek">--</span></div>
     </div>
-
-    <div class="section" id="greysHabitsSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ffd93d;--icon-glow:var(--glow-orange)">👶</div><span class="sec-name">Grey's Habits</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div class="chips">
-          <div class="chip"><input type="checkbox" id="inhalerMorning"><div class="chip-dot">✓</div><span class="chip-text">Inhaler AM</span></div>
-          <div class="chip"><input type="checkbox" id="inhalerEvening"><div class="chip-dot">✓</div><span class="chip-text">Inhaler PM</span></div>
-          <div class="chip"><input type="checkbox" id="multiplication"><div class="chip-dot">✓</div><span class="chip-text">Math</span></div>
-        </div>
+    <div class="rehit-right">
+      <div class="rehit-stats-grid">
+        <div class="rehit-stat"><span class="rehit-stat-label">Score</span><span id="rehitScoreDisplay" class="rehit-stat-value" style="color:var(--accent-teal)">--</span></div>
+        <div class="rehit-stat"><span class="rehit-stat-label">Cals</span><span id="rehitCalsDisplay" class="rehit-stat-value" style="color:var(--accent-orange)">--</span></div>
+        <div class="rehit-stat"><span class="rehit-stat-label">Watts</span><span id="rehitWattsDisplay" class="rehit-stat-value" style="color:var(--accent-pink)">--</span></div>
+        <div class="rehit-stat"><span class="rehit-stat-label">W-Sec</span><span id="rehitWsDisplay" class="rehit-stat-value" style="color:var(--accent-purple)">--</span></div>
       </div>
+      <button type="button" class="rehit-edit-btn" id="editRehitBtn"><span class="chip-dot">+</span><span class="chip-text">Edit</span></button>
     </div>
+  </div>
+</div>
 
-    <div class="section" id="nutritionSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#c471ed;--icon-glow:var(--glow-teal)">💊</div><span class="sec-name">Supplements</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div class="chips">
-          <div class="chip"><input type="checkbox" id="creatine"><div class="chip-dot">✓</div><span class="chip-text">Creatine</span></div>
-          <div class="chip"><input type="checkbox" id="vitaminD"><div class="chip-dot">✓</div><span class="chip-text">Vitamin D</span></div>
-          <div class="chip"><input type="checkbox" id="no2"><div class="chip-dot">✓</div><span class="chip-text">NO2</span></div>
-          <div class="chip"><input type="checkbox" id="psyllium"><div class="chip-dot">✓</div><span class="chip-text">Psyllium</span></div>
-        </div>
-      </div>
+<div class="section" id="greysHabitsSection">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ffd93d;--icon-glow:var(--glow-orange)">👶</div><span class="sec-name">Grey's Habits</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content">
+    <div class="mini-supps-grid three-col">
+      <div class="mini-supp" title="Inhaler Morning"><input type="checkbox" id="inhalerMorning"><span>Inhaler AM</span></div>
+      <div class="mini-supp" title="Inhaler Evening"><input type="checkbox" id="inhalerEvening"><span>Inhaler PM</span></div>
+      <div class="mini-supp" title="Math"><input type="checkbox" id="multiplication"><span>Math</span></div>
     </div>
+  </div>
+</div>
 
-    <div class="section" id="mealsSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">🍽️</div><span class="sec-name">Meals</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div class="chips" style="margin-bottom:12px">
-          <div class="chip"><input type="checkbox" id="breakfast"><div class="chip-dot">✓</div><span class="chip-text">Breakfast</span></div>
-          <div class="chip"><input type="checkbox" id="lunch"><div class="chip-dot">✓</div><span class="chip-text">Lunch</span></div>
-          <div class="chip"><input type="checkbox" id="dinner"><div class="chip-dot">✓</div><span class="chip-text">Dinner</span></div>
-        </div>
-        <div class="chips">
-          <div class="chip"><input type="checkbox" id="daySnacks"><div class="chip-dot">✓</div><span class="chip-text">Day Snacks</span></div>
-          <div class="chip"><input type="checkbox" id="nightSnacks"><div class="chip-dot">✓</div><span class="chip-text">Night Snacks</span></div>
-          <div class="chip"><input type="checkbox" id="noAlcohol"><div class="chip-dot">✓</div><span class="chip-text">No Alcohol</span></div>
-        </div>
-      </div>
+<div class="section" id="mealsSection">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">🍽️</div><span class="sec-name">Meals</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content">
+    <div class="mini-supps-grid three-col" style="margin-bottom:10px">
+      <div class="mini-supp"><input type="checkbox" id="breakfast"><span>Breakfast</span></div>
+      <div class="mini-supp"><input type="checkbox" id="lunch"><span>Lunch</span></div>
+      <div class="mini-supp"><input type="checkbox" id="dinner"><span>Dinner</span></div>
     </div>
+    <div class="mini-supps-grid three-col">
+      <div class="mini-supp"><input type="checkbox" id="daySnacks"><span>Day Snacks</span></div>
+      <div class="mini-supp"><input type="checkbox" id="nightSnacks"><span>Night Snacks</span></div>
+      <div class="mini-supp"><input type="checkbox" id="noAlcohol"><span>No Alcohol</span></div>
+    </div>
+  </div>
+</div>
 
-    <div class="section" id="movementSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">🚶</div><span class="sec-name">Movement Breaks</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div id="movementList" class="items"></div>
-        <button type="button" class="btn btn-secondary" id="addMovementBtn">+ Add Movement</button>
-        <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span></div>
-      </div>
-    </div>
+<div class="section" id="movementSection">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">🚶</div><span class="sec-name">Movement Breaks</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content">
+    <div id="movementList" class="items"></div>
+    <button type="button" class="btn btn-secondary" id="addMovementBtn">+ Add Movement</button>
+    <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span></div>
+  </div>
+</div>
 
-    <div class="section" id="mentalHabitsSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#6dd5ed;--icon-glow:var(--glow-purple)">📖</div><span class="sec-name">Reading</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed">
-        <div id="readingList" class="items"></div>
-        <button type="button" class="btn btn-secondary" id="addReadingBtn">+ Add Reading</button>
-      </div>
-    </div>
+<div class="section" id="mentalHabitsSection">
+  <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#6dd5ed;--icon-glow:var(--glow-purple)">📖</div><span class="sec-name">Reading</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content collapsed">
+    <div id="readingList" class="items"></div>
+    <button type="button" class="btn btn-secondary" id="addReadingBtn">+ Add Reading</button>
+  </div>
+</div>
 
-    <div class="section" id="meditationSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ffa552;--icon-glow:var(--glow-orange)">🧘</div><span class="sec-name">Mindfulness</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div class="chips"><div class="chip"><input type="checkbox" id="meditation"><div class="chip-dot">✓</div><span class="chip-text">Meditated</span></div></div>
-      </div>
+<div class="section" id="meditationSection">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ffa552;--icon-glow:var(--glow-orange)">🧘</div><span class="sec-name">Mindfulness</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content">
+    <div class="mini-supps-grid" style="grid-template-columns: 1fr;">
+      <div class="mini-supp"><input type="checkbox" id="meditation"><span>Meditated</span></div>
     </div>
+  </div>
+</div>
 
-    <div class="section" id="reflectionsSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#ff6b9d;--icon-glow:var(--glow-purple)">✍️</div><span class="sec-name">Reflections</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed"><textarea class="input" id="reflections" placeholder="What's on your mind?"></textarea></div>
-    </div>
+<div class="section" id="reflectionsSection">
+  <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#ff6b9d;--icon-glow:var(--glow-purple)">✍️</div><span class="sec-name">Reflections</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content collapsed"><textarea class="input" id="reflections" placeholder="What's on your mind?"></textarea></div>
+</div>
 
-    <div class="section" id="storiesSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">📝</div><span class="sec-name">Grey & Sloane</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed"><textarea class="input" id="stories" placeholder="Capture their moments..."></textarea></div>
-    </div>
+<div class="section" id="storiesSection">
+  <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">📝</div><span class="sec-name">Grey & Sloane</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content collapsed"><textarea class="input" id="stories" placeholder="Capture their moments..."></textarea></div>
+</div>
 
-    <div class="section" id="carlySection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">💛</div><span class="sec-name">Carly</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed"><textarea class="input" id="carly" placeholder="Notes..."></textarea></div>
-    </div>
+<div class="section" id="carlySection">
+  <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">💛</div><span class="sec-name">Carly</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content collapsed"><textarea class="input" id="carly" placeholder="Notes..."></textarea></div>
+</div>
 
-    <div class="section" id="bodyDataSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#c471ed;--icon-glow:var(--glow-teal)">⚖️</div><span class="sec-name">Body</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed">
-        <div class="body-grid">
-          <div class="body-cell"><div class="body-label">Weight</div><input type="number" inputmode="decimal" class="body-input" id="weight" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Waist</div><input type="number" inputmode="decimal" class="body-input" id="waist" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Lean Mass</div><input type="number" inputmode="decimal" class="body-input" id="leanMass" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Lean %</div><div class="body-pct" id="leanMassPercent">--</div></div>
-          <div class="body-cell"><div class="body-label">Body Fat</div><input type="number" inputmode="decimal" class="body-input" id="bodyFat" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Fat %</div><div class="body-pct" id="bodyFatPercent">--</div></div>
-          <div class="body-cell"><div class="body-label">Bone Mass</div><input type="number" inputmode="decimal" class="body-input" id="boneMass" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Bone %</div><div class="body-pct" id="boneMassPercent">--</div></div>
-          <div class="body-cell"><div class="body-label">Water (lbs)</div><input type="number" inputmode="decimal" class="body-input" id="water" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="waterPercent">--</div></div>
-        </div>
-      </div>
+<div class="section" id="bodyDataSection">
+  <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#c471ed;--icon-glow:var(--glow-teal)">⚖️</div><span class="sec-name">Body</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content collapsed">
+    <div class="body-grid">
+      <div class="body-cell"><div class="body-label">Weight</div><input type="number" inputmode="decimal" class="body-input" id="weight" step="0.1"></div>
+      <div class="body-cell"><div class="body-label">Waist</div><input type="number" inputmode="decimal" class="body-input" id="waist" step="0.1"></div>
+      <div class="body-cell"><div class="body-label">Lean Mass</div><input type="number" inputmode="decimal" class="body-input" id="leanMass" step="0.1"></div>
+      <div class="body-cell"><div class="body-label">Lean %</div><div class="body-pct" id="leanMassPercent">--</div></div>
+      <div class="body-cell"><div class="body-label">Body Fat</div><input type="number" inputmode="decimal" class="body-input" id="bodyFat" step="0.1"></div>
+      <div class="body-cell"><div class="body-label">Fat %</div><div class="body-pct" id="bodyFatPercent">--</div></div>
+      <div class="body-cell"><div class="body-label">Bone Mass</div><input type="number" inputmode="decimal" class="body-input" id="boneMass" step="0.1"></div>
+      <div class="body-cell"><div class="body-label">Bone %</div><div class="body-pct" id="boneMassPercent">--</div></div>
+      <div class="body-cell"><div class="body-label">Water (lbs)</div><input type="number" inputmode="decimal" class="body-input" id="water" step="0.1"></div>
+      <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="waterPercent">--</div></div>
     </div>
+  </div>
+</div>
 
-    <div class="section" id="bloodPressureSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">❤️</div><span class="sec-name">Blood Pressure</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed">
-        <div class="body-grid">
-          <div class="body-cell"><div class="body-label">Systolic</div><input type="number" inputmode="numeric" class="body-input" id="systolic"></div>
-          <div class="body-cell"><div class="body-label">Diastolic</div><input type="number" inputmode="numeric" class="body-input" id="diastolic"></div>
-          <div class="body-cell"><div class="body-label">Heart Rate</div><input type="number" inputmode="numeric" class="body-input" id="heartRate"></div>
-          <div class="body-cell"><div class="body-label">Status</div><div class="body-pct" id="bpStatus">--</div></div>
-        </div>
-      </div>
+<div class="section" id="bloodPressureSection">
+  <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">❤️</div><span class="sec-name">Blood Pressure</span></div><span class="sec-toggle">▼</span></div>
+  <div class="sec-content collapsed">
+    <div class="body-grid">
+      <div class="body-cell"><div class="body-label">Systolic</div><input type="number" inputmode="numeric" class="body-input" id="systolic"></div>
+      <div class="body-cell"><div class="body-label">Diastolic</div><input type="number" inputmode="numeric" class="body-input" id="diastolic"></div>
+      <div class="body-cell"><div class="body-label">Heart Rate</div><input type="number" inputmode="numeric" class="body-input" id="heartRate"></div>
+      <div class="body-cell"><div class="body-label">Status</div><div class="body-pct" id="bpStatus">--</div></div>
     </div>
+  </div>
+</div>
+```
+
   </form>
 
   <div id="chartsPage" style="display:none">
@@ -1387,6 +1559,7 @@
   </div>
 
   <!-- Settings Page -->
+
   <div id="settingsPage" style="display:none">
     <header class="header">
       <div class="header-top">
@@ -1394,153 +1567,157 @@
         <button type="button" id="settingsCloseBtn" class="nav-link">✕</button>
       </div>
     </header>
-    
-    <!-- Theme Settings -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-orange);--icon-end:var(--accent-yellow);--icon-glow:var(--glow-orange)">🌗</div><span class="sec-name">Theme Schedule</span></div></div>
-      <div class="sec-content">
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">☀️ Day Mode Starts</span>
-            <span class="setting-desc">When to switch to bright theme</span>
-          </div>
-          <input type="time" class="time-input" id="dayStartTime" value="06:00">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">🌙 Night Mode Starts</span>
-            <span class="setting-desc">When to switch to dark theme</span>
-          </div>
-          <input type="time" class="time-input" id="nightStartTime" value="18:00">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">Current Theme</span>
-            <span class="setting-desc" id="currentThemeDisplay">Auto</span>
-          </div>
-          <div class="theme-preview">
-            <button type="button" class="theme-btn" data-theme="day" title="Day">☀️</button>
-            <button type="button" class="theme-btn" data-theme="night" title="Night">🌙</button>
-          </div>
-        </div>
+
+```
+<!-- Theme Settings -->
+<div class="section">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-orange);--icon-end:var(--accent-yellow);--icon-glow:var(--glow-orange)">🌗</div><span class="sec-name">Theme Schedule</span></div></div>
+  <div class="sec-content">
+    <div class="setting-row">
+      <div class="setting-label">
+        <span class="setting-title">☀️ Day Mode Starts</span>
+        <span class="setting-desc">When to switch to bright theme</span>
       </div>
+      <input type="time" class="time-input" id="dayStartTime" value="06:00">
     </div>
-    
-    <!-- Section Management -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
-      <div class="sec-content">
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Drag to reorder • Toggle to show/hide</p>
-        <div id="sectionList" class="section-list">
-          <!-- Populated by JS -->
-        </div>
+    <div class="setting-row">
+      <div class="setting-label">
+        <span class="setting-title">🌙 Night Mode Starts</span>
+        <span class="setting-desc">When to switch to dark theme</span>
       </div>
+      <input type="time" class="time-input" id="nightStartTime" value="18:00">
     </div>
-    
-    <!-- Add Custom Section -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">➕</div><span class="sec-name">Add Custom Section</span></div></div>
-      <div class="sec-content">
-        <div class="field">
-          <label class="field-label">Section Name</label>
-          <input type="text" class="input" id="newSectionName" placeholder="e.g., Gratitude, Goals, etc.">
-        </div>
-        <div class="field">
-          <label class="field-label">Section Type</label>
-          <select class="input" id="newSectionType">
-            <option value="text">Text/Notes</option>
-            <option value="checkbox">Checkboxes (multiple)</option>
-            <option value="number">Number Input</option>
-            <option value="counter">Counter (+/- with goal)</option>
-            <option value="log">Log (list of entries)</option>
-            <option value="time">Time Input</option>
-            <option value="rating">Rating (1-5 stars)</option>
-            <option value="toggle">Yes/No Toggle</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="field-label">Icon (emoji)</label>
-          <input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px">
-        </div>
-        
-        <!-- Dynamic options based on type -->
-        <div id="checkboxOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Checkbox Names (comma-separated)</label>
-            <input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening">
-          </div>
-        </div>
-        
-        <div id="counterOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Goal Type</label>
-            <select class="input" id="counterGoalType">
-              <option value="daily">Daily (progress bar)</option>
-              <option value="weekly">Weekly (dots)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-label">Goal Number</label>
-            <input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20">
-          </div>
-          <div class="field">
-            <label class="field-label">Unit Label</label>
-            <input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times">
-          </div>
-        </div>
-        
-        <div id="logOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Fields per Entry</label>
-            <div id="logFieldsList">
-              <div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px">
-                <input type="text" class="input" placeholder="Field name" style="flex:2">
-                <select class="input" style="flex:1">
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="select">Dropdown</option>
-                </select>
-                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
-              </div>
-            </div>
-            <button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button>
-          </div>
-        </div>
-        
-        <div id="numberOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Unit (optional)</label>
-            <input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc.">
-          </div>
-          <div class="field">
-            <label class="field-label">Placeholder</label>
-            <input type="text" class="input" id="numberPlaceholder" placeholder="0">
-          </div>
-        </div>
-        
-        <div id="ratingOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Rating Label</label>
-            <input type="text" class="input" id="ratingLabel" placeholder="How was your day?">
-          </div>
-        </div>
-        
-        <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
+    <div class="setting-row">
+      <div class="setting-label">
+        <span class="setting-title">Current Theme</span>
+        <span class="setting-desc" id="currentThemeDisplay">Auto</span>
       </div>
-    </div>
-    
-    <!-- Data Management -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-pink);--icon-end:var(--accent-orange);--icon-glow:var(--glow-pink)">💾</div><span class="sec-name">Data</span></div></div>
-      <div class="sec-content">
-        <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
-        <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%">Import Settings</button>
-        <input type="file" id="importSettingsFile" accept=".json" style="display:none">
+      <div class="theme-preview">
+        <button type="button" class="theme-btn" data-theme="day" title="Day">☀️</button>
+        <button type="button" class="theme-btn" data-theme="night" title="Night">🌙</button>
       </div>
     </div>
   </div>
+</div>
+
+<!-- Section Management -->
+<div class="section">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
+  <div class="sec-content">
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Drag to reorder • Toggle to show/hide</p>
+    <div id="sectionList" class="section-list">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Add Custom Section -->
+<div class="section">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">➕</div><span class="sec-name">Add Custom Section</span></div></div>
+  <div class="sec-content">
+    <div class="field">
+      <label class="field-label">Section Name</label>
+      <input type="text" class="input" id="newSectionName" placeholder="e.g., Gratitude, Goals, etc.">
+    </div>
+    <div class="field">
+      <label class="field-label">Section Type</label>
+      <select class="input" id="newSectionType">
+        <option value="text">Text/Notes</option>
+        <option value="checkbox">Checkboxes (multiple)</option>
+        <option value="number">Number Input</option>
+        <option value="counter">Counter (+/- with goal)</option>
+        <option value="log">Log (list of entries)</option>
+        <option value="time">Time Input</option>
+        <option value="rating">Rating (1-5 stars)</option>
+        <option value="toggle">Yes/No Toggle</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">Icon (emoji)</label>
+      <input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px">
+    </div>
+    
+    <!-- Dynamic options based on type -->
+    <div id="checkboxOptions" class="type-options" style="display:none">
+      <div class="field">
+        <label class="field-label">Checkbox Names (comma-separated)</label>
+        <input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening">
+      </div>
+    </div>
+    
+    <div id="counterOptions" class="type-options" style="display:none">
+      <div class="field">
+        <label class="field-label">Goal Type</label>
+        <select class="input" id="counterGoalType">
+          <option value="daily">Daily (progress bar)</option>
+          <option value="weekly">Weekly (dots)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Goal Number</label>
+        <input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20">
+      </div>
+      <div class="field">
+        <label class="field-label">Unit Label</label>
+        <input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times">
+      </div>
+    </div>
+    
+    <div id="logOptions" class="type-options" style="display:none">
+      <div class="field">
+        <label class="field-label">Fields per Entry</label>
+        <div id="logFieldsList">
+          <div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px">
+            <input type="text" class="input" placeholder="Field name" style="flex:2">
+            <select class="input" style="flex:1">
+              <option value="text">Text</option>
+              <option value="number">Number</option>
+              <option value="select">Dropdown</option>
+            </select>
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button>
+      </div>
+    </div>
+    
+    <div id="numberOptions" class="type-options" style="display:none">
+      <div class="field">
+        <label class="field-label">Unit (optional)</label>
+        <input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc.">
+      </div>
+      <div class="field">
+        <label class="field-label">Placeholder</label>
+        <input type="text" class="input" id="numberPlaceholder" placeholder="0">
+      </div>
+    </div>
+    
+    <div id="ratingOptions" class="type-options" style="display:none">
+      <div class="field">
+        <label class="field-label">Rating Label</label>
+        <input type="text" class="input" id="ratingLabel" placeholder="How was your day?">
+      </div>
+    </div>
+    
+    <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
+  </div>
+</div>
+
+<!-- Data Management -->
+<div class="section">
+  <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-pink);--icon-end:var(--accent-orange);--icon-glow:var(--glow-pink)">💾</div><span class="sec-name">Data</span></div></div>
+  <div class="sec-content">
+    <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
+    <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%">Import Settings</button>
+    <input type="file" id="importSettingsFile" accept=".json" style="display:none">
+  </div>
+</div>
+```
+
+  </div>
 
   <!-- Movement Modal -->
+
   <div id="movementModal">
     <div class="modal-overlay" onclick="closeMovementModal()"></div>
     <div class="modal-content">
@@ -1548,42 +1725,46 @@
         <h3>Add Movement</h3>
         <button class="modal-close" onclick="closeMovementModal()">×</button>
       </div>
-      
-      <div class="movement-types">
-        <button type="button" class="movement-type-btn" data-type="Walk">
-          <span class="type-icon">🚶</span>
-          Walk
-        </button>
-        <button type="button" class="movement-type-btn" data-type="Carol Bike">
-          <span class="type-icon">🚴</span>
-          Carol Bike
-        </button>
-        <button type="button" class="movement-type-btn" data-type="Other" style="grid-column: 1 / -1;">
-          <span class="type-icon">🏃</span>
-          Other
-        </button>
-      </div>
-      
-      <div class="duration-section">
-        <div class="duration-label">Duration</div>
-        <div class="duration-presets">
-          <button type="button" class="duration-preset" data-mins="5">5</button>
-          <button type="button" class="duration-preset" data-mins="10">10</button>
-          <button type="button" class="duration-preset" data-mins="15">15</button>
-          <button type="button" class="duration-preset" data-mins="20">20</button>
-          <button type="button" class="duration-preset" data-mins="30">30</button>
-        </div>
-        <div class="duration-custom-row">
-          <input type="number" id="movementCustomMins" placeholder="--" min="1" max="120">
-          <span>minutes</span>
-        </div>
-      </div>
-      
-      <button type="button" class="btn-save" id="movementSaveBtn" disabled>Add Movement</button>
+
+```
+  <div class="movement-types">
+    <button type="button" class="movement-type-btn" data-type="Walk">
+      <span class="type-icon">🚶</span>
+      Walk
+    </button>
+    <button type="button" class="movement-type-btn" data-type="Carol Bike">
+      <span class="type-icon">🚴</span>
+      Carol Bike
+    </button>
+    <button type="button" class="movement-type-btn" data-type="Other" style="grid-column: 1 / -1;">
+      <span class="type-icon">🏃</span>
+      Other
+    </button>
+  </div>
+  
+  <div class="duration-section">
+    <div class="duration-label">Duration</div>
+    <div class="duration-presets">
+      <button type="button" class="duration-preset" data-mins="5">5</button>
+      <button type="button" class="duration-preset" data-mins="10">10</button>
+      <button type="button" class="duration-preset" data-mins="15">15</button>
+      <button type="button" class="duration-preset" data-mins="20">20</button>
+      <button type="button" class="duration-preset" data-mins="30">30</button>
+    </div>
+    <div class="duration-custom-row">
+      <input type="number" id="movementCustomMins" placeholder="--" min="1" max="120">
+      <span>minutes</span>
     </div>
   </div>
+  
+  <button type="button" class="btn-save" id="movementSaveBtn" disabled>Add Movement</button>
+</div>
+```
 
-  <button id="quickLogFab" class="fab">+</button>
+  </div>
+
+<button id="quickLogFab" class="fab">+</button>
+
   <div id="quickLogMenu" class="fab-menu">
     <button class="fab-item quick-log-item" data-action="movement"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple))">🚶</div><span class="fab-label">Movement</span></button>
     <button class="fab-item quick-log-item" data-action="water"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-teal),var(--accent-purple))">💧</div><span class="fab-label">Water</span></button>
@@ -1592,7 +1773,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+
   <script src="app.js" defer></script>
+
   <script>
     // Sync all chip visuals
     function syncAllChips() {
@@ -1654,7 +1837,7 @@
       const count = parseInt(waterCount.textContent) || 0;
       const goal = 6;
       const pct = Math.min(100, (count / goal) * 100);
-      fill.style.height = pct + '%';
+      fill.style.width = pct + '%';
     }
     
     // Steps progress bar (goal: 7500)
@@ -1665,7 +1848,7 @@
       const steps = parseInt(stepsInput.value) || 0;
       const goal = 7500;
       const pct = Math.min(100, (steps / goal) * 100);
-      fill.style.height = pct + '%';
+      fill.style.width = pct + '%';
     }
     
     // REHIT dots - count sessions this week (goal: 4 sessions per week)
@@ -1720,6 +1903,18 @@
     // Start trying to hook after DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
       setupPopulateFormHook();
+      
+      // Wire up mini supplements
+      document.querySelectorAll('.mini-supp').forEach(supp => {
+        supp.addEventListener('click', () => {
+          const cb = supp.querySelector('input[type="checkbox"]');
+          if (cb) {
+            cb.checked = !cb.checked;
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+            if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+          }
+        });
+      });
     });
     
     // =============================================
@@ -2393,518 +2588,521 @@
       
       if (type === 'text') {
         content = `<textarea class="input" id="${id}_input" placeholder="Enter notes..."></textarea>`;
-      
-      } else if (type === 'checkbox') {
-        const checkboxes = config.checkboxes || ['Done'];
-        content = `<div class="chips">${checkboxes.map((cb, i) => `
-          <div class="chip"><input type="checkbox" id="${id}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>
-        `).join('')}</div>`;
-      
-      } else if (type === 'number') {
-        const unit = config.unit ? `<span class="card-unit">${config.unit}</span>` : '';
-        content = `<div style="display:flex;align-items:center;gap:8px">
-          <input type="number" class="big-input" id="${id}_input" placeholder="${config.placeholder || '0'}" style="max-width:120px">
-          ${unit}
-        </div>`;
-      
-      } else if (type === 'counter') {
-        const goalNum = config.goalNumber || 6;
-        const unit = config.unitLabel || 'times';
-        const isWeekly = config.goalType === 'weekly';
-        
-        if (isWeekly) {
-          // Weekly goal with dots
-          let dots = '';
-          for (let i = 0; i < goalNum; i++) {
-            dots += `<div class="counter-dot" data-idx="${i}"></div>`;
-          }
-          content = `
-            <div style="display:flex;align-items:center;gap:12px">
-              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
-              <div class="water-num counter-value" id="${id}_value">0</div>
-              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
-              <div class="counter-dots" id="${id}_dots" style="display:flex;gap:6px;margin-left:auto">
-                ${dots}
-              </div>
-            </div>
-            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/week</div>
-          `;
-        } else {
-          // Daily goal with progress bar
-          content = `
-            <div style="display:flex;align-items:center;gap:12px">
-              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
-              <div class="water-num counter-value" id="${id}_value">0</div>
-              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
-              <div class="water-bar-wrap">
-                <div class="water-bar-track">
-                  <div class="water-bar-fill counter-fill" id="${id}_fill" style="height:0%"></div>
-                </div>
-                <div class="water-bar-goal">${goalNum}</div>
-              </div>
-            </div>
-            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/day</div>
-          `;
-        }
-      
-      } else if (type === 'log') {
-        content = `
-          <div class="items" id="${id}_list"></div>
-          <button type="button" class="btn btn-secondary" id="${id}_addBtn">+ Add Entry</button>
-        `;
-      
-      } else if (type === 'time') {
-        content = `<input type="time" class="input" id="${id}_input">`;
-      
-      } else if (type === 'rating') {
-        const label = config.label || 'Rate';
-        content = `
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${label}</div>
-          <div class="rating-stars" id="${id}_stars">
-            <span class="star" data-val="1">☆</span>
-            <span class="star" data-val="2">☆</span>
-            <span class="star" data-val="3">☆</span>
-            <span class="star" data-val="4">☆</span>
-            <span class="star" data-val="5">☆</span>
-          </div>
-          <input type="hidden" id="${id}_input" value="">
-        `;
-      
-      } else if (type === 'toggle') {
-        content = `
-          <div class="chips">
-            <div class="chip toggle-chip" id="${id}_toggle">
-              <input type="checkbox" id="${id}_input">
-              <div class="chip-dot">✓</div>
-              <span class="chip-text">Yes</span>
-            </div>
-          </div>
-        `;
-      }
-      
-      section.innerHTML = `
-        <div class="sec-head collapsed">
-          <div class="sec-title">
-            <div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink)">${icon}</div>
-            <span class="sec-name">${name}</span>
-          </div>
-          <span class="sec-toggle">▼</span>
-        </div>
-        <div class="sec-content collapsed">${content}</div>
-      `;
-      
-      form.appendChild(section);
-      
-      // Wire up collapse
-      const head = section.querySelector('.sec-head');
-      head.addEventListener('click', () => {
-        head.classList.toggle('collapsed');
-        section.querySelector('.sec-content').classList.toggle('collapsed');
-      });
-      
-      // Wire up type-specific interactions
-      wireUpCustomSection(section, id, type, config);
-    }
+
+```
+  } else if (type === 'checkbox') {
+    const checkboxes = config.checkboxes || ['Done'];
+    content = `<div class="chips">${checkboxes.map((cb, i) => `
+      <div class="chip"><input type="checkbox" id="${id}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>
+    `).join('')}</div>`;
+  
+  } else if (type === 'number') {
+    const unit = config.unit ? `<span class="card-unit">${config.unit}</span>` : '';
+    content = `<div style="display:flex;align-items:center;gap:8px">
+      <input type="number" class="big-input" id="${id}_input" placeholder="${config.placeholder || '0'}" style="max-width:120px">
+      ${unit}
+    </div>`;
+  
+  } else if (type === 'counter') {
+    const goalNum = config.goalNumber || 6;
+    const unit = config.unitLabel || 'times';
+    const isWeekly = config.goalType === 'weekly';
     
-    function wireUpCustomSection(section, id, type, config) {
-      if (type === 'checkbox') {
-        section.querySelectorAll('.chip').forEach(chip => {
-          const cb = chip.querySelector('input');
-          chip.addEventListener('click', (e) => {
-            if (e.target.type !== 'checkbox') {
-              cb.checked = !cb.checked;
-              chip.classList.toggle('on', cb.checked);
-              updateCompletionRingAurora();
-              if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-            }
-          });
-          cb.addEventListener('change', () => {
-            chip.classList.toggle('on', cb.checked);
-            updateCompletionRingAurora();
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        });
-      
-      } else if (type === 'counter') {
-        const goalNum = config.goalNumber || 6;
-        const isWeekly = config.goalType === 'weekly';
-        
-        section.querySelector('.counter-plus')?.addEventListener('click', () => {
-          const valEl = document.getElementById(`${id}_value`);
-          let val = parseInt(valEl.textContent) || 0;
-          val++;
-          valEl.textContent = val;
-          window.customSectionData[id].value = val;
-          
-          if (isWeekly) {
-            // Update dots
-            const dots = section.querySelectorAll('.counter-dot');
-            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
-          } else {
-            // Update progress bar
-            const fill = document.getElementById(`${id}_fill`);
-            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
-          }
-          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-        });
-        
-        section.querySelector('.counter-minus')?.addEventListener('click', () => {
-          const valEl = document.getElementById(`${id}_value`);
-          let val = parseInt(valEl.textContent) || 0;
-          if (val > 0) val--;
-          valEl.textContent = val;
-          window.customSectionData[id].value = val;
-          
-          if (isWeekly) {
-            const dots = section.querySelectorAll('.counter-dot');
-            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
-          } else {
-            const fill = document.getElementById(`${id}_fill`);
-            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
-          }
-          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-        });
-      
-      } else if (type === 'log') {
-        const addBtn = document.getElementById(`${id}_addBtn`);
-        addBtn?.addEventListener('click', () => openLogModal(id, config.fields || []));
-      
-      } else if (type === 'rating') {
-        const stars = section.querySelectorAll('.star');
-        const input = document.getElementById(`${id}_input`);
-        stars.forEach(star => {
-          star.addEventListener('click', () => {
-            const val = parseInt(star.dataset.val);
-            input.value = val;
-            window.customSectionData[id].value = val;
-            stars.forEach((s, i) => {
-              s.textContent = i < val ? '★' : '☆';
-              s.classList.toggle('filled', i < val);
-            });
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        });
-      
-      } else if (type === 'toggle') {
-        const chip = section.querySelector('.toggle-chip');
-        const cb = chip.querySelector('input');
-        chip.addEventListener('click', (e) => {
-          if (e.target.type !== 'checkbox') {
-            cb.checked = !cb.checked;
-            chip.classList.toggle('on', cb.checked);
-            chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
-            updateCompletionRingAurora();
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          }
-        });
-        cb.addEventListener('change', () => {
+    if (isWeekly) {
+      // Weekly goal with dots
+      let dots = '';
+      for (let i = 0; i < goalNum; i++) {
+        dots += `<div class="counter-dot" data-idx="${i}"></div>`;
+      }
+      content = `
+        <div style="display:flex;align-items:center;gap:12px">
+          <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
+          <div class="water-num counter-value" id="${id}_value">0</div>
+          <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
+          <div class="counter-dots" id="${id}_dots" style="display:flex;gap:6px;margin-left:auto">
+            ${dots}
+          </div>
+        </div>
+        <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/week</div>
+      `;
+    } else {
+      // Daily goal with progress bar
+      content = `
+        <div style="display:flex;align-items:center;gap:12px">
+          <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
+          <div class="water-num counter-value" id="${id}_value">0</div>
+          <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
+          <div class="water-bar-wrap">
+            <div class="water-bar-track">
+              <div class="water-bar-fill counter-fill" id="${id}_fill" style="height:0%"></div>
+            </div>
+            <div class="water-bar-goal">${goalNum}</div>
+          </div>
+        </div>
+        <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/day</div>
+      `;
+    }
+  
+  } else if (type === 'log') {
+    content = `
+      <div class="items" id="${id}_list"></div>
+      <button type="button" class="btn btn-secondary" id="${id}_addBtn">+ Add Entry</button>
+    `;
+  
+  } else if (type === 'time') {
+    content = `<input type="time" class="input" id="${id}_input">`;
+  
+  } else if (type === 'rating') {
+    const label = config.label || 'Rate';
+    content = `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${label}</div>
+      <div class="rating-stars" id="${id}_stars">
+        <span class="star" data-val="1">☆</span>
+        <span class="star" data-val="2">☆</span>
+        <span class="star" data-val="3">☆</span>
+        <span class="star" data-val="4">☆</span>
+        <span class="star" data-val="5">☆</span>
+      </div>
+      <input type="hidden" id="${id}_input" value="">
+    `;
+  
+  } else if (type === 'toggle') {
+    content = `
+      <div class="chips">
+        <div class="chip toggle-chip" id="${id}_toggle">
+          <input type="checkbox" id="${id}_input">
+          <div class="chip-dot">✓</div>
+          <span class="chip-text">Yes</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  section.innerHTML = `
+    <div class="sec-head collapsed">
+      <div class="sec-title">
+        <div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink)">${icon}</div>
+        <span class="sec-name">${name}</span>
+      </div>
+      <span class="sec-toggle">▼</span>
+    </div>
+    <div class="sec-content collapsed">${content}</div>
+  `;
+  
+  form.appendChild(section);
+  
+  // Wire up collapse
+  const head = section.querySelector('.sec-head');
+  head.addEventListener('click', () => {
+    head.classList.toggle('collapsed');
+    section.querySelector('.sec-content').classList.toggle('collapsed');
+  });
+  
+  // Wire up type-specific interactions
+  wireUpCustomSection(section, id, type, config);
+}
+
+function wireUpCustomSection(section, id, type, config) {
+  if (type === 'checkbox') {
+    section.querySelectorAll('.chip').forEach(chip => {
+      const cb = chip.querySelector('input');
+      chip.addEventListener('click', (e) => {
+        if (e.target.type !== 'checkbox') {
+          cb.checked = !cb.checked;
           chip.classList.toggle('on', cb.checked);
-          chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
           updateCompletionRingAurora();
           if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-        });
-      
-      } else if (type === 'text') {
-        const input = document.getElementById(`${id}_input`);
-        if (input) {
-          // Save on blur (when user clicks away) to avoid interrupting typing
-          input.addEventListener('blur', () => {
-            window.customSectionData[id] = window.customSectionData[id] || {};
-            window.customSectionData[id].value = input.value;
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        }
-      
-      } else if (type === 'number') {
-        const input = document.getElementById(`${id}_input`);
-        if (input) {
-          input.addEventListener('change', () => {
-            window.customSectionData[id] = window.customSectionData[id] || {};
-            window.customSectionData[id].value = input.value;
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        }
-      
-      } else if (type === 'time') {
-        const input = document.getElementById(`${id}_input`);
-        if (input) {
-          input.addEventListener('change', () => {
-            window.customSectionData[id] = window.customSectionData[id] || {};
-            window.customSectionData[id].value = input.value;
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        }
-      }
-    }
-    
-    // Log modal for custom log sections
-    function openLogModal(sectionId, fields) {
-      // Create modal if doesn't exist
-      let modal = document.getElementById('customLogModal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'customLogModal';
-        modal.className = 'modal';
-        modal.innerHTML = `
-          <div class="modal-overlay" onclick="closeLogModal()"></div>
-          <div class="modal-content">
-            <div class="modal-header">
-              <h3 id="logModalTitle">Add Entry</h3>
-              <button onclick="closeLogModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text)">×</button>
-            </div>
-            <div id="logModalFields"></div>
-            <button class="btn btn-primary" id="logModalSaveBtn" style="width:100%;margin-top:12px">Save</button>
-          </div>
-        `;
-        document.body.appendChild(modal);
-      }
-      
-      // Populate fields
-      const fieldsContainer = document.getElementById('logModalFields');
-      fieldsContainer.innerHTML = fields.map(f => `
-        <div class="field">
-          <label class="field-label">${f.name}</label>
-          ${f.type === 'number' 
-            ? `<input type="number" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="0">`
-            : `<input type="text" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="">`
-          }
-        </div>
-      `).join('');
-      
-      // Wire up save
-      document.getElementById('logModalSaveBtn').onclick = () => {
-        const entry = {};
-        fields.forEach(f => {
-          const input = document.getElementById(`logField_${f.name.replace(/\s/g, '_')}`);
-          entry[f.name] = f.type === 'number' ? (parseFloat(input.value) || 0) : input.value;
-        });
-        
-        if (!window.customSectionData[sectionId]) {
-          window.customSectionData[sectionId] = { entries: [] };
-        }
-        window.customSectionData[sectionId].entries.push(entry);
-        
-        renderLogEntries(sectionId, fields);
-        closeLogModal();
-        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-      };
-      
-      modal.classList.add('show');
-    }
-    
-    function closeLogModal() {
-      document.getElementById('customLogModal')?.classList.remove('show');
-    }
-    
-    function renderLogEntries(sectionId, fields) {
-      const list = document.getElementById(`${sectionId}_list`);
-      if (!list) return;
-      
-      const entries = window.customSectionData[sectionId]?.entries || [];
-      list.innerHTML = entries.map((entry, idx) => {
-        const summary = fields.map(f => entry[f.name]).filter(v => v).join(' · ');
-        return `
-          <div class="item">
-            <span class="item-text">${summary || 'Entry ' + (idx + 1)}</span>
-            <button type="button" class="btn btn-danger" onclick="removeLogEntry('${sectionId}', ${idx})">×</button>
-          </div>
-        `;
-      }).join('');
-    }
-    
-    window.removeLogEntry = function(sectionId, idx) {
-      if (window.customSectionData[sectionId]?.entries) {
-        window.customSectionData[sectionId].entries.splice(idx, 1);
-        // Re-render - need to get fields from config
-        const sec = appSettings.sections.find(s => s.id === sectionId);
-        if (sec?.config?.fields) {
-          renderLogEntries(sectionId, sec.config.fields);
-        }
-        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-      }
-    };
-    
-    // Load custom sections data from server and update UI
-    window.loadCustomSectionsData = function(data) {
-      // Reset all custom section data first
-      window.customSectionData = {};
-      
-      // Then load new data if provided
-      if (data && typeof data === 'object') {
-        window.customSectionData = data;
-      }
-      
-      // Update UI for each custom section
-      appSettings.sections.filter(s => s.custom).forEach(sec => {
-        const sectionData = window.customSectionData[sec.id] || {};
-        
-        // Ensure data structure exists
-        if (!window.customSectionData[sec.id]) {
-          window.customSectionData[sec.id] = { value: null, entries: [] };
-        }
-        
-        const type = sec.type;
-        const config = sec.config || {};
-        
-        if (type === 'counter') {
-          const val = sectionData.value || 0;
-          const valEl = document.getElementById(`${sec.id}_value`);
-          if (valEl) valEl.textContent = val;
-          
-          if (config.goalType === 'weekly') {
-            // Update dots
-            const dots = document.querySelectorAll(`#${sec.id} .counter-dot`);
-            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
-          } else {
-            // Update progress bar
-            const fill = document.getElementById(`${sec.id}_fill`);
-            const goalNum = config.goalNumber || 6;
-            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
-          }
-        
-        } else if (type === 'checkbox') {
-          const checkboxes = config.checkboxes || ['Done'];
-          checkboxes.forEach((cb, i) => {
-            const input = document.getElementById(`${sec.id}_check_${i}`);
-            const chip = input?.closest('.chip');
-            const isChecked = sectionData.checkboxes?.[i] || false;
-            if (input) {
-              input.checked = isChecked;
-              chip?.classList.toggle('on', isChecked);
-            }
-          });
-        
-        } else if (type === 'text') {
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) {
-            input.value = sectionData.value || '';
-            console.log(`Loading text for ${sec.id}:`, sectionData.value);
-          }
-        
-        } else if (type === 'number') {
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) input.value = sectionData.value || '';
-        
-        } else if (type === 'time') {
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) input.value = sectionData.value || '';
-        
-        } else if (type === 'rating') {
-          const val = sectionData.value || 0;
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) input.value = val;
-          const stars = document.querySelectorAll(`#${sec.id}_stars .star`);
-          stars.forEach((s, i) => {
-            s.textContent = i < val ? '★' : '☆';
-            s.classList.toggle('filled', i < val);
-          });
-        
-        } else if (type === 'toggle') {
-          const input = document.getElementById(`${sec.id}_input`);
-          const chip = document.getElementById(`${sec.id}_toggle`);
-          const isChecked = sectionData.value || false;
-          if (input) {
-            input.checked = isChecked;
-            chip?.classList.toggle('on', isChecked);
-            const textEl = chip?.querySelector('.chip-text');
-            if (textEl) textEl.textContent = isChecked ? 'Yes' : 'No';
-          }
-        
-        } else if (type === 'log') {
-          if (config.fields) {
-            renderLogEntries(sec.id, config.fields);
-          }
         }
       });
-      
-      // Update completion ring
-      if (typeof updateCompletionRingAurora === 'function') {
+      cb.addEventListener('change', () => {
+        chip.classList.toggle('on', cb.checked);
         updateCompletionRingAurora();
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      });
+    });
+  
+  } else if (type === 'counter') {
+    const goalNum = config.goalNumber || 6;
+    const isWeekly = config.goalType === 'weekly';
+    
+    section.querySelector('.counter-plus')?.addEventListener('click', () => {
+      const valEl = document.getElementById(`${id}_value`);
+      let val = parseInt(valEl.textContent) || 0;
+      val++;
+      valEl.textContent = val;
+      window.customSectionData[id].value = val;
+      
+      if (isWeekly) {
+        // Update dots
+        const dots = section.querySelectorAll('.counter-dot');
+        dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+      } else {
+        // Update progress bar
+        const fill = document.getElementById(`${id}_fill`);
+        if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
       }
-      
-      console.log('✅ loadCustomSectionsData ran', window.customSectionData);
-    };
+      if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+    });
     
-    // Collect custom sections data from UI for saving
-    window.collectCustomSectionsData = function() {
-      appSettings.sections.filter(s => s.custom).forEach(sec => {
-        if (!window.customSectionData[sec.id]) {
-          window.customSectionData[sec.id] = { value: null, entries: [] };
-        }
-        
-        const type = sec.type;
-        const config = sec.config || {};
-        
-        if (type === 'checkbox') {
-          const checkboxes = config.checkboxes || ['Done'];
-          window.customSectionData[sec.id].checkboxes = checkboxes.map((cb, i) => {
-            const input = document.getElementById(`${sec.id}_check_${i}`);
-            return input?.checked || false;
-          });
-        
-        } else if (type === 'text' || type === 'number' || type === 'time') {
-          const input = document.getElementById(`${sec.id}_input`);
-          window.customSectionData[sec.id].value = input?.value || '';
-        
-        } else if (type === 'toggle') {
-          const input = document.getElementById(`${sec.id}_input`);
-          window.customSectionData[sec.id].value = input?.checked || false;
-        }
-        // counter, rating, and log already update customSectionData directly
+    section.querySelector('.counter-minus')?.addEventListener('click', () => {
+      const valEl = document.getElementById(`${id}_value`);
+      let val = parseInt(valEl.textContent) || 0;
+      if (val > 0) val--;
+      valEl.textContent = val;
+      window.customSectionData[id].value = val;
+      
+      if (isWeekly) {
+        const dots = section.querySelectorAll('.counter-dot');
+        dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+      } else {
+        const fill = document.getElementById(`${id}_fill`);
+        if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+      }
+      if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+    });
+  
+  } else if (type === 'log') {
+    const addBtn = document.getElementById(`${id}_addBtn`);
+    addBtn?.addEventListener('click', () => openLogModal(id, config.fields || []));
+  
+  } else if (type === 'rating') {
+    const stars = section.querySelectorAll('.star');
+    const input = document.getElementById(`${id}_input`);
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        const val = parseInt(star.dataset.val);
+        input.value = val;
+        window.customSectionData[id].value = val;
+        stars.forEach((s, i) => {
+          s.textContent = i < val ? '★' : '☆';
+          s.classList.toggle('filled', i < val);
+        });
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
       });
-      
-      return window.customSectionData;
-    };
-    
-    // Export/Import settings
-    document.getElementById('exportSettingsBtn')?.addEventListener('click', () => {
-      const data = JSON.stringify(appSettings, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'elevate-settings.json';
-      a.click();
-      URL.revokeObjectURL(url);
+    });
+  
+  } else if (type === 'toggle') {
+    const chip = section.querySelector('.toggle-chip');
+    const cb = chip.querySelector('input');
+    chip.addEventListener('click', (e) => {
+      if (e.target.type !== 'checkbox') {
+        cb.checked = !cb.checked;
+        chip.classList.toggle('on', cb.checked);
+        chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
+        updateCompletionRingAurora();
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      }
+    });
+    cb.addEventListener('change', () => {
+      chip.classList.toggle('on', cb.checked);
+      chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
+      updateCompletionRingAurora();
+      if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+    });
+  
+  } else if (type === 'text') {
+    const input = document.getElementById(`${id}_input`);
+    if (input) {
+      // Save on blur (when user clicks away) to avoid interrupting typing
+      input.addEventListener('blur', () => {
+        window.customSectionData[id] = window.customSectionData[id] || {};
+        window.customSectionData[id].value = input.value;
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      });
+    }
+  
+  } else if (type === 'number') {
+    const input = document.getElementById(`${id}_input`);
+    if (input) {
+      input.addEventListener('change', () => {
+        window.customSectionData[id] = window.customSectionData[id] || {};
+        window.customSectionData[id].value = input.value;
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      });
+    }
+  
+  } else if (type === 'time') {
+    const input = document.getElementById(`${id}_input`);
+    if (input) {
+      input.addEventListener('change', () => {
+        window.customSectionData[id] = window.customSectionData[id] || {};
+        window.customSectionData[id].value = input.value;
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      });
+    }
+  }
+}
+
+// Log modal for custom log sections
+function openLogModal(sectionId, fields) {
+  // Create modal if doesn't exist
+  let modal = document.getElementById('customLogModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'customLogModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-overlay" onclick="closeLogModal()"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="logModalTitle">Add Entry</h3>
+          <button onclick="closeLogModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text)">×</button>
+        </div>
+        <div id="logModalFields"></div>
+        <button class="btn btn-primary" id="logModalSaveBtn" style="width:100%;margin-top:12px">Save</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  // Populate fields
+  const fieldsContainer = document.getElementById('logModalFields');
+  fieldsContainer.innerHTML = fields.map(f => `
+    <div class="field">
+      <label class="field-label">${f.name}</label>
+      ${f.type === 'number' 
+        ? `<input type="number" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="0">`
+        : `<input type="text" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="">`
+      }
+    </div>
+  `).join('');
+  
+  // Wire up save
+  document.getElementById('logModalSaveBtn').onclick = () => {
+    const entry = {};
+    fields.forEach(f => {
+      const input = document.getElementById(`logField_${f.name.replace(/\s/g, '_')}`);
+      entry[f.name] = f.type === 'number' ? (parseFloat(input.value) || 0) : input.value;
     });
     
-    document.getElementById('importSettingsBtn')?.addEventListener('click', () => {
-      document.getElementById('importSettingsFile').click();
-    });
+    if (!window.customSectionData[sectionId]) {
+      window.customSectionData[sectionId] = { entries: [] };
+    }
+    window.customSectionData[sectionId].entries.push(entry);
     
-    document.getElementById('importSettingsFile')?.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    renderLogEntries(sectionId, fields);
+    closeLogModal();
+    if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+  };
+  
+  modal.classList.add('show');
+}
+
+function closeLogModal() {
+  document.getElementById('customLogModal')?.classList.remove('show');
+}
+
+function renderLogEntries(sectionId, fields) {
+  const list = document.getElementById(`${sectionId}_list`);
+  if (!list) return;
+  
+  const entries = window.customSectionData[sectionId]?.entries || [];
+  list.innerHTML = entries.map((entry, idx) => {
+    const summary = fields.map(f => entry[f.name]).filter(v => v).join(' · ');
+    return `
+      <div class="item">
+        <span class="item-text">${summary || 'Entry ' + (idx + 1)}</span>
+        <button type="button" class="btn btn-danger" onclick="removeLogEntry('${sectionId}', ${idx})">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+window.removeLogEntry = function(sectionId, idx) {
+  if (window.customSectionData[sectionId]?.entries) {
+    window.customSectionData[sectionId].entries.splice(idx, 1);
+    // Re-render - need to get fields from config
+    const sec = appSettings.sections.find(s => s.id === sectionId);
+    if (sec?.config?.fields) {
+      renderLogEntries(sectionId, sec.config.fields);
+    }
+    if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+  }
+};
+
+// Load custom sections data from server and update UI
+window.loadCustomSectionsData = function(data) {
+  // Reset all custom section data first
+  window.customSectionData = {};
+  
+  // Then load new data if provided
+  if (data && typeof data === 'object') {
+    window.customSectionData = data;
+  }
+  
+  // Update UI for each custom section
+  appSettings.sections.filter(s => s.custom).forEach(sec => {
+    const sectionData = window.customSectionData[sec.id] || {};
+    
+    // Ensure data structure exists
+    if (!window.customSectionData[sec.id]) {
+      window.customSectionData[sec.id] = { value: null, entries: [] };
+    }
+    
+    const type = sec.type;
+    const config = sec.config || {};
+    
+    if (type === 'counter') {
+      const val = sectionData.value || 0;
+      const valEl = document.getElementById(`${sec.id}_value`);
+      if (valEl) valEl.textContent = val;
       
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const imported = JSON.parse(evt.target.result);
-          appSettings = { ...defaultSettings, ...imported };
-          saveSettings(appSettings);
-          renderSectionList();
-          applySectionSettings();
-          currentTheme = getCurrentTheme();
-          applyTheme(currentTheme, true);
-          alert('Settings imported successfully!');
-        } catch (err) {
-          alert('Error importing settings: ' + err.message);
+      if (config.goalType === 'weekly') {
+        // Update dots
+        const dots = document.querySelectorAll(`#${sec.id} .counter-dot`);
+        dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
+      } else {
+        // Update progress bar
+        const fill = document.getElementById(`${sec.id}_fill`);
+        const goalNum = config.goalNumber || 6;
+        if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+      }
+    
+    } else if (type === 'checkbox') {
+      const checkboxes = config.checkboxes || ['Done'];
+      checkboxes.forEach((cb, i) => {
+        const input = document.getElementById(`${sec.id}_check_${i}`);
+        const chip = input?.closest('.chip');
+        const isChecked = sectionData.checkboxes?.[i] || false;
+        if (input) {
+          input.checked = isChecked;
+          chip?.classList.toggle('on', isChecked);
         }
-      };
-      reader.readAsText(file);
-    });
+      });
     
-    // Initialize section settings on load
-    document.addEventListener('DOMContentLoaded', () => {
+    } else if (type === 'text') {
+      const input = document.getElementById(`${sec.id}_input`);
+      if (input) {
+        input.value = sectionData.value || '';
+        console.log(`Loading text for ${sec.id}:`, sectionData.value);
+      }
+    
+    } else if (type === 'number') {
+      const input = document.getElementById(`${sec.id}_input`);
+      if (input) input.value = sectionData.value || '';
+    
+    } else if (type === 'time') {
+      const input = document.getElementById(`${sec.id}_input`);
+      if (input) input.value = sectionData.value || '';
+    
+    } else if (type === 'rating') {
+      const val = sectionData.value || 0;
+      const input = document.getElementById(`${sec.id}_input`);
+      if (input) input.value = val;
+      const stars = document.querySelectorAll(`#${sec.id}_stars .star`);
+      stars.forEach((s, i) => {
+        s.textContent = i < val ? '★' : '☆';
+        s.classList.toggle('filled', i < val);
+      });
+    
+    } else if (type === 'toggle') {
+      const input = document.getElementById(`${sec.id}_input`);
+      const chip = document.getElementById(`${sec.id}_toggle`);
+      const isChecked = sectionData.value || false;
+      if (input) {
+        input.checked = isChecked;
+        chip?.classList.toggle('on', isChecked);
+        const textEl = chip?.querySelector('.chip-text');
+        if (textEl) textEl.textContent = isChecked ? 'Yes' : 'No';
+      }
+    
+    } else if (type === 'log') {
+      if (config.fields) {
+        renderLogEntries(sec.id, config.fields);
+      }
+    }
+  });
+  
+  // Update completion ring
+  if (typeof updateCompletionRingAurora === 'function') {
+    updateCompletionRingAurora();
+  }
+  
+  console.log('✅ loadCustomSectionsData ran', window.customSectionData);
+};
+
+// Collect custom sections data from UI for saving
+window.collectCustomSectionsData = function() {
+  appSettings.sections.filter(s => s.custom).forEach(sec => {
+    if (!window.customSectionData[sec.id]) {
+      window.customSectionData[sec.id] = { value: null, entries: [] };
+    }
+    
+    const type = sec.type;
+    const config = sec.config || {};
+    
+    if (type === 'checkbox') {
+      const checkboxes = config.checkboxes || ['Done'];
+      window.customSectionData[sec.id].checkboxes = checkboxes.map((cb, i) => {
+        const input = document.getElementById(`${sec.id}_check_${i}`);
+        return input?.checked || false;
+      });
+    
+    } else if (type === 'text' || type === 'number' || type === 'time') {
+      const input = document.getElementById(`${sec.id}_input`);
+      window.customSectionData[sec.id].value = input?.value || '';
+    
+    } else if (type === 'toggle') {
+      const input = document.getElementById(`${sec.id}_input`);
+      window.customSectionData[sec.id].value = input?.checked || false;
+    }
+    // counter, rating, and log already update customSectionData directly
+  });
+  
+  return window.customSectionData;
+};
+
+// Export/Import settings
+document.getElementById('exportSettingsBtn')?.addEventListener('click', () => {
+  const data = JSON.stringify(appSettings, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'elevate-settings.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importSettingsBtn')?.addEventListener('click', () => {
+  document.getElementById('importSettingsFile').click();
+});
+
+document.getElementById('importSettingsFile')?.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const imported = JSON.parse(evt.target.result);
+      appSettings = { ...defaultSettings, ...imported };
+      saveSettings(appSettings);
+      renderSectionList();
       applySectionSettings();
-      
-      // Recreate any custom sections
-      appSettings.sections.filter(s => s.custom).forEach(sec => {
-        if (!document.getElementById(sec.id)) {
-          createCustomSection(sec.id, sec.name, sec.icon, sec.type, sec.config || {});
-        }
-      });
-    });
+      currentTheme = getCurrentTheme();
+      applyTheme(currentTheme, true);
+      alert('Settings imported successfully!');
+    } catch (err) {
+      alert('Error importing settings: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Initialize section settings on load
+document.addEventListener('DOMContentLoaded', () => {
+  applySectionSettings();
+  
+  // Recreate any custom sections
+  appSettings.sections.filter(s => s.custom).forEach(sec => {
+    if (!document.getElementById(sec.id)) {
+      createCustomSection(sec.id, sec.name, sec.icon, sec.type, sec.config || {});
+    }
+  });
+});
+```
+
   </script>
 </body>
 </html>
