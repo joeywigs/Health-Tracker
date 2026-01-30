@@ -1308,7 +1308,7 @@ body.day-mode .item {
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v1.2</span></h1>
+          <h1>Habits <span class="version">v1.3</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1803,6 +1803,8 @@ body.day-mode .item {
       const total = checkboxes.length;
       const checked = checkboxes.filter(cb => cb.checked).length;
       
+      console.log('updateCompletionRingAurora:', {total, checked, chipCount: chipCheckboxes.length, miniSuppCount: miniSuppCheckboxes.length});
+      
       const progress = document.getElementById('completionProgress');
       const number = document.getElementById('completionNumber');
       
@@ -1814,8 +1816,11 @@ body.day-mode .item {
         } else {
           offset = circumference - (checked / total) * circumference;
         }
+        console.log('Setting ring offset to', offset);
         progress.style.strokeDashoffset = offset;
         number.textContent = checked;
+      } else {
+        console.log('Ring elements not found!', {progress: !!progress, number: !!number});
       }
     }
     
@@ -1823,10 +1828,12 @@ body.day-mode .item {
     function updateWaterBar(){
       const waterCount = document.getElementById('waterCount');
       const fill = document.getElementById('waterBarFill');
+      console.log('updateWaterBar called', {waterCount: waterCount?.textContent, fill: !!fill});
       if(!waterCount || !fill) return;
       const count = parseInt(waterCount.textContent) || 0;
       const goal = 6;
       const pct = Math.min(100, (count / goal) * 100);
+      console.log('Water bar setting width to', pct + '%');
       fill.style.width = pct + '%';
     }
     
@@ -1834,10 +1841,12 @@ body.day-mode .item {
     function updateStepsBar(){
       const stepsInput = document.getElementById('steps');
       const fill = document.getElementById('stepsBarFill');
+      console.log('updateStepsBar called', {steps: stepsInput?.value, fill: !!fill});
       if(!stepsInput || !fill) return;
       const steps = parseInt(stepsInput.value) || 0;
       const goal = 7500;
       const pct = Math.min(100, (steps / goal) * 100);
+      console.log('Steps bar setting width to', pct + '%');
       fill.style.width = pct + '%';
     }
     
