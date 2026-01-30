@@ -357,6 +357,7 @@ body.day-mode .header {
   50% { box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple); }
 }
 .brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: white; margin: 0; }
+.brand h1 .version { font-size: 12px; font-weight: 500; color: var(--text-muted); vertical-align: super; margin-left: 4px; }
 .brand .tagline { font-size: 16px; font-weight: 600; color: var(--accent-pink); margin-top: 2px; }
 .phase-day { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .nav-links { display: flex; gap: 8px; }
@@ -1307,7 +1308,7 @@ body.day-mode .item {
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits</h1>
+          <h1>Habits <span class="version">v1.2</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
