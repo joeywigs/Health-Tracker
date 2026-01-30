@@ -1974,11 +1974,17 @@ async function loadDataForCurrentDate(options = {}) {
   const dateStr = formatDateForAPI(currentDate);
   console.log("Loading data for", dateStr);
 
-  // 1) If cached and not forcing, show instantly
+  // Show loading if not cached
   const cached = cacheGet(dateStr);
+  if (!cached || options.force) {
+    if (typeof showLoading === 'function') showLoading();
+  }
+
+  // 1) If cached and not forcing, show instantly
   if (cached && !cached?.error && !options.force) {
     await populateForm(cached);
     prefetchAround(currentDate);
+    if (typeof hideLoading === 'function') hideLoading();
     
     // Start chart data loading in background if not already loaded
     if (!chartDataCache && !chartDataLoading) {
@@ -1993,10 +1999,13 @@ async function loadDataForCurrentDate(options = {}) {
 
     if (result?.error) {
       console.error("Backend error:", result.message);
+      if (typeof hideLoading === 'function') hideLoading();
+      if (typeof showToast === 'function') showToast('Failed to load', 'error');
       return;
     }
 
     await populateForm(result);
+    if (typeof hideLoading === 'function') hideLoading();
 
     // 3) Prefetch neighbors so next/prev is fast
     prefetchAround(currentDate);
@@ -2009,6 +2018,8 @@ async function loadDataForCurrentDate(options = {}) {
     dataChanged = false;
   } catch (err) {
     console.error("Load failed:", err);
+    if (typeof hideLoading === 'function') hideLoading();
+    if (typeof showToast === 'function') showToast('Load failed', 'error');
   }
 }
 
@@ -2018,11 +2029,15 @@ async function saveData(payload) {
 
     if (saveResult?.error) {
       console.error("Save error:", saveResult.message);
+      if (typeof showToast === 'function') showToast('Save failed', 'error');
       return;
     }
 
     console.log("💾 Saved successfully", saveResult);
     dataChanged = false;
+    
+    // Show success toast
+    if (typeof showToast === 'function') showToast('Saved ✓', 'success');
 
     if ("sleepHours" in payload) {
       markSleepSaved();
@@ -2033,6 +2048,7 @@ async function saveData(payload) {
 
   } catch (err) {
     console.error("Save failed:", err);
+    if (typeof showToast === 'function') showToast('Save failed', 'error');
   }
 }
 
