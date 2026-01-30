@@ -892,6 +892,7 @@ async function loadAndRenderCharts() {
     renderSleepChart(dataPoints);
     renderStepsChart(dataPoints);
     renderRehitChart(dataPoints);
+    renderPeakWattsChart(dataPoints);
     renderBodyCompositionChart(dataPoints);
     renderBloodPressureChart(dataPoints);
   } catch (err) {
@@ -937,7 +938,8 @@ function updateRangeButtonsAvailability() {
   }
 }
 
-let weightChart, sleepChart, stepsChart, rehitChart, bodyCompChart;
+let weightChart, sleepChart, stepsChart, rehitChart, bodyCompChart, peakWattsChart;
+let rehitCalendarMonth = new Date(); // Track current month for calendar
 
 function renderWeightChart(dataPoints) {
   const canvas = document.getElementById("weightChart");
@@ -1125,59 +1127,193 @@ function renderStepsChart(dataPoints) {
   });
 }
 
+// Store REHIT data globally for calendar
+let rehitDataMap = {};
+
 function renderRehitChart(dataPoints) {
-  const canvas = document.getElementById("rehitChart");
+  // Build a map of date -> rehit value for calendar lookup
+  rehitDataMap = {};
+  dataPoints.forEach(d => {
+    const val = d.daily["REHIT 2x10"];
+    if (val === "2x10" || val === true || val === "TRUE") {
+      rehitDataMap[d.date] = "2x10";
+    } else if (val === "3x10") {
+      rehitDataMap[d.date] = "3x10";
+    }
+  });
+  
+  // Render the calendar
+  renderRehitCalendar();
+}
+
+function renderRehitCalendar() {
+  const container = document.getElementById("rehitCalendar");
+  if (!container) return;
+  
+  const year = rehitCalendarMonth.getFullYear();
+  const month = rehitCalendarMonth.getMonth();
+  
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  
+  // Get first day of month and number of days
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDay = firstDay.getDay(); // 0 = Sunday
+  
+  // Get days from previous month to fill first week
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+  
+  let html = `
+    <div class="rehit-cal-header">
+      <div class="rehit-cal-title">${monthNames[month]} ${year}</div>
+      <div class="rehit-cal-nav">
+        <button type="button" onclick="navigateRehitCalendar(-1)">‹</button>
+        <button type="button" onclick="navigateRehitCalendar(1)">›</button>
+      </div>
+    </div>
+    <div class="rehit-cal-weekdays">
+      <div class="rehit-cal-weekday">S</div>
+      <div class="rehit-cal-weekday">M</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">W</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">F</div>
+      <div class="rehit-cal-weekday">S</div>
+    </div>
+    <div class="rehit-cal-days">
+  `;
+  
+  // Previous month days
+  for (let i = startingDay - 1; i >= 0; i--) {
+    const day = prevMonthLastDay - i;
+    html += `<div class="rehit-cal-day other-month">${day}</div>`;
+  }
+  
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const rehitVal = rehitDataMap[dateStr];
+    const isToday = dateStr === todayStr;
+    
+    let classes = "rehit-cal-day";
+    if (isToday) classes += " today";
+    if (rehitVal) {
+      classes += " has-rehit";
+      if (rehitVal === "2x10") classes += " rehit-2x10";
+      if (rehitVal === "3x10") classes += " rehit-3x10";
+    }
+    
+    html += `<div class="${classes}">${day}</div>`;
+  }
+  
+  // Next month days to fill last week
+  const totalCells = startingDay + daysInMonth;
+  const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= remainingCells; i++) {
+    html += `<div class="rehit-cal-day other-month">${i}</div>`;
+  }
+  
+  html += `
+    </div>
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item">
+        <div class="rehit-cal-legend-dot dot-2x10"></div>
+        <span>2×10</span>
+      </div>
+      <div class="rehit-cal-legend-item">
+        <div class="rehit-cal-legend-dot dot-3x10"></div>
+        <span>3×10</span>
+      </div>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+function navigateRehitCalendar(direction) {
+  rehitCalendarMonth.setMonth(rehitCalendarMonth.getMonth() + direction);
+  renderRehitCalendar();
+}
+
+// Make it globally available
+window.navigateRehitCalendar = navigateRehitCalendar;
+
+function renderPeakWattsChart(dataPoints) {
+  const canvas = document.getElementById("peakWattsChart");
   if (!canvas) return;
   
   const ctx = canvas.getContext("2d");
   
-  if (rehitChart) rehitChart.destroy();
+  if (peakWattsChart) peakWattsChart.destroy();
   
-  const labels = dataPoints.map(d => d.date);
-  const rehitData = dataPoints.map(d => {
-    const val = d.daily["REHIT 2x10"];
-    if (val === "2x10" || val === true || val === "TRUE") return 1;
-    if (val === "3x10") return 2;
-    return 0; // handles "", false, "FALSE", null, undefined
+  // Filter to only days with peak watts data
+  const filteredData = dataPoints.filter(d => {
+    const watts = parseFloat(d.daily["Peak Watts"]);
+    return !isNaN(watts) && watts > 0;
   });
   
-  rehitChart = new Chart(ctx, {
-    type: 'bar',
+  if (filteredData.length === 0) {
+    // No data - show empty state
+    canvas.style.display = 'none';
+    return;
+  }
+  
+  canvas.style.display = 'block';
+  
+  const labels = filteredData.map(d => d.date);
+  const watts = filteredData.map(d => parseFloat(d.daily["Peak Watts"]));
+  
+  // Calculate trend line
+  const avgWatts = watts.reduce((a, b) => a + b, 0) / watts.length;
+  
+  peakWattsChart = new Chart(ctx, {
+    type: 'line',
     data: {
       labels: labels,
       datasets: [{
-        label: 'REHIT Sessions',
-        data: rehitData,
-        backgroundColor: rehitData.map(v => {
-          if (v === 2) return '#52b788';
-          if (v === 1) return '#4d9de0';
-          return '#3a3a3a';
-        }),
-        borderWidth: 0
+        label: 'Peak Watts',
+        data: watts,
+        borderColor: '#ff6b9d',
+        backgroundColor: 'rgba(255, 107, 157, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: '#ff6b9d',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `${context.parsed.y} watts`;
+            }
+          }
+        }
       },
       scales: {
-        x: { 
+        x: {
           ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
           grid: { color: '#3a3a3a' }
         },
         y: {
-          beginAtZero: true,
-          max: 2,
+          beginAtZero: false,
           ticks: { 
             color: '#999',
-            stepSize: 1,
             callback: function(value) {
-              if (value === 0) return 'None';
-              if (value === 1) return '2x10';
-              if (value === 2) return '3x10';
-              return value;
+              return value + 'W';
             }
           },
           grid: { color: '#3a3a3a' }
