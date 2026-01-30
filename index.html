@@ -7,6 +7,9 @@
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/png" href="/icons/new-icon.png">
+  <link rel="apple-touch-icon" href="/icons/new-icon.png">
+  <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -286,6 +289,130 @@
     }
     .theme-indicator.show {
       opacity: 1;
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-deep);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .loading-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent-pink);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    body.day-mode .loading-overlay {
+      background: linear-gradient(135deg, #fef3e2 0%, #fce7c8 50%, #fff9f0 100%);
+    }
+    body.day-mode .loading-spinner {
+      border-color: rgba(0,0,0,0.1);
+      border-top-color: var(--accent-orange);
+    }
+    body.day-mode .loading-text {
+      color: #6b7280;
+    }
+    
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 12px 24px;
+      border-radius: var(--radius-pill);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.success {
+      border-color: var(--success);
+      box-shadow: 0 0 20px var(--glow-teal);
+    }
+    .toast.error {
+      border-color: #ef4444;
+      box-shadow: 0 0 20px rgba(239,68,68,0.4);
+    }
+    body.day-mode .toast {
+      background: rgba(255,255,255,0.95);
+      color: #1f2937;
+    }
+    
+    /* Pull to Refresh */
+    .pull-indicator {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      font-size: 12px;
+      color: var(--text-muted);
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pull-indicator.visible {
+      transform: translateX(-50%) translateY(0);
+    }
+    .pull-indicator .pull-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: var(--accent-teal);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    body.day-mode .pull-indicator {
+      background: rgba(255,255,255,0.9);
+      color: #6b7280;
+    }
+    body.day-mode .pull-indicator .pull-spinner {
+      border-color: rgba(0,0,0,0.1);
+      border-top-color: var(--accent-orange);
     }
       --radius-pill: 100px;
     }
@@ -1171,6 +1298,24 @@
     }
     .time-input:focus { border-color: var(--accent-teal); }
     
+    .goal-input {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none;
+      width: 80px;
+      text-align: center;
+    }
+    .goal-input:focus { border-color: var(--accent-teal); }
+    body.day-mode .goal-input {
+      background: rgba(255,255,255,0.8);
+      color: #1f2937;
+    }
+    
     .theme-preview { display: flex; gap: 8px; }
     .theme-btn {
       width: 40px; height: 40px;
@@ -1251,6 +1396,24 @@
   </style>
 </head>
 <body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading...</div>
+  </div>
+  
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">✓</span>
+    <span class="toast-text">Saved</span>
+  </div>
+  
+  <!-- Pull to Refresh Indicator -->
+  <div class="pull-indicator" id="pullIndicator">
+    <div class="pull-spinner"></div>
+    <span>Refreshing...</span>
+  </div>
+
   <div class="theme-indicator" id="themeIndicator">☀️ Day Mode</div>
   
   <svg width="0" height="0" style="position:absolute">
@@ -1308,7 +1471,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v1.8</span></h1>
+          <h1>Habits <span class="version">v2.0</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1568,6 +1731,34 @@
       </div>
     </header>
     
+    <!-- Goals Settings -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Daily Goals</span></div></div>
+      <div class="sec-content">
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">💧 Water Goal</span>
+            <span class="setting-desc">Glasses per day</span>
+          </div>
+          <input type="number" class="goal-input" id="waterGoal" value="6" min="1" max="20">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">👟 Steps Goal</span>
+            <span class="setting-desc">Steps per day</span>
+          </div>
+          <input type="number" class="goal-input" id="stepsGoal" value="7500" min="1000" max="50000" step="500">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">🚴 REHIT Goal</span>
+            <span class="setting-desc">Sessions per week</span>
+          </div>
+          <input type="number" class="goal-input" id="rehitGoal" value="4" min="1" max="7">
+        </div>
+      </div>
+    </div>
+    
     <!-- Theme Settings -->
     <div class="section">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-orange);--icon-end:var(--accent-yellow);--icon-glow:var(--glow-orange)">🌗</div><span class="sec-name">Theme Schedule</span></div></div>
@@ -1767,6 +1958,94 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
   <script src="app.js" defer></script>
   <script>
+    // =============================================
+    // TOAST NOTIFICATIONS
+    // =============================================
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      
+      const icon = toast.querySelector('.toast-icon');
+      const text = toast.querySelector('.toast-text');
+      
+      text.textContent = message;
+      icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+      
+      toast.className = 'toast ' + type;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+    
+    // Make it globally available
+    window.showToast = showToast;
+    
+    // =============================================
+    // LOADING OVERLAY
+    // =============================================
+    function showLoading() {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) overlay.classList.remove('hidden');
+    }
+    
+    function hideLoading() {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) overlay.classList.add('hidden');
+    }
+    
+    window.showLoading = showLoading;
+    window.hideLoading = hideLoading;
+    
+    // =============================================
+    // PULL TO REFRESH
+    // =============================================
+    let pullStartY = 0;
+    let isPulling = false;
+    
+    function setupPullToRefresh() {
+      const indicator = document.getElementById('pullIndicator');
+      if (!indicator) return;
+      
+      document.addEventListener('touchstart', (e) => {
+        if (window.scrollY === 0) {
+          pullStartY = e.touches[0].clientY;
+          isPulling = true;
+        }
+      }, { passive: true });
+      
+      document.addEventListener('touchmove', (e) => {
+        if (!isPulling) return;
+        const pullDistance = e.touches[0].clientY - pullStartY;
+        
+        if (pullDistance > 60 && window.scrollY === 0) {
+          indicator.classList.add('visible');
+        }
+      }, { passive: true });
+      
+      document.addEventListener('touchend', () => {
+        if (!isPulling) return;
+        isPulling = false;
+        
+        const indicator = document.getElementById('pullIndicator');
+        if (indicator && indicator.classList.contains('visible')) {
+          // Trigger refresh
+          if (typeof loadDay === 'function') {
+            loadDay(window.currentDate || new Date().toISOString().split('T')[0]);
+          }
+          
+          setTimeout(() => {
+            indicator.classList.remove('visible');
+            showToast('Refreshed', 'success');
+          }, 500);
+        }
+      });
+    }
+    
+    // =============================================
+    // SYNC FUNCTIONS
+    // =============================================
     // Sync all chip visuals
     function syncAllChips() {
       document.querySelectorAll('.chip').forEach(c => {
@@ -1789,7 +2068,7 @@
       const total = checkboxes.length;
       const checked = checkboxes.filter(cb => cb.checked).length;
       
-      console.log('updateCompletionRingAurora:', {total, checked, chipCount: chipCheckboxes.length, miniSuppCount: miniSuppCheckboxes.length});
+      // Debug removed
       
       const progress = document.getElementById('completionProgress');
       const number = document.getElementById('completionNumber');
@@ -1802,37 +2081,33 @@
         } else {
           offset = circumference - (checked / total) * circumference;
         }
-        console.log('Setting ring offset to', offset);
+        // Debug removed
         progress.style.strokeDashoffset = offset;
         number.textContent = checked;
       } else {
-        console.log('Ring elements not found!', {progress: !!progress, number: !!number});
+        // Debug removed
       }
     }
     
-    // Water progress bar (goal: 6)
+    // Water progress bar
     function updateWaterBar(){
       const waterCount = document.getElementById('waterCount');
       const fill = document.getElementById('waterBarFill');
-      console.log('updateWaterBar called', {waterCount: waterCount?.textContent, fill: !!fill});
       if(!waterCount || !fill) return;
       const count = parseInt(waterCount.textContent) || 0;
-      const goal = 6;
+      const goal = (typeof appSettings !== 'undefined' && appSettings.waterGoal) ? appSettings.waterGoal : 6;
       const pct = Math.min(100, (count / goal) * 100);
-      console.log('Water bar setting width to', pct + '%');
       fill.style.width = pct + '%';
     }
     
-    // Steps progress bar (goal: 7500)
+    // Steps progress bar
     function updateStepsBar(){
       const stepsInput = document.getElementById('steps');
       const fill = document.getElementById('stepsBarFill');
-      console.log('updateStepsBar called', {steps: stepsInput?.value, fill: !!fill});
       if(!stepsInput || !fill) return;
       const steps = parseInt(stepsInput.value) || 0;
-      const goal = 7500;
+      const goal = (typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500;
       const pct = Math.min(100, (steps / goal) * 100);
-      console.log('Steps bar setting width to', pct + '%');
       fill.style.width = pct + '%';
     }
     
@@ -1878,7 +2153,7 @@
           }, 100);
         };
         window._populateFormHooked = true;
-        console.log('populateForm hooked successfully');
+        // Debug removed
       } else if (!window._populateFormHooked) {
         // Try again in 100ms if app.js hasn't loaded yet
         setTimeout(setupPopulateFormHook, 100);
@@ -1889,7 +2164,8 @@
     // MAIN DOM READY SETUP
     // =============================================
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM Ready - Setting up Aurora UI');
+      // Setup pull to refresh
+      setupPullToRefresh();
       
       // Setup populateForm hook
       setupPopulateFormHook();
@@ -1971,10 +2247,10 @@
         updateRehitDisplay();
         updateCompletionRingAurora();
         updatePhaseInfoFixed();
-        console.log('Initial UI sync complete');
+        // Debug removed
       }, 1500);
       
-      console.log('Aurora UI setup complete');
+      // Debug removed
     });
     
     // =============================================
@@ -2179,6 +2455,9 @@
     const defaultSettings = {
       dayStartTime: '05:00',
       nightStartTime: '17:00',
+      waterGoal: 6,
+      stepsGoal: 7500,
+      rehitGoal: 4,
       sections: [
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
@@ -2300,6 +2579,9 @@
       // Populate settings
       document.getElementById('dayStartTime').value = appSettings.dayStartTime;
       document.getElementById('nightStartTime').value = appSettings.nightStartTime;
+      document.getElementById('waterGoal').value = appSettings.waterGoal || 6;
+      document.getElementById('stepsGoal').value = appSettings.stepsGoal || 7500;
+      document.getElementById('rehitGoal').value = appSettings.rehitGoal || 4;
       
       window.scrollTo(0, 0);
       renderSectionList();
@@ -2435,6 +2717,29 @@
       saveSettings(appSettings);
       currentTheme = getCurrentTheme();
       applyTheme(currentTheme, true);
+    });
+    
+    // Goal inputs
+    document.getElementById('waterGoal')?.addEventListener('change', (e) => {
+      appSettings.waterGoal = parseInt(e.target.value) || 6;
+      saveSettings(appSettings);
+      // Update water bar goal
+      if (typeof updateWaterBar === 'function') updateWaterBar();
+      showToast('Water goal updated', 'success');
+    });
+    
+    document.getElementById('stepsGoal')?.addEventListener('change', (e) => {
+      appSettings.stepsGoal = parseInt(e.target.value) || 7500;
+      saveSettings(appSettings);
+      // Update steps bar goal
+      if (typeof updateStepsBar === 'function') updateStepsBar();
+      showToast('Steps goal updated', 'success');
+    });
+    
+    document.getElementById('rehitGoal')?.addEventListener('change', (e) => {
+      appSettings.rehitGoal = parseInt(e.target.value) || 4;
+      saveSettings(appSettings);
+      showToast('REHIT goal updated', 'success');
     });
     
     // Theme preview buttons
@@ -2971,7 +3276,6 @@
           const input = document.getElementById(`${sec.id}_input`);
           if (input) {
             input.value = sectionData.value || '';
-            console.log(`Loading text for ${sec.id}:`, sectionData.value);
           }
         
         } else if (type === 'number') {
@@ -3015,7 +3319,6 @@
         updateCompletionRingAurora();
       }
       
-      console.log('✅ loadCustomSectionsData ran', window.customSectionData);
     };
     
     // Collect custom sections data from UI for saving
@@ -3098,6 +3401,19 @@
         }
       });
     });
+    
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('SW registration failed:', error);
+          });
+      });
+    }
   </script>
 </body>
 </html>
