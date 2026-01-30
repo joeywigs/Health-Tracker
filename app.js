@@ -355,6 +355,21 @@ function setupWeeklySummaryButton() {
     summaryCloseBtn.addEventListener("click", hideWeeklySummaryPage);
   }
   
+  // Setup range buttons
+  document.querySelectorAll('.summary-range-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.summary-range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const range = btn.dataset.range;
+      const rangeValue = range === 'phase' ? 'phase' : range === 'all' ? 'all' : 7;
+      
+      if (chartDataCache && chartDataCache.length > 0) {
+        renderSummaryPage(chartDataCache, rangeValue);
+      }
+    });
+  });
+  
   console.log("✅ Weekly summary wired");
 }
 
@@ -418,19 +433,578 @@ async function loadWeeklySummary() {
   
   // If chart data not cached, fetch it now
   if (!chartDataCache || chartDataCache.length === 0) {
-    document.getElementById("weeklyStats").innerHTML = '<div style="color: #999;">Loading data...</div>';
+    document.getElementById("summaryOverview").innerHTML = '<div style="color: #999; text-align: center; padding: 20px;">Loading data...</div>';
     chartDataCache = await fetchChartData(null, true);
   }
   
   // Now render with the data
   if (chartDataCache && chartDataCache.length > 0) {
-    renderWeeklyStats(chartDataCache);
-    renderStreaks(chartDataCache);
-    renderWins(chartDataCache);
-    renderWeekComparison(chartDataCache);
+    renderSummaryPage(chartDataCache, 7);
   } else {
-    document.getElementById("weeklyStats").innerHTML = '<div style="color: #999;">No data available</div>';
+    document.getElementById("summaryOverview").innerHTML = '<div style="color: #999; text-align: center; padding: 20px;">No data available</div>';
   }
+}
+
+// Summary page state
+let currentSummaryRange = 7;
+const PHASE_START = new Date("2026-01-19");
+const PHASE_LENGTH = 21;
+
+// Goals configuration
+const GOALS = {
+  sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "hrs", type: "daily-avg" },
+  water: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
+  supps: { name: "Supplements", icon: "💊", target: 4, unit: "of 4", type: "daily-all" },
+  rehit: { name: "REHIT", icon: "🚴", target: 3, unit: "sessions", type: "weekly" },
+  steps: { name: "Steps", icon: "👟", target: 5000, unit: "steps", type: "daily-avg" },
+  movement: { name: "Movement", icon: "🚶", target: 2, unit: "breaks", type: "daily-avg" },
+  reading: { name: "Reading", icon: "📖", target: 60, unit: "min", type: "weekly" }
+};
+
+function getFilteredData(data, range) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (range === 7) {
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - 6);
+    return data.filter(d => {
+      const date = parseDataDate(d.date);
+      return date >= weekStart && date <= today;
+    });
+  } else if (range === 'phase') {
+    const phaseStart = new Date(PHASE_START);
+    phaseStart.setHours(0, 0, 0, 0);
+    const phaseEnd = new Date(phaseStart);
+    phaseEnd.setDate(phaseStart.getDate() + PHASE_LENGTH - 1);
+    return data.filter(d => {
+      const date = parseDataDate(d.date);
+      return date >= phaseStart && date <= Math.min(phaseEnd, today);
+    });
+  } else {
+    // All time
+    return data;
+  }
+}
+
+function parseDataDate(dateStr) {
+  // Parse M/D/YY format
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    const month = parseInt(parts[0]) - 1;
+    const day = parseInt(parts[1]);
+    const year = 2000 + parseInt(parts[2]);
+    return new Date(year, month, day);
+  }
+  return new Date(dateStr);
+}
+
+function calculateGoalStats(data, range) {
+  const stats = {};
+  const totalDays = data.length;
+  
+  // Sleep: goal is 7+ hours
+  const sleepValues = data.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
+  const sleepDaysMet = sleepValues.filter(v => v >= GOALS.sleep.target).length;
+  stats.sleep = {
+    pct: totalDays > 0 ? Math.round((sleepDaysMet / totalDays) * 100) : 0,
+    avg: sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : 0,
+    detail: `${sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : '--'} avg hrs`
+  };
+  
+  // Water: goal is 6 glasses
+  const waterValues = data.map(d => parseInt(d.daily["Water"])).filter(v => !isNaN(v));
+  const waterDaysMet = waterValues.filter(v => v >= GOALS.water.target).length;
+  stats.water = {
+    pct: totalDays > 0 ? Math.round((waterDaysMet / totalDays) * 100) : 0,
+    avg: waterValues.length > 0 ? (waterValues.reduce((a,b) => a+b, 0) / waterValues.length).toFixed(1) : 0,
+    detail: `${waterDaysMet}/${totalDays} days at 6+`
+  };
+  
+  // Supps: all 4 each day
+  let suppsDaysMet = 0;
+  data.forEach(d => {
+    const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
+    const vitD = d.daily["Vitamin D"];
+    const no2 = d.daily["NO2"];
+    const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
+    const allFour = [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE" || v === "true").length;
+    if (allFour === 4) suppsDaysMet++;
+  });
+  stats.supps = {
+    pct: totalDays > 0 ? Math.round((suppsDaysMet / totalDays) * 100) : 0,
+    detail: `${suppsDaysMet}/${totalDays} days all 4`
+  };
+  
+  // REHIT: 3 sessions per week
+  const weeks = Math.max(1, Math.ceil(totalDays / 7));
+  const rehitCount = data.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
+  const rehitPerWeek = rehitCount / weeks;
+  stats.rehit = {
+    pct: Math.min(100, Math.round((rehitPerWeek / GOALS.rehit.target) * 100)),
+    total: rehitCount,
+    detail: `${rehitCount} sessions (${rehitPerWeek.toFixed(1)}/wk)`
+  };
+  
+  // Steps: 5000 per day average
+  const stepsValues = data.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
+  const avgSteps = stepsValues.length > 0 ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
+  const stepsDaysMet = stepsValues.filter(v => v >= GOALS.steps.target).length;
+  stats.steps = {
+    pct: Math.min(100, Math.round((avgSteps / GOALS.steps.target) * 100)),
+    avg: Math.round(avgSteps),
+    detail: `${Math.round(avgSteps).toLocaleString()} avg steps`
+  };
+  
+  // Movement: 2 breaks per day average
+  let totalMovements = 0;
+  data.forEach(d => {
+    // Count movement breaks from Movements field
+    const movements = d.daily["Movements"];
+    if (movements && typeof movements === 'string') {
+      totalMovements += movements.split(',').filter(m => m.trim()).length;
+    } else if (Array.isArray(movements)) {
+      totalMovements += movements.length;
+    }
+  });
+  const avgMovements = totalDays > 0 ? totalMovements / totalDays : 0;
+  stats.movement = {
+    pct: Math.min(100, Math.round((avgMovements / GOALS.movement.target) * 100)),
+    avg: avgMovements.toFixed(1),
+    detail: `${avgMovements.toFixed(1)} avg/day`
+  };
+  
+  // Reading: 60 min per week
+  let totalReadingMins = 0;
+  data.forEach(d => {
+    const mins = parseInt(d.daily["Reading Minutes"]) || 0;
+    totalReadingMins += mins;
+  });
+  const readingPerWeek = weeks > 0 ? totalReadingMins / weeks : 0;
+  stats.reading = {
+    pct: Math.min(100, Math.round((readingPerWeek / GOALS.reading.target) * 100)),
+    total: totalReadingMins,
+    detail: `${totalReadingMins} min total`
+  };
+  
+  // Nutrition stats
+  let goodMealsDays = 0;
+  let healthySnacksDays = 0;
+  data.forEach(d => {
+    const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
+    const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
+    const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
+    const mealsCount = [breakfast, lunch, dinner].filter(Boolean).length;
+    if (mealsCount >= 2) goodMealsDays++;
+    
+    const daySnacks = d.daily["Healthy Day Snacks"] || d.daily["Day Snacks"];
+    const nightSnacks = d.daily["Healthy Night Snacks"] || d.daily["Night Snacks"];
+    const snacksHealthy = [daySnacks, nightSnacks].filter(v => v === true || v === "TRUE").length;
+    if (snacksHealthy >= 2) healthySnacksDays++;
+  });
+  stats.meals = {
+    pct: totalDays > 0 ? Math.round((goodMealsDays / totalDays) * 100) : 0,
+    detail: `${goodMealsDays}/${totalDays} days 2+ meals`
+  };
+  stats.snacks = {
+    pct: totalDays > 0 ? Math.round((healthySnacksDays / totalDays) * 100) : 0,
+    detail: `${healthySnacksDays}/${totalDays} days healthy`
+  };
+  
+  // Mindfulness (meditation)
+  let meditationDays = 0;
+  data.forEach(d => {
+    const med = d.daily["Meditation"] || d.daily["Meditated"];
+    if (med === true || med === "TRUE" || med === "true") meditationDays++;
+  });
+  stats.meditation = {
+    pct: totalDays > 0 ? Math.round((meditationDays / totalDays) * 100) : 0,
+    detail: `${meditationDays}/${totalDays} days`
+  };
+  
+  // Kid's habits
+  let inhalerMorningDays = 0, inhalerEveningDays = 0, mathDays = 0;
+  data.forEach(d => {
+    if (d.daily["Grey's Inhaler Morning"] === true || d.daily["Inhaler Morning"] === true || 
+        d.daily["Grey's Inhaler Morning"] === "TRUE" || d.daily["Inhaler Morning"] === "TRUE") inhalerMorningDays++;
+    if (d.daily["Grey's Inhaler Evening"] === true || d.daily["Inhaler Evening"] === true ||
+        d.daily["Grey's Inhaler Evening"] === "TRUE" || d.daily["Inhaler Evening"] === "TRUE") inhalerEveningDays++;
+    if (d.daily["5 min Multiplication"] === true || d.daily["5 min Multiplication"] === "TRUE") mathDays++;
+  });
+  stats.inhalerAM = { pct: totalDays > 0 ? Math.round((inhalerMorningDays / totalDays) * 100) : 0, detail: `${inhalerMorningDays}/${totalDays} days` };
+  stats.inhalerPM = { pct: totalDays > 0 ? Math.round((inhalerEveningDays / totalDays) * 100) : 0, detail: `${inhalerEveningDays}/${totalDays} days` };
+  stats.math = { pct: totalDays > 0 ? Math.round((mathDays / totalDays) * 100) : 0, detail: `${mathDays}/${totalDays} days` };
+  
+  // Writing (reflections, stories, carly)
+  let reflectionsDays = 0, storiesDays = 0, carlyDays = 0;
+  data.forEach(d => {
+    if (d.daily["Reflections"] && d.daily["Reflections"].trim() !== "") reflectionsDays++;
+    if (d.daily["Grey & Sloane Story"] && d.daily["Grey & Sloane Story"].trim() !== "") storiesDays++;
+    if (d.daily["Carly"] && d.daily["Carly"].trim() !== "") carlyDays++;
+  });
+  stats.reflections = { pct: totalDays > 0 ? Math.round((reflectionsDays / totalDays) * 100) : 0, detail: `${reflectionsDays}/${totalDays} days` };
+  stats.stories = { pct: totalDays > 0 ? Math.round((storiesDays / totalDays) * 100) : 0, detail: `${storiesDays}/${totalDays} days` };
+  stats.carly = { pct: totalDays > 0 ? Math.round((carlyDays / totalDays) * 100) : 0, detail: `${carlyDays}/${totalDays} days` };
+  
+  return stats;
+}
+
+function renderSummaryPage(data, range) {
+  currentSummaryRange = range;
+  const filteredData = getFilteredData(data, range);
+  const stats = calculateGoalStats(filteredData, range);
+  
+  // Update subtitle
+  const subtitle = document.getElementById('summarySubtitle');
+  if (subtitle) {
+    if (range === 7) subtitle.textContent = '7 Days';
+    else if (range === 'phase') subtitle.textContent = 'Phase 1';
+    else subtitle.textContent = 'All Time';
+  }
+  
+  // Overview stats
+  renderSummaryOverview(filteredData, stats, range);
+  
+  // REHIT Calendar
+  renderSummaryRehitCalendar(data, range);
+  
+  // Goal performance
+  renderGoalPerformance(stats);
+  
+  // Category stats
+  renderHealthGoals(stats);
+  renderNutritionStats(stats);
+  renderMindfulnessStats(stats);
+  renderKidsHabitsStats(stats);
+  renderWritingStats(stats);
+}
+
+function renderSummaryOverview(data, stats, range) {
+  const container = document.getElementById('summaryOverview');
+  if (!container) return;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const phaseStart = new Date(PHASE_START);
+  phaseStart.setHours(0, 0, 0, 0);
+  
+  const daysIntoPhase = Math.max(0, Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
+  const daysRemaining = Math.max(0, PHASE_LENGTH - daysIntoPhase);
+  const totalDaysLogged = data.length;
+  
+  // Calculate percent complete (days with 90%+ goals)
+  let daysComplete = 0;
+  data.forEach(d => {
+    // Count goals met: sleep 7+, water 6+, 4 supps, steps 5000+
+    let goalsMet = 0;
+    const totalGoals = 4;
+    
+    const sleep = parseFloat(d.daily["Hours of Sleep"]);
+    if (!isNaN(sleep) && sleep >= 7) goalsMet++;
+    
+    const water = parseInt(d.daily["Water"]);
+    if (!isNaN(water) && water >= 6) goalsMet++;
+    
+    const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
+    const vitD = d.daily["Vitamin D"];
+    const no2 = d.daily["NO2"];
+    const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
+    const allSupps = [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE").length === 4;
+    if (allSupps) goalsMet++;
+    
+    const steps = parseInt(d.daily["Steps"]);
+    if (!isNaN(steps) && steps >= 5000) goalsMet++;
+    
+    if (goalsMet / totalGoals >= 0.9) daysComplete++;
+  });
+  
+  const pctComplete = totalDaysLogged > 0 ? Math.round((daysComplete / totalDaysLogged) * 100) : 0;
+  
+  container.innerHTML = `
+    <div class="summary-stat">
+      <div class="summary-stat-value">${totalDaysLogged}</div>
+      <div class="summary-stat-label">Days Logged</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-value">${pctComplete}%</div>
+      <div class="summary-stat-label">Days Complete</div>
+      <div class="summary-stat-sub">90%+ goals met</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-value">${Math.min(daysIntoPhase, PHASE_LENGTH)}</div>
+      <div class="summary-stat-label">Days into Phase</div>
+      <div class="summary-stat-sub">${daysRemaining > 0 ? daysRemaining + ' remaining' : 'Complete!'}</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-value">${stats.rehit.total}</div>
+      <div class="summary-stat-label">REHIT Sessions</div>
+    </div>
+  `;
+}
+
+function renderSummaryRehitCalendar(data, range) {
+  const container = document.getElementById('summaryRehitCalendar');
+  if (!container) return;
+  
+  // Build rehit data map
+  const rehitMap = {};
+  data.forEach(d => {
+    const val = d.daily["REHIT 2x10"];
+    if (val === "2x10" || val === true || val === "TRUE") {
+      rehitMap[d.date] = "2x10";
+    } else if (val === "3x10") {
+      rehitMap[d.date] = "3x10";
+    }
+  });
+  
+  if (range === 7) {
+    // Show just this week
+    renderWeekCalendar(container, rehitMap);
+  } else if (range === 'phase') {
+    // Show phase month(s)
+    renderMonthCalendar(container, rehitMap, new Date(PHASE_START));
+  } else {
+    // Show 30 days
+    renderMonthCalendar(container, rehitMap, new Date());
+  }
+}
+
+function renderWeekCalendar(container, rehitMap) {
+  const today = new Date();
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+  
+  // Get start of week (Sunday)
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+  
+  let html = `
+    <div class="rehit-cal-weekdays">
+      <div class="rehit-cal-weekday">S</div>
+      <div class="rehit-cal-weekday">M</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">W</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">F</div>
+      <div class="rehit-cal-weekday">S</div>
+    </div>
+    <div class="rehit-cal-days">
+  `;
+  
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    const dateStr = `${day.getMonth() + 1}/${day.getDate()}/${String(day.getFullYear()).slice(-2)}`;
+    const rehitVal = rehitMap[dateStr];
+    const isToday = dateStr === todayStr;
+    
+    let classes = "rehit-cal-day";
+    if (isToday) classes += " today";
+    if (rehitVal) {
+      classes += " has-rehit";
+      if (rehitVal === "2x10") classes += " rehit-2x10";
+      if (rehitVal === "3x10") classes += " rehit-3x10";
+    }
+    
+    html += `<div class="${classes}">${day.getDate()}</div>`;
+  }
+  
+  html += `
+    </div>
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+function renderMonthCalendar(container, rehitMap, startDate) {
+  const year = startDate.getFullYear();
+  const month = startDate.getMonth();
+  
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  
+  const today = new Date();
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDay = firstDay.getDay();
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+  
+  let html = `
+    <div class="rehit-cal-header">
+      <div class="rehit-cal-title">${monthNames[month]} ${year}</div>
+    </div>
+    <div class="rehit-cal-weekdays">
+      <div class="rehit-cal-weekday">S</div>
+      <div class="rehit-cal-weekday">M</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">W</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">F</div>
+      <div class="rehit-cal-weekday">S</div>
+    </div>
+    <div class="rehit-cal-days">
+  `;
+  
+  // Previous month days
+  for (let i = startingDay - 1; i >= 0; i--) {
+    html += `<div class="rehit-cal-day other-month">${prevMonthLastDay - i}</div>`;
+  }
+  
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${month + 1}/${day}/${String(year).slice(-2)}`;
+    const rehitVal = rehitMap[dateStr];
+    const isToday = dateStr === todayStr;
+    
+    let classes = "rehit-cal-day";
+    if (isToday) classes += " today";
+    if (rehitVal) {
+      classes += " has-rehit";
+      if (rehitVal === "2x10") classes += " rehit-2x10";
+      if (rehitVal === "3x10") classes += " rehit-3x10";
+    }
+    
+    html += `<div class="${classes}">${day}</div>`;
+  }
+  
+  // Next month days
+  const totalCells = startingDay + daysInMonth;
+  const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= remainingCells; i++) {
+    html += `<div class="rehit-cal-day other-month">${i}</div>`;
+  }
+  
+  html += `
+    </div>
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+function renderGoalPerformance(stats) {
+  const doingWell = document.getElementById('goalsDoingWell');
+  const needsWork = document.getElementById('goalsNeedWork');
+  if (!doingWell || !needsWork) return;
+  
+  const goals = [
+    { key: 'sleep', ...GOALS.sleep, ...stats.sleep },
+    { key: 'water', ...GOALS.water, ...stats.water },
+    { key: 'supps', ...GOALS.supps, name: 'Supplements', icon: '💊' },
+    { key: 'rehit', ...GOALS.rehit, ...stats.rehit },
+    { key: 'steps', ...GOALS.steps, ...stats.steps },
+    { key: 'movement', ...GOALS.movement, ...stats.movement },
+    { key: 'reading', ...GOALS.reading, ...stats.reading }
+  ];
+  
+  const sorted = goals.sort((a, b) => b.pct - a.pct);
+  const good = sorted.filter(g => g.pct >= 70);
+  const work = sorted.filter(g => g.pct < 70);
+  
+  doingWell.innerHTML = good.length > 0 ? good.map(g => `
+    <div class="goal-badge">
+      <span class="goal-badge-icon">${g.icon}</span>
+      <span class="goal-badge-text">${g.name}</span>
+      <span class="goal-badge-pct">${g.pct}%</span>
+    </div>
+  `).join('') : '<div style="color: var(--text-muted); font-size: 13px;">Keep working on your goals!</div>';
+  
+  needsWork.innerHTML = work.length > 0 ? work.map(g => `
+    <div class="goal-badge" style="border-color: var(--accent-pink);">
+      <span class="goal-badge-icon">${g.icon}</span>
+      <span class="goal-badge-text">${g.name}</span>
+      <span class="goal-badge-pct" style="color: var(--accent-pink);">${g.pct}%</span>
+    </div>
+  `).join('') : '<div style="color: var(--text-muted); font-size: 13px;">Great job on all goals! 🎉</div>';
+}
+
+function renderGoalStatCard(name, icon, pct, detail, color = null) {
+  const pctClass = pct >= 80 ? 'good' : pct >= 50 ? 'ok' : 'needs-work';
+  const barColor = pct >= 80 ? 'var(--accent-teal)' : pct >= 50 ? 'var(--accent-orange)' : 'var(--accent-pink)';
+  
+  return `
+    <div class="goal-stat-card">
+      <div class="goal-stat-header">
+        <span class="goal-stat-name">${icon} ${name}</span>
+        <span class="goal-stat-pct ${pctClass}">${pct}%</span>
+      </div>
+      <div class="goal-stat-bar">
+        <div class="goal-stat-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
+      </div>
+      <div class="goal-stat-detail">${detail}</div>
+    </div>
+  `;
+}
+
+function renderHealthGoals(stats) {
+  const container = document.getElementById('healthGoalsStats');
+  if (!container) return;
+  
+  container.innerHTML = `
+    ${renderGoalStatCard('Sleep', '🌙', stats.sleep.pct, stats.sleep.detail)}
+    ${renderGoalStatCard('Water', '💧', stats.water.pct, stats.water.detail)}
+    ${renderGoalStatCard('Supps', '💊', stats.supps.pct, stats.supps.detail)}
+    ${renderGoalStatCard('REHIT', '🚴', stats.rehit.pct, stats.rehit.detail)}
+    ${renderGoalStatCard('Steps', '👟', stats.steps.pct, stats.steps.detail)}
+    ${renderGoalStatCard('Movement', '🚶', stats.movement.pct, stats.movement.detail)}
+    ${renderGoalStatCard('Reading', '📖', stats.reading.pct, stats.reading.detail)}
+  `;
+}
+
+function renderNutritionStats(stats) {
+  const container = document.getElementById('nutritionStats');
+  if (!container) return;
+  
+  container.innerHTML = `
+    ${renderGoalStatCard('Meals', '🍽️', stats.meals.pct, stats.meals.detail)}
+    ${renderGoalStatCard('Snacks', '🥗', stats.snacks.pct, stats.snacks.detail)}
+  `;
+}
+
+function renderMindfulnessStats(stats) {
+  const container = document.getElementById('mindfulnessStats');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div class="goal-stat-card" style="grid-column: 1 / -1;">
+      <div class="goal-stat-header">
+        <span class="goal-stat-name">🧘 Meditation</span>
+        <span style="font-size: 12px; color: var(--text-muted);">No goal - tracking only</span>
+      </div>
+      <div class="goal-stat-detail">${stats.meditation.detail}</div>
+    </div>
+  `;
+}
+
+function renderKidsHabitsStats(stats) {
+  const container = document.getElementById('kidsHabitsStats');
+  if (!container) return;
+  
+  container.innerHTML = `
+    ${renderGoalStatCard('Inhaler AM', '💨', stats.inhalerAM.pct, stats.inhalerAM.detail)}
+    ${renderGoalStatCard('Inhaler PM', '💨', stats.inhalerPM.pct, stats.inhalerPM.detail)}
+    ${renderGoalStatCard('Math', '🔢', stats.math.pct, stats.math.detail)}
+  `;
+}
+
+function renderWritingStats(stats) {
+  const container = document.getElementById('writingStats');
+  if (!container) return;
+  
+  container.innerHTML = `
+    ${renderGoalStatCard('Reflections', '✍️', stats.reflections.pct, stats.reflections.detail)}
+    ${renderGoalStatCard('Stories', '📝', stats.stories.pct, stats.stories.detail)}
+    ${renderGoalStatCard('Carly', '💛', stats.carly.pct, stats.carly.detail)}
+  `;
 }
 
 function loadPhaseProgress() {
@@ -445,205 +1019,8 @@ function loadPhaseProgress() {
   const daysRemaining = Math.max(0, totalDays - daysComplete);
   const progressPercent = Math.min(100, (daysComplete / totalDays) * 100);
   
-  const daysEl = document.getElementById("phaseDaysComplete");
   const barEl = document.getElementById("phaseProgressBar");
-  const summaryBarEl = document.getElementById("summaryPhaseBar");
-  const remainingEl = document.getElementById("phaseDaysRemaining");
-  
-  if (daysEl) daysEl.textContent = Math.min(daysComplete, totalDays);
   if (barEl) barEl.style.width = `${progressPercent}%`;
-  if (summaryBarEl) summaryBarEl.style.width = `${progressPercent}%`;
-  if (remainingEl) {
-    if (daysRemaining > 0) {
-      remainingEl.textContent = `${daysRemaining} days remaining`;
-    } else {
-      remainingEl.textContent = "Phase complete! 🎉";
-      remainingEl.style.color = "#52b788";
-    }
-  }
-}
-
-function renderWeeklyStats(data) {
-  const statsEl = document.getElementById("weeklyStats");
-  if (!statsEl) return;
-  
-  // Get this week's data
-  const today = new Date();
-  const currentDay = today.getDay();
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - currentDay);
-  weekStart.setHours(0, 0, 0, 0);
-  
-  const thisWeekData = data.filter(d => {
-    const date = new Date(d.date);
-    return date >= weekStart;
-  });
-  
-  // Calculate stats
-  const sleepValues = thisWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
-  const stepsValues = thisWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
-  const rehitCount = thisWeekData.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
-  
-  const avgSleep = sleepValues.length ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : "--";
-  const avgSteps = stepsValues.length ? Math.round(stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length).toLocaleString() : "--";
-  const daysLogged = thisWeekData.length;
-  
-  statsEl.innerHTML = `
-    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
-      <div style="font-size: 32px; font-weight: bold; color: #a393eb;">${avgSleep}</div>
-      <div style="font-size: 14px; color: #999;">Avg Sleep (hrs)</div>
-    </div>
-    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
-      <div style="font-size: 32px; font-weight: bold; color: #4d9de0;">${avgSteps}</div>
-      <div style="font-size: 14px; color: #999;">Avg Steps</div>
-    </div>
-    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
-      <div style="font-size: 32px; font-weight: bold; color: #52b788;">${rehitCount}</div>
-      <div style="font-size: 14px; color: #999;">REHIT Sessions</div>
-    </div>
-    <div style="background: #2a2a2a; padding: 16px; border-radius: 12px; text-align: center;">
-      <div style="font-size: 32px; font-weight: bold; color: #e0e0e0;">${daysLogged}/7</div>
-      <div style="font-size: 14px; color: #999;">Days Logged</div>
-    </div>
-  `;
-}
-
-function renderStreaks(data) {
-  const streaksEl = document.getElementById("streaksDisplay");
-  if (!streaksEl) return;
-  
-  // Calculate streaks (consecutive days with data)
-  let currentStreak = 0;
-  const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
-  for (let i = 0; i < sortedData.length; i++) {
-    const d = sortedData[i];
-    const hasData = d.daily["Hours of Sleep"] || d.daily["Steps"];
-    if (hasData) {
-      currentStreak++;
-    } else {
-      break;
-    }
-  }
-  
-  streaksEl.innerHTML = `
-    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); border-radius: 20px;">
-      <span style="font-size: 18px;">🔥</span>
-      <span style="font-size: 16px; font-weight: 600; color: #ff6b35;">${currentStreak} day streak</span>
-    </div>
-  `;
-}
-
-function renderWins(data) {
-  const winsEl = document.getElementById("winsDisplay");
-  if (!winsEl) return;
-  
-  const wins = [];
-  
-  // Get this week's data
-  const today = new Date();
-  const currentDay = today.getDay();
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - currentDay);
-  weekStart.setHours(0, 0, 0, 0);
-  
-  const thisWeekData = data.filter(d => {
-    const date = new Date(d.date);
-    return date >= weekStart;
-  });
-  
-  // Check for wins
-  const sleepValues = thisWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
-  const avgSleep = sleepValues.length ? sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length : 0;
-  
-  if (avgSleep >= 7) wins.push("🌙 Averaged 7+ hours of sleep");
-  
-  const rehitCount = thisWeekData.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
-  if (rehitCount >= 3) {
-    wins.push("💪 Hit 3+ REHIT sessions");
-  } else if (rehitCount >= 2) {
-    wins.push("🚴 Got in 2+ REHIT sessions");
-  }
-  
-  if (thisWeekData.length === 7) {
-    wins.push("⭐ Perfect week of logging!");
-  } else if (thisWeekData.length >= 5) {
-    wins.push("📝 Logged 5+ days this week");
-  }
-  
-  const stepsValues = thisWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
-  const avgSteps = stepsValues.length ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
-  if (avgSteps >= 10000) {
-    wins.push("👟 Averaged 10k+ steps");
-  } else if (avgSteps >= 7500) {
-    wins.push("🚶 Averaged 7.5k+ steps");
-  }
-  
-  if (wins.length === 0) {
-    wins.push("Keep going! You're building great habits.");
-  }
-  
-  winsEl.innerHTML = wins.slice(0, 4).map(w => `
-    <div style="padding: 8px 0; border-bottom: 1px solid #3a3a3a;">${w}</div>
-  `).join('');
-}
-
-function renderWeekComparison(data) {
-  const compEl = document.getElementById("weekComparisonDisplay");
-  if (!compEl) return;
-  
-  // Get this week and last week data
-  const today = new Date();
-  const currentDay = today.getDay();
-  
-  const thisWeekStart = new Date(today);
-  thisWeekStart.setDate(today.getDate() - currentDay);
-  thisWeekStart.setHours(0, 0, 0, 0);
-  
-  const lastWeekStart = new Date(thisWeekStart);
-  lastWeekStart.setDate(thisWeekStart.getDate() - 7);
-  
-  const lastWeekEnd = new Date(thisWeekStart);
-  lastWeekEnd.setDate(thisWeekStart.getDate() - 1);
-  
-  const thisWeekData = data.filter(d => new Date(d.date) >= thisWeekStart);
-  const lastWeekData = data.filter(d => {
-    const date = new Date(d.date);
-    return date >= lastWeekStart && date <= lastWeekEnd;
-  });
-  
-  // Calculate comparisons
-  const thisWeekSleep = thisWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
-  const lastWeekSleep = lastWeekData.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
-  
-  const thisAvgSleep = thisWeekSleep.length ? thisWeekSleep.reduce((a,b) => a+b, 0) / thisWeekSleep.length : null;
-  const lastAvgSleep = lastWeekSleep.length ? lastWeekSleep.reduce((a,b) => a+b, 0) / lastWeekSleep.length : null;
-  
-  const thisWeekSteps = thisWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
-  const lastWeekSteps = lastWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
-  
-  const thisAvgSteps = thisWeekSteps.length ? thisWeekSteps.reduce((a,b) => a+b, 0) / thisWeekSteps.length : null;
-  const lastAvgSteps = lastWeekSteps.length ? lastWeekSteps.reduce((a,b) => a+b, 0) / lastWeekSteps.length : null;
-  
-  const formatDiff = (current, last, unit, decimals = 0) => {
-    if (current === null || last === null) return '<span style="color: #999;">--</span>';
-    const diff = current - last;
-    const sign = diff >= 0 ? "↑" : "↓";
-    const color = diff >= 0 ? "#52b788" : "#e63946";
-    const formatted = decimals > 0 ? Math.abs(diff).toFixed(decimals) : Math.round(Math.abs(diff)).toLocaleString();
-    return `<span style="color: ${color}">${sign} ${formatted}${unit}</span>`;
-  };
-  
-  compEl.innerHTML = `
-    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #3a3a3a;">
-      <span>Sleep</span>
-      ${formatDiff(thisAvgSleep, lastAvgSleep, 'h', 1)}
-    </div>
-    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #3a3a3a;">
-      <span>Steps</span>
-      ${formatDiff(thisAvgSteps, lastAvgSteps, '')}
-    </div>
-  `;
 }
 
 // =====================================
