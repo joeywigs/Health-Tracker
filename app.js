@@ -10,7 +10,7 @@
  * - Blood pressure tracking with status indicator
  **********************************************/
 
-console.log("✅ app.js running - Other Movement", new Date().toISOString());
+console.log("✅ app.js running - No bottom nav", new Date().toISOString());
 window.__APP_JS_OK__ = true;
 
 // Show errors on screen
@@ -2132,9 +2132,19 @@ function toBool(v) {
 }
 
 function syncCheckboxVisual(cb) {
+  // Check for old checkbox-field wrapper
   const wrapper = cb.closest(".checkbox-field");
-  if (!wrapper) return;
-  wrapper.classList.toggle("checked", cb.checked);
+  if (wrapper) {
+    wrapper.classList.toggle("checked", cb.checked);
+  }
+  
+  // Check for chip wrapper
+  const chip = cb.closest(".chip");
+  if (chip) {
+    chip.classList.toggle("on", cb.checked);
+  }
+  
+  // mini-supp doesn't need class toggle - CSS :has() handles it
 }
 
 function setCheckbox(id, valueFromSheet) {
@@ -2455,7 +2465,7 @@ async function populateForm(data) {
   if (peakWattsEl) peakWattsEl.value = d["Peak Watts"] ?? "";
 
   const wattSecondsEl = document.getElementById("wattSeconds");
-  if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? "";
+  if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? d["Watt-Seconds"] ?? "";
 
   // Checkboxes (sheet -> UI)
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"]);
