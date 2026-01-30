@@ -526,18 +526,10 @@ function renderStreaks(data) {
     }
   }
   
-  // Calculate REHIT streak
-  let rehitStreak = 0;
-  // Count consecutive weeks with at least 2 REHIT sessions
-  // (simplified for now)
-  
   streaksEl.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #2a2a2a; border-radius: 12px; margin-bottom: 8px;">
-      <div style="font-size: 32px;">🔥</div>
-      <div>
-        <div style="font-size: 24px; font-weight: bold; color: #ff6b35;">${currentStreak} days</div>
-        <div style="font-size: 14px; color: #999;">Logging streak</div>
-      </div>
+    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); border-radius: 20px;">
+      <span style="font-size: 18px;">🔥</span>
+      <span style="font-size: 16px; font-weight: 600; color: #ff6b35;">${currentStreak} day streak</span>
     </div>
   `;
 }
@@ -567,16 +559,25 @@ function renderWins(data) {
   if (avgSleep >= 7) wins.push("🌙 Averaged 7+ hours of sleep");
   
   const rehitCount = thisWeekData.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
-  if (rehitCount >= 3) wins.push("💪 Hit 3+ REHIT sessions");
-  if (rehitCount >= 2) wins.push("🚴 Got in 2+ REHIT sessions");
+  if (rehitCount >= 3) {
+    wins.push("💪 Hit 3+ REHIT sessions");
+  } else if (rehitCount >= 2) {
+    wins.push("🚴 Got in 2+ REHIT sessions");
+  }
   
-  if (thisWeekData.length >= 5) wins.push("📝 Logged 5+ days this week");
-  if (thisWeekData.length === 7) wins.push("⭐ Perfect week of logging!");
+  if (thisWeekData.length === 7) {
+    wins.push("⭐ Perfect week of logging!");
+  } else if (thisWeekData.length >= 5) {
+    wins.push("📝 Logged 5+ days this week");
+  }
   
   const stepsValues = thisWeekData.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
   const avgSteps = stepsValues.length ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
-  if (avgSteps >= 10000) wins.push("👟 Averaged 10k+ steps");
-  if (avgSteps >= 7500) wins.push("🚶 Averaged 7.5k+ steps");
+  if (avgSteps >= 10000) {
+    wins.push("👟 Averaged 10k+ steps");
+  } else if (avgSteps >= 7500) {
+    wins.push("🚶 Averaged 7.5k+ steps");
+  }
   
   if (wins.length === 0) {
     wins.push("Keep going! You're building great habits.");
@@ -941,11 +942,22 @@ function updateRangeButtonsAvailability() {
 let weightChart, sleepChart, stepsChart, rehitChart, bodyCompChart, peakWattsChart;
 let rehitCalendarMonth = new Date(); // Track current month for calendar
 
+// Helper to get chart colors based on theme
+function getChartColors() {
+  const isDayMode = document.body.classList.contains('day-mode');
+  return {
+    text: isDayMode ? '#374151' : '#999',
+    grid: isDayMode ? '#e5e7eb' : '#3a3a3a',
+    background: isDayMode ? 'rgba(0,0,0,0.05)' : '#2a2a2a'
+  };
+}
+
 function renderWeightChart(dataPoints) {
   const canvas = document.getElementById("weightChart");
   if (!canvas) return;
   
   const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
   
   // Destroy existing chart
   if (weightChart) weightChart.destroy();
@@ -986,20 +998,20 @@ function renderWeightChart(dataPoints) {
       },
       scales: {
         x: { 
-          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
-          grid: { color: '#3a3a3a' }
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
         },
         y: {
           type: 'linear',
           position: 'left',
-          ticks: { color: '#999' },
-          grid: { color: '#3a3a3a' },
+          ticks: { color: colors.text },
+          grid: { color: colors.grid },
           title: { display: true, text: 'Weight (lbs)', color: '#999' }
         },
         y1: {
           type: 'linear',
           position: 'right',
-          ticks: { color: '#999' },
+          ticks: { color: colors.text },
           grid: { display: false },
           title: { display: true, text: 'Waist (in)', color: '#999' }
         }
@@ -1013,6 +1025,7 @@ function renderSleepChart(dataPoints) {
   if (!canvas) return;
   
   const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
   
   if (sleepChart) sleepChart.destroy();
   
@@ -1065,14 +1078,14 @@ function renderSleepChart(dataPoints) {
       },
       scales: {
         x: { 
-          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
-          grid: { color: '#3a3a3a' }
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
         },
         y: {
           beginAtZero: true,
           max: 12,
-          ticks: { color: '#999' },
-          grid: { color: '#3a3a3a' },
+          ticks: { color: colors.text },
+          grid: { color: colors.grid },
           title: { display: true, text: 'Hours', color: '#999' }
         }
       }
@@ -1085,6 +1098,7 @@ function renderStepsChart(dataPoints) {
   if (!canvas) return;
   
   const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
   
   if (stepsChart) stepsChart.destroy();
   
@@ -1113,13 +1127,13 @@ function renderStepsChart(dataPoints) {
       },
       scales: {
         x: { 
-          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
-          grid: { color: '#3a3a3a' }
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
         },
         y: {
           beginAtZero: true,
-          ticks: { color: '#999' },
-          grid: { color: '#3a3a3a' },
+          ticks: { color: colors.text },
+          grid: { color: colors.grid },
           title: { display: true, text: 'Steps', color: '#999' }
         }
       }
@@ -1157,7 +1171,8 @@ function renderRehitCalendar() {
     "July", "August", "September", "October", "November", "December"];
   
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  // Format today as M/D/YY to match API format
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
   
   // Get first day of month and number of days
   const firstDay = new Date(year, month, 1);
@@ -1196,7 +1211,8 @@ function renderRehitCalendar() {
   
   // Current month days
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    // Format as M/D/YY to match API format
+    const dateStr = `${month + 1}/${day}/${String(year).slice(-2)}`;
     const rehitVal = rehitDataMap[dateStr];
     const isToday = dateStr === todayStr;
     
@@ -1248,6 +1264,7 @@ function renderPeakWattsChart(dataPoints) {
   if (!canvas) return;
   
   const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
   
   if (peakWattsChart) peakWattsChart.destroy();
   
@@ -1305,8 +1322,8 @@ function renderPeakWattsChart(dataPoints) {
       },
       scales: {
         x: {
-          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
-          grid: { color: '#3a3a3a' }
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
         },
         y: {
           beginAtZero: false,
@@ -1316,7 +1333,7 @@ function renderPeakWattsChart(dataPoints) {
               return value + 'W';
             }
           },
-          grid: { color: '#3a3a3a' }
+          grid: { color: colors.grid }
         }
       }
     }
@@ -1328,6 +1345,7 @@ function renderBodyCompositionChart(dataPoints) {
   if (!canvas) return;
   
   const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
   
   if (bodyCompChart) bodyCompChart.destroy();
   
@@ -1366,12 +1384,12 @@ function renderBodyCompositionChart(dataPoints) {
       },
       scales: {
         x: { 
-          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
-          grid: { color: '#3a3a3a' }
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
         },
         y: {
-          ticks: { color: '#999' },
-          grid: { color: '#3a3a3a' },
+          ticks: { color: colors.text },
+          grid: { color: colors.grid },
           title: { display: true, text: 'Pounds', color: '#999' }
         }
       }
@@ -1386,6 +1404,7 @@ function renderBloodPressureChart(dataPoints) {
   if (!canvas) return;
   
   const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
   
   if (bpChart) bpChart.destroy();
   
@@ -1434,14 +1453,14 @@ function renderBloodPressureChart(dataPoints) {
       },
       scales: {
         x: { 
-          ticks: { color: '#999', maxRotation: 45, minRotation: 45 },
-          grid: { color: '#3a3a3a' }
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
         },
         y: {
           type: 'linear',
           position: 'left',
-          ticks: { color: '#999' },
-          grid: { color: '#3a3a3a' },
+          ticks: { color: colors.text },
+          grid: { color: colors.grid },
           title: { display: true, text: 'Blood Pressure (mmHg)', color: '#999' },
           min: 60,
           max: 160
@@ -1449,7 +1468,7 @@ function renderBloodPressureChart(dataPoints) {
         y1: {
           type: 'linear',
           position: 'right',
-          ticks: { color: '#999' },
+          ticks: { color: colors.text },
           grid: { display: false },
           title: { display: true, text: 'Heart Rate (bpm)', color: '#999' },
           min: 50,
