@@ -1303,7 +1303,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v1.4</span></h1>
+          <h1>Habits <span class="version">v1.5</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2581,20 +2581,19 @@
       let content = '';
       
       if (type === 'text') {
-        content = `<textarea class="input" id="${id}_input" placeholder="Enter notes..."></textarea>`;
+        content = '<textarea class="input" id="' + id + '_input" placeholder="Enter notes..."></textarea>';
       
       } else if (type === 'checkbox') {
         const checkboxes = config.checkboxes || ['Done'];
-        content = `<div class="chips">${checkboxes.map((cb, i) => `
-          <div class="chip"><input type="checkbox" id="${id}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>
-        `).join('')}</div>`;
+        let cbHtml = '';
+        checkboxes.forEach((cb, i) => {
+          cbHtml += '<div class="chip"><input type="checkbox" id="' + id + '_check_' + i + '"><div class="chip-dot">✓</div><span class="chip-text">' + cb + '</span></div>';
+        });
+        content = '<div class="chips">' + cbHtml + '</div>';
       
       } else if (type === 'number') {
-        const unit = config.unit ? `<span class="card-unit">${config.unit}</span>` : '';
-        content = `<div style="display:flex;align-items:center;gap:8px">
-          <input type="number" class="big-input" id="${id}_input" placeholder="${config.placeholder || '0'}" style="max-width:120px">
-          ${unit}
-        </div>`;
+        const unit = config.unit ? '<span class="card-unit">' + config.unit + '</span>' : '';
+        content = '<div style="display:flex;align-items:center;gap:8px"><input type="number" class="big-input" id="' + id + '_input" placeholder="' + (config.placeholder || '0') + '" style="max-width:120px">' + unit + '</div>';
       
       } else if (type === 'counter') {
         const goalNum = config.goalNumber || 6;
