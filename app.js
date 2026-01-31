@@ -2021,34 +2021,10 @@ async function handleQuickLog(action, buttonEl) {
 }
 
 async function quickLogMovement() {
-  // Prompt for movement type and duration
-  const types = ["Walk", "Carol Bike Free Ride", "Stretch", "Stairs", "Exercise", "Other"];
-  const typeChoice = prompt(`Movement type:\n1. Walk\n2. Carol Bike Free Ride\n3. Stretch\n4. Stairs\n5. Exercise\n6. Other\n\nEnter number (1-6):`);
-  
-  if (!typeChoice) return;
-  
-  const typeIndex = parseInt(typeChoice, 10) - 1;
-  if (typeIndex < 0 || typeIndex >= types.length) {
-    alert("Invalid choice");
-    return;
+  // Open the in-app movement modal (defined in index.html)
+  if (typeof openMovementModal === 'function') {
+    openMovementModal();
   }
-  
-  const duration = prompt("Duration in minutes:", "10");
-  if (!duration) return;
-  
-  const mins = parseInt(duration, 10);
-  if (isNaN(mins) || mins <= 0) {
-    alert("Please enter a valid number of minutes");
-    return;
-  }
-  
-  // Add to movements array and save
-  movements.push({ duration: mins, type: types[typeIndex] });
-  renderMovements();
-  triggerSaveSoon();
-  
-  // Show confirmation
-  showQuickConfirmation(`✓ Logged ${mins} min ${types[typeIndex]}`);
 }
 
 async function quickLogWater() {
@@ -3191,32 +3167,10 @@ function setupMovementUI() {
 }
 
 function promptAddMovement() {
-  // First ask for movement type
-  const types = ["Walk", "Carol Bike Free Ride", "Stretch", "Stairs", "Exercise", "Other"];
-  const typeChoice = prompt(`Movement type:\n1. Walk\n2. Carol Bike Free Ride\n3. Stretch\n4. Stairs\n5. Exercise\n6. Other\n\nEnter number (1-6):`);
-  
-  if (!typeChoice) return;
-  
-  const typeIndex = parseInt(typeChoice, 10) - 1;
-  if (typeIndex < 0 || typeIndex >= types.length) {
-    alert("Invalid choice. Please enter 1-6.");
-    return;
+  // Open the in-app movement modal (defined in index.html)
+  if (typeof openMovementModal === 'function') {
+    openMovementModal();
   }
-  
-  // Then ask for duration
-  const raw = prompt("Duration (minutes):", "10");
-  if (raw === null) return;
-
-  const durationNum = parseInt(raw, 10);
-  if (!Number.isFinite(durationNum) || durationNum <= 0) {
-    alert("Please enter a valid number of minutes.");
-    return;
-  }
-
-  movements.push({ duration: durationNum, type: types[typeIndex] });
-
-  renderMovements();
-  triggerSaveSoon();
 }
 
 function removeMovement(index) {
