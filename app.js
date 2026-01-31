@@ -11,7 +11,7 @@
 - - Blood pressure tracking with status indicator
     **********************************************/
 
-console.log(“✅ app.js running - No bottom nav”, new Date().toISOString());
+console.log(“app.js running - No bottom nav”, new Date().toISOString());
 window.**APP_JS_OK** = true;
 
 // Show errors on screen
