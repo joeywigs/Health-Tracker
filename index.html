@@ -1674,7 +1674,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v2.8 – 1:46 PM CST</span></h1>
+          <h1>Habits <span class="version">v2.9 – 1:56 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2516,7 +2516,7 @@
     let selectedMovementType = null;
     let selectedDuration = null;
     
-    function openMovementModal() {
+    window.openMovementModal = function() {
       selectedMovementType = null;
       selectedDuration = null;
       
@@ -2529,7 +2529,7 @@
       document.getElementById('movementModal').classList.add('show');
     }
     
-    function closeMovementModal() {
+    window.closeMovementModal = function() {
       document.getElementById('movementModal').classList.remove('show');
     }
     
