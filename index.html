@@ -425,7 +425,7 @@
       min-height: 100vh;
       color: var(--text);
       padding: 16px;
-      padding-top: calc(16px + env(safe-area-inset-top, 20px));
+      padding-top: calc(24px + env(safe-area-inset-top, 44px));
       padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
       padding-left: calc(16px + env(safe-area-inset-left, 0px));
       padding-right: calc(16px + env(safe-area-inset-right, 0px));
@@ -1418,7 +1418,7 @@
     .fab-label { font-size: 14px; font-weight: 600; color: var(--text); }
     
     /* Sticky */
-    .sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(26,26,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.3s; }
+    .sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(26,26,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px; padding-top: calc(14px + env(safe-area-inset-top, 44px)); display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.3s; }
     .sticky.visible { transform: translateY(0); }
     .sticky-date { font-size: 14px; font-weight: 600; }
     .sticky-btns { display: flex; gap: 8px; }
@@ -1674,7 +1674,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v2.5 – 12:57 PM CST</span></h1>
+          <h1>Habits <span class="version">v2.6 – 1:05 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
