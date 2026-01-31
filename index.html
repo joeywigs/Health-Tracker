@@ -912,57 +912,11 @@
     }
     
     /* Movement Modal */
-    #movementModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-    }
-    #movementModal.show {
-      display: flex;
-    }
-    #movementModal .modal-overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-    }
-    #movementModal .modal-content {
-      position: relative;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      width: 90%;
-      max-width: 320px;
-    }
-    #movementModal .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    #movementModal .modal-header h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-    }
-    #movementModal .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: var(--text-dim);
-      padding: 0;
-      line-height: 1;
-    }
     .movement-types {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .movement-type-btn {
       padding: 20px 10px;
@@ -988,7 +942,7 @@
       box-shadow: 0 0 20px var(--glow-teal);
     }
     .duration-section {
-      margin-bottom: 24px;
+      margin-bottom: 0;
     }
     .duration-label {
       font-size: 11px;
@@ -1022,9 +976,6 @@
       background: rgba(236, 72, 153, 0.15);
       box-shadow: 0 0 15px var(--glow-pink);
     }
-    .duration-preset.custom-active {
-      border-color: var(--accent-pink);
-    }
     .duration-custom-row {
       display: flex;
       align-items: center;
@@ -1050,30 +1001,10 @@
       color: var(--text-muted);
       font-size: 14px;
     }
-    #movementModal .btn-save {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      color: white;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 15px var(--glow-pink);
-    }
-    #movementModal .btn-save:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--glow-pink);
-    }
-    #movementModal .btn-save:disabled {
+    #movementModal .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
       transform: none;
-    }
-    body.day-mode #movementModal .modal-content {
-      background: rgba(255,255,255,0.95);
     }
     body.day-mode .movement-type-btn,
     body.day-mode .duration-preset,
@@ -2225,45 +2156,51 @@
   </div>
 
   <!-- Movement Modal -->
-  <div id="movementModal">
-    <div class="modal-overlay" onclick="closeMovementModal()"></div>
+  <div id="movementModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Add Movement</h3>
-        <button class="modal-close" onclick="closeMovementModal()">×</button>
-      </div>
-      
-      <div class="movement-types">
-        <button type="button" class="movement-type-btn" data-type="Walk">
-          <span class="type-icon">🚶</span>
-          Walk
-        </button>
-        <button type="button" class="movement-type-btn" data-type="Carol Bike">
-          <span class="type-icon">🚴</span>
-          Carol Bike
-        </button>
-        <button type="button" class="movement-type-btn" data-type="Other" style="grid-column: 1 / -1;">
-          <span class="type-icon">🏃</span>
-          Other
-        </button>
-      </div>
-      
-      <div class="duration-section">
-        <div class="duration-label">Duration</div>
-        <div class="duration-presets">
-          <button type="button" class="duration-preset" data-mins="5">5</button>
-          <button type="button" class="duration-preset" data-mins="10">10</button>
-          <button type="button" class="duration-preset" data-mins="15">15</button>
-          <button type="button" class="duration-preset" data-mins="20">20</button>
-          <button type="button" class="duration-preset" data-mins="30">30</button>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-pink)">🚶</div>
+          <div>
+            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">Add Movement</div>
+            <div style="font-size:12px;color:var(--text-muted)">Select type and duration</div>
+          </div>
         </div>
-        <div class="duration-custom-row">
-          <input type="number" id="movementCustomMins" placeholder="--" min="1" max="120">
-          <span>minutes</span>
+        <button class="modal-close" onclick="closeMovementModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="movement-types">
+          <button type="button" class="movement-type-btn" data-type="Walk">
+            <span class="type-icon">🚶</span>
+            Walk
+          </button>
+          <button type="button" class="movement-type-btn" data-type="Carol Bike">
+            <span class="type-icon">🚴</span>
+            Carol Bike
+          </button>
+          <button type="button" class="movement-type-btn" data-type="Other" style="grid-column: 1 / -1;">
+            <span class="type-icon">🏃</span>
+            Other
+          </button>
+        </div>
+        <div class="duration-section">
+          <div class="duration-label">Duration</div>
+          <div class="duration-presets">
+            <button type="button" class="duration-preset" data-mins="5">5</button>
+            <button type="button" class="duration-preset" data-mins="10">10</button>
+            <button type="button" class="duration-preset" data-mins="15">15</button>
+            <button type="button" class="duration-preset" data-mins="20">20</button>
+            <button type="button" class="duration-preset" data-mins="30">30</button>
+          </div>
+          <div class="duration-custom-row">
+            <input type="number" id="movementCustomMins" placeholder="--" min="1" max="120">
+            <span>minutes</span>
+          </div>
         </div>
       </div>
-      
-      <button type="button" class="btn-save" id="movementSaveBtn" disabled>Add Movement</button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="movementSaveBtn" disabled style="width:100%">Add Movement</button>
+      </div>
     </div>
   </div>
 
@@ -2648,6 +2585,9 @@
       closeMovementModal();
     });
     
+    // Close movement modal when clicking backdrop
+    document.getElementById('movementModal')?.addEventListener('click',(e)=>{if(e.target.id==='movementModal')closeMovementModal()});
+
     // Override promptAddMovement to use our modal
     window.promptAddMovement = openMovementModal;
     
