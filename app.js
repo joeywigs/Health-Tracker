@@ -2021,10 +2021,7 @@ async function handleQuickLog(action, buttonEl) {
 }
 
 async function quickLogMovement() {
-  // Open the in-app movement modal (defined in index.html)
-  if (typeof openMovementModal === 'function') {
-    openMovementModal();
-  }
+  window.openMovementModal();
 }
 
 async function quickLogWater() {
@@ -3167,10 +3164,7 @@ function setupMovementUI() {
 }
 
 function promptAddMovement() {
-  // Open the in-app movement modal (defined in index.html)
-  if (typeof openMovementModal === 'function') {
-    openMovementModal();
-  }
+  window.openMovementModal();
 }
 
 function removeMovement(index) {
