@@ -2720,7 +2720,7 @@ function buildPayloadFromUI() {
     leanMass: document.getElementById("leanMass")?.value || "",
     bodyFat: document.getElementById("bodyFat")?.value || "",
     boneMass: document.getElementById("boneMass")?.value || "",
-    waterLbs: document.getElementById("water")?.value || "",
+    water: document.getElementById("water")?.value || "",
 
     // Blood Pressure
     systolic: document.getElementById("systolic")?.value || "",
