@@ -1155,6 +1155,8 @@
     .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; }
     .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-dim); border: 1px solid var(--border); }
     .btn-secondary:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+    .btn-secondary.active { background: var(--accent-teal); color: #fff; border-color: var(--accent-teal); box-shadow: 0 0 10px var(--glow-teal); }
+    body.day-mode .btn-secondary.active { background: #6366f1; color: #fff; border-color: #6366f1; box-shadow: 0 0 10px var(--glow-purple); }
     .btn-primary { 
       background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
       color: white; padding: 14px 24px; 
@@ -1723,7 +1725,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v3.5 – 7:40 AM CST</span></h1>
+          <h1>Habits <span class="version">v3.6 – 10:01 AM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1925,7 +1927,7 @@
   <div id="chartsPage" style="display:none">
     <header class="header">
       <div class="header-top">
-        <div class="brand"><div class="logo">📊</div><div><h1>Charts</h1><div class="tagline" id="chartsSubtitle">Last 7 Days</div></div></div>
+        <div class="brand"><div class="logo">📊</div><div><h1>Charts</h1></div></div>
         <button type="button" id="chartsCloseBtn" class="nav-link">✕</button>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -1934,13 +1936,13 @@
         <button type="button" class="range-btn btn btn-secondary" data-range="all">All</button>
       </div>
     </header>
-    <div class="section"><div class="sec-name">Weight</div><canvas id="weightChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Weight and Waist</div><canvas id="weightChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Sleep</div><canvas id="sleepChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Steps</div><canvas id="stepsChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">REHIT Calendar</div><div id="rehitCalendar" class="rehit-calendar"></div></div>
     <div class="section"><div class="sec-name">Peak Watts</div><canvas id="peakWattsChart" style="max-height:220px"></canvas></div>
-    <div class="section"><div class="sec-name">Body Comp</div><canvas id="bodyCompChart" style="max-height:220px"></canvas></div>
-    <div class="section"><div class="sec-name">Blood Pressure</div><canvas id="bpChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Lean Mass %</div><canvas id="bodyCompChart" style="max-height:220px"></canvas></div>
+    <div class="section"><div class="sec-name">Blood Pressure and Pulse</div><canvas id="bpChart" style="max-height:220px"></canvas></div>
   </div>
 
   <div id="biomarkersPage" style="display:none">
@@ -1961,7 +1963,7 @@
   <div id="weeklySummaryPage" style="display:none">
     <header class="header">
       <div class="header-top">
-        <div class="brand"><div class="logo">📈</div><div><h1>Summary</h1><div class="tagline" id="summarySubtitle">7 Days</div></div></div>
+        <div class="brand"><div class="logo">📈</div><div><h1>Summary</h1></div></div>
         <button type="button" id="summaryCloseBtn" class="nav-link">✕</button>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px">
