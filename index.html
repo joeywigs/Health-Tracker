@@ -1496,7 +1496,7 @@
     
     /* Responsive */
     @media (max-width: 430px) {
-      body { padding: 12px; }
+      body { padding: 12px; padding-top: max(66px, calc(12px + env(safe-area-inset-top, 54px))); padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
       .quick-grid { gap: 10px; }
       .card { padding: 14px; }
       .card-value { font-size: 28px; }
@@ -1723,7 +1723,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v3.3 – 10:25 PM CST</span></h1>
+          <h1>Habits <span class="version">v3.4 – 11:21 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
