@@ -569,6 +569,8 @@ function getGoalTarget(key) {
     if (key === 'steps' && appSettings.stepsGoal) return appSettings.stepsGoal;
     if (key === 'rehit' && appSettings.rehitGoal) return appSettings.rehitGoal;
     if (key === 'reading' && appSettings.readingGoal) return appSettings.readingGoal;
+    if (key === 'movement' && appSettings.movementGoal) return appSettings.movementGoal;
+    if (key === 'meditation' && appSettings.meditationGoal) return appSettings.meditationGoal;
   }
   return GOALS[key]?.target;
 }
