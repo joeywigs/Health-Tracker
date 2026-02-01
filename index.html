@@ -1723,7 +1723,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v3.4 – 11:21 PM CST</span></h1>
+          <h1>Habits <span class="version">v3.5 – 7:40 AM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2049,12 +2049,25 @@
           </div>
           <input type="number" class="goal-input" id="stepsGoal" value="7500" min="1000" max="50000" step="500">
         </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-orange);--icon-glow:var(--glow-purple)">📅</div><span class="sec-name">Weekly Goals</span></div></div>
+      <div class="sec-content">
         <div class="setting-row">
           <div class="setting-label">
             <span class="setting-title">🚴 REHIT Goal</span>
             <span class="setting-desc">Sessions per week</span>
           </div>
           <input type="number" class="goal-input" id="rehitGoal" value="4" min="1" max="7">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">📖 Reading Goal</span>
+            <span class="setting-desc">Minutes per week</span>
+          </div>
+          <input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5">
         </div>
       </div>
     </div>
@@ -2894,6 +2907,7 @@
       waterGoal: 6,
       stepsGoal: 7500,
       rehitGoal: 4,
+      readingGoal: 60,
       sections: [
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
@@ -3018,7 +3032,8 @@
       document.getElementById('waterGoal').value = appSettings.waterGoal || 6;
       document.getElementById('stepsGoal').value = appSettings.stepsGoal || 7500;
       document.getElementById('rehitGoal').value = appSettings.rehitGoal || 4;
-      
+      document.getElementById('readingGoal').value = appSettings.readingGoal || 60;
+
       window.scrollTo(0, 0);
       renderSectionList();
     }
@@ -3190,7 +3205,13 @@
       saveSettings(appSettings);
       showToast('REHIT goal updated', 'success');
     });
-    
+
+    document.getElementById('readingGoal')?.addEventListener('change', (e) => {
+      appSettings.readingGoal = parseInt(e.target.value) || 60;
+      saveSettings(appSettings);
+      showToast('Reading goal updated', 'success');
+    });
+
     // Theme preview buttons
     document.querySelectorAll('.theme-btn').forEach(btn => {
       btn.addEventListener('click', () => {

@@ -567,6 +567,18 @@ const PHASE_START = new Date("2026-01-19");
 const PHASE_LENGTH = 21;
 
 // Goals configuration
+// Goal targets — getGoalTarget() reads from appSettings (set in index.html)
+// so changes in Settings apply retroactively to all calculations.
+function getGoalTarget(key) {
+  if (typeof appSettings !== 'undefined') {
+    if (key === 'water' && appSettings.waterGoal) return appSettings.waterGoal;
+    if (key === 'steps' && appSettings.stepsGoal) return appSettings.stepsGoal;
+    if (key === 'rehit' && appSettings.rehitGoal) return appSettings.rehitGoal;
+    if (key === 'reading' && appSettings.readingGoal) return appSettings.readingGoal;
+  }
+  return GOALS[key]?.target;
+}
+
 const GOALS = {
   sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "hrs", type: "daily-avg" },
   water: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
@@ -621,7 +633,7 @@ function calculateGoalStats(data, range) {
   
   // Sleep: goal is 7+ hours
   const sleepValues = data.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
-  const sleepDaysMet = sleepValues.filter(v => v >= GOALS.sleep.target).length;
+  const sleepDaysMet = sleepValues.filter(v => v >= getGoalTarget('sleep')).length;
   stats.sleep = {
     pct: totalDays > 0 ? Math.round((sleepDaysMet / totalDays) * 100) : 0,
     avg: sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : 0,
@@ -630,7 +642,7 @@ function calculateGoalStats(data, range) {
   
   // Water: goal is 6 glasses
   const waterValues = data.map(d => parseInt(d.daily["Water"])).filter(v => !isNaN(v));
-  const waterDaysMet = waterValues.filter(v => v >= GOALS.water.target).length;
+  const waterDaysMet = waterValues.filter(v => v >= getGoalTarget('water')).length;
   stats.water = {
     pct: totalDays > 0 ? Math.round((waterDaysMet / totalDays) * 100) : 0,
     avg: waterValues.length > 0 ? (waterValues.reduce((a,b) => a+b, 0) / waterValues.length).toFixed(1) : 0,
@@ -657,7 +669,7 @@ function calculateGoalStats(data, range) {
   const rehitCount = data.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
   const rehitPerWeek = rehitCount / weeks;
   stats.rehit = {
-    pct: Math.min(100, Math.round((rehitPerWeek / GOALS.rehit.target) * 100)),
+    pct: Math.min(100, Math.round((rehitPerWeek / getGoalTarget('rehit')) * 100)),
     total: rehitCount,
     detail: `${rehitCount} sessions (${rehitPerWeek.toFixed(1)}/wk)`
   };
@@ -665,9 +677,9 @@ function calculateGoalStats(data, range) {
   // Steps: 5000 per day average
   const stepsValues = data.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
   const avgSteps = stepsValues.length > 0 ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
-  const stepsDaysMet = stepsValues.filter(v => v >= GOALS.steps.target).length;
+  const stepsDaysMet = stepsValues.filter(v => v >= getGoalTarget('steps')).length;
   stats.steps = {
-    pct: Math.min(100, Math.round((avgSteps / GOALS.steps.target) * 100)),
+    pct: Math.min(100, Math.round((avgSteps / getGoalTarget('steps')) * 100)),
     avg: Math.round(avgSteps),
     detail: `${Math.round(avgSteps).toLocaleString()} avg steps`
   };
@@ -685,7 +697,7 @@ function calculateGoalStats(data, range) {
   });
   const avgMovements = totalDays > 0 ? totalMovements / totalDays : 0;
   stats.movement = {
-    pct: Math.min(100, Math.round((avgMovements / GOALS.movement.target) * 100)),
+    pct: Math.min(100, Math.round((avgMovements / getGoalTarget('movement')) * 100)),
     avg: avgMovements.toFixed(1),
     detail: `${avgMovements.toFixed(1)} avg/day`
   };
@@ -698,7 +710,7 @@ function calculateGoalStats(data, range) {
   });
   const readingPerWeek = weeks > 0 ? totalReadingMins / weeks : 0;
   stats.reading = {
-    pct: Math.min(100, Math.round((readingPerWeek / GOALS.reading.target) * 100)),
+    pct: Math.min(100, Math.round((readingPerWeek / getGoalTarget('reading')) * 100)),
     total: totalReadingMins,
     detail: `${totalReadingMins} min total`
   };
@@ -816,10 +828,10 @@ function renderSummaryOverview(data, stats, range) {
     const totalGoals = 4;
     
     const sleep = parseFloat(d.daily["Hours of Sleep"]);
-    if (!isNaN(sleep) && sleep >= 7) goalsMet++;
-    
+    if (!isNaN(sleep) && sleep >= getGoalTarget('sleep')) goalsMet++;
+
     const water = parseInt(d.daily["Water"]);
-    if (!isNaN(water) && water >= 6) goalsMet++;
+    if (!isNaN(water) && water >= getGoalTarget('water')) goalsMet++;
     
     const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
     const vitD = d.daily["Vitamin D"];
@@ -829,7 +841,7 @@ function renderSummaryOverview(data, stats, range) {
     if (allSupps) goalsMet++;
     
     const steps = parseInt(d.daily["Steps"]);
-    if (!isNaN(steps) && steps >= 5000) goalsMet++;
+    if (!isNaN(steps) && steps >= getGoalTarget('steps')) goalsMet++;
     
     if (goalsMet / totalGoals >= 0.9) daysComplete++;
   });
