@@ -2462,88 +2462,79 @@ function hideBiomarkersPage() {
 }
 
 async function loadBiomarkers() {
+  const subtitle = document.getElementById("biomarkersSubtitle");
+  let apiDef = [], apiValues = [], apiDate = null;
+
   try {
     console.log("Loading biomarkers...");
-    // Add timestamp to bust any caching
     const result = await apiGet("biomarkers_load", { _t: Date.now() });
     console.log("Biomarkers result:", result);
-    
-    if (result?.error) {
-      console.error("Biomarkers error:", result);
-      const subtitle = document.getElementById("biomarkersSubtitle");
-      if (subtitle) {
-        // Check if it's an "unknown action" error - means the backend doesn't support it
-        if (result.message && result.message.includes("Unknown action")) {
-          subtitle.textContent = "⚠️ Backend needs update - biomarkers_load not supported";
-        } else {
-          subtitle.textContent = "Error: " + result.message;
-        }
-      }
-      return;
+
+    if (!result?.error) {
+      apiDef = result.definition || [];
+      apiValues = result.latestValues || [];
+      apiDate = result.latestDate || null;
     }
-    
-    const subtitle = document.getElementById("biomarkersSubtitle");
-    if (subtitle) {
-      if (result.latestDate) {
-        // Format the date nicely: "Jan 25, 2026"
-        const d = new Date(result.latestDate);
-        const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        subtitle.textContent = `Most recent: ${formatted}`;
-      } else {
-        subtitle.textContent = "No data yet";
-      }
-    }
-    
-    renderBiomarkersTable(result.definition || [], result.latestValues || []);
-    
   } catch (err) {
-    console.error("Failed to load biomarkers:", err);
-    const subtitle = document.getElementById("biomarkersSubtitle");
-    if (subtitle) subtitle.textContent = "Failed to connect";
+    console.error("Failed to load biomarkers from API:", err);
   }
+
+  // Update subtitle: use API date if available, otherwise fall back to history
+  if (subtitle) {
+    if (apiDate) {
+      const d = new Date(apiDate);
+      subtitle.textContent = `Most recent: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    } else if (BIOMARKER_HISTORY_DATES && BIOMARKER_HISTORY_DATES.length > 0) {
+      subtitle.textContent = `Most recent: ${BIOMARKER_HISTORY_DATES[0]}`;
+    } else {
+      subtitle.textContent = "No data yet";
+    }
+  }
+
+  renderBiomarkersTable(apiDef, apiValues);
 }
 
 // Biomarker definitions organized by category
 const BIOMARKER_DEFS = [
   { cat: "Metabolic Health", icon: "🔬", markers: [
-    { name: "Fasting Glucose", range: "70–99 mg/dL", low: 70, high: 99, unit: "mg/dL", desc: "Measures blood sugar at a single moment after fasting; helps detect early dysregulation before diabetes develops" },
-    { name: "HbA1c", range: "<5.7 %", low: 4.0, high: 5.7, unit: "%", desc: "Reflects average blood sugar over the prior ~3 months; key marker for long-term glucose exposure and diabetes risk" },
+    { name: "Fasting Glucose", range: "70–110 mg/dL", low: 70, high: 110, unit: "mg/dL", desc: "Measures blood sugar at a single moment after fasting; helps detect early dysregulation before diabetes develops" },
+    { name: "HbA1c", range: "4.4–6.4 %", low: 4.4, high: 6.4, unit: "%", desc: "Reflects average blood sugar over the prior ~3 months; key marker for long-term glucose exposure and diabetes risk" },
     { name: "Fasting Insulin", range: "2–10 µIU/mL", low: 2, high: 10, unit: "µIU/mL", desc: "Shows how hard the body must work to keep glucose normal; elevated levels signal insulin resistance years before diabetes" },
     { name: "eAG", range: "<117 mg/dL", low: 70, high: 117, unit: "mg/dL", desc: "Estimated average glucose translated from HbA1c into daily-life units; useful for intuitive understanding of A1c" }
   ]},
   { cat: "Kidney Function", icon: "🫘", markers: [
-    { name: "BUN", range: "7–20 mg/dL", low: 7, high: 20, unit: "mg/dL", desc: "Measures nitrogen waste in blood; influenced by kidney function, hydration, and protein intake" },
-    { name: "Creatinine", range: "0.74–1.35 mg/dL", low: 0.74, high: 1.35, unit: "mg/dL", desc: "Primary marker of kidney filtration; higher levels suggest reduced kidney clearance or high muscle mass" },
-    { name: "eGFR", range: "≥90 mL/min/1.73m²", low: 90, high: 120, unit: "mL/min", desc: "Calculated estimate of overall kidney filtering capacity; tracks kidney health over time" }
+    { name: "BUN", range: "5–25 mg/dL", low: 5, high: 25, unit: "mg/dL", desc: "Measures nitrogen waste in blood; influenced by kidney function, hydration, and protein intake" },
+    { name: "Creatinine", range: "0.72–1.25 mg/dL", low: 0.72, high: 1.25, unit: "mg/dL", desc: "Primary marker of kidney filtration; higher levels suggest reduced kidney clearance or high muscle mass" },
+    { name: "eGFR", range: "≥60 mL/min/1.73m²", low: 60, high: 120, unit: "mL/min", desc: "Calculated estimate of overall kidney filtering capacity; tracks kidney health over time" }
   ]},
   { cat: "Electrolytes & Minerals", icon: "⚡", markers: [
-    { name: "Sodium", range: "135–145 mmol/L", low: 135, high: 145, unit: "mmol/L", desc: "Regulates fluid balance, blood pressure, and nerve signaling; tightly controlled by kidneys and hormones" },
-    { name: "Potassium", range: "3.5–5.1 mmol/L", low: 3.5, high: 5.1, unit: "mmol/L", desc: "Essential for heart rhythm and muscle contraction; abnormalities can affect cardiac stability" },
-    { name: "Chloride", range: "96–106 mmol/L", low: 96, high: 106, unit: "mmol/L", desc: "Works with sodium to maintain fluid balance and acid-base equilibrium" },
-    { name: "CO2 (Bicarbonate)", range: "22–29 mmol/L", low: 22, high: 29, unit: "mmol/L", desc: "Reflects acid-base balance and metabolic function; low levels may suggest metabolic stress" },
-    { name: "Calcium", range: "8.6–10.2 mg/dL", low: 8.6, high: 10.2, unit: "mg/dL", desc: "Important for bone strength, muscle contraction, nerve transmission, and hormone signaling" }
+    { name: "Sodium", range: "135–146 mmol/L", low: 135, high: 146, unit: "mmol/L", desc: "Regulates fluid balance, blood pressure, and nerve signaling; tightly controlled by kidneys and hormones" },
+    { name: "Potassium", range: "3.5–5.0 mmol/L", low: 3.5, high: 5.0, unit: "mmol/L", desc: "Essential for heart rhythm and muscle contraction; abnormalities can affect cardiac stability" },
+    { name: "Chloride", range: "96–112 mmol/L", low: 96, high: 112, unit: "mmol/L", desc: "Works with sodium to maintain fluid balance and acid-base equilibrium" },
+    { name: "CO2 (Bicarbonate)", range: "21–32 mmol/L", low: 21, high: 32, unit: "mmol/L", desc: "Reflects acid-base balance and metabolic function; low levels may suggest metabolic stress" },
+    { name: "Calcium", range: "8.5–10.7 mg/dL", low: 8.5, high: 10.7, unit: "mg/dL", desc: "Important for bone strength, muscle contraction, nerve transmission, and hormone signaling" }
   ]},
   { cat: "Liver Function", icon: "🫁", markers: [
-    { name: "ALT (SGPT)", range: "7–56 U/L", low: 7, high: 56, unit: "U/L", desc: "Most liver-specific enzyme; elevations suggest liver inflammation or fat-related liver stress" },
-    { name: "AST (SGOT)", range: "10–40 U/L", low: 10, high: 40, unit: "U/L", desc: "Found in liver and muscle; helps interpret liver results in context of exercise or injury" },
-    { name: "Alkaline Phosphatase", range: "44–147 IU/L", low: 44, high: 147, unit: "IU/L", desc: "Linked to bile flow and bone turnover; elevations may indicate liver or bone conditions" },
-    { name: "Total Bilirubin", range: "0.2–1.2 mg/dL", low: 0.2, high: 1.2, unit: "mg/dL", desc: "Measures liver processing of red blood cells; mild elevations can be benign or genetic" },
+    { name: "ALT (SGPT)", range: "7–40 U/L", low: 7, high: 40, unit: "U/L", desc: "Most liver-specific enzyme; elevations suggest liver inflammation or fat-related liver stress" },
+    { name: "AST (SGOT)", range: "8–42 U/L", low: 8, high: 42, unit: "U/L", desc: "Found in liver and muscle; helps interpret liver results in context of exercise or injury" },
+    { name: "Alkaline Phosphatase", range: "39–139 IU/L", low: 39, high: 139, unit: "IU/L", desc: "Linked to bile flow and bone turnover; elevations may indicate liver or bone conditions" },
+    { name: "Total Bilirubin", range: "0.1–1.2 mg/dL", low: 0.1, high: 1.2, unit: "mg/dL", desc: "Measures liver processing of red blood cells; mild elevations can be benign or genetic" },
     { name: "GGT", range: "9–48 U/L", low: 9, high: 48, unit: "U/L", desc: "Early and sensitive marker of liver stress, alcohol sensitivity, and cardiometabolic risk" }
   ]},
   { cat: "Proteins & Nutrition", icon: "🥩", markers: [
-    { name: "Total Protein", range: "6.3–8.2 g/dL", low: 6.3, high: 8.2, unit: "g/dL", desc: "Measures total circulating proteins involved in immunity, transport, and nutrition" },
-    { name: "Albumin", range: "3.5–5.0 g/dL", low: 3.5, high: 5.0, unit: "g/dL", desc: "Key blood protein reflecting liver function, nutritional status, and systemic inflammation" }
+    { name: "Total Protein", range: "6.2–8.2 g/dL", low: 6.2, high: 8.2, unit: "g/dL", desc: "Measures total circulating proteins involved in immunity, transport, and nutrition" },
+    { name: "Albumin", range: "3.4–4.7 g/dL", low: 3.4, high: 4.7, unit: "g/dL", desc: "Key blood protein reflecting liver function, nutritional status, and systemic inflammation" }
   ]},
   { cat: "Lipid & Lipoproteins", icon: "❤️", markers: [
-    { name: "Total Cholesterol", range: "<200 mg/dL", low: 100, high: 200, unit: "mg/dL", desc: "Overall cholesterol burden; limited alone but useful for trend tracking" },
-    { name: "Triglycerides", range: "<150 mg/dL", low: 30, high: 150, unit: "mg/dL", desc: "Reflects fat metabolism and insulin sensitivity; often elevated in metabolic dysfunction" },
-    { name: "HDL-C", range: "≥40 mg/dL", low: 40, high: 100, unit: "mg/dL", desc: "Involved in cholesterol transport away from arteries; higher levels generally protective" },
-    { name: "LDL-C", range: "<100 mg/dL", low: 40, high: 100, unit: "mg/dL", desc: "Traditional cholesterol marker associated with plaque formation; incomplete without particle data" },
+    { name: "Total Cholesterol", range: "120–200 mg/dL", low: 120, high: 200, unit: "mg/dL", desc: "Overall cholesterol burden; limited alone but useful for trend tracking" },
+    { name: "Triglycerides", range: "50–150 mg/dL", low: 50, high: 150, unit: "mg/dL", desc: "Reflects fat metabolism and insulin sensitivity; often elevated in metabolic dysfunction" },
+    { name: "HDL-C", range: "40–72 mg/dL", low: 40, high: 72, unit: "mg/dL", desc: "Involved in cholesterol transport away from arteries; higher levels generally protective" },
+    { name: "LDL-C", range: "62–129 mg/dL", low: 62, high: 129, unit: "mg/dL", desc: "Traditional cholesterol marker associated with plaque formation; incomplete without particle data" },
     { name: "Apolipoprotein B", range: "<90 mg/dL", low: 30, high: 90, unit: "mg/dL", desc: "Counts total atherogenic particles that cause plaque; strongest single lipid predictor of heart disease" },
     { name: "Lipoprotein(a)", range: "<30 mg/dL", low: 0, high: 30, unit: "mg/dL", desc: "Genetically determined LDL-like particle; major inherited risk factor for premature heart disease" }
   ]},
   { cat: "Inflammation & Vascular Risk", icon: "🔥", markers: [
-    { name: "hsCRP", range: "<1.0 mg/L", low: 0, high: 1.0, unit: "mg/L", desc: "Measures chronic low-grade inflammation that contributes to atherosclerosis and heart events" },
+    { name: "hsCRP", range: "0.1–0.9 mg/L", low: 0.1, high: 0.9, unit: "mg/L", desc: "Measures chronic low-grade inflammation that contributes to atherosclerosis and heart events" },
     { name: "Homocysteine", range: "5–15 µmol/L", low: 5, high: 15, unit: "µmol/L", desc: "Amino acid linked to endothelial damage and vascular risk when elevated" }
   ]},
   { cat: "Iron & Hematology", icon: "🩸", markers: [
@@ -2612,6 +2603,15 @@ function renderBiomarkersTable(definition, latestValues) {
     definition.forEach((item, idx) => {
       valueLookup[item.biomarker] = latestValues[idx] || '';
     });
+  }
+
+  // Fall back to hardcoded history for any marker not in API lookup
+  for (const [name, values] of Object.entries(BIOMARKER_HISTORY)) {
+    if (!valueLookup[name]) {
+      // Find first non-null value (most recent)
+      const latest = values.find(v => v != null);
+      if (latest != null) valueLookup[name] = String(latest);
+    }
   }
 
   table.innerHTML = "";
