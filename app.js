@@ -58,6 +58,117 @@ async function apiPost(action, payload = {}) {
 }
 
 // =====================================
+// OFFLINE SUPPORT (IndexedDB)
+// =====================================
+const DB_NAME = 'habits-offline';
+const DB_VERSION = 1;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('pendingSaves')) {
+        db.createObjectStore('pendingSaves', { keyPath: 'id', autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains('dayCache')) {
+        db.createObjectStore('dayCache', { keyPath: 'date' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function queueOfflineSave(payload) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('pendingSaves', 'readwrite');
+    tx.objectStore('pendingSaves').add({ payload, timestamp: Date.now() });
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    db.close();
+    console.log('📴 Save queued offline');
+  } catch (e) {
+    console.error('Failed to queue offline save:', e);
+  }
+}
+
+async function flushOfflineQueue() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('pendingSaves', 'readonly');
+    const store = tx.objectStore('pendingSaves');
+    const items = await new Promise((res, rej) => {
+      const req = store.getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror = rej;
+    });
+    db.close();
+
+    if (items.length === 0) return;
+
+    console.log(`🔄 Flushing ${items.length} offline saves...`);
+    let flushed = 0;
+
+    for (const item of items) {
+      try {
+        const result = await apiPost("save", { data: item.payload });
+        if (!result?.error) {
+          const db2 = await openDB();
+          const tx2 = db2.transaction('pendingSaves', 'readwrite');
+          tx2.objectStore('pendingSaves').delete(item.id);
+          await new Promise((res, rej) => { tx2.oncomplete = res; tx2.onerror = rej; });
+          db2.close();
+          flushed++;
+        }
+      } catch (e) {
+        console.warn('Offline flush failed for item, will retry later:', e);
+        break;
+      }
+    }
+
+    if (flushed > 0) {
+      if (typeof showToast === 'function') showToast(`Synced ${flushed} offline save${flushed > 1 ? 's' : ''}`, 'success');
+      await loadDataForCurrentDate({ force: true });
+    }
+  } catch (e) {
+    console.error('Flush offline queue failed:', e);
+  }
+}
+
+async function cacheDayLocally(dateStr, data) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('dayCache', 'readwrite');
+    tx.objectStore('dayCache').put({ date: dateStr, data, timestamp: Date.now() });
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    db.close();
+  } catch (e) { /* silent */ }
+}
+
+async function getCachedDay(dateStr) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('dayCache', 'readonly');
+    const result = await new Promise((res, rej) => {
+      const req = tx.objectStore('dayCache').get(dateStr);
+      req.onsuccess = () => res(req.result);
+      req.onerror = rej;
+    });
+    db.close();
+    return result?.data || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Flush queue when coming back online
+window.addEventListener('online', () => {
+  console.log('🌐 Back online, flushing queue...');
+  flushOfflineQueue();
+});
+
+// =====================================
 // APP STATE
 // =====================================
 let currentDate = new Date();
@@ -106,6 +217,11 @@ document.addEventListener("DOMContentLoaded", () => {
   try { updateDateDisplay(); console.log("20 ok"); } catch(e) { console.error("updateDateDisplay failed:", e); }
   try { updatePhaseInfo(); console.log("21 ok"); } catch(e) { console.error("updatePhaseInfo failed:", e); }
   try { loadDataForCurrentDate(); console.log("22 ok"); } catch(e) { console.error("loadDataForCurrentDate failed:", e); }
+
+  // Flush any queued offline saves on startup
+  if (navigator.onLine) {
+    flushOfflineQueue().catch(e => console.warn('Offline flush on boot failed:', e));
+  }
 });
 
 const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
@@ -2510,18 +2626,23 @@ async function loadDataForCurrentDate(options = {}) {
 }
 
 async function saveData(payload) {
+  // Always cache locally for offline reads
+  cacheDayLocally(payload.date, payload);
+
   try {
     const saveResult = await apiPost("save", { data: payload });
 
     if (saveResult?.error) {
       console.error("Save error:", saveResult.message);
-      if (typeof showToast === 'function') showToast('Save failed', 'error');
+      await queueOfflineSave(payload);
+      if (typeof showToast === 'function') showToast('Saved offline — will sync later', 'info');
+      dataChanged = false;
       return;
     }
 
     console.log("💾 Saved successfully", saveResult);
     dataChanged = false;
-    
+
     // Show success toast
     if (typeof showToast === 'function') showToast('Saved ✓', 'success');
 
@@ -2533,8 +2654,10 @@ async function saveData(payload) {
     await loadDataForCurrentDate({ force: true });
 
   } catch (err) {
-    console.error("Save failed:", err);
-    if (typeof showToast === 'function') showToast('Save failed', 'error');
+    console.error("Save failed, queuing offline:", err);
+    await queueOfflineSave(payload);
+    if (typeof showToast === 'function') showToast('Saved offline — will sync later', 'info');
+    dataChanged = false;
   }
 }
 
@@ -3112,9 +3235,21 @@ async function fetchDay(dateObj, force = false) {
   const cached = cacheGet(dateStr);
   if (cached && !force) return cached;
 
-  const result = await apiGet("load", { date: dateStr });
-  cacheSet(dateStr, result);
-  return result;
+  try {
+    const result = await apiGet("load", { date: dateStr });
+    cacheSet(dateStr, result);
+    // Also persist to IndexedDB for offline access
+    if (result && !result.error) cacheDayLocally(dateStr, result);
+    return result;
+  } catch (err) {
+    console.warn('Fetch failed, trying offline cache for', dateStr);
+    const offlineData = await getCachedDay(dateStr);
+    if (offlineData) {
+      if (typeof showToast === 'function') showToast('Loaded from offline cache', 'info');
+      return offlineData;
+    }
+    throw err;
+  }
 }
 
 function prefetchAround(dateObj) {
