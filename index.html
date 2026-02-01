@@ -1516,6 +1516,16 @@
     .modal-close:hover { background: rgba(255,255,255,0.15); color: var(--text); }
     .modal-body { padding: 18px; }
     .modal-footer { padding: 18px; border-top: 1px solid var(--border); }
+
+    .weekly-review-intro { font-size: 16px; font-weight: 600; color: var(--accent-teal); text-align: center; margin-bottom: 16px; }
+    .weekly-review-section { margin-bottom: 14px; }
+    .weekly-review-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+    .weekly-review-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; font-weight: 500; }
+    .weekly-review-row:last-child { border-bottom: none; }
+    .weekly-review-input-wrap { display: flex; align-items: center; gap: 6px; }
+    .weekly-review-unit { font-size: 11px; color: var(--text-muted); min-width: 65px; }
+    .weekly-review-input-wrap .goal-input { width: 70px; }
+    body.day-mode .weekly-review-row { border-bottom-color: rgba(0,0,0,0.06); }
     
     /* Responsive */
     @media (max-width: 430px) {
@@ -1742,11 +1752,45 @@
     </div>
   </div>
 
+  <!-- Weekly Goals Review Modal (Sunday) -->
+  <div id="weeklyReviewModal" class="modal">
+    <div class="modal-content" style="max-width:380px">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-teal),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-teal)">🎯</div>
+          <div>
+            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">Weekly Goals</div>
+            <div style="font-size:12px;color:var(--text-muted)">Set your intentions for the week</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeWeeklyReview()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="weekly-review-intro">This week I will...</div>
+        <div class="weekly-review-section">
+          <div class="weekly-review-label">Daily Goals</div>
+          <div class="weekly-review-row"><span>🌙 Sleep</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-sleep" value="7" min="4" max="12" step="0.5"><span class="weekly-review-unit">hrs/night</span></div></div>
+          <div class="weekly-review-row"><span>💧 Water</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-water" value="6" min="1" max="20"><span class="weekly-review-unit">glasses/day</span></div></div>
+          <div class="weekly-review-row"><span>👟 Steps</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-steps" value="7500" min="1000" max="50000" step="500"><span class="weekly-review-unit">steps/day</span></div></div>
+        </div>
+        <div class="weekly-review-section">
+          <div class="weekly-review-label">Weekly Goals</div>
+          <div class="weekly-review-row"><span>🚴 REHIT</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-rehit" value="4" min="1" max="7"><span class="weekly-review-unit">sessions</span></div></div>
+          <div class="weekly-review-row"><span>📖 Reading</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-reading" value="60" min="5" max="500" step="5"><span class="weekly-review-unit">min</span></div></div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeWeeklyReview()" style="flex:1">Keep Current</button>
+        <button class="btn btn-primary" onclick="saveWeeklyReview()" style="flex:2">Lock In My Goals</button>
+      </div>
+    </div>
+  </div>
+
   <header class="header">
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v4.0 – 11:22 AM CST</span></h1>
+          <h1>Habits <span class="version">v4.1 – 1:55 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -3895,6 +3939,66 @@
       });
     });
     
+    // Weekly Goals Review (Sunday)
+    function getWeekKey() {
+      const now = new Date();
+      const sun = new Date(now);
+      sun.setDate(now.getDate() - now.getDay());
+      return 'weeklyReview-' + sun.toISOString().slice(0, 10);
+    }
+
+    function checkWeeklyReview() {
+      const today = new Date();
+      if (today.getDay() !== 0) return; // Only Sundays
+      const key = getWeekKey();
+      if (localStorage.getItem(key)) return; // Already shown this week
+      populateWeeklyReview();
+      document.getElementById('weeklyReviewModal').classList.add('show');
+    }
+
+    function populateWeeklyReview() {
+      document.getElementById('wr-sleep').value = 7;
+      document.getElementById('wr-water').value = appSettings.waterGoal || 6;
+      document.getElementById('wr-steps').value = appSettings.stepsGoal || 7500;
+      document.getElementById('wr-rehit').value = appSettings.rehitGoal || 4;
+      document.getElementById('wr-reading').value = appSettings.readingGoal || 60;
+    }
+
+    window.closeWeeklyReview = function() {
+      document.getElementById('weeklyReviewModal').classList.remove('show');
+      localStorage.setItem(getWeekKey(), 'true');
+    };
+
+    window.saveWeeklyReview = function() {
+      appSettings.waterGoal = parseInt(document.getElementById('wr-water').value) || 6;
+      appSettings.stepsGoal = parseInt(document.getElementById('wr-steps').value) || 7500;
+      appSettings.rehitGoal = parseInt(document.getElementById('wr-rehit').value) || 4;
+      appSettings.readingGoal = parseInt(document.getElementById('wr-reading').value) || 60;
+      saveSettings(appSettings);
+
+      // Sync Settings page inputs if they exist
+      const wg = document.getElementById('waterGoal');
+      const sg = document.getElementById('stepsGoal');
+      const rg = document.getElementById('rehitGoal');
+      const rdg = document.getElementById('readingGoal');
+      if (wg) wg.value = appSettings.waterGoal;
+      if (sg) sg.value = appSettings.stepsGoal;
+      if (rg) rg.value = appSettings.rehitGoal;
+      if (rdg) rdg.value = appSettings.readingGoal;
+
+      document.getElementById('weeklyReviewModal').classList.remove('show');
+      localStorage.setItem(getWeekKey(), 'true');
+      if (typeof showToast === 'function') showToast('Goals locked in! Let\'s go.', 'success');
+    };
+
+    // Check after a short delay so the page finishes loading
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(checkWeeklyReview, 1500);
+      document.getElementById('weeklyReviewModal').addEventListener('click', (e) => {
+        if (e.target.id === 'weeklyReviewModal') closeWeeklyReview();
+      });
+    });
+
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
