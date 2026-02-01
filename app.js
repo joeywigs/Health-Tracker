@@ -2562,6 +2562,46 @@ const BIOMARKER_DEFS = [
   ]}
 ];
 
+// Historical biomarker data (dates newest → oldest)
+const BIOMARKER_HISTORY_DATES = ["11/11/24", "12/19/22", "8/9/21", "12/2/15", "5/2/14"];
+const BIOMARKER_HISTORY = {
+  "Fasting Glucose":      [104, 105, 102, 95, 81],
+  "HbA1c":                [null, 4.9, null, null, null],
+  "Fasting Insulin":      [],
+  "eAG":                  [null, 94, null, null, null],
+  "BUN":                  [17, 13, 19, 21, 14],
+  "Creatinine":           [1.1, 1, 1.11, 1.14, 0.97],
+  "eGFR":                 [85, null, 83, null, null],
+  "Sodium":               [141, 141, 140, 138, 138],
+  "Potassium":            [4.4, 4.4, 4.8, 4.5, 4.2],
+  "Chloride":             [109, 109, 106, 105, 103],
+  "CO2 (Bicarbonate)":    [24, 26, 25, 26, 27],
+  "Calcium":              [9.6, 9.9, 10.5, 10, 9.2],
+  "ALT (SGPT)":           [20, 16, 26, 20, 17],
+  "AST (SGOT)":           [19, 19, 21, 23, 19],
+  "Alkaline Phosphatase": [51, 43, 54, 52, 42],
+  "Total Bilirubin":      [0.5, 0.7, 0.6, 1.1, 0.7],
+  "GGT":                  [],
+  "Total Protein":        [7.6, 7.7, 8.4, 8, 7.2],
+  "Albumin":              [4.6, 4.6, 4.8, 4.9, 4.4],
+  "Total Cholesterol":    [169, 181, 193, 185, null],
+  "Triglycerides":        [120, 73, 133, 51, null],
+  "HDL-C":                [50, 53, 54, 59, null],
+  "LDL-C":                [95, 113, 112, 116, null],
+  "Apolipoprotein B":     [],
+  "Lipoprotein(a)":       [],
+  "hsCRP":                [1.6, null, null, null, null],
+  "Homocysteine":         [],
+  "Ferritin":             [],
+  "Total Testosterone":   [null, null, 585, null, null],
+  "SHBG":                 [null, null, 32, null, null],
+  "Free Testosterone":    [null, null, 134.4, null, null],
+  "Estradiol (E2)":       [],
+  "Cortisol (AM)":        [],
+  "DHEA-S":               [],
+  "Vitamin D (25-OH)":    []
+};
+
 function renderBiomarkersTable(definition, latestValues) {
   const table = document.getElementById("biomarkersTable");
   if (!table) return;
@@ -2608,7 +2648,7 @@ function renderBiomarkersTable(definition, latestValues) {
       markersHTML += `
         <div class="bio-card">
           <div class="bio-card-top">
-            <div class="bio-name">${m.name}</div>
+            <div class="bio-name" data-marker="${m.name}">${m.name}</div>
             <button type="button" class="bio-info-btn" data-bio="${m.name}">i</button>
           </div>
           <div class="bio-range-text">Normal: ${m.range}</div>
@@ -2668,6 +2708,13 @@ function renderBiomarkersTable(definition, latestValues) {
     });
   });
 
+  // Wire biomarker name clicks to open history chart
+  table.querySelectorAll('.bio-name').forEach(el => {
+    el.addEventListener('click', () => {
+      openBioHistory(el.dataset.marker);
+    });
+  });
+
   // Setup submit button
   const submitBtn = document.getElementById("biomarkersSubmitBtn");
   if (submitBtn) {
@@ -2715,6 +2762,128 @@ async function saveBiomarkers() {
     alert("Failed to save biomarkers");
   }
 }
+
+// Biomarker history chart
+let bioHistoryChart = null;
+
+function openBioHistory(markerName) {
+  // Find marker definition
+  let markerDef = null;
+  for (const cat of BIOMARKER_DEFS) {
+    markerDef = cat.markers.find(m => m.name === markerName);
+    if (markerDef) break;
+  }
+  if (!markerDef) return;
+
+  const history = BIOMARKER_HISTORY[markerName] || [];
+  const dates = BIOMARKER_HISTORY_DATES;
+
+  // Build data points (reverse to chronological order oldest → newest)
+  const dataPoints = [];
+  for (let i = dates.length - 1; i >= 0; i--) {
+    if (history[i] != null) {
+      dataPoints.push({ date: dates[i], value: history[i] });
+    }
+  }
+
+  // Update modal header
+  document.getElementById('bioHistoryTitle').textContent = markerName;
+  document.getElementById('bioHistoryRange').textContent = 'Normal: ' + markerDef.range;
+
+  // Render chart
+  const canvas = document.getElementById('bioHistoryChart');
+  const ctx = canvas.getContext('2d');
+  const colors = getChartColors();
+
+  if (bioHistoryChart) bioHistoryChart.destroy();
+
+  if (dataPoints.length >= 2) {
+    canvas.style.display = 'block';
+    bioHistoryChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dataPoints.map(d => d.date),
+        datasets: [{
+          label: markerName,
+          data: dataPoints.map(d => d.value),
+          borderColor: '#6dd5ed',
+          backgroundColor: 'rgba(109, 213, 237, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: dataPoints.map(d =>
+            (d.value >= markerDef.low && d.value <= markerDef.high) ? '#52b788' : '#d4a017'
+          ),
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          annotation: undefined
+        },
+        scales: {
+          x: {
+            ticks: { color: colors.text, maxRotation: 45, minRotation: 45, font: { size: 11 } },
+            grid: { color: colors.grid }
+          },
+          y: {
+            ticks: { color: colors.text, font: { size: 11 } },
+            grid: { color: colors.grid }
+          }
+        }
+      }
+    });
+
+    // Draw normal range band as a box annotation (manual approach via plugin)
+    const yScale = bioHistoryChart.scales.y;
+    if (yScale) {
+      const origDraw = bioHistoryChart.draw.bind(bioHistoryChart);
+      // We'll use the afterDraw hook instead
+    }
+  } else {
+    canvas.style.display = 'none';
+    if (bioHistoryChart) { bioHistoryChart.destroy(); bioHistoryChart = null; }
+  }
+
+  // Render history table (newest first)
+  const tableEl = document.getElementById('bioHistoryTable');
+  let tableHTML = '';
+  for (let i = 0; i < dates.length; i++) {
+    if (history[i] != null) {
+      const inRange = history[i] >= markerDef.low && history[i] <= markerDef.high;
+      tableHTML += `<div class="bio-history-row">
+        <span class="bio-history-date">${dates[i]}</span>
+        <span class="bio-history-val ${inRange ? 'in-range' : 'out-range'}">${history[i]} ${markerDef.unit}</span>
+      </div>`;
+    }
+  }
+  if (!tableHTML) tableHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;font-size:13px">No historical data</div>';
+  tableEl.innerHTML = tableHTML;
+
+  // Show modal
+  document.getElementById('bioHistoryModal').classList.add('show');
+}
+
+window.closeBioHistory = function() {
+  document.getElementById('bioHistoryModal').classList.remove('show');
+  if (bioHistoryChart) { bioHistoryChart.destroy(); bioHistoryChart = null; }
+};
+
+// Click outside to close
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('bioHistoryModal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeBioHistory();
+    });
+  }
+});
 
 // =====================================
 // LOAD / SAVE
