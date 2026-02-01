@@ -536,14 +536,6 @@ async function loadWeeklySummary() {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 6);
   
-  // Update subtitle
-  const subtitle = document.getElementById("summarySubtitle");
-  if (subtitle) {
-    const startStr = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const endStr = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    subtitle.textContent = `${startStr} - ${endStr}`;
-  }
-  
   // Load phase progress
   loadPhaseProgress();
   
@@ -781,14 +773,6 @@ function renderSummaryPage(data, range) {
   currentSummaryRange = range;
   const filteredData = getFilteredData(data, range);
   const stats = calculateGoalStats(filteredData, range);
-  
-  // Update subtitle
-  const subtitle = document.getElementById('summarySubtitle');
-  if (subtitle) {
-    if (range === 7) subtitle.textContent = '7 Days';
-    else if (range === 'phase') subtitle.textContent = 'Phase 1';
-    else subtitle.textContent = 'All Time';
-  }
   
   // Overview stats
   renderSummaryOverview(filteredData, stats, range);
@@ -1374,23 +1358,11 @@ async function loadAndRenderCharts() {
   
   if (allData.length === 0) {
     console.log("No data to chart");
-    const subtitle = document.getElementById("chartsSubtitle");
-    if (subtitle) subtitle.textContent = "No data available";
     return;
   }
   
   // Filter by selected range
   const dataPoints = filterChartDataByRange(allData, currentChartRange);
-  
-  // Update subtitle
-  const subtitle = document.getElementById("chartsSubtitle");
-  if (subtitle) {
-    if (currentChartRange === 'all') {
-      subtitle.textContent = `All Time (${dataPoints.length} days)`;
-    } else {
-      subtitle.textContent = `Last ${currentChartRange} Days (${dataPoints.length} with data)`;
-    }
-  }
   
   // Render each chart
   try {
@@ -1499,10 +1471,10 @@ function renderWeightChart(dataPoints) {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: true, labels: { color: '#e0e0e0' } }
+        legend: { display: true, labels: { color: colors.text } }
       },
       scales: {
-        x: { 
+        x: {
           ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
           grid: { color: colors.grid }
         },
@@ -1511,14 +1483,14 @@ function renderWeightChart(dataPoints) {
           position: 'left',
           ticks: { color: colors.text },
           grid: { color: colors.grid },
-          title: { display: true, text: 'Weight (lbs)', color: '#999' }
+          title: { display: true, text: 'Weight (lbs)', color: colors.text }
         },
         y1: {
           type: 'linear',
           position: 'right',
           ticks: { color: colors.text },
           grid: { display: false },
-          title: { display: true, text: 'Waist (in)', color: '#999' }
+          title: { display: true, text: 'Waist (in)', color: colors.text }
         }
       }
     }
@@ -1576,13 +1548,13 @@ function renderSleepChart(dataPoints) {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { 
+        legend: {
           display: true,
-          labels: { color: '#e0e0e0' }
+          labels: { color: colors.text }
         }
       },
       scales: {
-        x: { 
+        x: {
           ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
           grid: { color: colors.grid }
         },
@@ -1591,7 +1563,7 @@ function renderSleepChart(dataPoints) {
           max: 12,
           ticks: { color: colors.text },
           grid: { color: colors.grid },
-          title: { display: true, text: 'Hours', color: '#999' }
+          title: { display: true, text: 'Hours', color: colors.text }
         }
       }
     }
@@ -1631,7 +1603,7 @@ function renderStepsChart(dataPoints) {
         legend: { display: false }
       },
       scales: {
-        x: { 
+        x: {
           ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
           grid: { color: colors.grid }
         },
@@ -1639,7 +1611,7 @@ function renderStepsChart(dataPoints) {
           beginAtZero: true,
           ticks: { color: colors.text },
           grid: { color: colors.grid },
-          title: { display: true, text: 'Steps', color: '#999' }
+          title: { display: true, text: 'Steps', color: colors.text }
         }
       }
     }
@@ -1832,8 +1804,8 @@ function renderPeakWattsChart(dataPoints) {
         },
         y: {
           beginAtZero: false,
-          ticks: { 
-            color: '#999',
+          ticks: {
+            color: colors.text,
             callback: function(value) {
               return value + 'W';
             }
@@ -1848,35 +1820,34 @@ function renderPeakWattsChart(dataPoints) {
 function renderBodyCompositionChart(dataPoints) {
   const canvas = document.getElementById("bodyCompChart");
   if (!canvas) return;
-  
+
   const ctx = canvas.getContext("2d");
   const colors = getChartColors();
-  
+
   if (bodyCompChart) bodyCompChart.destroy();
-  
+
   const labels = dataPoints.map(d => d.date);
-  const leanMass = dataPoints.map(d => parseFloat(d.daily["Lean Mass (lbs)"]) || null);
-  const bodyFat = dataPoints.map(d => parseFloat(d.daily["Body Fat (lbs)"]) || null);
-  
+  const leanMassPct = dataPoints.map(d => {
+    const lean = parseFloat(d.daily["Lean Mass (lbs)"]);
+    const weight = parseFloat(d.daily["Weight (lbs)"]);
+    if (!isNaN(lean) && !isNaN(weight) && weight > 0) {
+      return parseFloat(((lean / weight) * 100).toFixed(1));
+    }
+    return null;
+  });
+
   bodyCompChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
       datasets: [
         {
-          label: 'Lean Mass (lbs)',
-          data: leanMass,
+          label: 'Lean Mass %',
+          data: leanMassPct,
           borderColor: '#52b788',
           backgroundColor: 'rgba(82, 183, 136, 0.1)',
           tension: 0.3,
-          spanGaps: true
-        },
-        {
-          label: 'Body Fat (lbs)',
-          data: bodyFat,
-          borderColor: '#e63946',
-          backgroundColor: 'rgba(230, 57, 70, 0.1)',
-          tension: 0.3,
+          fill: true,
           spanGaps: true
         }
       ]
@@ -1885,17 +1856,29 @@ function renderBodyCompositionChart(dataPoints) {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: true, labels: { color: '#e0e0e0' } }
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + '%';
+            }
+          }
+        }
       },
       scales: {
-        x: { 
+        x: {
           ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
           grid: { color: colors.grid }
         },
         y: {
-          ticks: { color: colors.text },
+          ticks: {
+            color: colors.text,
+            callback: function(value) {
+              return value + '%';
+            }
+          },
           grid: { color: colors.grid },
-          title: { display: true, text: 'Pounds', color: '#999' }
+          title: { display: true, text: 'Lean Mass %', color: colors.text }
         }
       }
     }
@@ -1940,7 +1923,7 @@ function renderBloodPressureChart(dataPoints) {
           spanGaps: true
         },
         {
-          label: 'Heart Rate (bpm)',
+          label: 'Pulse (bpm)',
           data: heartRate,
           borderColor: '#52b788',
           backgroundColor: 'rgba(82, 183, 136, 0.1)',
@@ -1954,10 +1937,10 @@ function renderBloodPressureChart(dataPoints) {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: true, labels: { color: '#e0e0e0' } }
+        legend: { display: true, labels: { color: colors.text } }
       },
       scales: {
-        x: { 
+        x: {
           ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
           grid: { color: colors.grid }
         },
@@ -1966,7 +1949,7 @@ function renderBloodPressureChart(dataPoints) {
           position: 'left',
           ticks: { color: colors.text },
           grid: { color: colors.grid },
-          title: { display: true, text: 'Blood Pressure (mmHg)', color: '#999' },
+          title: { display: true, text: 'Blood Pressure (mmHg)', color: colors.text },
           min: 60,
           max: 160
         },
@@ -1975,7 +1958,7 @@ function renderBloodPressureChart(dataPoints) {
           position: 'right',
           ticks: { color: colors.text },
           grid: { display: false },
-          title: { display: true, text: 'Heart Rate (bpm)', color: '#999' },
+          title: { display: true, text: 'Pulse (bpm)', color: colors.text },
           min: 50,
           max: 100
         }
