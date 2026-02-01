@@ -775,7 +775,7 @@ function renderSummaryPage(data, range) {
   const stats = calculateGoalStats(filteredData, range);
   
   // Overview stats
-  renderSummaryOverview(filteredData, stats, range);
+  renderSummaryOverview(filteredData, stats, range, data);
   
   // REHIT Calendar
   renderSummaryRehitCalendar(data, range);
@@ -791,51 +791,54 @@ function renderSummaryPage(data, range) {
   renderWritingStats(stats);
 }
 
-function renderSummaryOverview(data, stats, range) {
+function renderSummaryOverview(data, stats, range, allData) {
   const container = document.getElementById('summaryOverview');
   if (!container) return;
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const phaseStart = new Date(PHASE_START);
   phaseStart.setHours(0, 0, 0, 0);
-  
+
   const daysIntoPhase = Math.max(0, Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
   const daysRemaining = Math.max(0, PHASE_LENGTH - daysIntoPhase);
-  const totalDaysLogged = data.length;
-  
+  const totalDaysLogged = allData ? allData.length : data.length;
+  const currentStreak = calculateCurrentStreak();
+  const streakIcon = currentStreak > 7 ? '🔥 ' : '';
+
   // Calculate percent complete (days with 90%+ goals)
   let daysComplete = 0;
   data.forEach(d => {
     // Count goals met: sleep 7+, water 6+, 4 supps, steps 5000+
     let goalsMet = 0;
     const totalGoals = 4;
-    
+
     const sleep = parseFloat(d.daily["Hours of Sleep"]);
     if (!isNaN(sleep) && sleep >= getGoalTarget('sleep')) goalsMet++;
 
     const water = parseInt(d.daily["Water"]);
     if (!isNaN(water) && water >= getGoalTarget('water')) goalsMet++;
-    
+
     const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
     const vitD = d.daily["Vitamin D"];
     const no2 = d.daily["NO2"];
     const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
     const allSupps = [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE").length === 4;
     if (allSupps) goalsMet++;
-    
+
     const steps = parseInt(d.daily["Steps"]);
     if (!isNaN(steps) && steps >= getGoalTarget('steps')) goalsMet++;
-    
+
     if (goalsMet / totalGoals >= 0.9) daysComplete++;
   });
-  
+
   const pctComplete = totalDaysLogged > 0 ? Math.round((daysComplete / totalDaysLogged) * 100) : 0;
-  
+
   container.innerHTML = `
     <div class="summary-stat">
       <div class="summary-stat-value">${totalDaysLogged}</div>
       <div class="summary-stat-label">Days Logged</div>
+      <div class="summary-stat-sub">${streakIcon}${currentStreak} day streak</div>
     </div>
     <div class="summary-stat">
       <div class="summary-stat-value">${pctComplete}%</div>
