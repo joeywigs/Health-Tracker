@@ -1011,7 +1011,55 @@
     body.day-mode .duration-custom-row input {
       background: rgba(255,255,255,0.5);
     }
-    
+
+    /* Reading Modal */
+    .reading-field {
+      margin-bottom: 20px;
+    }
+    .reading-field:last-child {
+      margin-bottom: 0;
+    }
+    .reading-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .reading-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    .reading-input:focus {
+      outline: none;
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 15px var(--glow-purple);
+    }
+    .reading-input::placeholder {
+      color: var(--text-muted);
+    }
+    #readingModal .duration-preset.selected {
+      border-color: var(--accent-purple);
+      background: rgba(196, 113, 237, 0.15);
+      box-shadow: 0 0 15px var(--glow-purple);
+    }
+    #readingModal .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    body.day-mode .reading-input {
+      background: rgba(255,255,255,0.5);
+    }
+
     .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: white; outline: none; }
     .big-input::placeholder { color: var(--text-muted); }
     .big-input:focus { color: var(--accent-teal); }
@@ -1674,7 +1722,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v2.9 – 1:56 PM CST</span></h1>
+          <h1>Habits <span class="version">v3.0 – 4:16 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2204,6 +2252,45 @@
     </div>
   </div>
 
+  <!-- Reading Modal -->
+  <div id="readingModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-purple),var(--accent-blue));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-purple)">📖</div>
+          <div>
+            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">Add Reading</div>
+            <div style="font-size:12px;color:var(--text-muted)">Book title and duration</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeReadingModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="reading-field">
+          <label class="reading-label" for="readingBookInput">Book Title</label>
+          <input type="text" id="readingBookInput" class="reading-input" placeholder="Enter book title...">
+        </div>
+        <div class="reading-field">
+          <label class="reading-label">Duration</label>
+          <div class="duration-presets reading-duration-presets">
+            <button type="button" class="duration-preset reading-duration-preset" data-mins="10">10</button>
+            <button type="button" class="duration-preset reading-duration-preset" data-mins="15">15</button>
+            <button type="button" class="duration-preset reading-duration-preset" data-mins="20">20</button>
+            <button type="button" class="duration-preset reading-duration-preset" data-mins="30">30</button>
+            <button type="button" class="duration-preset reading-duration-preset" data-mins="45">45</button>
+          </div>
+          <div class="duration-custom-row">
+            <input type="number" id="readingCustomMins" placeholder="--" min="1" max="300">
+            <span>minutes</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="readingSaveBtn" disabled style="width:100%">Add Reading</button>
+      </div>
+    </div>
+  </div>
+
   <button id="quickLogFab" class="fab">+</button>
   <div id="quickLogMenu" class="fab-menu">
     <button class="fab-item quick-log-item" data-action="movement"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple))">🚶</div><span class="fab-label">Movement</span></button>
@@ -2596,6 +2683,94 @@
       openMovementModal();
     };
     
+    // =============================================
+    // READING MODAL
+    // =============================================
+    let selectedReadingDuration = null;
+
+    window.openReadingModal = function() {
+      selectedReadingDuration = null;
+
+      // Autopopulate book title from last entry
+      const bookInput = document.getElementById('readingBookInput');
+      if (typeof lastBookTitle !== 'undefined' && lastBookTitle) {
+        bookInput.value = lastBookTitle;
+      } else {
+        bookInput.value = '';
+      }
+
+      // Reset duration UI
+      document.querySelectorAll('.reading-duration-preset').forEach(b => b.classList.remove('selected'));
+      document.getElementById('readingCustomMins').value = '';
+      document.getElementById('readingSaveBtn').disabled = true;
+      updateReadingSaveBtn();
+
+      document.getElementById('readingModal').classList.add('show');
+    };
+
+    window.closeReadingModal = function() {
+      document.getElementById('readingModal').classList.remove('show');
+    };
+
+    function updateReadingSaveBtn() {
+      const btn = document.getElementById('readingSaveBtn');
+      const bookInput = document.getElementById('readingBookInput');
+      btn.disabled = !selectedReadingDuration || !bookInput.value.trim();
+    }
+
+    // Wire up reading duration presets
+    document.querySelectorAll('.reading-duration-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.reading-duration-preset').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedReadingDuration = parseInt(btn.dataset.mins, 10);
+        document.getElementById('readingCustomMins').value = '';
+        updateReadingSaveBtn();
+      });
+    });
+
+    // Wire up custom reading duration input
+    document.getElementById('readingCustomMins')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      if (val > 0) {
+        document.querySelectorAll('.reading-duration-preset').forEach(b => b.classList.remove('selected'));
+        selectedReadingDuration = val;
+      } else {
+        selectedReadingDuration = null;
+      }
+      updateReadingSaveBtn();
+    });
+
+    // Wire up book title input
+    document.getElementById('readingBookInput')?.addEventListener('input', updateReadingSaveBtn);
+
+    // Wire up save button
+    document.getElementById('readingSaveBtn')?.addEventListener('click', () => {
+      const bookInput = document.getElementById('readingBookInput');
+      const bookTitle = bookInput.value.trim();
+      if (!selectedReadingDuration || !bookTitle) return;
+
+      if (typeof readings !== 'undefined') {
+        readings.push({ duration: selectedReadingDuration, book: bookTitle });
+        if (typeof window.lastBookTitle !== 'undefined' || true) window.lastBookTitle = bookTitle;
+        if (typeof renderReadings === 'function') renderReadings();
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      }
+
+      closeReadingModal();
+    });
+
+    // Close reading modal when clicking backdrop
+    document.getElementById('readingModal')?.addEventListener('click',(e)=>{if(e.target.id==='readingModal')closeReadingModal()});
+
+    // Override promptAddReading to use our modal
+    window.promptAddReading = openReadingModal;
+
+    // Also override quickLogReading for the FAB
+    window.quickLogReading = async function() {
+      openReadingModal();
+    };
+
     // Also try immediately in case app.js loaded first
     setupPopulateFormHook();
     

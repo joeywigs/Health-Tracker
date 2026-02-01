@@ -2035,26 +2035,7 @@ async function quickLogWater() {
 }
 
 async function quickLogReading() {
-  const duration = prompt("Reading duration (minutes):", "15");
-  if (!duration) return;
-  
-  const mins = parseInt(duration, 10);
-  if (isNaN(mins) || mins <= 0) {
-    alert("Please enter a valid number of minutes");
-    return;
-  }
-  
-  const book = prompt("Book title:", lastBookTitle);
-  if (book === null) return;
-  
-  const bookTitle = book.trim() || lastBookTitle;
-  
-  readings.push({ duration: mins, book: bookTitle });
-  lastBookTitle = bookTitle;
-  renderReadings();
-  triggerSaveSoon();
-  
-  showQuickConfirmation(`✓ Logged ${mins} min reading`);
+  window.openReadingModal();
 }
 
 async function quickLogRehit() {
@@ -3214,25 +3195,7 @@ function setupReadingUI() {
 }
 
 function promptAddReading() {
-  const durationRaw = prompt("Reading duration (minutes):");
-  if (durationRaw === null) return;
-
-  const duration = parseInt(durationRaw, 10);
-  if (!Number.isFinite(duration) || duration <= 0) {
-    alert("Please enter a valid number of minutes.");
-    return;
-  }
-
-  const book = prompt("Book title:", lastBookTitle);
-  if (book === null) return;
-
-  const bookTitle = book.trim() || lastBookTitle;
-  
-  readings.push({ duration, book: bookTitle });
-  lastBookTitle = bookTitle;
-
-  renderReadings();
-  triggerSaveSoon();
+  window.openReadingModal();
 }
 
 function removeReading(index) {
