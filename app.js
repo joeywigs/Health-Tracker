@@ -2503,27 +2503,171 @@ async function loadBiomarkers() {
   }
 }
 
+// Biomarker definitions organized by category
+const BIOMARKER_DEFS = [
+  { cat: "Metabolic Health", icon: "🔬", markers: [
+    { name: "Fasting Glucose", range: "70–99 mg/dL", low: 70, high: 99, unit: "mg/dL", desc: "Measures blood sugar at a single moment after fasting; helps detect early dysregulation before diabetes develops" },
+    { name: "HbA1c", range: "<5.7 %", low: 4.0, high: 5.7, unit: "%", desc: "Reflects average blood sugar over the prior ~3 months; key marker for long-term glucose exposure and diabetes risk" },
+    { name: "Fasting Insulin", range: "2–10 µIU/mL", low: 2, high: 10, unit: "µIU/mL", desc: "Shows how hard the body must work to keep glucose normal; elevated levels signal insulin resistance years before diabetes" },
+    { name: "eAG", range: "<117 mg/dL", low: 70, high: 117, unit: "mg/dL", desc: "Estimated average glucose translated from HbA1c into daily-life units; useful for intuitive understanding of A1c" }
+  ]},
+  { cat: "Kidney Function", icon: "🫘", markers: [
+    { name: "BUN", range: "7–20 mg/dL", low: 7, high: 20, unit: "mg/dL", desc: "Measures nitrogen waste in blood; influenced by kidney function, hydration, and protein intake" },
+    { name: "Creatinine", range: "0.74–1.35 mg/dL", low: 0.74, high: 1.35, unit: "mg/dL", desc: "Primary marker of kidney filtration; higher levels suggest reduced kidney clearance or high muscle mass" },
+    { name: "eGFR", range: "≥90 mL/min/1.73m²", low: 90, high: 120, unit: "mL/min", desc: "Calculated estimate of overall kidney filtering capacity; tracks kidney health over time" }
+  ]},
+  { cat: "Electrolytes & Minerals", icon: "⚡", markers: [
+    { name: "Sodium", range: "135–145 mmol/L", low: 135, high: 145, unit: "mmol/L", desc: "Regulates fluid balance, blood pressure, and nerve signaling; tightly controlled by kidneys and hormones" },
+    { name: "Potassium", range: "3.5–5.1 mmol/L", low: 3.5, high: 5.1, unit: "mmol/L", desc: "Essential for heart rhythm and muscle contraction; abnormalities can affect cardiac stability" },
+    { name: "Chloride", range: "96–106 mmol/L", low: 96, high: 106, unit: "mmol/L", desc: "Works with sodium to maintain fluid balance and acid-base equilibrium" },
+    { name: "CO2 (Bicarbonate)", range: "22–29 mmol/L", low: 22, high: 29, unit: "mmol/L", desc: "Reflects acid-base balance and metabolic function; low levels may suggest metabolic stress" },
+    { name: "Calcium", range: "8.6–10.2 mg/dL", low: 8.6, high: 10.2, unit: "mg/dL", desc: "Important for bone strength, muscle contraction, nerve transmission, and hormone signaling" }
+  ]},
+  { cat: "Liver Function", icon: "🫁", markers: [
+    { name: "ALT (SGPT)", range: "7–56 U/L", low: 7, high: 56, unit: "U/L", desc: "Most liver-specific enzyme; elevations suggest liver inflammation or fat-related liver stress" },
+    { name: "AST (SGOT)", range: "10–40 U/L", low: 10, high: 40, unit: "U/L", desc: "Found in liver and muscle; helps interpret liver results in context of exercise or injury" },
+    { name: "Alkaline Phosphatase", range: "44–147 IU/L", low: 44, high: 147, unit: "IU/L", desc: "Linked to bile flow and bone turnover; elevations may indicate liver or bone conditions" },
+    { name: "Total Bilirubin", range: "0.2–1.2 mg/dL", low: 0.2, high: 1.2, unit: "mg/dL", desc: "Measures liver processing of red blood cells; mild elevations can be benign or genetic" },
+    { name: "GGT", range: "9–48 U/L", low: 9, high: 48, unit: "U/L", desc: "Early and sensitive marker of liver stress, alcohol sensitivity, and cardiometabolic risk" }
+  ]},
+  { cat: "Proteins & Nutrition", icon: "🥩", markers: [
+    { name: "Total Protein", range: "6.3–8.2 g/dL", low: 6.3, high: 8.2, unit: "g/dL", desc: "Measures total circulating proteins involved in immunity, transport, and nutrition" },
+    { name: "Albumin", range: "3.5–5.0 g/dL", low: 3.5, high: 5.0, unit: "g/dL", desc: "Key blood protein reflecting liver function, nutritional status, and systemic inflammation" }
+  ]},
+  { cat: "Lipid & Lipoproteins", icon: "❤️", markers: [
+    { name: "Total Cholesterol", range: "<200 mg/dL", low: 100, high: 200, unit: "mg/dL", desc: "Overall cholesterol burden; limited alone but useful for trend tracking" },
+    { name: "Triglycerides", range: "<150 mg/dL", low: 30, high: 150, unit: "mg/dL", desc: "Reflects fat metabolism and insulin sensitivity; often elevated in metabolic dysfunction" },
+    { name: "HDL-C", range: "≥40 mg/dL", low: 40, high: 100, unit: "mg/dL", desc: "Involved in cholesterol transport away from arteries; higher levels generally protective" },
+    { name: "LDL-C", range: "<100 mg/dL", low: 40, high: 100, unit: "mg/dL", desc: "Traditional cholesterol marker associated with plaque formation; incomplete without particle data" },
+    { name: "Apolipoprotein B", range: "<90 mg/dL", low: 30, high: 90, unit: "mg/dL", desc: "Counts total atherogenic particles that cause plaque; strongest single lipid predictor of heart disease" },
+    { name: "Lipoprotein(a)", range: "<30 mg/dL", low: 0, high: 30, unit: "mg/dL", desc: "Genetically determined LDL-like particle; major inherited risk factor for premature heart disease" }
+  ]},
+  { cat: "Inflammation & Vascular Risk", icon: "🔥", markers: [
+    { name: "hsCRP", range: "<1.0 mg/L", low: 0, high: 1.0, unit: "mg/L", desc: "Measures chronic low-grade inflammation that contributes to atherosclerosis and heart events" },
+    { name: "Homocysteine", range: "5–15 µmol/L", low: 5, high: 15, unit: "µmol/L", desc: "Amino acid linked to endothelial damage and vascular risk when elevated" }
+  ]},
+  { cat: "Iron & Hematology", icon: "🩸", markers: [
+    { name: "Ferritin", range: "30–400 ng/mL", low: 30, high: 400, unit: "ng/mL", desc: "Reflects iron storage; high levels may indicate inflammation or excess iron" }
+  ]},
+  { cat: "Hormones & Endocrine", icon: "⚙️", markers: [
+    { name: "Total Testosterone", range: "300–1000 ng/dL", low: 300, high: 1000, unit: "ng/dL", desc: "Measures overall testosterone production; baseline helps detect age-related decline" },
+    { name: "SHBG", range: "10–57 nmol/L", low: 10, high: 57, unit: "nmol/L", desc: "Binding protein that controls how much testosterone is biologically available" },
+    { name: "Free Testosterone", range: "5–20 ng/dL", low: 5, high: 20, unit: "ng/dL", desc: "Active fraction of testosterone that affects energy, muscle, mood, and metabolism" },
+    { name: "Estradiol (E2)", range: "10–40 pg/mL", low: 10, high: 40, unit: "pg/mL", desc: "Primary estrogen in men; affects fat distribution, cardiovascular risk, and libido" },
+    { name: "Cortisol (AM)", range: "6–23 µg/dL", low: 6, high: 23, unit: "µg/dL", desc: "Main stress hormone; abnormal levels can affect sleep, blood pressure, and metabolism" },
+    { name: "DHEA-S", range: "80–560 µg/dL", low: 80, high: 560, unit: "µg/dL", desc: "Adrenal hormone associated with stress resilience, immune health, and aging trajectory" }
+  ]},
+  { cat: "Vitamins & Longevity", icon: "☀️", markers: [
+    { name: "Vitamin D (25-OH)", range: "30–50 ng/mL", low: 30, high: 50, unit: "ng/mL", desc: "Regulates calcium absorption, immune function, and mood; deficiency is common and linked to many chronic diseases" }
+  ]}
+];
+
 function renderBiomarkersTable(definition, latestValues) {
   const table = document.getElementById("biomarkersTable");
   if (!table) return;
-  
+
+  // Build a lookup from API values by biomarker name
+  const valueLookup = {};
+  if (definition && latestValues) {
+    definition.forEach((item, idx) => {
+      valueLookup[item.biomarker] = latestValues[idx] || '';
+    });
+  }
+
   table.innerHTML = "";
-  
-  definition.forEach((item, idx) => {
-    const prevValue = latestValues[idx] || '';
-    const div = document.createElement("div");
-    div.style.marginBottom = "16px";
-    div.innerHTML = `
-      <label class="field-label">${item.biomarker} (${item.units})</label>
-      <div style="font-size: 14px; color: #999; margin-bottom: 4px;">
-        Optimal: ${item.optimal}${prevValue ? ` • Previous: <span style="color: #4d9de0;">${prevValue}</span>` : ''}
+  let inputIdx = 0;
+
+  BIOMARKER_DEFS.forEach(cat => {
+    const catDiv = document.createElement("div");
+    catDiv.className = "bio-category";
+
+    let markersHTML = '';
+    cat.markers.forEach(m => {
+      const prev = valueLookup[m.name] || '';
+      const prevNum = parseFloat(prev);
+      const hasPrev = prev !== '' && !isNaN(prevNum);
+
+      // Calculate bar percentages and bubble position
+      const barRange = m.high - m.low;
+      const barPadding = barRange * 0.3; // 30% padding on each side
+      const barMin = Math.max(0, m.low - barPadding);
+      const barMax = m.high + barPadding;
+      const barTotal = barMax - barMin;
+      const lowPct = ((m.low - barMin) / barTotal) * 100;
+      const normalPct = ((m.high - m.low) / barTotal) * 100;
+
+      let bubbleHTML = '';
+      if (hasPrev) {
+        const clampedVal = Math.max(barMin, Math.min(barMax, prevNum));
+        const bubblePct = ((clampedVal - barMin) / barTotal) * 100;
+        const inRange = prevNum >= m.low && prevNum <= m.high;
+        const rangeClass = inRange ? 'in-range' : 'out-range';
+        bubbleHTML = `<div class="bio-bubble-wrap" style="left:${bubblePct}%"><div class="bio-bubble ${rangeClass}">${prev}</div><div class="bio-bubble-arrow"></div></div>`;
+      }
+
+      markersHTML += `
+        <div class="bio-card">
+          <div class="bio-card-top">
+            <div class="bio-name">${m.name}</div>
+            <button type="button" class="bio-info-btn" data-bio="${m.name}">i</button>
+          </div>
+          <div class="bio-range-text">Normal: ${m.range}</div>
+          <div class="bio-tooltip" id="bio-tip-${m.name.replace(/[^a-zA-Z0-9]/g, '')}">${m.desc}</div>
+          <div style="position:relative;margin-bottom:2px;padding-top:${hasPrev ? '30' : '0'}px">
+            <div class="bio-bar-wrap">
+              <div class="bio-bar-low" style="width:${lowPct}%"></div>
+              <div class="bio-bar-normal" style="width:${normalPct}%"></div>
+              <div class="bio-bar-high"></div>
+              ${bubbleHTML}
+            </div>
+          </div>
+          <div class="bio-bar-labels"><span class="bio-bar-label">${m.low}</span><span class="bio-bar-label">${m.high}</span></div>
+          <div class="bio-input-row">
+            <span class="bio-input-label">New result:</span>
+            <input type="text" inputmode="decimal" class="bio-input biomarker-input" data-index="${inputIdx}" data-name="${m.name}" placeholder="${hasPrev ? prev : '—'}">
+          </div>
+        </div>`;
+      inputIdx++;
+    });
+
+    catDiv.innerHTML = `
+      <div class="bio-cat-header">
+        <span class="bio-cat-icon">${cat.icon}</span>
+        <span class="bio-cat-name">${cat.cat}</span>
+        <span class="bio-cat-toggle">▼</span>
       </div>
-      <input type="text" class="input-field biomarker-input" data-index="${idx}" 
-             placeholder="${prevValue ? 'Enter new value' : 'Enter value'}" value="">
-    `;
-    table.appendChild(div);
+      <div class="bio-cat-body">${markersHTML}</div>`;
+
+    table.appendChild(catDiv);
   });
-  
+
+  // Wire category collapse toggles
+  table.querySelectorAll('.bio-cat-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.classList.toggle('collapsed');
+      header.nextElementSibling.classList.toggle('collapsed');
+    });
+  });
+
+  // Wire info buttons
+  table.querySelectorAll('.bio-info-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const name = btn.dataset.bio.replace(/[^a-zA-Z0-9]/g, '');
+      const tip = document.getElementById('bio-tip-' + name);
+      if (tip) {
+        const isShowing = tip.classList.contains('show');
+        // Close all tooltips
+        table.querySelectorAll('.bio-tooltip.show').forEach(t => t.classList.remove('show'));
+        table.querySelectorAll('.bio-info-btn.active').forEach(b => b.classList.remove('active'));
+        if (!isShowing) {
+          tip.classList.add('show');
+          btn.classList.add('active');
+        }
+      }
+    });
+  });
+
   // Setup submit button
   const submitBtn = document.getElementById("biomarkersSubmitBtn");
   if (submitBtn) {

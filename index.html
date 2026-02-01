@@ -1109,6 +1109,54 @@
       background: rgba(99, 102, 241, 0.12);
       border-color: rgba(99, 102, 241, 0.3);
     }
+    /* Biomarkers Page */
+    .bio-category { margin-bottom: 14px; }
+    .bio-cat-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; }
+    .bio-cat-header .bio-cat-icon { font-size: 16px; }
+    .bio-cat-header .bio-cat-name { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); flex: 1; }
+    .bio-cat-header .bio-cat-toggle { font-size: 10px; color: var(--text-muted); transition: transform 0.3s; }
+    .bio-cat-header.collapsed .bio-cat-toggle { transform: rotate(-90deg); }
+    .bio-cat-body { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-top: none; border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
+    .bio-cat-body.collapsed { display: none; }
+
+    .bio-card { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .bio-card:last-child { border-bottom: none; }
+    .bio-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .bio-name { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+    .bio-info-btn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--text-muted); background: none; color: var(--text-muted); font-size: 11px; font-style: italic; font-family: Georgia, serif; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .bio-info-btn:hover, .bio-info-btn.active { border-color: var(--accent-teal); color: var(--accent-teal); }
+    .bio-range-text { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+    .bio-tooltip { display: none; padding: 8px 10px; margin-bottom: 8px; background: rgba(99,102,241,0.1); border-radius: var(--radius-sm); font-size: 12px; line-height: 1.5; color: var(--text-dim); }
+    .bio-tooltip.show { display: block; }
+
+    .bio-bar-wrap { position: relative; height: 14px; border-radius: 7px; overflow: visible; margin: 0 8px 4px; display: flex; }
+    .bio-bar-low { background: #d4a017; border-radius: 7px 0 0 7px; height: 100%; }
+    .bio-bar-normal { background: #52b788; height: 100%; }
+    .bio-bar-high { background: #d4a017; border-radius: 0 7px 7px 0; height: 100%; flex: 1; }
+    .bio-bar-labels { display: flex; justify-content: space-between; padding: 0 8px; margin-bottom: 8px; }
+    .bio-bar-label { font-size: 10px; color: var(--text-muted); }
+
+    .bio-bubble-wrap { position: absolute; top: -28px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+    .bio-bubble { padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; }
+    .bio-bubble-arrow { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid; }
+    .bio-bubble.in-range { background: #52b788; }
+    .bio-bubble.in-range + .bio-bubble-arrow { border-top-color: #52b788; }
+    .bio-bubble.out-range { background: #d4a017; }
+    .bio-bubble.out-range + .bio-bubble-arrow { border-top-color: #d4a017; }
+    .bio-bubble.no-result { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); }
+    .bio-bubble.no-result + .bio-bubble-arrow { border-top-color: var(--border); }
+
+    .bio-input-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .bio-input-label { font-size: 11px; color: var(--text-muted); }
+    .bio-input { width: 80px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 8px; color: var(--text); font-size: 13px; font-family: 'Space Grotesk', sans-serif; text-align: center; outline: none; flex-shrink: 0; }
+    .bio-input:focus { border-color: var(--accent-teal); }
+
+    body.day-mode .bio-cat-header { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
+    body.day-mode .bio-cat-body { background: rgba(255,255,255,0.6); border-color: rgba(0,0,0,0.08); }
+    body.day-mode .bio-card { border-bottom-color: rgba(0,0,0,0.06); }
+    body.day-mode .bio-input { background: rgba(255,255,255,0.8); color: #1f2937; }
+    body.day-mode .bio-tooltip { background: rgba(99,102,241,0.08); }
+
     .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
     .sec-title { display: flex; align-items: center; gap: 10px; }
     .sec-icon { 
@@ -1792,7 +1840,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v4.4 – 3:28 PM CST</span></h1>
+          <h1>Habits <span class="version">v4.5 – 4:34 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2021,8 +2069,10 @@
     </header>
     <div class="section">
       <div class="field"><label class="field-label">Lab Date</label><input type="text" class="input" id="biomarkersDate" placeholder="M/D/YY"></div>
-      <div id="biomarkersTable"></div>
-      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn" style="width:100%;margin-top:14px">Submit</button>
+    </div>
+    <div id="biomarkersTable"></div>
+    <div class="section" style="margin-top:4px">
+      <button type="button" class="btn btn-primary" id="biomarkersSubmitBtn" style="width:100%">Submit</button>
       <div id="biomarkersSaveStatus" style="text-align:center;margin-top:8px;color:var(--accent-teal)"></div>
     </div>
   </div>
