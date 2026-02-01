@@ -2670,7 +2670,7 @@ function triggerSaveSoon() {
   autoSaveTimeout = setTimeout(async () => {
     const payload = buildPayloadFromUI();
     await saveData(payload);
-  }, 800);
+  }, 1500);
 }
 
 function buildPayloadFromUI() {
