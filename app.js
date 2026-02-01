@@ -2999,8 +2999,34 @@ function applyBodyFieldsFromDaily(daily) {
   if (boneMassEl) boneMassEl.value = boneVal ?? "";
   if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
 
-  if (typeof calculatePercentages === "function") calculatePercentages();
+  calculatePercentages();
 }
+
+function calculatePercentages() {
+  const weight = parseFloat(document.getElementById("weight")?.value);
+  if (!weight || weight <= 0) return;
+
+  const fields = [
+    { input: "leanMass", display: "leanMassPercent" },
+    { input: "bodyFat", display: "bodyFatPercent" },
+    { input: "boneMass", display: "boneMassPercent" },
+    { input: "water", display: "waterPercent" }
+  ];
+
+  fields.forEach(({ input, display }) => {
+    const val = parseFloat(document.getElementById(input)?.value);
+    const el = document.getElementById(display);
+    if (el) {
+      el.textContent = (!isNaN(val) && val > 0) ? ((val / weight) * 100).toFixed(1) + '%' : '--';
+    }
+  });
+}
+
+// Wire up live percentage calculation on body input changes
+['weight', 'leanMass', 'bodyFat', 'boneMass', 'water'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', calculatePercentages);
+});
 
 // =====================================
 // populateForm: set UI from sheet data
