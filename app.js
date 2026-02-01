@@ -426,19 +426,21 @@ function updateWeighReminder() {
 }
 
 function showWeighReminder() {
-  let banner = document.getElementById("weighReminder");
-  if (!banner) {
-    banner = document.createElement("div");
-    banner.id = "weighReminder";
-    banner.className = "reminder-banner";
-    banner.innerHTML = `
-      <span>📊 Weigh-in Monday! Don't forget to log your body measurements.</span>
-      <button onclick="document.getElementById('weighReminder').remove()">✕</button>
+  let card = document.getElementById("weighReminder");
+  if (!card) {
+    card = document.createElement("div");
+    card.id = "weighReminder";
+    card.className = "reminder-card";
+    card.innerHTML = `
+      <button class="reminder-close" onclick="document.getElementById('weighReminder').remove()">✕</button>
+      <div class="reminder-icon">⚖️</div>
+      <div class="reminder-title">Weigh-in Monday!</div>
+      <div class="reminder-sub">Don't forget to log your body measurements.</div>
     `;
-    
+
     const header = document.querySelector(".header");
     if (header) {
-      header.parentNode.insertBefore(banner, header.nextSibling);
+      header.parentNode.insertBefore(card, header.nextSibling);
     }
   }
 }
