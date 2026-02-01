@@ -2034,11 +2034,12 @@ function updateStickyDate() {
   const cur = new Date(currentDate);
   cur.setHours(0, 0, 0, 0);
   
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
+  const dateStr = cur.toLocaleDateString('en-US', options);
   if (cur.getTime() === today.getTime()) {
-    stickyDate.textContent = "Today";
+    stickyDate.textContent = "Today - " + dateStr;
   } else {
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
-    stickyDate.textContent = cur.toLocaleDateString('en-US', options);
+    stickyDate.textContent = dateStr;
   }
 }
 
