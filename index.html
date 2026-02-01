@@ -1090,6 +1090,25 @@
       transition: all 0.3s;
     }
     .section:hover { border-color: rgba(255,255,255,0.2); }
+
+    .reminder-card {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 12px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+    }
+    .reminder-card .reminder-icon { font-size: 28px; margin-bottom: 6px; }
+    .reminder-card .reminder-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .reminder-card .reminder-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+    .reminder-card .reminder-close { position: absolute; top: 8px; right: 12px; background: none; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer; }
+    .reminder-card { position: relative; }
+    body.day-mode .reminder-card {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
     .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
     .sec-title { display: flex; align-items: center; gap: 10px; }
     .sec-icon { 
@@ -1727,7 +1746,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v3.8 – 10:13 AM CST</span></h1>
+          <h1>Habits <span class="version">v4.0 – 11:22 AM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
