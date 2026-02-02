@@ -1849,7 +1849,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v5.7 – 7:24 PM CST</span></h1>
+          <h1>Habits <span class="version">v5.8 – 7:32 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1888,6 +1888,24 @@
         <div><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
         <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
       </div>
+      <script>
+        window.handleAguaPlus = function() {
+          var el = document.getElementById('aguaCount');
+          if (!el) return;
+          var n = (parseInt(el.textContent) || 0) + 1;
+          el.textContent = n;
+          if (typeof aguaCount !== 'undefined') aguaCount = n;
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        };
+        window.handleAguaMinus = function() {
+          var el = document.getElementById('aguaCount');
+          if (!el) return;
+          var n = Math.max(0, (parseInt(el.textContent) || 0) - 1);
+          el.textContent = n;
+          if (typeof aguaCount !== 'undefined') aguaCount = n;
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        };
+      </script>
       <div class="card water" id="waterSection">
         <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
         <div class="water-row">

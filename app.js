@@ -3170,20 +3170,12 @@ function updateAguaDisplay() {
   if (aguaCountEl) aguaCountEl.textContent = String(aguaCount);
 }
 
-// Expose on window for inline onclick in HTML
-window.handleAguaPlus = function() {
-  aguaCount += 1;
-  updateAguaDisplay();
-  triggerSaveSoon();
-};
-window.handleAguaMinus = function() {
-  aguaCount = Math.max(0, aguaCount - 1);
-  updateAguaDisplay();
-  triggerSaveSoon();
-};
-
 function setupAguaButtons() {
-  // Handled by inline onclick — nothing to do here
+  // Agua buttons use inline onclick → window.handleAguaPlus/Minus
+  // defined in an inline <script> in index.html (before the buttons).
+  // Sync aguaCount from DOM in case it was changed before app.js loaded.
+  const el = document.getElementById("aguaCount");
+  if (el) aguaCount = parseInt(el.textContent) || 0;
 }
 
 // =====================================
