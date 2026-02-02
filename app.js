@@ -227,6 +227,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // unchecked checkboxes and saves stale data to the backend/cache.
   try { await loadDataForCurrentDate(); console.log("22 ok"); } catch(e) { console.error("loadDataForCurrentDate failed:", e); }
 
+  // Re-check weigh-in reminder now that weight field is populated with loaded data
+  try { updateWeighReminder(); } catch(e) { console.error("updateWeighReminder post-load failed:", e); }
+
+  // Schedule movement reminders AFTER data loads so movements array is populated
+  try { scheduleMovementReminders(); console.log("22b ok"); } catch(e) { console.error("scheduleMovementReminders failed:", e); }
+
   // Flush any queued offline saves AFTER the form is populated
   if (navigator.onLine) {
     flushOfflineQueue().catch(e => console.warn('Offline flush on boot failed:', e));
@@ -419,8 +425,8 @@ function setupWeeklyReminders() {
     });
   }
 
-  // Schedule movement break reminder checks at 11am and 4pm
-  scheduleMovementReminders();
+  // Movement reminders are scheduled later, after data loads
+  // (see loadDataForCurrentDate completion in DOMContentLoaded)
 
   console.log("✅ Weekly reminders wired");
 }
