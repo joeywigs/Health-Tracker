@@ -1850,7 +1850,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.2 – 9:15 PM CST</span></h1>
+          <h1>Habits <span class="version">v6.3 – 9:30 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2684,8 +2684,8 @@
       const dotsContainer = document.getElementById('rehitDots');
       if (!dotsContainer) return;
       const dots = dotsContainer.querySelectorAll('.rehit-dot');
-      
-      // Try to get week count from the rehitWeek display (set by app.js)
+
+      // Get week count from the rehitWeek display (set by app.js averages)
       let weekCount = 0;
       const rehitWeekEl = document.getElementById('rehitWeek');
       if (rehitWeekEl) {
@@ -2695,7 +2695,14 @@
           weekCount = parseInt(match[1], 10);
         }
       }
-      
+
+      // Adjust for today's checkbox state vs what was loaded
+      // The averages include today only if REHIT was already saved at load time
+      const todayChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
+      const wasCheckedAtLoad = !!window._rehitLoadedChecked;
+      if (todayChecked && !wasCheckedAtLoad) weekCount++;
+      else if (!todayChecked && wasCheckedAtLoad) weekCount = Math.max(0, weekCount - 1);
+
       // Update dots (max 4)
       dots.forEach((dot, i) => {
         dot.classList.toggle('on', i < Math.min(weekCount, 4));
@@ -2711,13 +2718,16 @@
           originalPopulateForm.call(this, data);
           
           // Then sync our UI after a small delay
-          setTimeout(() => { 
-            syncAllChips(); 
-            updateAguaBar(); 
-            updateRehitDisplay(); 
+          setTimeout(() => {
+            syncAllChips();
+            updateAguaBar();
+            updateRehitDisplay();
             updateStepsBar();
             updateCompletionRingAurora();
             updateRehitDots();
+            // Track whether REHIT was already checked at load time
+            // so we know if the averages already include today's session
+            window._rehitLoadedChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
           }, 100);
         };
         window._populateFormHooked = true;
