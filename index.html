@@ -1850,7 +1850,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.5 – 10:15 PM CST</span></h1>
+          <h1>Habits <span class="version">v6.6 – 12:00 AM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2713,25 +2713,22 @@
     function setupPopulateFormHook() {
       if (typeof window.populateForm === 'function' && !window._populateFormHooked) {
         const originalPopulateForm = window.populateForm;
-        window.populateForm = function(data) {
-          // Call original first
-          originalPopulateForm.call(this, data);
-          
-          // Then sync our UI after a small delay
-          setTimeout(() => {
-            syncAllChips();
-            updateAguaBar();
-            updateRehitDisplay();
-            updateStepsBar();
-            updateCompletionRingAurora();
-            updateRehitDots();
-            // Track whether REHIT was already checked at load time
-            // so we know if the averages already include today's session
-            window._rehitLoadedChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
-          }, 100);
+        window.populateForm = async function(data) {
+          // Await the original so loadDataForCurrentDate properly waits
+          await originalPopulateForm.call(this, data);
+
+          // Sync our UI after the form is fully populated
+          syncAllChips();
+          updateAguaBar();
+          updateRehitDisplay();
+          updateStepsBar();
+          updateCompletionRingAurora();
+          updateRehitDots();
+          // Track whether REHIT was already checked at load time
+          // so we know if the averages already include today's session
+          window._rehitLoadedChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
         };
         window._populateFormHooked = true;
-        // Debug removed
       } else if (!window._populateFormHooked) {
         // Try again in 100ms if app.js hasn't loaded yet
         setTimeout(setupPopulateFormHook, 100);
@@ -2742,10 +2739,7 @@
     // MAIN DOM READY SETUP
     // =============================================
     document.addEventListener('DOMContentLoaded', () => {
-      // Setup pull to refresh
-      setupPullToRefresh();
-      
-      // Setup populateForm hook
+      // Setup populateForm hook (must happen before app.js calls loadDataForCurrentDate)
       setupPopulateFormHook();
       
       // Wire up chip toggles
