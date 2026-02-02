@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'habits-v5.4';
+const CACHE_VERSION = 'habits-v5.5';
 
 // Install: activate immediately, don't wait for old SW to finish
 self.addEventListener('install', (event) => {
