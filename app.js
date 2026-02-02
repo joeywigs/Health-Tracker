@@ -401,28 +401,21 @@ function setupWeeklyReminders() {
 function updateWeighReminder() {
   const today = new Date(currentDate);
   const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday
-  
+
   // Only show on Mondays
   if (dayOfWeek !== 1) {
     hideWeighReminder();
     return;
   }
-  
-  // Check if body measurements exist for today
+
+  // Don't show if user already dismissed it this session
   const dateStr = formatDateForAPI(currentDate);
-  apiGet("load", { date: dateStr }).then(result => {
-    const daily = result?.daily;
-    const hasBodyData = daily && (daily["Weight (lbs)"] || daily["Waist"]);
-    
-    if (!hasBodyData) {
-      showWeighReminder();
-    } else {
-      hideWeighReminder();
-    }
-  }).catch(() => {
-    // If error, don't show reminder
+  if (sessionStorage.getItem("weighReminderDismissed") === dateStr) {
     hideWeighReminder();
-  });
+    return;
+  }
+
+  showWeighReminder();
 }
 
 function showWeighReminder() {
@@ -432,7 +425,7 @@ function showWeighReminder() {
     card.id = "weighReminder";
     card.className = "reminder-card";
     card.innerHTML = `
-      <button class="reminder-close" onclick="document.getElementById('weighReminder').remove()">✕</button>
+      <button class="reminder-close" onclick="sessionStorage.setItem('weighReminderDismissed', '${formatDateForAPI(currentDate)}'); document.getElementById('weighReminder').remove()">✕</button>
       <div class="reminder-icon">⚖️</div>
       <div class="reminder-title">Weigh-in Monday!</div>
       <div class="reminder-sub">Don't forget to log your body measurements.</div>
