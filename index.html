@@ -4194,6 +4194,8 @@
         navigator.serviceWorker.register('sw.js')
           .then((registration) => {
             console.log('SW registered:', registration.scope);
+            // Force the browser to check for a new service worker immediately
+            registration.update();
           })
           .catch((error) => {
             console.log('SW registration failed:', error);
