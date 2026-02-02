@@ -405,11 +405,13 @@ function setupPullToRefresh() {
 function setupWeeklyReminders() {
   updateWeighReminder();
 
-  // Auto-dismiss weigh-in banner when weight is entered on Monday
+  // Auto-dismiss weigh-in banner when a NEW weight is entered on Monday
   const weightEl = document.getElementById("weight");
   if (weightEl) {
     weightEl.addEventListener("input", () => {
-      if (weightEl.value && parseFloat(weightEl.value) > 0) {
+      const val = parseFloat(weightEl.value);
+      const carried = parseFloat(window._loadedWeight || 0);
+      if (val > 0 && val !== carried) {
         const dateStr = formatDateForAPI(currentDate);
         sessionStorage.setItem("weighReminderDismissed", dateStr);
         hideWeighReminder();
@@ -417,8 +419,8 @@ function setupWeeklyReminders() {
     });
   }
 
-  // Start movement break reminder checks
-  setupMovementReminder();
+  // Schedule movement break reminder checks at 11am and 4pm
+  scheduleMovementReminders();
 
   console.log("✅ Weekly reminders wired");
 }
@@ -440,9 +442,11 @@ function updateWeighReminder() {
     return;
   }
 
-  // Don't show if weight has already been entered today
+  // Don't show if user has entered a NEW weight (different from carry-forward)
   const weightEl = document.getElementById("weight");
-  if (weightEl && weightEl.value && parseFloat(weightEl.value) > 0) {
+  const currentWeight = parseFloat(weightEl?.value || 0);
+  const carriedWeight = parseFloat(window._loadedWeight || 0);
+  if (currentWeight > 0 && currentWeight !== carriedWeight) {
     hideWeighReminder();
     return;
   }
@@ -478,10 +482,30 @@ function hideWeighReminder() {
 // =====================================
 // MOVEMENT BREAK REMINDER
 // =====================================
-function setupMovementReminder() {
-  // Check every 60 seconds
-  checkMovementReminder();
-  setInterval(checkMovementReminder, 60000);
+function scheduleMovementReminders() {
+  const now = new Date();
+
+  // Schedule the 11am check
+  const at11 = new Date(now);
+  at11.setHours(11, 0, 0, 0);
+  const ms11 = at11 - now;
+  if (ms11 > 0) {
+    setTimeout(checkMovementReminder, ms11);
+  } else if (now.getHours() < 16) {
+    // Already past 11am but before 4pm — check now for the 11am tier
+    checkMovementReminder();
+  }
+
+  // Schedule the 4pm check
+  const at16 = new Date(now);
+  at16.setHours(16, 0, 0, 0);
+  const ms16 = at16 - now;
+  if (ms16 > 0) {
+    setTimeout(checkMovementReminder, ms16);
+  } else {
+    // Already past 4pm — check now for the 4pm tier
+    checkMovementReminder();
+  }
 }
 
 function checkMovementReminder() {
@@ -501,21 +525,18 @@ function checkMovementReminder() {
 
   // At or after 4pm (16:00): remind if fewer than 2 movement breaks
   if (hour >= 16 && movementCount < 2 && !dismissed16) {
-    showMovementReminder(2 - movementCount);
+    showMovementReminder("afternoon", 2 - movementCount);
     return;
   }
 
   // At or after 11am: remind if no movement breaks
   if (hour >= 11 && movementCount === 0 && !dismissed11) {
-    showMovementReminder(1);
+    showMovementReminder("morning", 1);
     return;
   }
-
-  // Conditions not met or already satisfied — hide
-  hideMovementReminder();
 }
 
-function showMovementReminder(needed) {
+function showMovementReminder(tier, needed) {
   let modal = document.getElementById("movementReminderModal");
   if (modal && modal.classList.contains("show")) return; // already showing
 
@@ -529,7 +550,10 @@ function showMovementReminder(needed) {
     document.body.appendChild(modal);
   }
 
-  const plural = needed > 1 ? "s" : "";
+  const message = tier === "morning"
+    ? "You need a morning movement break!"
+    : `You still need ${needed} more movement break${needed > 1 ? "s" : ""} today!`;
+
   modal.innerHTML = `
     <div class="modal-content">
       <div class="modal-header">
@@ -544,7 +568,7 @@ function showMovementReminder(needed) {
       </div>
       <div class="modal-body" style="text-align:center;padding:24px 18px">
         <div style="font-size:40px;margin-bottom:12px">🚶‍♂️</div>
-        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">You still need ${needed} movement break${plural}!</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">${message}</div>
         <div style="font-size:13px;color:var(--text-muted)">Take a short walk or stretch to keep your body moving.</div>
       </div>
       <div class="modal-footer" style="display:flex;gap:10px">
@@ -571,11 +595,6 @@ function dismissMovementReminder() {
   } else {
     sessionStorage.setItem("movementReminder11_" + dateStr, "1");
   }
-}
-
-function hideMovementReminder() {
-  const modal = document.getElementById("movementReminderModal");
-  if (modal) modal.classList.remove("show");
 }
 
 // =====================================
@@ -3431,6 +3450,9 @@ function applyBodyFieldsFromDaily(daily) {
   if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
   if (boneMassEl) boneMassEl.value = boneVal ?? "";
   if (bodywaterEl) bodywaterEl.value = bodywaterVal ?? "";
+
+  // Track the loaded weight so weigh-in reminder can detect a NEW entry
+  window._loadedWeight = weightVal ?? "";
 
   calculatePercentages();
 }
