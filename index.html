@@ -1849,7 +1849,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v5.3 – 6:56 PM CST</span></h1>
+          <h1>Habits <span class="version">v5.4 – 7:08 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2582,14 +2582,28 @@
         cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
       );
 
-      // Include agua goal as a completable item
+      // Daily goals from numeric inputs: sleep, agua, steps
+      let goalsMet = 0;
+      const totalGoals = 3; // sleep + agua + steps
+
+      // Sleep goal
+      const sleepVal = parseFloat(document.getElementById('sleepHours')?.value) || 0;
+      const sleepGoal = (typeof appSettings !== 'undefined' && appSettings.sleepGoal) ? appSettings.sleepGoal : 7;
+      if (sleepVal >= sleepGoal) goalsMet++;
+
+      // Agua goal
       const aguaGoal = (typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6;
       const aguaEl = document.getElementById('aguaCount');
       const aguaCurrent = aguaEl ? parseInt(aguaEl.textContent) || 0 : 0;
-      const aguaMet = aguaCurrent >= aguaGoal ? 1 : 0;
+      if (aguaCurrent >= aguaGoal) goalsMet++;
 
-      const total = checkboxes.length + 1; // +1 for agua
-      const checked = checkboxes.filter(cb => cb.checked).length + aguaMet;
+      // Steps goal
+      const stepsVal = parseInt(document.getElementById('steps')?.value) || 0;
+      const stepsGoal = (typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500;
+      if (stepsVal >= stepsGoal) goalsMet++;
+
+      const total = checkboxes.length + totalGoals;
+      const checked = checkboxes.filter(cb => cb.checked).length + goalsMet;
       
       // Debug removed
       
@@ -2744,8 +2758,15 @@
       // Steps input listener
       const stepsInput = document.getElementById('steps');
       if (stepsInput) {
-        stepsInput.addEventListener('input', updateStepsBar);
-        stepsInput.addEventListener('change', updateStepsBar);
+        stepsInput.addEventListener('input', () => { updateStepsBar(); updateCompletionRingAurora(); });
+        stepsInput.addEventListener('change', () => { updateStepsBar(); updateCompletionRingAurora(); });
+      }
+
+      // Sleep input listener (for completion ring)
+      const sleepInput = document.getElementById('sleepHours');
+      if (sleepInput) {
+        sleepInput.addEventListener('input', updateCompletionRingAurora);
+        sleepInput.addEventListener('change', updateCompletionRingAurora);
       }
       
       // REHIT week observer
