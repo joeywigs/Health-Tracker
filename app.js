@@ -3331,11 +3331,10 @@ function calculatePercentages() {
 // populateForm: set UI from sheet data
 // =====================================
 async function populateForm(data) {
-  const form = document.getElementById("healthForm");
-  if (form && typeof form.reset === "function") form.reset();
-
-  // clear checkbox visuals
-  document.querySelectorAll(".checkbox-field").forEach(w => w.classList.remove("checked"));
+  // NOTE: form.reset() was intentionally removed — every field is explicitly
+  // set below, and reset() caused a race condition where checkboxes were
+  // briefly cleared before the async body-carry-forward resolved, letting
+  // syncAllChips() see them as unchecked and remove the chip .on class.
 
   // reset state
   movements = [];
