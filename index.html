@@ -1850,7 +1850,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.10d – 10:00 AM CST</span></h1>
+          <h1>Habits <span class="version">v6.11 – 10:30 AM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2492,7 +2492,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=6.10d" defer></script>
+  <script src="app.js?v=6.11" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -2723,10 +2723,14 @@
           updateRehitDisplay();
           updateStepsBar();
           updateCompletionRingAurora();
-          updateRehitDots();
           // Track whether REHIT was already checked at load time
-          // so we know if the averages already include today's session
+          // BEFORE calling updateRehitDots — otherwise it incorrectly adds +1
+          // to the week count (because it sees todayChecked=true but
+          // wasCheckedAtLoad=false), causing an extra dot to briefly appear
+          // and then disappear when the next updateRehitDots call sees the
+          // corrected wasCheckedAtLoad=true.
           window._rehitLoadedChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
+          updateRehitDots();
         };
         window._populateFormHooked = true;
       } else if (!window._populateFormHooked) {
@@ -4205,116 +4209,6 @@
       });
     }
 
-    // =============================================
-    // TEMPORARY REHIT DEBUG OVERLAY
-    // Remove once the issue is diagnosed
-    // =============================================
-    // Create the debug panel immediately (during parsing)
-    window._rehitDbg = { log: [], lastChecked: null, lastChipOn: null };
-    (function() {
-      const dbg = document.createElement('div');
-      dbg.id = 'rehitDebug';
-      dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:30vh;overflow-y:auto;background:rgba(0,0,0,0.9);color:#0f0;font:11px/1.4 monospace;padding:8px;z-index:99999;pointer-events:auto;';
-      document.body.appendChild(dbg);
-
-      window._rehitDbg.addLog = function(msg) {
-        const d = new Date();
-        const t = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})+'.'+String(d.getMilliseconds()).padStart(3,'0');
-        window._rehitDbg.log.push(t + ' ' + msg);
-        if (window._rehitDbg.log.length > 40) window._rehitDbg.log.shift();
-        dbg.innerHTML = '<b>REHIT Debug v6.10</b><br>' + window._rehitDbg.log.join('<br>');
-        dbg.scrollTop = dbg.scrollHeight;
-      };
-
-      // Poll for state changes every 150ms
-      setInterval(() => {
-        const cb = document.getElementById('rehit2');
-        const chip = document.getElementById('rehit2Chip');
-        if (!cb || !chip) return;
-        const checked = cb.checked;
-        const chipOn = chip.classList.contains('on');
-        const D = window._rehitDbg;
-        if (D.lastChecked !== null && checked !== D.lastChecked) {
-          D.addLog('!! rehit2.checked: ' + D.lastChecked + ' -> ' + checked);
-        }
-        if (D.lastChipOn !== null && chipOn !== D.lastChipOn) {
-          D.addLog('!! chip .on: ' + D.lastChipOn + ' -> ' + chipOn);
-        }
-        D.lastChecked = checked;
-        D.lastChipOn = chipOn;
-      }, 150);
-
-      window._rehitDbg.addLog('Panel created (parsing)');
-    })();
-
-    // Intercept functions AFTER app.js loads (DOMContentLoaded)
-    // This handler fires BEFORE app.js's handler because inline scripts
-    // register DOMContentLoaded handlers before defer scripts do.
-    document.addEventListener('DOMContentLoaded', () => {
-      const D = window._rehitDbg;
-      if (!D || !D.addLog) return;
-
-      // Intercept setCheckbox
-      const origSC = window.setCheckbox;
-      if (origSC) {
-        window.setCheckbox = function(id, val) {
-          if (id === 'rehit2' || id === 'rehit3') {
-            D.addLog('setCheckbox("'+id+'", '+JSON.stringify(val)+')');
-          }
-          return origSC.apply(this, arguments);
-        };
-        D.addLog('Intercepted setCheckbox');
-      }
-
-      // Intercept populateForm (may already be hooked)
-      const origPF = window.populateForm;
-      if (origPF) {
-        window.populateForm = async function(data) {
-          const d = data?.daily || null;
-          const rv = d ? (d["REHIT 2x10"] ?? d["REHIT"] ?? d["rehit"] ?? "(none)") : "(no daily)";
-          D.addLog('>> populateForm rehit=' + JSON.stringify(rv));
-          const r = await origPF.call(this, data);
-          const cb = document.getElementById('rehit2');
-          D.addLog('<< populateForm done chk=' + (cb ? cb.checked : '?'));
-          return r;
-        };
-        D.addLog('Intercepted populateForm');
-      }
-
-      // Intercept loadDataForCurrentDate
-      const origLD = window.loadDataForCurrentDate;
-      if (origLD) {
-        window.loadDataForCurrentDate = async function(opts) {
-          D.addLog('>> loadData(' + JSON.stringify(opts||{}) + ')');
-          const r = await origLD.call(this, opts);
-          D.addLog('<< loadData done');
-          return r;
-        };
-        D.addLog('Intercepted loadDataForCurrentDate');
-      }
-
-      // Intercept flushOfflineQueue
-      const origFQ = window.flushOfflineQueue;
-      if (origFQ) {
-        window.flushOfflineQueue = async function() {
-          D.addLog('>> flushOffline');
-          const r = await origFQ.call(this);
-          D.addLog('<< flushOffline done');
-          return r;
-        };
-        D.addLog('Intercepted flushOfflineQueue');
-      }
-
-      // Listen for change events on rehit2 to catch programmatic dispatches
-      const rehit2El = document.getElementById('rehit2');
-      if (rehit2El) {
-        rehit2El.addEventListener('change', () => {
-          D.addLog('change event fired on rehit2, checked=' + rehit2El.checked);
-        });
-      }
-
-      D.addLog('All interceptors ready');
-    });
   </script>
 </body>
 </html>
