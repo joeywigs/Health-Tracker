@@ -3170,20 +3170,26 @@ function updateAguaDisplay() {
   if (aguaCountEl) aguaCountEl.textContent = String(aguaCount);
 }
 
-// Expose agua +/- on window so inline onclick handlers work reliably
-window.aguaPlus = function() {
-  aguaCount += 1;
-  updateAguaDisplay();
-  triggerSaveSoon();
-};
-window.aguaMinus = function() {
-  aguaCount = Math.max(0, aguaCount - 1);
-  updateAguaDisplay();
-  triggerSaveSoon();
-};
-
 function setupAguaButtons() {
-  console.log("✅ Agua buttons wired (via inline onclick)");
+  const plus = document.getElementById("aguaPlus");
+  const minus = document.getElementById("aguaMinus");
+  if (!plus || !minus) return;
+
+  plus.addEventListener("click", (e) => {
+    e.preventDefault();
+    aguaCount += 1;
+    updateAguaDisplay();
+    triggerSaveSoon();
+  });
+
+  minus.addEventListener("click", (e) => {
+    e.preventDefault();
+    aguaCount = Math.max(0, aguaCount - 1);
+    updateAguaDisplay();
+    triggerSaveSoon();
+  });
+
+  console.log("✅ Agua buttons wired");
 }
 
 // =====================================
