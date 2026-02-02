@@ -723,7 +723,8 @@
     }
     .card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
     .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
-    .card-unit { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: 4px; }
+    .card-unit { font-size: 13px; color: var(--text); margin-left: 4px; }
+    .input-row { display: flex; align-items: baseline; }
     .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
     
     /* REHIT Dots */
@@ -1060,7 +1061,7 @@
       background: rgba(255,255,255,0.5);
     }
 
-    .big-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: white; outline: none; transition: color 0.3s; }
+    .big-input { width: auto; flex: 1; min-width: 0; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: white; outline: none; transition: color 0.3s; }
     .big-input::placeholder { color: var(--text-muted); }
     .big-input:focus { color: var(--accent-teal); }
     
@@ -1850,7 +1851,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.12 – 11:33 AM CST</span></h1>
+          <h1>Habits <span class="version">v6.13</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1886,7 +1887,7 @@
     <div class="quick-grid">
       <div class="card sleep" id="sleepSection">
         <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
-        <div><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
+        <div class="input-row"><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
         <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
       </div>
       <script>
@@ -1929,7 +1930,7 @@
       </div>
       <div class="card movement">
         <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
-        <div><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
+        <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
         <div class="progress-bar-h">
           <div class="progress-bar-h-fill" id="stepsBarFill"></div>
         </div>
@@ -1954,7 +1955,7 @@
             <div class="chip rehit-chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
             <div class="chip rehit-chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
           </div>
-          <div class="card-avg rehit-week-count">This week: <span id="rehitWeek">--</span></div>
+          <div class="card-avg rehit-week-count" style="display:none">This week: <span id="rehitWeek">--</span></div>
         </div>
         <div class="rehit-right">
           <div class="rehit-stats-grid">
@@ -2492,7 +2493,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=6.12" defer></script>
+  <script src="app.js?v=6.13" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
