@@ -2144,9 +2144,10 @@ async function quickLogMovement() {
 }
 
 async function quickLogAgua() {
-  // Increment water count
-  aguaCount++;
+  // Sync from DOM first (inline handlers may have changed it)
   const waterEl = document.getElementById("aguaCount");
+  aguaCount = waterEl ? (parseInt(waterEl.textContent) || 0) : aguaCount;
+  aguaCount++;
   if (waterEl) waterEl.textContent = aguaCount;
   
   triggerSaveSoon();
@@ -3027,8 +3028,8 @@ function buildPayloadFromUI() {
 
     meditation: !!document.getElementById("meditation")?.checked,
 
-    // Agua (hydration glasses)
-    agua: aguaCount,
+    // Agua (hydration glasses) - read from DOM to stay in sync with inline handlers
+    agua: parseInt(document.getElementById("aguaCount")?.textContent) || 0,
 
     // Body
     weight: document.getElementById("weight")?.value || "",
