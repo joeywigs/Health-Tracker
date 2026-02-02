@@ -1850,7 +1850,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.11 – 10:30 AM CST</span></h1>
+          <h1>Habits <span class="version">v6.12 – 11:33 AM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2492,7 +2492,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=6.11" defer></script>
+  <script src="app.js?v=6.12" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -2696,12 +2696,10 @@
         }
       }
 
-      // Adjust for today's checkbox state vs what was loaded
-      // The averages include today only if REHIT was already saved at load time
+      // Always include today's REHIT in the dot count — the averages from
+      // the worker reflect previous days only, so we add today separately.
       const todayChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
-      const wasCheckedAtLoad = !!window._rehitLoadedChecked;
-      if (todayChecked && !wasCheckedAtLoad) weekCount++;
-      else if (!todayChecked && wasCheckedAtLoad) weekCount = Math.max(0, weekCount - 1);
+      if (todayChecked) weekCount++;
 
       // Update dots (max 4)
       dots.forEach((dot, i) => {
@@ -2723,13 +2721,6 @@
           updateRehitDisplay();
           updateStepsBar();
           updateCompletionRingAurora();
-          // Track whether REHIT was already checked at load time
-          // BEFORE calling updateRehitDots — otherwise it incorrectly adds +1
-          // to the week count (because it sees todayChecked=true but
-          // wasCheckedAtLoad=false), causing an extra dot to briefly appear
-          // and then disappear when the next updateRehitDots call sees the
-          // corrected wasCheckedAtLoad=true.
-          window._rehitLoadedChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
           updateRehitDots();
         };
         window._populateFormHooked = true;

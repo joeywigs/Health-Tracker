@@ -313,7 +313,9 @@ async function calculate7DayAverages(dateStr, env) {
     if (isThisWeek) {
       if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
       if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
-      if (rehit && rehit !== "") rehitCount++;
+      // Exclude today (i===0) from rehitCount — the frontend adds today's
+      // REHIT status separately so dots update instantly on checkbox toggle.
+      if (i > 0 && rehit && rehit !== "") rehitCount++;
     }
 
     if (isLastWeek) {
