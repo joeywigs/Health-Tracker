@@ -33,7 +33,7 @@ const BODY_FIELDS = [
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
-  { id: "water", keys: ["Water (lbs)", "Water"] }
+  { id: "water", keys: ["Water (lbs)", "water"] }
 ];
 
 // =====================================
@@ -637,7 +637,7 @@ function calculateGoalStats(data, range) {
   };
   
   // Water: goal is 6 glasses
-  const waterValues = data.map(d => parseInt(d.daily["Water"])).filter(v => !isNaN(v));
+  const waterValues = data.map(d => parseInt(d.daily["Water (glasses)"] ?? d.daily["hydrationGood"])).filter(v => !isNaN(v));
   const waterDaysMet = waterValues.filter(v => v >= getGoalTarget('water')).length;
   stats.water = {
     pct: totalDays > 0 ? Math.round((waterDaysMet / totalDays) * 100) : 0,
@@ -820,7 +820,7 @@ function renderSummaryOverview(data, stats, range, allData) {
     const sleep = parseFloat(d.daily["Hours of Sleep"]);
     if (!isNaN(sleep) && sleep >= getGoalTarget('sleep')) goalsMet++;
 
-    const water = parseInt(d.daily["Water"]);
+    const water = parseInt(d.daily["Water (glasses)"] ?? d.daily["hydrationGood"]);
     if (!isNaN(water) && water >= getGoalTarget('water')) goalsMet++;
 
     const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
@@ -3296,7 +3296,7 @@ function applyBodyFieldsFromDaily(daily) {
   const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
   const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
-  const waterBodyVal = source["Water (lbs)"] ?? source["Water"];
+  const waterBodyVal = source["Water (lbs)"] ?? source["water"];
 
   const weightEl = document.getElementById("weight");
   const waistEl = document.getElementById("waist");
@@ -3467,7 +3467,7 @@ async function populateForm(data) {
   setCheckbox("meditation", d["Meditation"]);
 
   // Water counter
-  waterCount = parseInt(d["Water (glasses)"] ?? d["Water"], 10) || 0;
+  waterCount = parseInt(d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
   updateWaterDisplay();
 
   // Body fields: use current day if present, else carry-forward source
