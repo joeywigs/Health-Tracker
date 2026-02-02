@@ -27,13 +27,14 @@ window.onerror = function(msg, url, line) {
 const API_URL = "https://habit-proxy.joeywigs.workers.dev/";
 
 // Body fields (for carry-forward + detection)
+// Keys include: worker column names, fallback names, and buildPayloadFromUI key names
 const BODY_FIELDS = [
-  { id: "weight", keys: ["Weight (lbs)", "Weight"] },
-  { id: "waist", keys: ["Waist (in)", "Waist"] },
-  { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
-  { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
-  { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
-  { id: "bodywater", keys: ["Water (lbs)", "bodywater"] }
+  { id: "weight", keys: ["Weight (lbs)", "Weight", "weight"] },
+  { id: "waist", keys: ["Waist (in)", "Waist", "waist"] },
+  { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass", "leanMass"] },
+  { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat", "bodyFat"] },
+  { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass", "boneMass"] },
+  { id: "bodywater", keys: ["Water (lbs)", "bodywater", "waterLbs"] }
 ];
 
 // =====================================
@@ -3245,10 +3246,12 @@ function setupBloodPressureCalculator() {
 // =====================================
 function hasAnyBodyData(daily) {
   if (!daily) return false;
-  return BODY_FIELDS.some(f => {
-    const v = daily[f.keys[0]] ?? daily[f.keys[1]];
-    return v !== undefined && v !== null && v !== "";
-  });
+  return BODY_FIELDS.some(f =>
+    f.keys.some(k => {
+      const v = daily[k];
+      return v !== undefined && v !== null && v !== "";
+    })
+  );
 }
 
 async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
@@ -3344,9 +3347,22 @@ async function populateForm(data) {
 
   // BODY CARRY-FORWARD:
   // if daily is missing OR daily exists but body is blank => carry forward
+  // Prefer the worker's pre-calculated bodyCarryForward to avoid expensive API calls
   let bodySource = d;
   if (!hasAnyBodyData(d)) {
-    bodySource = await getMostRecentBodyDaily(currentDate);
+    const cf = data?.bodyCarryForward;
+    if (cf && Object.keys(cf).length > 0) {
+      bodySource = {
+        "Weight (lbs)": cf.weight,
+        "Waist": cf.waist,
+        "Lean Mass (lbs)": cf.leanMass,
+        "Body Fat (lbs)": cf.bodyFat,
+        "Bone Mass (lbs)": cf.boneMass,
+        "Water (lbs)": cf.waterLbs,
+      };
+    } else {
+      bodySource = await getMostRecentBodyDaily(currentDate);
+    }
   }
 
   updateAverages(data?.averages);
