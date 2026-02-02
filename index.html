@@ -1849,7 +1849,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v5.2 – 6:47 PM CST</span></h1>
+          <h1>Habits <span class="version">v5.5 – 7:15 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2573,17 +2573,49 @@
     
     // Our own completion ring update (since app.js looks for .checkbox-field)
     function updateCompletionRingAurora() {
-      // Get all checkboxes in chips AND mini-supps, excluding Grey's habits
-      const chipCheckboxes = document.querySelectorAll('#healthForm .chip input[type="checkbox"]');
-      const miniSuppCheckboxes = document.querySelectorAll('#healthForm .mini-supp input[type="checkbox"]');
-      const allCheckboxes = [...chipCheckboxes, ...miniSuppCheckboxes];
-      
-      const checkboxes = allCheckboxes.filter(cb => 
-        cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
-      );
-      
-      const total = checkboxes.length;
-      const checked = checkboxes.filter(cb => cb.checked).length;
+      // 9 daily goals: sleep, agua, steps, movement, meals, no alcohol,
+      // day snacks, night snacks, supplements
+      const total = 9;
+      let checked = 0;
+
+      // 1. Sleep ≥ goal
+      const sleepVal = parseFloat(document.getElementById('sleepHours')?.value) || 0;
+      const sleepGoal = (typeof appSettings !== 'undefined' && appSettings.sleepGoal) ? appSettings.sleepGoal : 7;
+      if (sleepVal >= sleepGoal) checked++;
+
+      // 2. Agua ≥ goal
+      const aguaGoal = (typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6;
+      const aguaEl = document.getElementById('aguaCount');
+      if ((aguaEl ? parseInt(aguaEl.textContent) || 0 : 0) >= aguaGoal) checked++;
+
+      // 3. Steps ≥ goal
+      const stepsVal = parseInt(document.getElementById('steps')?.value) || 0;
+      const stepsGoal = (typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500;
+      if (stepsVal >= stepsGoal) checked++;
+
+      // 4. Movement breaks ≥ 2
+      const movementGoal = (typeof appSettings !== 'undefined' && appSettings.movementGoal) ? appSettings.movementGoal : 2;
+      const movementItems = document.querySelectorAll('#movementList .item');
+      if (movementItems.length >= movementGoal) checked++;
+
+      // 5. Meals: 2 of 3 checked (breakfast, lunch, dinner)
+      const mealsChecked = ['breakfast', 'lunch', 'dinner']
+        .filter(id => document.getElementById(id)?.checked).length;
+      if (mealsChecked >= 2) checked++;
+
+      // 6. No alcohol
+      if (document.getElementById('noAlcohol')?.checked) checked++;
+
+      // 7. Healthy day snacks
+      if (document.getElementById('daySnacks')?.checked) checked++;
+
+      // 8. Healthy night snacks
+      if (document.getElementById('nightSnacks')?.checked) checked++;
+
+      // 9. Supplements: all 4 (creatine, vitD, NO2, psyllium)
+      const suppsChecked = ['creatine', 'vitaminD', 'no2', 'psyllium']
+        .filter(id => document.getElementById(id)?.checked).length;
+      if (suppsChecked === 4) checked++;
       
       // Debug removed
       
@@ -2731,15 +2763,29 @@
       // Agua count observer
       const aguaCount = document.getElementById('aguaCount');
       if (aguaCount) {
-        const observer = new MutationObserver(updateAguaBar);
+        const observer = new MutationObserver(() => { updateAguaBar(); updateCompletionRingAurora(); });
         observer.observe(aguaCount, { childList: true, characterData: true, subtree: true });
       }
       
       // Steps input listener
       const stepsInput = document.getElementById('steps');
       if (stepsInput) {
-        stepsInput.addEventListener('input', updateStepsBar);
-        stepsInput.addEventListener('change', updateStepsBar);
+        stepsInput.addEventListener('input', () => { updateStepsBar(); updateCompletionRingAurora(); });
+        stepsInput.addEventListener('change', () => { updateStepsBar(); updateCompletionRingAurora(); });
+      }
+
+      // Sleep input listener (for completion ring)
+      const sleepInput = document.getElementById('sleepHours');
+      if (sleepInput) {
+        sleepInput.addEventListener('input', updateCompletionRingAurora);
+        sleepInput.addEventListener('change', updateCompletionRingAurora);
+      }
+
+      // Movement list observer (for completion ring)
+      const movementList = document.getElementById('movementList');
+      if (movementList) {
+        const movObs = new MutationObserver(updateCompletionRingAurora);
+        movObs.observe(movementList, { childList: true });
       }
       
       // REHIT week observer
@@ -2954,6 +3000,7 @@
         window.updateAguaDisplay = function() {
           origAgua.call(this);
           updateAguaBar();
+          updateCompletionRingAurora();
         };
         window._aguaHooked = true;
       } else if (!window._aguaHooked) {

@@ -3183,21 +3183,7 @@ window.aguaMinus = function() {
 };
 
 function setupAguaButtons() {
-  const plus = document.getElementById("aguaPlus");
-  const minus = document.getElementById("aguaMinus");
-  if (!plus || !minus) return;
-
-  plus.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.aguaPlus();
-  });
-
-  minus.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.aguaMinus();
-  });
-
-  console.log("✅ Agua buttons wired");
+  console.log("✅ Agua buttons wired (via inline onclick)");
 }
 
 // =====================================
