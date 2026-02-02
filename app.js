@@ -196,7 +196,7 @@ const dayCache = new Map();        // key: "M/D/YY" -> loadResult
 // =====================================
 // BOOTSTRAP
 // =====================================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log("Habit Tracker booting…");
 
   try { setupDateNav(); console.log("1 ok"); } catch(e) { console.error("setupDateNav failed:", e); }
@@ -221,9 +221,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   try { updateDateDisplay(); console.log("20 ok"); } catch(e) { console.error("updateDateDisplay failed:", e); }
   try { updatePhaseInfo(); console.log("21 ok"); } catch(e) { console.error("updatePhaseInfo failed:", e); }
-  try { loadDataForCurrentDate(); console.log("22 ok"); } catch(e) { console.error("loadDataForCurrentDate failed:", e); }
 
-  // Flush any queued offline saves on startup
+  // IMPORTANT: await loadDataForCurrentDate so the form is fully populated
+  // before flushOfflineQueue runs — otherwise buildPayloadFromUI reads
+  // unchecked checkboxes and saves stale data to the backend/cache.
+  try { await loadDataForCurrentDate(); console.log("22 ok"); } catch(e) { console.error("loadDataForCurrentDate failed:", e); }
+
+  // Flush any queued offline saves AFTER the form is populated
   if (navigator.onLine) {
     flushOfflineQueue().catch(e => console.warn('Offline flush on boot failed:', e));
   }
@@ -371,7 +375,7 @@ function setupPullToRefresh() {
     const touchY = e.touches[0].clientY;
     const pullDistance = touchY - touchStartY;
     
-    if (pullDistance > 100 && window.scrollY === 0) {
+    if (pullDistance > 150 && window.scrollY === 0) {
       pulling = false;
       loadDataForCurrentDate({ force: true });
       
