@@ -1827,7 +1827,7 @@
         <div class="weekly-review-section">
           <div class="weekly-review-label">Daily Goals</div>
           <div class="weekly-review-row"><span>🌙 Sleep</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-sleep" value="7" min="4" max="12" step="0.5"><span class="weekly-review-unit">hrs/night</span></div></div>
-          <div class="weekly-review-row"><span>💧 Water</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-water" value="6" min="1" max="20"><span class="weekly-review-unit">glasses/day</span></div></div>
+          <div class="weekly-review-row"><span>💧 Water</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-agua" value="6" min="1" max="20"><span class="weekly-review-unit">glasses/day</span></div></div>
           <div class="weekly-review-row"><span>👟 Steps</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-steps" value="7500" min="1000" max="50000" step="500"><span class="weekly-review-unit">steps/day</span></div></div>
           <div class="weekly-review-row"><span>🚶 Movement</span><div class="weekly-review-input-wrap"><input type="number" class="goal-input" id="wr-movement" value="2" min="1" max="10"><span class="weekly-review-unit">breaks/day</span></div></div>
         </div>
@@ -1849,7 +1849,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v4.9 – 6:19 PM CST</span></h1>
+          <h1>Habits <span class="version">v5.0 – 6:34 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1891,12 +1891,12 @@
       <div class="card water" id="waterSection">
         <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
         <div class="water-row">
-          <button type="button" class="water-btn" id="waterMinus">−</button>
-          <div class="water-num" id="waterCount">0</div>
-          <button type="button" class="water-btn" id="waterPlus">+</button>
+          <button type="button" class="water-btn" id="aguaMinus">−</button>
+          <div class="water-num" id="aguaCount">0</div>
+          <button type="button" class="water-btn" id="aguaPlus">+</button>
         </div>
         <div class="progress-bar-h">
-          <div class="progress-bar-h-fill" id="waterBarFill"></div>
+          <div class="progress-bar-h-fill" id="aguaBarFill"></div>
         </div>
       </div>
       <div class="card supplements">
@@ -2029,8 +2029,8 @@
           <div class="body-cell"><div class="body-label">Fat %</div><div class="body-pct" id="bodyFatPercent">--</div></div>
           <div class="body-cell"><div class="body-label">Bone Mass</div><input type="number" inputmode="decimal" class="body-input" id="boneMass" step="0.1"></div>
           <div class="body-cell"><div class="body-label">Bone %</div><div class="body-pct" id="boneMassPercent">--</div></div>
-          <div class="body-cell"><div class="body-label">Water (lbs)</div><input type="number" inputmode="decimal" class="body-input" id="water" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="waterPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Water (lbs)</div><input type="number" inputmode="decimal" class="body-input" id="bodywater" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="bodywaterPercent">--</div></div>
         </div>
       </div>
     </div>
@@ -2185,7 +2185,7 @@
             <span class="setting-title">💧 Water Goal</span>
             <span class="setting-desc">Glasses per day</span>
           </div>
-          <input type="number" class="goal-input" id="waterGoal" value="6" min="1" max="20">
+          <input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20">
         </div>
         <div class="setting-row">
           <div class="setting-label">
@@ -2467,7 +2467,7 @@
   <button id="quickLogFab" class="fab">+</button>
   <div id="quickLogMenu" class="fab-menu">
     <button class="fab-item quick-log-item" data-action="movement"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple))">🚶</div><span class="fab-label">Movement</span></button>
-    <button class="fab-item quick-log-item" data-action="water"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-teal),var(--accent-purple))">💧</div><span class="fab-label">Water</span></button>
+    <button class="fab-item quick-log-item" data-action="agua"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-teal),var(--accent-purple))">💧</div><span class="fab-label">Water</span></button>
     <button class="fab-item quick-log-item" data-action="reading"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink))">📖</div><span class="fab-label">Reading</span></button>
     <button class="fab-item quick-log-item" data-action="rehit"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-orange),var(--accent-pink))">🚴</div><span class="fab-label">REHIT</span></button>
   </div>
@@ -2606,13 +2606,13 @@
       }
     }
     
-    // Water progress bar
-    function updateWaterBar(){
-      const waterCount = document.getElementById('waterCount');
-      const fill = document.getElementById('waterBarFill');
-      if(!waterCount || !fill) return;
-      const count = parseInt(waterCount.textContent) || 0;
-      const goal = (typeof appSettings !== 'undefined' && appSettings.waterGoal) ? appSettings.waterGoal : 6;
+    // Agua progress bar
+    function updateAguaBar(){
+      const aguaCount = document.getElementById('aguaCount');
+      const fill = document.getElementById('aguaBarFill');
+      if(!aguaCount || !fill) return;
+      const count = parseInt(aguaCount.textContent) || 0;
+      const goal = (typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6;
       const pct = Math.min(100, (count / goal) * 100);
       fill.style.width = pct + '%';
     }
@@ -2662,7 +2662,7 @@
           // Then sync our UI after a small delay
           setTimeout(() => { 
             syncAllChips(); 
-            updateWaterBar(); 
+            updateAguaBar(); 
             updateRehitDisplay(); 
             updateStepsBar();
             updateCompletionRingAurora();
@@ -2728,11 +2728,11 @@
         });
       });
       
-      // Water count observer
-      const waterCount = document.getElementById('waterCount');
-      if (waterCount) {
-        const observer = new MutationObserver(updateWaterBar);
-        observer.observe(waterCount, { childList: true, characterData: true, subtree: true });
+      // Agua count observer
+      const aguaCount = document.getElementById('aguaCount');
+      if (aguaCount) {
+        const observer = new MutationObserver(updateAguaBar);
+        observer.observe(aguaCount, { childList: true, characterData: true, subtree: true });
       }
       
       // Steps input listener
@@ -2758,7 +2758,7 @@
       // Initial update after app.js loads data
       setTimeout(() => { 
         syncAllChips(); 
-        updateWaterBar(); 
+        updateAguaBar(); 
         updateStepsBar();
         updateRehitDots();
         updateRehitDisplay();
@@ -2947,20 +2947,20 @@
     // Also try immediately in case app.js loaded first
     setupPopulateFormHook();
     
-    // Hook water display updates
-    function setupWaterHook() {
-      if (typeof window.updateWaterDisplay === 'function' && !window._waterHooked) {
-        const origWater = window.updateWaterDisplay;
-        window.updateWaterDisplay = function() {
-          origWater.call(this);
-          updateWaterBar();
+    // Hook agua display updates
+    function setupAguaHook() {
+      if (typeof window.updateAguaDisplay === 'function' && !window._aguaHooked) {
+        const origAgua = window.updateAguaDisplay;
+        window.updateAguaDisplay = function() {
+          origAgua.call(this);
+          updateAguaBar();
         };
-        window._waterHooked = true;
-      } else if (!window._waterHooked) {
-        setTimeout(setupWaterHook, 100);
+        window._aguaHooked = true;
+      } else if (!window._aguaHooked) {
+        setTimeout(setupAguaHook, 100);
       }
     }
-    setupWaterHook();
+    setupAguaHook();
     
     // Fixed phase info that always uses today's date
     function updatePhaseInfoFixed() {
@@ -3063,7 +3063,7 @@
     const defaultSettings = {
       dayStartTime: '05:00',
       nightStartTime: '17:00',
-      waterGoal: 6,
+      aguaGoal: 6,
       stepsGoal: 7500,
       rehitGoal: 4,
       readingGoal: 60,
@@ -3107,7 +3107,14 @@
     }
     
     let appSettings = loadSettings();
-    
+
+    // Migrate old waterGoal → aguaGoal
+    if (appSettings.waterGoal && !appSettings.aguaGoal) {
+      appSettings.aguaGoal = appSettings.waterGoal;
+      delete appSettings.waterGoal;
+      saveSettings(appSettings);
+    }
+
     // Theme functions
     function getCurrentTheme() {
       const now = new Date();
@@ -3190,7 +3197,7 @@
       // Populate settings
       document.getElementById('dayStartTime').value = appSettings.dayStartTime;
       document.getElementById('nightStartTime').value = appSettings.nightStartTime;
-      document.getElementById('waterGoal').value = appSettings.waterGoal || 6;
+      document.getElementById('aguaGoal').value = appSettings.aguaGoal || 6;
       document.getElementById('stepsGoal').value = appSettings.stepsGoal || 7500;
       document.getElementById('rehitGoal').value = appSettings.rehitGoal || 4;
       document.getElementById('readingGoal').value = appSettings.readingGoal || 60;
@@ -3347,11 +3354,11 @@
     });
     
     // Goal inputs
-    document.getElementById('waterGoal')?.addEventListener('change', (e) => {
-      appSettings.waterGoal = parseInt(e.target.value) || 6;
+    document.getElementById('aguaGoal')?.addEventListener('change', (e) => {
+      appSettings.aguaGoal = parseInt(e.target.value) || 6;
       saveSettings(appSettings);
-      // Update water bar goal
-      if (typeof updateWaterBar === 'function') updateWaterBar();
+      // Update agua bar goal
+      if (typeof updateAguaBar === 'function') updateAguaBar();
       showToast('Water goal updated', 'success');
     });
     
@@ -4066,7 +4073,7 @@
 
     function populateWeeklyReview() {
       document.getElementById('wr-sleep').value = 7;
-      document.getElementById('wr-water').value = appSettings.waterGoal || 6;
+      document.getElementById('wr-agua').value = appSettings.aguaGoal || 6;
       document.getElementById('wr-steps').value = appSettings.stepsGoal || 7500;
       document.getElementById('wr-movement').value = appSettings.movementGoal || 2;
       document.getElementById('wr-rehit').value = appSettings.rehitGoal || 4;
@@ -4080,7 +4087,7 @@
     };
 
     window.saveWeeklyReview = function() {
-      appSettings.waterGoal = parseInt(document.getElementById('wr-water').value) || 6;
+      appSettings.aguaGoal = parseInt(document.getElementById('wr-agua').value) || 6;
       appSettings.stepsGoal = parseInt(document.getElementById('wr-steps').value) || 7500;
       appSettings.movementGoal = parseInt(document.getElementById('wr-movement').value) || 2;
       appSettings.rehitGoal = parseInt(document.getElementById('wr-rehit').value) || 4;
@@ -4089,13 +4096,13 @@
       saveSettings(appSettings);
 
       // Sync Settings page inputs if they exist
-      const wg = document.getElementById('waterGoal');
+      const wg = document.getElementById('aguaGoal');
       const sg = document.getElementById('stepsGoal');
       const mg = document.getElementById('movementGoal');
       const rg = document.getElementById('rehitGoal');
       const rdg = document.getElementById('readingGoal');
       const mdg = document.getElementById('meditationGoal');
-      if (wg) wg.value = appSettings.waterGoal;
+      if (wg) wg.value = appSettings.aguaGoal;
       if (sg) sg.value = appSettings.stepsGoal;
       if (mg) mg.value = appSettings.movementGoal;
       if (rg) rg.value = appSettings.rehitGoal;
