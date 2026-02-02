@@ -5,7 +5,7 @@
  * - Populates UI (including checkbox highlighting from sheet data)
  * - Saves on changes (debounced)
  * - Date navigation prev/next
- * - Water +/- wired
+ * - Agua +/- wired
  * - Body data carry-forward: shows last known body metrics when missing
  * - Blood pressure tracking with status indicator
  **********************************************/
@@ -33,7 +33,7 @@ const BODY_FIELDS = [
   { id: "leanMass", keys: ["Lean Mass (lbs)", "Lean Mass"] },
   { id: "bodyFat", keys: ["Body Fat (lbs)", "Body Fat"] },
   { id: "boneMass", keys: ["Bone Mass (lbs)", "Bone Mass"] },
-  { id: "water", keys: ["Water (lbs)", "water"] }
+  { id: "bodywater", keys: ["Water (lbs)", "bodywater"] }
 ];
 
 // =====================================
@@ -179,7 +179,7 @@ let readings = [];
 let honeyDos = [];
 let currentAverages = null;
 let lastBookTitle = "";
-let waterCount = 0;
+let aguaCount = 0;
 
 let autoSaveTimeout = null;
 
@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
   try { setupDateNav(); console.log("1 ok"); } catch(e) { console.error("setupDateNav failed:", e); }
   try { setupCheckboxes(); console.log("2 ok"); } catch(e) { console.error("setupCheckboxes failed:", e); }
   try { setupRehitMutualExclusion(); console.log("3 ok"); } catch(e) { console.error("setupRehitMutualExclusion failed:", e); }
-  try { setupWaterButtons(); console.log("4 ok"); } catch(e) { console.error("setupWaterButtons failed:", e); }
+  try { setupAguaButtons(); console.log("4 ok"); } catch(e) { console.error("setupAguaButtons failed:", e); }
   try { setupInputAutosave(); console.log("5 ok"); } catch(e) { console.error("setupInputAutosave failed:", e); }
   try { setupCollapsibleSections(); console.log("6 ok"); } catch(e) { console.error("setupCollapsibleSections failed:", e); }
   try { setupMovementUI(); console.log("7 ok"); } catch(e) { console.error("setupMovementUI failed:", e); }
@@ -565,7 +565,7 @@ const PHASE_LENGTH = 21;
 // so changes in Settings apply retroactively to all calculations.
 function getGoalTarget(key) {
   if (typeof appSettings !== 'undefined') {
-    if (key === 'water' && appSettings.waterGoal) return appSettings.waterGoal;
+    if (key === 'agua' && appSettings.aguaGoal) return appSettings.aguaGoal;
     if (key === 'steps' && appSettings.stepsGoal) return appSettings.stepsGoal;
     if (key === 'rehit' && appSettings.rehitGoal) return appSettings.rehitGoal;
     if (key === 'reading' && appSettings.readingGoal) return appSettings.readingGoal;
@@ -577,7 +577,7 @@ function getGoalTarget(key) {
 
 const GOALS = {
   sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "hrs", type: "daily-avg" },
-  water: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
+  agua: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
   supps: { name: "Supplements", icon: "💊", target: 4, unit: "of 4", type: "daily-all" },
   rehit: { name: "REHIT", icon: "🚴", target: 3, unit: "sessions", type: "weekly" },
   steps: { name: "Steps", icon: "👟", target: 5000, unit: "steps", type: "daily-avg" },
@@ -636,10 +636,10 @@ function calculateGoalStats(data, range) {
     detail: `${sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : '--'} avg hrs`
   };
   
-  // Water: goal is 6 glasses
-  const waterValues = data.map(d => parseInt(d.daily["Water (glasses)"] ?? d.daily["hydrationGood"])).filter(v => !isNaN(v));
-  const waterDaysMet = waterValues.filter(v => v >= getGoalTarget('water')).length;
-  stats.water = {
+  // Agua: goal is 6 glasses
+  const waterValues = data.map(d => parseInt(d.daily["agua"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"])).filter(v => !isNaN(v));
+  const waterDaysMet = waterValues.filter(v => v >= getGoalTarget('agua')).length;
+  stats.agua = {
     pct: totalDays > 0 ? Math.round((waterDaysMet / totalDays) * 100) : 0,
     avg: waterValues.length > 0 ? (waterValues.reduce((a,b) => a+b, 0) / waterValues.length).toFixed(1) : 0,
     detail: `${waterDaysMet}/${totalDays} days at 6+`
@@ -820,8 +820,8 @@ function renderSummaryOverview(data, stats, range, allData) {
     const sleep = parseFloat(d.daily["Hours of Sleep"]);
     if (!isNaN(sleep) && sleep >= getGoalTarget('sleep')) goalsMet++;
 
-    const water = parseInt(d.daily["Water (glasses)"] ?? d.daily["hydrationGood"]);
-    if (!isNaN(water) && water >= getGoalTarget('water')) goalsMet++;
+    const water = parseInt(d.daily["agua"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"]);
+    if (!isNaN(water) && water >= getGoalTarget('agua')) goalsMet++;
 
     const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
     const vitD = d.daily["Vitamin D"];
@@ -1017,7 +1017,7 @@ function renderGoalPerformance(stats) {
   
   const goals = [
     { key: 'sleep', ...GOALS.sleep, ...stats.sleep },
-    { key: 'water', ...GOALS.water, ...stats.water },
+    { key: 'agua', ...GOALS.agua, ...stats.agua },
     { key: 'supps', ...GOALS.supps, name: 'Supplements', icon: '💊' },
     { key: 'rehit', ...GOALS.rehit, ...stats.rehit },
     { key: 'steps', ...GOALS.steps, ...stats.steps },
@@ -1070,7 +1070,7 @@ function renderHealthGoals(stats) {
   
   container.innerHTML = `
     ${renderGoalStatCard('Sleep', '🌙', stats.sleep.pct, stats.sleep.detail)}
-    ${renderGoalStatCard('Water', '💧', stats.water.pct, stats.water.detail)}
+    ${renderGoalStatCard('Water', '💧', stats.agua.pct, stats.agua.detail)}
     ${renderGoalStatCard('Supps', '💊', stats.supps.pct, stats.supps.detail)}
     ${renderGoalStatCard('REHIT', '🚴', stats.rehit.pct, stats.rehit.detail)}
     ${renderGoalStatCard('Steps', '👟', stats.steps.pct, stats.steps.detail)}
@@ -2120,8 +2120,8 @@ async function handleQuickLog(action, buttonEl) {
     case "movement":
       await quickLogMovement();
       break;
-    case "water":
-      await quickLogWater();
+    case "agua":
+      await quickLogAgua();
       break;
     case "reading":
       await quickLogReading();
@@ -2143,14 +2143,14 @@ async function quickLogMovement() {
   window.openMovementModal();
 }
 
-async function quickLogWater() {
+async function quickLogAgua() {
   // Increment water count
-  waterCount++;
-  const waterEl = document.getElementById("waterCount");
-  if (waterEl) waterEl.textContent = waterCount;
+  aguaCount++;
+  const waterEl = document.getElementById("aguaCount");
+  if (waterEl) waterEl.textContent = aguaCount;
   
   triggerSaveSoon();
-  showQuickConfirmation(`✓ Water: ${waterCount} glasses`);
+  showQuickConfirmation(`✓ Water: ${aguaCount} glasses`);
 }
 
 async function quickLogReading() {
@@ -3024,8 +3024,8 @@ function buildPayloadFromUI() {
 
     meditation: !!document.getElementById("meditation")?.checked,
 
-    // Water counter
-    hydrationGood: waterCount,
+    // Agua (hydration glasses)
+    agua: aguaCount,
 
     // Body
     weight: document.getElementById("weight")?.value || "",
@@ -3033,7 +3033,7 @@ function buildPayloadFromUI() {
     leanMass: document.getElementById("leanMass")?.value || "",
     bodyFat: document.getElementById("bodyFat")?.value || "",
     boneMass: document.getElementById("boneMass")?.value || "",
-    water: document.getElementById("water")?.value || "",
+    bodywater: document.getElementById("bodywater")?.value || "",
 
     // Blood Pressure
     systolic: document.getElementById("systolic")?.value || "",
@@ -3160,33 +3160,33 @@ function setupRehitMutualExclusion() {
 }
 
 // =====================================
-// WATER BUTTONS
+// AGUA BUTTONS
 // =====================================
-function updateWaterDisplay() {
-  const waterCountEl = document.getElementById("waterCount");
-  if (waterCountEl) waterCountEl.textContent = String(waterCount);
+function updateAguaDisplay() {
+  const aguaCountEl = document.getElementById("aguaCount");
+  if (aguaCountEl) aguaCountEl.textContent = String(aguaCount);
 }
 
-function setupWaterButtons() {
-  const plus = document.getElementById("waterPlus");
-  const minus = document.getElementById("waterMinus");
+function setupAguaButtons() {
+  const plus = document.getElementById("aguaPlus");
+  const minus = document.getElementById("aguaMinus");
   if (!plus || !minus) return;
 
   plus.addEventListener("click", (e) => {
     e.preventDefault();
-    waterCount += 1;
-    updateWaterDisplay();
+    aguaCount += 1;
+    updateAguaDisplay();
     triggerSaveSoon();
   });
 
   minus.addEventListener("click", (e) => {
     e.preventDefault();
-    waterCount = Math.max(0, waterCount - 1);
-    updateWaterDisplay();
+    aguaCount = Math.max(0, aguaCount - 1);
+    updateAguaDisplay();
     triggerSaveSoon();
   });
 
-  console.log("✅ Water buttons wired");
+  console.log("✅ Agua buttons wired");
 }
 
 // =====================================
@@ -3296,21 +3296,21 @@ function applyBodyFieldsFromDaily(daily) {
   const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
   const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
   const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
-  const waterBodyVal = source["Water (lbs)"] ?? source["water"];
+  const bodywaterVal = source["Water (lbs)"] ?? source["bodywater"];
 
   const weightEl = document.getElementById("weight");
   const waistEl = document.getElementById("waist");
   const leanMassEl = document.getElementById("leanMass");
   const bodyFatEl = document.getElementById("bodyFat");
   const boneMassEl = document.getElementById("boneMass");
-  const waterBodyEl = document.getElementById("water");
+  const bodywaterEl = document.getElementById("bodywater");
 
   if (weightEl) weightEl.value = weightVal ?? "";
   if (waistEl) waistEl.value = waistVal ?? "";
   if (leanMassEl) leanMassEl.value = leanVal ?? "";
   if (bodyFatEl) bodyFatEl.value = fatVal ?? "";
   if (boneMassEl) boneMassEl.value = boneVal ?? "";
-  if (waterBodyEl) waterBodyEl.value = waterBodyVal ?? "";
+  if (bodywaterEl) bodywaterEl.value = bodywaterVal ?? "";
 
   calculatePercentages();
 }
@@ -3323,7 +3323,7 @@ function calculatePercentages() {
     { input: "leanMass", display: "leanMassPercent" },
     { input: "bodyFat", display: "bodyFatPercent" },
     { input: "boneMass", display: "boneMassPercent" },
-    { input: "water", display: "waterPercent" }
+    { input: "bodywater", display: "bodywaterPercent" }
   ];
 
   fields.forEach(({ input, display }) => {
@@ -3336,7 +3336,7 @@ function calculatePercentages() {
 }
 
 // Wire up live percentage calculation on body input changes
-['weight', 'leanMass', 'bodyFat', 'boneMass', 'water'].forEach(id => {
+['weight', 'leanMass', 'bodyFat', 'boneMass', 'bodywater'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', calculatePercentages);
 });
@@ -3370,8 +3370,8 @@ async function populateForm(data) {
 
   // No daily data for this date
   if (!d) {
-    waterCount = 0;
-    updateWaterDisplay();
+    aguaCount = 0;
+    updateAguaDisplay();
 
     movements = (data?.movements || []).map(m => ({
       duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
@@ -3466,9 +3466,9 @@ async function populateForm(data) {
 
   setCheckbox("meditation", d["Meditation"]);
 
-  // Water counter
-  waterCount = parseInt(d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
-  updateWaterDisplay();
+  // Agua counter
+  aguaCount = parseInt(d["agua"] ?? d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
+  updateAguaDisplay();
 
   // Body fields: use current day if present, else carry-forward source
   applyBodyFieldsFromDaily(bodySource);
