@@ -3630,11 +3630,12 @@ function renderMovements() {
   movements.forEach((m, idx) => {
     const duration = m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"];
     const type = m.type ?? m["Type"] ?? m["type"] ?? "";
+    const time = m.time ?? m["time"] ?? "";
 
     const item = document.createElement("div");
     item.className = "item";
     item.innerHTML = `
-      <span class="item-text">${duration} min (${type})</span>
+      <span class="item-text">${duration} min (${type})${time ? ' <span class="item-time">' + time + '</span>' : ''}</span>
       <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
     `;
 
@@ -3680,11 +3681,12 @@ function renderReadings() {
   readings.forEach((r, idx) => {
     const duration = r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"];
     const book = r.book ?? r["Book"] ?? r["book"] ?? "";
+    const time = r.time ?? r["time"] ?? "";
 
     const item = document.createElement("div");
     item.className = "item";
     item.innerHTML = `
-      <span class="item-text">${duration} min — ${book}</span>
+      <span class="item-text">${duration} min — ${book}${time ? ' <span class="item-time">' + time + '</span>' : ''}</span>
       <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
     `;
 

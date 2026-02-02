@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Habits - Daily Rituals</title>
   <meta name="theme-color" content="#1a1a2e">
   <meta name="mobile-web-app-capable" content="yes">
@@ -1252,6 +1252,7 @@
       box-shadow: 0 0 10px var(--glow-teal);
     }
     .item-text { font-size: 13px; color: white; }
+    .item-time { font-size: 11px; color: var(--text-muted); margin-left: 4px; }
     .item-del { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
     .item-del:hover { color: var(--accent-pink); }
     body.day-mode .item {
@@ -1849,7 +1850,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.0 – 8:45 PM CST</span></h1>
+          <h1>Habits <span class="version">v6.1 – 9:00 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2901,7 +2902,7 @@
       
       // Add to movements array (defined in app.js)
       if (typeof movements !== 'undefined') {
-        movements.push({ duration: selectedDuration, type: selectedMovementType });
+        movements.push({ duration: selectedDuration, type: selectedMovementType, time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Chicago' }) });
         if (typeof renderMovements === 'function') renderMovements();
         if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
       }
@@ -2988,7 +2989,7 @@
       if (!selectedReadingDuration || !bookTitle) return;
 
       if (typeof readings !== 'undefined') {
-        readings.push({ duration: selectedReadingDuration, book: bookTitle });
+        readings.push({ duration: selectedReadingDuration, book: bookTitle, time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Chicago' }) });
         if (typeof window.lastBookTitle !== 'undefined' || true) window.lastBookTitle = bookTitle;
         if (typeof renderReadings === 'function') renderReadings();
         if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
