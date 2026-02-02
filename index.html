@@ -1850,7 +1850,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.4 – 9:50 PM CST</span></h1>
+          <h1>Habits <span class="version">v6.5 – 10:15 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2824,28 +2824,9 @@
         rehitObserver.observe(rehitWeek, { childList: true, characterData: true, subtree: true });
       }
       
-      // REHIT chip click handlers — checkbox is display:none so we need to toggle it manually
-      const rehit2Chip = document.getElementById('rehit2Chip');
-      const rehit3Chip = document.getElementById('rehit3Chip');
+      // REHIT checkbox change listeners (chip click→toggle is handled by generic chip handler at line 2752)
       const rehit2 = document.getElementById('rehit2');
       const rehit3 = document.getElementById('rehit3');
-
-      if (rehit2Chip && rehit2) {
-        rehit2Chip.addEventListener('click', (e) => {
-          if (e.target.type === 'checkbox') return; // let native handle
-          rehit2.checked = !rehit2.checked;
-          rehit2.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-      }
-      if (rehit3Chip && rehit3) {
-        rehit3Chip.addEventListener('click', (e) => {
-          if (e.target.type === 'checkbox') return;
-          rehit3.checked = !rehit3.checked;
-          rehit3.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-      }
-
-      // REHIT checkbox change listeners
       if (rehit2) rehit2.addEventListener('change', () => { syncAllChips(); updateRehitDots(); updateRehitDisplay(); });
       if (rehit3) rehit3.addEventListener('change', () => { syncAllChips(); updateRehitDots(); updateRehitDisplay(); });
       
