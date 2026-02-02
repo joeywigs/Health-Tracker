@@ -2942,8 +2942,10 @@ async function loadDataForCurrentDate(options = {}) {
 }
 
 async function saveData(payload) {
-  // Always cache locally for offline reads
-  cacheDayLocally(payload.date, payload);
+  // Cache locally wrapped in the format populateForm expects
+  const wrappedPayload = { daily: { ...payload }, date: payload.date };
+  cacheDayLocally(payload.date, wrappedPayload);
+  cacheSet(formatDateForAPI(currentDate), wrappedPayload);
 
   try {
     const saveResult = await apiPost("save", { data: payload });
@@ -2966,8 +2968,9 @@ async function saveData(payload) {
       markSleepSaved();
     }
 
-    // Force reload from server to get fresh data including averages
-    await loadDataForCurrentDate({ force: true });
+    // Don't force-reload after save — the UI already has the correct state.
+    // Reloading would re-read API data with potentially different column names
+    // and overwrite the UI, zeroing out fields like agua.
 
   } catch (err) {
     console.error("Save failed, queuing offline:", err);
@@ -3291,11 +3294,11 @@ async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
 function applyBodyFieldsFromDaily(daily) {
   const source = daily || {};
 
-  const weightVal = source["Weight (lbs)"] ?? source["Weight"];
-  const waistVal = source["Waist (in)"] ?? source["Waist"];
-  const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"];
-  const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"];
-  const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"];
+  const weightVal = source["Weight (lbs)"] ?? source["Weight"] ?? source["weight"];
+  const waistVal = source["Waist (in)"] ?? source["Waist"] ?? source["waist"];
+  const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"] ?? source["leanMass"];
+  const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"] ?? source["bodyFat"];
+  const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"] ?? source["boneMass"];
   const bodywaterVal = source["Water (lbs)"] ?? source["bodywater"];
 
   const weightEl = document.getElementById("weight");
@@ -3415,35 +3418,35 @@ async function populateForm(data) {
     return;
   }
 
-  // Numbers
+  // Numbers (API column names ?? payload key names)
   const sleepEl = document.getElementById("sleepHours");
-  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? "";
+  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
 
   const stepsEl = document.getElementById("steps");
-  if (stepsEl) stepsEl.value = d["Steps"] ?? "";
+  if (stepsEl) stepsEl.value = d["Steps"] ?? d["steps"] ?? "";
 
   const fitnessEl = document.getElementById("fitnessScore");
-  if (fitnessEl) fitnessEl.value = d["Fitness Score"] ?? "";
+  if (fitnessEl) fitnessEl.value = d["Fitness Score"] ?? d["fitnessScore"] ?? "";
 
   const caloriesEl = document.getElementById("calories");
-  if (caloriesEl) caloriesEl.value = d["Calories"] ?? "";
+  if (caloriesEl) caloriesEl.value = d["Calories"] ?? d["calories"] ?? "";
 
   const peakWattsEl = document.getElementById("peakWatts");
-  if (peakWattsEl) peakWattsEl.value = d["Peak Watts"] ?? "";
+  if (peakWattsEl) peakWattsEl.value = d["Peak Watts"] ?? d["peakWatts"] ?? "";
 
   const wattSecondsEl = document.getElementById("wattSeconds");
-  if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? d["Watt-Seconds"] ?? "";
+  if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? d["Watt-Seconds"] ?? d["wattSeconds"] ?? "";
 
-  // Checkboxes (sheet -> UI)
-  setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"]);
-  setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"]);
-  setCheckbox("multiplication", d["5 min Multiplication"]);
-  
+  // Checkboxes (API column names ?? payload key names)
+  setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"] ?? d["inhalerMorning"]);
+  setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"] ?? d["inhalerEvening"]);
+  setCheckbox("multiplication", d["5 min Multiplication"] ?? d["multiplication"]);
+
   // REHIT: check the right one based on value
-  const rehitVal = d["REHIT 2x10"] ?? d["REHIT"] ?? "";
+  const rehitVal = d["REHIT 2x10"] ?? d["REHIT"] ?? d["rehit"] ?? "";
   setCheckbox("rehit2", rehitVal === "2x10" || rehitVal === true || rehitVal === "TRUE");
   setCheckbox("rehit3", rehitVal === "3x10");
-  
+
   // Show REHIT fields if either is checked
   const rehitFields = document.getElementById("rehitFields");
   if (rehitFields) {
@@ -3451,20 +3454,20 @@ async function populateForm(data) {
     rehitFields.style.display = showRehit ? "block" : "none";
   }
 
-  setCheckbox("creatine", d["Creatine Chews"] ?? d["Creatine"]);
-  setCheckbox("vitaminD", d["Vitamin D"]);
-  setCheckbox("no2", d["NO2"]);
-  setCheckbox("psyllium", d["Psyllium Husk"] ?? d["Psyllium"]);
+  setCheckbox("creatine", d["Creatine Chews"] ?? d["Creatine"] ?? d["creatine"]);
+  setCheckbox("vitaminD", d["Vitamin D"] ?? d["vitaminD"]);
+  setCheckbox("no2", d["NO2"] ?? d["no2"]);
+  setCheckbox("psyllium", d["Psyllium Husk"] ?? d["Psyllium"] ?? d["psyllium"]);
 
-  setCheckbox("breakfast", d["Breakfast"]);
-  setCheckbox("lunch", d["Lunch"]);
-  setCheckbox("dinner", d["Dinner"]);
+  setCheckbox("breakfast", d["Breakfast"] ?? d["breakfast"]);
+  setCheckbox("lunch", d["Lunch"] ?? d["lunch"]);
+  setCheckbox("dinner", d["Dinner"] ?? d["dinner"]);
 
-  setCheckbox("daySnacks", d["Healthy Day Snacks"] ?? d["Day Snacks"]);
-  setCheckbox("nightSnacks", d["Healthy Night Snacks"] ?? d["Night Snacks"]);
-  setCheckbox("noAlcohol", d["No Alcohol"]);
+  setCheckbox("daySnacks", d["Healthy Day Snacks"] ?? d["Day Snacks"] ?? d["daySnacks"]);
+  setCheckbox("nightSnacks", d["Healthy Night Snacks"] ?? d["Night Snacks"] ?? d["nightSnacks"]);
+  setCheckbox("noAlcohol", d["No Alcohol"] ?? d["noAlcohol"]);
 
-  setCheckbox("meditation", d["Meditation"]);
+  setCheckbox("meditation", d["Meditation"] ?? d["meditation"]);
 
   // Agua counter
   aguaCount = parseInt(d["agua"] ?? d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
@@ -3475,13 +3478,13 @@ async function populateForm(data) {
 
   // Blood Pressure - load from current day's data
   const systolicEl = document.getElementById("systolic");
-  if (systolicEl) systolicEl.value = d["Systolic"] ?? "";
+  if (systolicEl) systolicEl.value = d["Systolic"] ?? d["systolic"] ?? "";
 
   const diastolicEl = document.getElementById("diastolic");
-  if (diastolicEl) diastolicEl.value = d["Diastolic"] ?? "";
+  if (diastolicEl) diastolicEl.value = d["Diastolic"] ?? d["diastolic"] ?? "";
 
   const heartRateEl = document.getElementById("heartRate");
-  if (heartRateEl) heartRateEl.value = d["Heart Rate"] ?? "";
+  if (heartRateEl) heartRateEl.value = d["Heart Rate"] ?? d["heartRate"] ?? "";
 
   // Trigger BP status calculation
   if (systolicEl?.value && diastolicEl?.value) {
