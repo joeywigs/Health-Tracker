@@ -1849,7 +1849,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v5.2 – 6:47 PM CST</span></h1>
+          <h1>Habits <span class="version">v5.3 – 6:56 PM CST</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2577,13 +2577,19 @@
       const chipCheckboxes = document.querySelectorAll('#healthForm .chip input[type="checkbox"]');
       const miniSuppCheckboxes = document.querySelectorAll('#healthForm .mini-supp input[type="checkbox"]');
       const allCheckboxes = [...chipCheckboxes, ...miniSuppCheckboxes];
-      
-      const checkboxes = allCheckboxes.filter(cb => 
+
+      const checkboxes = allCheckboxes.filter(cb =>
         cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
       );
-      
-      const total = checkboxes.length;
-      const checked = checkboxes.filter(cb => cb.checked).length;
+
+      // Include agua goal as a completable item
+      const aguaGoal = (typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6;
+      const aguaEl = document.getElementById('aguaCount');
+      const aguaCurrent = aguaEl ? parseInt(aguaEl.textContent) || 0 : 0;
+      const aguaMet = aguaCurrent >= aguaGoal ? 1 : 0;
+
+      const total = checkboxes.length + 1; // +1 for agua
+      const checked = checkboxes.filter(cb => cb.checked).length + aguaMet;
       
       // Debug removed
       
@@ -2731,7 +2737,7 @@
       // Agua count observer
       const aguaCount = document.getElementById('aguaCount');
       if (aguaCount) {
-        const observer = new MutationObserver(updateAguaBar);
+        const observer = new MutationObserver(() => { updateAguaBar(); updateCompletionRingAurora(); });
         observer.observe(aguaCount, { childList: true, characterData: true, subtree: true });
       }
       
@@ -2954,6 +2960,7 @@
         window.updateAguaDisplay = function() {
           origAgua.call(this);
           updateAguaBar();
+          updateCompletionRingAurora();
         };
         window._aguaHooked = true;
       } else if (!window._aguaHooked) {
