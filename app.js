@@ -637,7 +637,7 @@ function calculateGoalStats(data, range) {
   };
   
   // Agua: goal is 6 glasses
-  const waterValues = data.map(d => parseInt(d.daily["agua"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"])).filter(v => !isNaN(v));
+  const waterValues = data.map(d => parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"])).filter(v => !isNaN(v));
   const waterDaysMet = waterValues.filter(v => v >= getGoalTarget('agua')).length;
   stats.agua = {
     pct: totalDays > 0 ? Math.round((waterDaysMet / totalDays) * 100) : 0,
@@ -820,7 +820,7 @@ function renderSummaryOverview(data, stats, range, allData) {
     const sleep = parseFloat(d.daily["Hours of Sleep"]);
     if (!isNaN(sleep) && sleep >= getGoalTarget('sleep')) goalsMet++;
 
-    const water = parseInt(d.daily["agua"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"]);
+    const water = parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"]);
     if (!isNaN(water) && water >= getGoalTarget('agua')) goalsMet++;
 
     const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
@@ -3457,7 +3457,7 @@ async function populateForm(data) {
   setCheckbox("meditation", d["Meditation"] ?? d["meditation"]);
 
   // Agua counter
-  aguaCount = parseInt(d["agua"] ?? d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
+  aguaCount = parseInt(d["agua"] ?? d["Water"] ?? d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
   updateAguaDisplay();
 
   // Body fields: use current day if present, else carry-forward source
