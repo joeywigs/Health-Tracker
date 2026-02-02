@@ -130,7 +130,11 @@ async function flushOfflineQueue() {
 
     if (flushed > 0) {
       if (typeof showToast === 'function') showToast(`Synced ${flushed} offline save${flushed > 1 ? 's' : ''}`, 'success');
-      await loadDataForCurrentDate({ force: true });
+      // Re-save the current form state so the backend reflects what the user sees.
+      // Old queued saves may have overwritten newer data on the backend.
+      // Don't reload — the UI already has the correct state from the initial load.
+      const currentPayload = buildPayloadFromUI();
+      await saveData(currentPayload);
     }
   } catch (e) {
     console.error('Flush offline queue failed:', e);
