@@ -3817,8 +3817,9 @@ function updateAverages(averages) {
     rehitWeekEl.innerHTML = display + comparison;
   }
 
-  // Update REHIT dots now that we have the week count
-  if (typeof window.updateRehitDots === 'function') window.updateRehitDots();
+  // Update REHIT dots now that we have the week count - pass the value directly
+  const rehitCount = (typeof averages.rehitWeek === 'number') ? averages.rehitWeek : 0;
+  if (typeof window.updateRehitDots === 'function') window.updateRehitDots(rehitCount);
 }
 
 function markSleepSaved() {

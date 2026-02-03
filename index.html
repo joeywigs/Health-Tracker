@@ -1852,7 +1852,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.19</span></h1>
+          <h1>Habits <span class="version">v6.20</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2682,21 +2682,18 @@
     }
     
     // REHIT dots - count sessions this week (goal: 4 sessions per week)
-    function updateRehitDots() {
+    // weekCountFromServer is optional - if provided, it's the count from the worker (excluding today)
+    window._rehitWeekCount = 0; // Store the server count globally
+    function updateRehitDots(weekCountFromServer) {
       const dotsContainer = document.getElementById('rehitDots');
       if (!dotsContainer) return;
       const dots = dotsContainer.querySelectorAll('.rehit-dot');
 
-      // Get week count from the rehitWeek display (set by app.js averages)
-      let weekCount = 0;
-      const rehitWeekEl = document.getElementById('rehitWeek');
-      if (rehitWeekEl) {
-        const text = rehitWeekEl.textContent;
-        const match = text.match(/(\d+)/);
-        if (match) {
-          weekCount = parseInt(match[1], 10);
-        }
+      // Use provided count or stored count
+      if (typeof weekCountFromServer === 'number') {
+        window._rehitWeekCount = weekCountFromServer;
       }
+      let weekCount = window._rehitWeekCount || 0;
 
       // Always include today's REHIT in the dot count — the averages from
       // the worker reflect previous days only, so we add today separately.
