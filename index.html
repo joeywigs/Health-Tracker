@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -545,7 +546,7 @@
       transition: stroke-dashoffset 0.6s;
       filter: drop-shadow(0 0 6px var(--glow-teal));
     }
-    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
+    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
     
     /* Phase Bar */
     .phase { margin-top: 0; }
@@ -641,7 +642,7 @@
     }
     .rehit-stat-value {
       display: block;
-      font-family: 'Space Grotesk';
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 20px;
       font-weight: 700;
     }
@@ -722,7 +723,7 @@
       box-shadow: 0 0 15px var(--card-glow, var(--glow-purple));
     }
     .card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
-    .card-value { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
+    .card-value { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
     .card-unit { font-size: 13px; color: var(--text); margin-left: 4px; }
     .input-row { display: flex; align-items: baseline; }
     .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
@@ -1061,7 +1062,7 @@
       background: rgba(255,255,255,0.5);
     }
 
-    .big-input { width: auto; flex: 1; min-width: 0; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: white; outline: none; transition: color 0.3s; }
+    .big-input { width: auto; flex: 1; min-width: 0; background: transparent; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: white; outline: none; transition: color 0.3s; }
     .big-input::placeholder { color: var(--text-muted); }
     .big-input:focus { color: var(--accent-teal); }
     
@@ -1078,7 +1079,7 @@
       box-shadow: 0 0 20px var(--glow-teal);
     }
     .water-btn:active { transform: scale(0.9); }
-    .water-num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: white; }
+    .water-num { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: white; }
     
     /* Sections */
     .section { 
@@ -1513,9 +1514,9 @@
     .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .body-cell { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
     .body-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
-    .body-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--text); outline: none; transition: color 0.3s; }
+    .body-input { width: 100%; background: transparent; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: var(--text); outline: none; transition: color 0.3s; }
     .body-input:focus { color: var(--accent-teal); }
-    .body-pct { font-family: 'Space Grotesk'; font-size: 18px; font-weight: 600; color: var(--accent-teal); }
+    .body-pct { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: var(--accent-teal); }
     
     /* FAB - Glowing */
     .fab { 
@@ -1562,7 +1563,7 @@
     @keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
     .milestone-emoji { font-size: 72px; animation: float 2s ease-in-out infinite; }
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
-    .milestone-title { font-family: 'Space Grotesk'; font-size: 26px; font-weight: 700; margin-top: 16px; background: linear-gradient(90deg, var(--accent-teal), var(--accent-purple), var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .milestone-title { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; margin-top: 16px; background: linear-gradient(90deg, var(--accent-teal), var(--accent-purple), var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .milestone-sub { font-size: 15px; color: var(--text-dim); margin-top: 8px; }
     .milestone-btn { margin-top: 28px; padding: 14px 32px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); border: none; border-radius: var(--radius-pill); font-size: 16px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 8px 30px var(--glow-purple); }
     
@@ -1791,7 +1792,7 @@
         <div style="display:flex;align-items:center;gap:10px">
           <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--accent-orange));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-pink)">🚴</div>
           <div>
-            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">REHIT Stats</div>
+            <div style="font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700">REHIT Stats</div>
             <div style="font-size:12px;color:var(--text-muted)">Enter your workout data</div>
           </div>
         </div>
@@ -1818,7 +1819,7 @@
         <div style="display:flex;align-items:center;gap:10px">
           <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-teal),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-teal)">🎯</div>
           <div>
-            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">Weekly Goals</div>
+            <div style="font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700">Weekly Goals</div>
             <div style="font-size:12px;color:var(--text-muted)">Set your intentions for the week</div>
           </div>
         </div>
@@ -2111,7 +2112,7 @@
     <div class="modal-content" style="max-width:400px">
       <div class="modal-header">
         <div>
-          <div id="bioHistoryTitle" style="font-family:'Space Grotesk';font-size:16px;font-weight:700">Biomarker</div>
+          <div id="bioHistoryTitle" style="font-family:'Space Grotesk', sans-serif;font-size:16px;font-weight:700">Biomarker</div>
           <div id="bioHistoryRange" style="font-size:12px;color:var(--text-muted)">Normal: --</div>
         </div>
         <button class="modal-close" onclick="closeBioHistory()">✕</button>
@@ -2403,7 +2404,7 @@
         <div style="display:flex;align-items:center;gap:10px">
           <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-pink)">🚶</div>
           <div>
-            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">Add Movement</div>
+            <div style="font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700">Add Movement</div>
             <div style="font-size:12px;color:var(--text-muted)">Select type and duration</div>
           </div>
         </div>
@@ -2452,7 +2453,7 @@
         <div style="display:flex;align-items:center;gap:10px">
           <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-purple),var(--accent-teal));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-purple)">📖</div>
           <div>
-            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">Add Reading</div>
+            <div style="font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700">Add Reading</div>
             <div style="font-size:12px;color:var(--text-muted)">Book title and duration</div>
           </div>
         </div>
