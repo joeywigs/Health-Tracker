@@ -205,6 +205,11 @@ async function saveDay(data, env, corsHeaders) {
     "Reflections": data.reflections || "",
     "Stories": data.stories || "",
     "Carly": data.carly || "",
+    // Movement breaks (morning/afternoon)
+    "Morning Movement Type": data.morningMovementType || "",
+    "Morning Movement Duration": data.morningMovementDuration || "",
+    "Afternoon Movement Type": data.afternoonMovementType || "",
+    "Afternoon Movement Duration": data.afternoonMovementDuration || "",
   };
 
   // Save all data in parallel
