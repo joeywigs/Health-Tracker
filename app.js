@@ -2536,7 +2536,7 @@ const BIOMARKER_DEFS = [
   ]},
   { cat: "Kidney Function", icon: "🫘", markers: [
     { name: "BUN", range: "5–25 mg/dL", low: 5, high: 25, unit: "mg/dL", desc: "Measures nitrogen waste in blood; influenced by kidney function, hydration, and protein intake" },
-    { name: "Creatinine", range: "0.72–1.25 mg/dL", low: 0.72, high: 1.25, unit: "mg/dL", desc: "Primary marker of kidney filtration; higher levels suggest reduced kidney clearance or high muscle mass" },
+    { name: "Creatinine", range: "0.60–1.30 mg/dL", low: 0.60, high: 1.30, unit: "mg/dL", desc: "Primary marker of kidney filtration; higher levels suggest reduced kidney clearance or high muscle mass" },
     { name: "eGFR", range: "≥60 mL/min/1.73m²", low: 60, high: 120, unit: "mL/min", desc: "Calculated estimate of overall kidney filtering capacity; tracks kidney health over time" }
   ]},
   { cat: "Electrolytes & Minerals", icon: "⚡", markers: [
@@ -2547,21 +2547,22 @@ const BIOMARKER_DEFS = [
     { name: "Calcium", range: "8.5–10.7 mg/dL", low: 8.5, high: 10.7, unit: "mg/dL", desc: "Important for bone strength, muscle contraction, nerve transmission, and hormone signaling" }
   ]},
   { cat: "Liver Function", icon: "🫁", markers: [
-    { name: "ALT (SGPT)", range: "7–40 U/L", low: 7, high: 40, unit: "U/L", desc: "Most liver-specific enzyme; elevations suggest liver inflammation or fat-related liver stress" },
+    { name: "ALT (SGPT)", range: "≤45 U/L", low: 0, high: 45, unit: "U/L", desc: "Most liver-specific enzyme; elevations suggest liver inflammation or fat-related liver stress" },
     { name: "AST (SGOT)", range: "8–42 U/L", low: 8, high: 42, unit: "U/L", desc: "Found in liver and muscle; helps interpret liver results in context of exercise or injury" },
     { name: "Alkaline Phosphatase", range: "39–139 IU/L", low: 39, high: 139, unit: "IU/L", desc: "Linked to bile flow and bone turnover; elevations may indicate liver or bone conditions" },
-    { name: "Total Bilirubin", range: "0.1–1.2 mg/dL", low: 0.1, high: 1.2, unit: "mg/dL", desc: "Measures liver processing of red blood cells; mild elevations can be benign or genetic" },
+    { name: "Total Bilirubin", range: "0.3–1.2 mg/dL", low: 0.3, high: 1.2, unit: "mg/dL", desc: "Measures liver processing of red blood cells; mild elevations can be benign or genetic" },
     { name: "GGT", range: "9–48 U/L", low: 9, high: 48, unit: "U/L", desc: "Early and sensitive marker of liver stress, alcohol sensitivity, and cardiometabolic risk" }
   ]},
   { cat: "Proteins & Nutrition", icon: "🥩", markers: [
-    { name: "Total Protein", range: "6.2–8.2 g/dL", low: 6.2, high: 8.2, unit: "g/dL", desc: "Measures total circulating proteins involved in immunity, transport, and nutrition" },
-    { name: "Albumin", range: "3.4–4.7 g/dL", low: 3.4, high: 4.7, unit: "g/dL", desc: "Key blood protein reflecting liver function, nutritional status, and systemic inflammation" }
+    { name: "Total Protein", range: "6.0–8.3 g/dL", low: 6.0, high: 8.3, unit: "g/dL", desc: "Measures total circulating proteins involved in immunity, transport, and nutrition" },
+    { name: "Albumin", range: "3.5–5.0 g/dL", low: 3.5, high: 5.0, unit: "g/dL", desc: "Key blood protein reflecting liver function, nutritional status, and systemic inflammation" }
   ]},
   { cat: "Lipid & Lipoproteins", icon: "❤️", markers: [
     { name: "Total Cholesterol", range: "120–200 mg/dL", low: 120, high: 200, unit: "mg/dL", desc: "Overall cholesterol burden; limited alone but useful for trend tracking" },
     { name: "Triglycerides", range: "50–150 mg/dL", low: 50, high: 150, unit: "mg/dL", desc: "Reflects fat metabolism and insulin sensitivity; often elevated in metabolic dysfunction" },
     { name: "HDL-C", range: "40–72 mg/dL", low: 40, high: 72, unit: "mg/dL", desc: "Involved in cholesterol transport away from arteries; higher levels generally protective" },
     { name: "LDL-C", range: "62–129 mg/dL", low: 62, high: 129, unit: "mg/dL", desc: "Traditional cholesterol marker associated with plaque formation; incomplete without particle data" },
+    { name: "Chol/HDL Ratio", range: "≤4.9", low: 0, high: 4.9, unit: "", desc: "Total cholesterol divided by HDL; lower ratios indicate better cardiovascular risk profile" },
     { name: "Apolipoprotein B", range: "<90 mg/dL", low: 30, high: 90, unit: "mg/dL", desc: "Counts total atherogenic particles that cause plaque; strongest single lipid predictor of heart disease" },
     { name: "Lipoprotein(a)", range: "<30 mg/dL", low: 0, high: 30, unit: "mg/dL", desc: "Genetically determined LDL-like particle; major inherited risk factor for premature heart disease" }
   ]},
@@ -2578,7 +2579,8 @@ const BIOMARKER_DEFS = [
     { name: "MCHC", range: "32.0–36.2 g/dL", low: 32.0, high: 36.2, unit: "g/dL", desc: "Mean corpuscular hemoglobin concentration; average hemoglobin concentration in red blood cells" },
     { name: "RDW", range: "12.2–16.4 %", low: 12.2, high: 16.4, unit: "%", desc: "Red cell distribution width; measures variation in red blood cell size; high values may indicate nutritional deficiencies" },
     { name: "Platelets", range: "150–440 K/cmm", low: 150, high: 440, unit: "K/cmm", desc: "Cell fragments essential for blood clotting; abnormal levels affect bleeding and clot risk" },
-    { name: "MPV", range: "9.0–12.8 fL", low: 9.0, high: 12.8, unit: "fL", desc: "Mean platelet volume; average size of platelets; may indicate platelet production rate" },
+    { name: "MPV", range: "9.04–12.79 fL", low: 9.04, high: 12.79, unit: "fL", desc: "Mean platelet volume; average size of platelets; may indicate platelet production rate" },
+    { name: "nRBCs", range: "0 /100", low: 0, high: 0, unit: "/100", desc: "Nucleated red blood cells; immature red cells normally absent in adults; presence may indicate bone marrow stress or blood disorders" },
     { name: "Ferritin", range: "30–400 ng/mL", low: 30, high: 400, unit: "ng/mL", desc: "Reflects iron storage; high levels may indicate inflammation or excess iron" }
   ]},
   { cat: "White Cell Differential", icon: "🔬", markers: [
@@ -2591,7 +2593,9 @@ const BIOMARKER_DEFS = [
     { name: "Absolute Lymphocytes", range: "0.8–3.5 K/cmm", low: 0.8, high: 3.5, unit: "K/cmm", desc: "Absolute count of lymphocytes; important for immune function assessment" },
     { name: "Absolute Monocytes", range: "0.3–1.0 K/cmm", low: 0.3, high: 1.0, unit: "K/cmm", desc: "Absolute count of monocytes; elevated in chronic infections and inflammatory conditions" },
     { name: "Absolute Eosinophils", range: "0.0–0.7 K/cmm", low: 0.0, high: 0.7, unit: "K/cmm", desc: "Absolute count of eosinophils; elevated in allergies, asthma, and parasitic infections" },
-    { name: "Absolute Basophils", range: "0.0–0.1 K/cmm", low: 0.0, high: 0.1, unit: "K/cmm", desc: "Absolute count of basophils; rarely elevated outside of specific blood disorders" }
+    { name: "Absolute Basophils", range: "0.0–0.1 K/cmm", low: 0.0, high: 0.1, unit: "K/cmm", desc: "Absolute count of basophils; rarely elevated outside of specific blood disorders" },
+    { name: "IG %", range: "0–1 %", low: 0, high: 1, unit: "%", desc: "Immature granulocytes percentage; early-stage white blood cells; elevated levels may indicate infection or bone marrow response" },
+    { name: "IG ABS", range: "0.0–0.1 K/cmm", low: 0.0, high: 0.1, unit: "K/cmm", desc: "Absolute count of immature granulocytes; useful marker for early detection of infection or inflammation" }
   ]},
   { cat: "Hormones & Endocrine", icon: "⚙️", markers: [
     { name: "TSH", range: "0.35–5.00 µIU/mL", low: 0.35, high: 5.00, unit: "µIU/mL", desc: "Thyroid stimulating hormone; regulates metabolism, energy, and body temperature; primary screening test for thyroid function" },
@@ -2603,7 +2607,7 @@ const BIOMARKER_DEFS = [
     { name: "DHEA-S", range: "80–560 µg/dL", low: 80, high: 560, unit: "µg/dL", desc: "Adrenal hormone associated with stress resilience, immune health, and aging trajectory" }
   ]},
   { cat: "Vitamins & Longevity", icon: "☀️", markers: [
-    { name: "Vitamin D (25-OH)", range: "30–50 ng/mL", low: 30, high: 50, unit: "ng/mL", desc: "Regulates calcium absorption, immune function, and mood; deficiency is common and linked to many chronic diseases" }
+    { name: "Vitamin D (25-OH)", range: "30–96 ng/mL", low: 30, high: 96, unit: "ng/mL", desc: "Regulates calcium absorption, immune function, and mood; deficiency is common and linked to many chronic diseases" }
   ]}
 ];
 
@@ -2639,6 +2643,7 @@ const BIOMARKER_HISTORY = {
   "Triglycerides":        [70, 120, 73, 133, 51, null],
   "HDL-C":                [54, 50, 53, 54, 59, null],
   "LDL-C":                [95, 95, 113, 112, 116, null],
+  "Chol/HDL Ratio":       [3.0, null, null, null, null, null],
   "Apolipoprotein B":     [null, null, null, null, null, null],
   "Lipoprotein(a)":       [null, null, null, null, null, null],
   // Inflammation
@@ -2654,6 +2659,7 @@ const BIOMARKER_HISTORY = {
   "RDW":                  [12.8, null, null, null, null, null],
   "Platelets":            [259, null, null, null, null, null],
   "MPV":                  [8.4, null, null, null, null, null],
+  "nRBCs":                [0, null, null, null, null, null],
   "Ferritin":             [null, null, null, null, null, null],
   // White Cell Differential
   "Neutrophils %":        [50, null, null, null, null, null],
@@ -2666,6 +2672,8 @@ const BIOMARKER_HISTORY = {
   "Absolute Monocytes":   [0.5, null, null, null, null, null],
   "Absolute Eosinophils": [0.1, null, null, null, null, null],
   "Absolute Basophils":   [0.1, null, null, null, null, null],
+  "IG %":                 [0, null, null, null, null, null],
+  "IG ABS":               [0, null, null, null, null, null],
   // Hormones
   "TSH":                  [0.86, null, null, null, null, null],
   "Total Testosterone":   [null, null, null, 585, null, null],
@@ -2675,7 +2683,7 @@ const BIOMARKER_HISTORY = {
   "Cortisol (AM)":        [null, null, null, null, null, null],
   "DHEA-S":               [null, null, null, null, null, null],
   // Vitamins
-  "Vitamin D (25-OH)":    [null, null, null, null, null, null]
+  "Vitamin D (25-OH)":    [39.1, null, null, null, null, null]
 };
 
 function renderBiomarkersTable(definition, latestValues) {
@@ -2883,6 +2891,7 @@ function exportBiomarkersCSV() {
     "Triglycerides": "Trig",
     "HDL-C": "HDL",
     "LDL-C": "LDL",
+    "Chol/HDL Ratio": "Chol/HDL",
     "Apolipoprotein B": "ApoB",
     "Lipoprotein(a)": "Lp(a)",
     "hsCRP": "hsCRP",
@@ -2896,6 +2905,7 @@ function exportBiomarkersCSV() {
     "RDW": "RDW",
     "Platelets": "Plt",
     "MPV": "MPV",
+    "nRBCs": "nRBCs",
     "Ferritin": "Ferr",
     "Neutrophils %": "Neut %",
     "Lymphocytes %": "Lymph %",
@@ -2907,6 +2917,8 @@ function exportBiomarkersCSV() {
     "Absolute Monocytes": "AMC",
     "Absolute Eosinophils": "AEC",
     "Absolute Basophils": "ABC",
+    "IG %": "IG %",
+    "IG ABS": "IG ABS",
     "TSH": "TSH",
     "Total Testosterone": "Total T",
     "SHBG": "SHBG",
