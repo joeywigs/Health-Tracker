@@ -1852,7 +1852,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.22</span></h1>
+          <h1>Habits <span class="version">v6.23</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2862,15 +2862,14 @@
       if (rehit3) rehit3.addEventListener('change', () => { syncAllChips(); updateRehitDots(); updateRehitDisplay(); });
       
       // Initial update after app.js loads data
-      setTimeout(() => { 
-        syncAllChips(); 
-        updateAguaBar(); 
+      setTimeout(() => {
+        syncAllChips();
+        updateAguaBar();
         updateStepsBar();
-        updateRehitDots();
+        fetchRehitWeekCount(); // Fetch from new endpoint
         updateRehitDisplay();
         updateCompletionRingAurora();
         updatePhaseInfoFixed();
-        // Debug removed
       }, 1500);
       
       // Debug removed
