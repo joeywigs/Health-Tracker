@@ -1900,7 +1900,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.25</span></h1>
+          <h1>Habits <span class="version">v6.26</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2465,6 +2465,28 @@
     </div>
   </div>
 
+  <!-- Chart Modal -->
+  <div id="chartModal" class="modal">
+    <div class="modal-content" style="max-width:500px">
+      <div class="modal-header">
+        <div>
+          <div id="chartModalTitle" style="font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700">Chart</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button type="button" class="chart-range-btn btn btn-secondary active" data-range="7">7d</button>
+            <button type="button" class="chart-range-btn btn btn-secondary" data-range="30">30d</button>
+            <button type="button" class="chart-range-btn btn btn-secondary" data-range="all">All</button>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeChartModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding:14px">
+        <div id="chartModalLoading" style="text-align:center;padding:40px;color:var(--text-muted)">Loading...</div>
+        <canvas id="chartModalCanvas" style="max-height:250px;display:none"></canvas>
+        <div id="chartModalCalendar" class="rehit-calendar" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Reading Modal -->
   <div id="readingModal" class="modal">
     <div class="modal-content">
@@ -2901,6 +2923,210 @@
           if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
         });
       }
+    });
+
+    // =============================================
+    // CHART MODAL
+    // =============================================
+    let currentChartType = null;
+    let chartModalInstance = null;
+    let chartModalRange = 7;
+
+    window.openChartModal = async function(chartType, title) {
+      currentChartType = chartType;
+      document.getElementById('chartModalTitle').textContent = title;
+      document.getElementById('chartModalLoading').style.display = 'block';
+      document.getElementById('chartModalCanvas').style.display = 'none';
+      document.getElementById('chartModalCalendar').style.display = 'none';
+      document.getElementById('chartModal').classList.add('show');
+
+      // Load and render the chart
+      await renderChartInModal(chartType, chartModalRange);
+    };
+
+    window.closeChartModal = function() {
+      document.getElementById('chartModal').classList.remove('show');
+      if (chartModalInstance) {
+        chartModalInstance.destroy();
+        chartModalInstance = null;
+      }
+    };
+
+    async function renderChartInModal(chartType, range) {
+      const loading = document.getElementById('chartModalLoading');
+      const canvas = document.getElementById('chartModalCanvas');
+      const calendar = document.getElementById('chartModalCalendar');
+
+      loading.style.display = 'block';
+      canvas.style.display = 'none';
+      calendar.style.display = 'none';
+
+      // Destroy existing chart
+      if (chartModalInstance) {
+        chartModalInstance.destroy();
+        chartModalInstance = null;
+      }
+
+      try {
+        // Use the existing chart data fetching from app.js
+        const data = await fetchChartDataForModal(range);
+
+        loading.style.display = 'none';
+
+        if (chartType === 'rehit') {
+          // Show calendar for REHIT
+          calendar.style.display = 'grid';
+          renderRehitCalendarInModal(data, calendar);
+        } else {
+          // Show canvas for line/bar charts
+          canvas.style.display = 'block';
+          chartModalInstance = renderChartByType(chartType, canvas, data);
+        }
+      } catch (err) {
+        console.error('Chart error:', err);
+        loading.textContent = 'Error loading chart';
+      }
+    }
+
+    async function fetchChartDataForModal(range) {
+      // Use existing chartDataCache if available, otherwise fetch
+      if (typeof chartDataCache !== 'undefined' && chartDataCache) {
+        const maxDays = range === 'all' ? chartDataCache.length : range;
+        return chartDataCache.slice(0, maxDays);
+      }
+
+      // Fetch data (simplified version)
+      const dataPoints = [];
+      const maxDays = range === 'all' ? 365 : range;
+      const startDate = new Date('2026-01-19');
+
+      for (let i = 0; i < maxDays; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        if (date < startDate) break;
+
+        const dateStr = typeof formatDateForAPI === 'function' ? formatDateForAPI(date) : date.toLocaleDateString('en-US');
+
+        try {
+          const result = await apiGet('load', { date: dateStr });
+          if (result?.daily) {
+            dataPoints.push({ date: dateStr, ...result.daily });
+          }
+        } catch (e) {
+          // Skip errors
+        }
+      }
+      return dataPoints;
+    }
+
+    function renderChartByType(type, canvas, data) {
+      const ctx = canvas.getContext('2d');
+      const labels = data.map(d => d.date).reverse();
+
+      let datasets = [];
+      let options = { responsive: true, plugins: { legend: { display: true } } };
+
+      switch (type) {
+        case 'sleep':
+          datasets = [{
+            label: 'Hours',
+            data: data.map(d => parseFloat(d['Hours of Sleep']) || null).reverse(),
+            borderColor: '#c471ed',
+            backgroundColor: 'rgba(196,113,237,0.2)',
+            fill: true
+          }];
+          break;
+        case 'steps':
+          datasets = [{
+            label: 'Steps',
+            data: data.map(d => parseInt(d['Steps']) || null).reverse(),
+            borderColor: '#6dd5ed',
+            backgroundColor: 'rgba(109,213,237,0.2)',
+            fill: true
+          }];
+          break;
+        case 'weight':
+          datasets = [{
+            label: 'Weight',
+            data: data.map(d => parseFloat(d['Weight']) || null).reverse(),
+            borderColor: '#ffd93d',
+            backgroundColor: 'rgba(255,217,61,0.2)',
+            fill: true
+          }];
+          break;
+        case 'body':
+          datasets = [
+            { label: 'Lean %', data: data.map(d => { const w = parseFloat(d['Weight']); const l = parseFloat(d['Lean Mass']); return w && l ? (l/w*100).toFixed(1) : null; }).reverse(), borderColor: '#6dd5ed' },
+            { label: 'Fat %', data: data.map(d => { const w = parseFloat(d['Weight']); const f = parseFloat(d['Body Fat']); return w && f ? (f/w*100).toFixed(1) : null; }).reverse(), borderColor: '#ff6b9d' }
+          ];
+          break;
+        case 'bp':
+          datasets = [
+            { label: 'Systolic', data: data.map(d => parseInt(d['Systolic']) || null).reverse(), borderColor: '#ff6b9d' },
+            { label: 'Diastolic', data: data.map(d => parseInt(d['Diastolic']) || null).reverse(), borderColor: '#6dd5ed' }
+          ];
+          break;
+        default:
+          return null;
+      }
+
+      return new Chart(ctx, { type: 'line', data: { labels, datasets }, options });
+    }
+
+    function renderRehitCalendarInModal(data, container) {
+      container.innerHTML = '';
+      // Simple grid showing REHIT days
+      data.slice(0, 28).forEach(d => {
+        const rehit2 = d['REHIT 2x10'];
+        const rehit3 = d['REHIT 3x10'];
+        const hasRehit = rehit2 || rehit3;
+        const cell = document.createElement('div');
+        cell.className = 'rehit-cal-day' + (hasRehit ? ' has-rehit' : '') + (rehit2 ? ' rehit-2x10' : '') + (rehit3 ? ' rehit-3x10' : '');
+        cell.textContent = d.date?.split('/')[1] || '';
+        container.appendChild(cell);
+      });
+    }
+
+    // Wire up chart range buttons
+    document.querySelectorAll('.chart-range-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        chartModalRange = btn.dataset.range === 'all' ? 365 : parseInt(btn.dataset.range);
+        if (currentChartType) {
+          await renderChartInModal(currentChartType, chartModalRange);
+        }
+      });
+    });
+
+    // Close modal when clicking backdrop
+    document.getElementById('chartModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'chartModal') closeChartModal();
+    });
+
+    // Wire up section titles to open chart modal
+    document.addEventListener('DOMContentLoaded', () => {
+      const chartMappings = {
+        'sleepSection': { type: 'sleep', title: 'Sleep History' },
+        'bodyDataSection': { type: 'body', title: 'Body Composition' },
+        'rehitCard': { type: 'rehit', title: 'REHIT Calendar' },
+        'bloodPressureSection': { type: 'bp', title: 'Blood Pressure' }
+      };
+
+      Object.entries(chartMappings).forEach(([sectionId, { type, title }]) => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          // Try both sec-title (for sections) and card-title (for cards)
+          const secTitle = section.querySelector('.sec-title') || section.querySelector('.card-title');
+          if (secTitle) {
+            secTitle.style.cursor = 'pointer';
+            secTitle.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openChartModal(type, title);
+            });
+          }
+        }
+      });
     });
 
     // =============================================
