@@ -3422,9 +3422,10 @@ async function populateForm(data) {
     const morningDurationEl = document.getElementById("morningMovementDuration");
     const afternoonTypeEl = document.getElementById("afternoonMovementType");
     const afternoonDurationEl = document.getElementById("afternoonMovementDuration");
-    if (morningTypeEl) morningTypeEl.value = data?.morningMovementType || "";
-    if (morningDurationEl) morningDurationEl.value = data?.morningMovementDuration || "";
-    if (afternoonTypeEl) afternoonTypeEl.value = data?.afternoonMovementType || "";
+    if (morningTypeEl) morningTypeEl.value = "";
+    if (morningDurationEl) morningDurationEl.value = "";
+    if (afternoonTypeEl) afternoonTypeEl.value = "";
+    if (afternoonDurationEl) afternoonDurationEl.value = "";
     if (afternoonDurationEl) afternoonDurationEl.value = data?.afternoonMovementDuration || "";
 
     readings = (data?.readings || []).map(r => ({
@@ -3536,16 +3537,16 @@ async function populateForm(data) {
     systolicEl.dispatchEvent(new Event("input"));
   }
 
-  // Movement breaks (morning/afternoon)
+  // Movement breaks (morning/afternoon) - read from daily data with server field names
   const morningTypeEl = document.getElementById("morningMovementType");
   const morningDurationEl = document.getElementById("morningMovementDuration");
   const afternoonTypeEl = document.getElementById("afternoonMovementType");
   const afternoonDurationEl = document.getElementById("afternoonMovementDuration");
 
-  if (morningTypeEl) morningTypeEl.value = data?.morningMovementType || "";
-  if (morningDurationEl) morningDurationEl.value = data?.morningMovementDuration || "";
-  if (afternoonTypeEl) afternoonTypeEl.value = data?.afternoonMovementType || "";
-  if (afternoonDurationEl) afternoonDurationEl.value = data?.afternoonMovementDuration || "";
+  if (morningTypeEl) morningTypeEl.value = d?.["Morning Movement Type"] || "";
+  if (morningDurationEl) morningDurationEl.value = d?.["Morning Movement Duration"] || "";
+  if (afternoonTypeEl) afternoonTypeEl.value = d?.["Afternoon Movement Type"] || "";
+  if (afternoonDurationEl) afternoonDurationEl.value = d?.["Afternoon Movement Duration"] || "";
 
   // Lists
   readings = (data?.readings || []).map(r => ({
