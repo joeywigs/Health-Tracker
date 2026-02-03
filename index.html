@@ -2682,31 +2682,72 @@
     }
     
     // REHIT dots - count sessions this week (goal: 4 sessions per week)
-    // weekCountFromServer is optional - if provided, it's the count from the worker (excluding today)
-    window._rehitWeekCount = 0; // Store the server count globally
-    function updateRehitDots(weekCountFromServer) {
+    const REHIT_API = "https://habit-proxy.joeywigs.workers.dev/";
+    window._rehitServerCount = 0;  // Count from server
+    window._rehitTodaySaved = false; // Whether today's REHIT was saved on server
+
+    // Fetch REHIT count from dedicated endpoint
+    async function fetchRehitWeekCount() {
+      try {
+        const date = window.currentDate || new Date().toISOString().slice(0, 10);
+        const resp = await fetch(`${REHIT_API}?action=rehit_week&date=${date}`);
+        const data = await resp.json();
+
+        // Update debug display
+        const debugEl = document.getElementById('rehitWeekDebug');
+        if (debugEl) debugEl.textContent = JSON.stringify(data);
+
+        if (data.ok) {
+          window._rehitServerCount = data.count;
+
+          // Check if today's REHIT is already in the server count
+          const todayStr = date;
+          const todayDetail = data.details?.find(d => d.date === todayStr);
+          window._rehitTodaySaved = todayDetail?.hasRehit || false;
+
+          // Update display
+          updateRehitDotsFromState();
+        }
+      } catch (err) {
+        console.error('Failed to fetch REHIT week count:', err);
+      }
+    }
+
+    // Calculate display count based on server + current checkbox state
+    function updateRehitDotsFromState() {
       const dotsContainer = document.getElementById('rehitDots');
       if (!dotsContainer) return;
       const dots = dotsContainer.querySelectorAll('.rehit-dot');
 
-      // Use provided count or stored count
-      if (typeof weekCountFromServer === 'number') {
-        window._rehitWeekCount = weekCountFromServer;
-      }
-      let weekCount = window._rehitWeekCount || 0;
-
-      // Always include today's REHIT in the dot count — the averages from
-      // the worker reflect previous days only, so we add today separately.
+      // Current checkbox state
       const todayChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
-      if (todayChecked) weekCount++;
+
+      // Start with server count
+      let count = window._rehitServerCount || 0;
+
+      // Adjust for unsaved changes:
+      // If today is checked but wasn't saved, add 1
+      // If today was saved but now unchecked, subtract 1
+      if (todayChecked && !window._rehitTodaySaved) {
+        count++;
+      } else if (!todayChecked && window._rehitTodaySaved) {
+        count--;
+      }
 
       // Update dots (max 4)
       dots.forEach((dot, i) => {
-        dot.classList.toggle('on', i < Math.min(weekCount, 4));
+        dot.classList.toggle('on', i < Math.min(count, 4));
       });
     }
-    // Expose globally so app.js can call it
+
+    // Called when checkbox changes - update display immediately (optimistic)
+    function updateRehitDots() {
+      updateRehitDotsFromState();
+    }
+
+    // Expose globally
     window.updateRehitDots = updateRehitDots;
+    window.fetchRehitWeekCount = fetchRehitWeekCount;
     
     // Hook populateForm - wait for app.js to define it first
     function setupPopulateFormHook() {
