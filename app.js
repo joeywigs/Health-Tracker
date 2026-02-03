@@ -2805,6 +2805,12 @@ function renderBiomarkersTable(definition, latestValues) {
   if (submitBtn) {
     submitBtn.onclick = saveBiomarkers;
   }
+
+  // Setup export button
+  const exportBtn = document.getElementById("biomarkersExportBtn");
+  if (exportBtn) {
+    exportBtn.onclick = exportBiomarkersCSV;
+  }
 }
 
 async function saveBiomarkers() {
@@ -2846,6 +2852,117 @@ async function saveBiomarkers() {
     console.error("Save failed:", err);
     alert("Failed to save biomarkers");
   }
+}
+
+// Export biomarkers to CSV
+function exportBiomarkersCSV() {
+  const mostRecentDate = BIOMARKER_HISTORY_DATES[0] || "unknown";
+
+  // Abbreviation mappings for common biomarkers
+  const abbreviations = {
+    "Fasting Glucose": "Gluc",
+    "HbA1c": "A1c",
+    "Fasting Insulin": "Insulin",
+    "eAG": "eAG",
+    "BUN": "BUN",
+    "Creatinine": "Creat",
+    "eGFR": "eGFR",
+    "Sodium": "Na",
+    "Potassium": "K",
+    "Chloride": "Cl",
+    "CO2 (Bicarbonate)": "CO2",
+    "Calcium": "Ca",
+    "ALT (SGPT)": "ALT",
+    "AST (SGOT)": "AST",
+    "Alkaline Phosphatase": "ALP",
+    "Total Bilirubin": "T Bili",
+    "GGT": "GGT",
+    "Total Protein": "TP",
+    "Albumin": "Alb",
+    "Total Cholesterol": "Chol",
+    "Triglycerides": "Trig",
+    "HDL-C": "HDL",
+    "LDL-C": "LDL",
+    "Apolipoprotein B": "ApoB",
+    "Lipoprotein(a)": "Lp(a)",
+    "hsCRP": "hsCRP",
+    "Homocysteine": "Hcy",
+    "WBC": "WBC",
+    "RBC": "RBC",
+    "Hemoglobin": "Hgb",
+    "Hematocrit": "Hct",
+    "MCV": "MCV",
+    "MCHC": "MCHC",
+    "RDW": "RDW",
+    "Platelets": "Plt",
+    "MPV": "MPV",
+    "Ferritin": "Ferr",
+    "Neutrophils %": "Neut %",
+    "Lymphocytes %": "Lymph %",
+    "Monocytes %": "Mono %",
+    "Eosinophils %": "Eos %",
+    "Basophils %": "Baso %",
+    "Absolute Neutrophils": "ANC",
+    "Absolute Lymphocytes": "ALC",
+    "Absolute Monocytes": "AMC",
+    "Absolute Eosinophils": "AEC",
+    "Absolute Basophils": "ABC",
+    "TSH": "TSH",
+    "Total Testosterone": "Total T",
+    "SHBG": "SHBG",
+    "Free Testosterone": "Free T",
+    "Estradiol (E2)": "E2",
+    "Cortisol (AM)": "Cortisol",
+    "DHEA-S": "DHEA-S",
+    "Vitamin D (25-OH)": "Vit D"
+  };
+
+  // Build CSV rows
+  const rows = [["Abbreviation", "Full Name", "Category", "Value", "Unit", "Reference Range"]];
+
+  BIOMARKER_DEFS.forEach(cat => {
+    cat.markers.forEach(m => {
+      const history = BIOMARKER_HISTORY[m.name] || [];
+      const latestValue = history[0];
+      const abbrev = abbreviations[m.name] || m.name;
+
+      // Only include if there's a value
+      if (latestValue != null) {
+        rows.push([
+          abbrev,
+          m.name,
+          cat.cat,
+          latestValue,
+          m.unit,
+          m.range
+        ]);
+      }
+    });
+  });
+
+  // Convert to CSV string
+  const csvContent = rows.map(row =>
+    row.map(cell => {
+      // Escape quotes and wrap in quotes if contains comma or quote
+      const str = String(cell);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }).join(',')
+  ).join('\n');
+
+  // Create and download file
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `biomarkers_${mostRecentDate.replace(/\//g, '-')}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 // Biomarker history chart
