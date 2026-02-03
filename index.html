@@ -1656,7 +1656,63 @@
       .card-value { font-size: 28px; }
       .big-input { font-size: 28px; }
     }
-    @media (min-width: 768px) { body { max-width: 540px; margin: 0 auto; } }
+
+    /* Tablet */
+    @media (min-width: 768px) {
+      body { max-width: 720px; margin: 0 auto; }
+      .quick-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Desktop */
+    @media (min-width: 1024px) {
+      body { max-width: 960px; margin: 0 auto; padding: 24px; padding-top: 80px; }
+
+      /* Two-column layout for sections */
+      #healthForm {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+
+      /* Quick grid spans full width */
+      .quick-grid {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+      }
+
+      /* REHIT card spans full width */
+      .rehit-full {
+        grid-column: 1 / -1;
+      }
+
+      /* Header spans full width */
+      .header {
+        grid-column: 1 / -1;
+      }
+
+      /* Larger cards */
+      .card { padding: 20px; }
+      .section { padding: 20px; }
+
+      /* Better text sizes */
+      .card-title { font-size: 16px; }
+      .sec-name { font-size: 16px; }
+    }
+
+    /* Large Desktop */
+    @media (min-width: 1400px) {
+      body { max-width: 1200px; }
+
+      .quick-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      #healthForm {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
     
     /* Settings Page Styles */
     .setting-row {
@@ -1886,7 +1942,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v6.30</span></h1>
+<h1>Habits <span class="version">v6.31</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
