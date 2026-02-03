@@ -14,10 +14,11 @@ export default {
   async fetch(request, env) {
     const allowed = new Set([
       "https://joeywigs.github.io",
+      "https://zxc-group1.gitlab.io",
       "http://localhost:3000"
     ]);
     const reqOrigin = request.headers.get("Origin");
-    const origin = allowed.has(reqOrigin) ? reqOrigin : "https://joeywigs.github.io";
+    const origin = allowed.has(reqOrigin) ? reqOrigin : "https://zxc-group1.gitlab.io";
 
     const corsHeaders = {
       "Access-Control-Allow-Origin": origin,
