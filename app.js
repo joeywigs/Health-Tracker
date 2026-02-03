@@ -230,9 +230,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Re-check weigh-in reminder now that weight field is populated with loaded data
   try { updateWeighReminder(); } catch(e) { console.error("updateWeighReminder post-load failed:", e); }
 
-  // Schedule movement reminders AFTER data loads so movements array is populated
-  try { scheduleMovementReminders(); console.log("22b ok"); } catch(e) { console.error("scheduleMovementReminders failed:", e); }
-
   // Flush any queued offline saves AFTER the form is populated
   if (navigator.onLine) {
     flushOfflineQueue().catch(e => console.warn('Offline flush on boot failed:', e));
@@ -483,124 +480,6 @@ function showWeighReminder() {
 function hideWeighReminder() {
   const banner = document.getElementById("weighReminder");
   if (banner) banner.remove();
-}
-
-// =====================================
-// MOVEMENT BREAK REMINDER
-// =====================================
-function scheduleMovementReminders() {
-  const now = new Date();
-
-  // Schedule the 11am check
-  const at11 = new Date(now);
-  at11.setHours(11, 0, 0, 0);
-  const ms11 = at11 - now;
-  if (ms11 > 0) {
-    setTimeout(checkMovementReminder, ms11);
-  } else if (now.getHours() < 16) {
-    // Already past 11am but before 4pm — check now for the 11am tier
-    checkMovementReminder();
-  }
-
-  // Schedule the 4pm check
-  const at16 = new Date(now);
-  at16.setHours(16, 0, 0, 0);
-  const ms16 = at16 - now;
-  if (ms16 > 0) {
-    setTimeout(checkMovementReminder, ms16);
-  } else {
-    // Already past 4pm — check now for the 4pm tier
-    checkMovementReminder();
-  }
-}
-
-function checkMovementReminder() {
-  // Only remind on today's date (not browsing past dates)
-  const now = new Date();
-  const todayStr = formatDateForAPI(new Date());
-  const viewingStr = formatDateForAPI(currentDate);
-  if (todayStr !== viewingStr) return;
-
-  const hour = now.getHours();
-  const movementCount = (typeof movements !== 'undefined' && Array.isArray(movements)) ? movements.length : 0;
-  const dateStr = formatDateForAPI(currentDate);
-
-  // Dismissed keys track which reminder tier was dismissed today
-  const dismissed11 = sessionStorage.getItem("movementReminder11_" + dateStr);
-  const dismissed16 = sessionStorage.getItem("movementReminder16_" + dateStr);
-
-  // At or after 4pm (16:00): remind if fewer than 2 movement breaks
-  if (hour >= 16 && movementCount < 2 && !dismissed16) {
-    showMovementReminder("afternoon", 2 - movementCount);
-    return;
-  }
-
-  // At or after 11am: remind if no movement breaks
-  if (hour >= 11 && movementCount === 0 && !dismissed11) {
-    showMovementReminder("morning", 1);
-    return;
-  }
-}
-
-function showMovementReminder(tier, needed) {
-  let modal = document.getElementById("movementReminderModal");
-  if (modal && modal.classList.contains("show")) return; // already showing
-
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "movementReminderModal";
-    modal.className = "modal";
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) dismissMovementReminder();
-    });
-    document.body.appendChild(modal);
-  }
-
-  const message = tier === "morning"
-    ? "You need a morning movement break!"
-    : `You still need ${needed} more movement break${needed > 1 ? "s" : ""} today!`;
-
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-pink)">🚶</div>
-          <div>
-            <div style="font-family:'Space Grotesk';font-size:18px;font-weight:700">Movement Break</div>
-            <div style="font-size:12px;color:var(--text-muted)">Time to get moving!</div>
-          </div>
-        </div>
-        <button class="modal-close" onclick="dismissMovementReminder()">✕</button>
-      </div>
-      <div class="modal-body" style="text-align:center;padding:24px 18px">
-        <div style="font-size:40px;margin-bottom:12px">🚶‍♂️</div>
-        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">${message}</div>
-        <div style="font-size:13px;color:var(--text-muted)">Take a short walk or stretch to keep your body moving.</div>
-      </div>
-      <div class="modal-footer" style="display:flex;gap:10px">
-        <button type="button" class="btn btn-secondary" style="flex:1" onclick="dismissMovementReminder()">Dismiss</button>
-        <button type="button" class="btn btn-primary" style="flex:1" onclick="dismissMovementReminder(); if(typeof openMovementModal==='function') openMovementModal();">Log Movement</button>
-      </div>
-    </div>
-  `;
-
-  requestAnimationFrame(() => modal.classList.add("show"));
-}
-
-function dismissMovementReminder() {
-  const modal = document.getElementById("movementReminderModal");
-  if (modal) modal.classList.remove("show");
-
-  const dateStr = formatDateForAPI(currentDate);
-  const now = new Date();
-  const hour = now.getHours();
-
-  // Track which tier was dismissed
-  if (hour >= 16) {
-    sessionStorage.setItem("movementReminder16_" + dateStr, "1");
-  } else {
-    sessionStorage.setItem("movementReminder11_" + dateStr, "1");
-  }
 }
 
 // =====================================
@@ -3300,14 +3179,16 @@ function setupRehitMutualExclusion() {
       syncCheckboxVisual(rehit3);
     }
     toggleRehitFields();
+    if (typeof window.updateRehitDots === 'function') window.updateRehitDots();
   });
-  
+
   rehit3.addEventListener("change", () => {
     if (rehit3.checked && rehit2.checked) {
       rehit2.checked = false;
       syncCheckboxVisual(rehit2);
     }
     toggleRehitFields();
+    if (typeof window.updateRehitDots === 'function') window.updateRehitDots();
   });
   
   // Initial state
