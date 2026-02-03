@@ -2974,6 +2974,14 @@ async function loadDataForCurrentDate(options = {}) {
 }
 
 async function saveData(payload) {
+  // Debug: log movement data being saved
+  console.log("Saving movement data:", {
+    morningType: payload.morningMovementType,
+    morningDuration: payload.morningMovementDuration,
+    afternoonType: payload.afternoonMovementType,
+    afternoonDuration: payload.afternoonMovementDuration
+  });
+
   // Cache locally wrapped in the format populateForm expects
   const wrappedPayload = { daily: { ...payload }, date: payload.date };
   cacheDayLocally(payload.date, wrappedPayload);
@@ -3542,6 +3550,15 @@ async function populateForm(data) {
   const morningDurationEl = document.getElementById("morningMovementDuration");
   const afternoonTypeEl = document.getElementById("afternoonMovementType");
   const afternoonDurationEl = document.getElementById("afternoonMovementDuration");
+
+  // Debug: log what we're loading
+  console.log("Loading movement data:", {
+    morningType: d?.["Morning Movement Type"],
+    morningDuration: d?.["Morning Movement Duration"],
+    afternoonType: d?.["Afternoon Movement Type"],
+    afternoonDuration: d?.["Afternoon Movement Duration"],
+    fullDaily: d
+  });
 
   if (morningTypeEl) morningTypeEl.value = d?.["Morning Movement Type"] || "";
   if (morningDurationEl) morningDurationEl.value = d?.["Morning Movement Duration"] || "";
