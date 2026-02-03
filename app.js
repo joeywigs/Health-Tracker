@@ -2569,10 +2569,32 @@ const BIOMARKER_DEFS = [
     { name: "hsCRP", range: "0.1–0.9 mg/L", low: 0.1, high: 0.9, unit: "mg/L", desc: "Measures chronic low-grade inflammation that contributes to atherosclerosis and heart events" },
     { name: "Homocysteine", range: "5–15 µmol/L", low: 5, high: 15, unit: "µmol/L", desc: "Amino acid linked to endothelial damage and vascular risk when elevated" }
   ]},
-  { cat: "Iron & Hematology", icon: "🩸", markers: [
+  { cat: "Complete Blood Count", icon: "🩸", markers: [
+    { name: "WBC", range: "4.6–12.4 K/cmm", low: 4.6, high: 12.4, unit: "K/cmm", desc: "White blood cell count; measures immune cells that fight infection and disease" },
+    { name: "RBC", range: "3.98–5.64 M/cmm", low: 3.98, high: 5.64, unit: "M/cmm", desc: "Red blood cell count; measures cells that carry oxygen throughout the body" },
+    { name: "Hemoglobin", range: "12.8–17.4 g/dL", low: 12.8, high: 17.4, unit: "g/dL", desc: "Oxygen-carrying protein in red blood cells; low levels indicate anemia" },
+    { name: "Hematocrit", range: "36.6–49.4 %", low: 36.6, high: 49.4, unit: "%", desc: "Percentage of blood volume made up of red blood cells; reflects hydration and oxygen capacity" },
+    { name: "MCV", range: "78.9–101.0 fL", low: 78.9, high: 101.0, unit: "fL", desc: "Mean corpuscular volume; average size of red blood cells; helps classify types of anemia" },
+    { name: "MCHC", range: "32.0–36.2 g/dL", low: 32.0, high: 36.2, unit: "g/dL", desc: "Mean corpuscular hemoglobin concentration; average hemoglobin concentration in red blood cells" },
+    { name: "RDW", range: "12.2–16.4 %", low: 12.2, high: 16.4, unit: "%", desc: "Red cell distribution width; measures variation in red blood cell size; high values may indicate nutritional deficiencies" },
+    { name: "Platelets", range: "150–440 K/cmm", low: 150, high: 440, unit: "K/cmm", desc: "Cell fragments essential for blood clotting; abnormal levels affect bleeding and clot risk" },
+    { name: "MPV", range: "9.0–12.8 fL", low: 9.0, high: 12.8, unit: "fL", desc: "Mean platelet volume; average size of platelets; may indicate platelet production rate" },
     { name: "Ferritin", range: "30–400 ng/mL", low: 30, high: 400, unit: "ng/mL", desc: "Reflects iron storage; high levels may indicate inflammation or excess iron" }
   ]},
+  { cat: "White Cell Differential", icon: "🔬", markers: [
+    { name: "Neutrophils %", range: "39–83 %", low: 39, high: 83, unit: "%", desc: "Most abundant white blood cells; first responders to bacterial infections" },
+    { name: "Lymphocytes %", range: "11–45 %", low: 11, high: 45, unit: "%", desc: "Immune cells including T and B cells; key for viral defense and antibody production" },
+    { name: "Monocytes %", range: "5–12 %", low: 5, high: 12, unit: "%", desc: "Large white blood cells that become macrophages; help clean up infections and dead cells" },
+    { name: "Eosinophils %", range: "0–10 %", low: 0, high: 10, unit: "%", desc: "White blood cells involved in allergic responses and parasitic infections" },
+    { name: "Basophils %", range: "0–2 %", low: 0, high: 2, unit: "%", desc: "Rarest white blood cells; involved in allergic reactions and inflammation" },
+    { name: "Absolute Neutrophils", range: "1.8–8.6 K/cmm", low: 1.8, high: 8.6, unit: "K/cmm", desc: "Absolute count of neutrophils; more precise than percentage for assessing infection risk" },
+    { name: "Absolute Lymphocytes", range: "0.8–3.5 K/cmm", low: 0.8, high: 3.5, unit: "K/cmm", desc: "Absolute count of lymphocytes; important for immune function assessment" },
+    { name: "Absolute Monocytes", range: "0.3–1.0 K/cmm", low: 0.3, high: 1.0, unit: "K/cmm", desc: "Absolute count of monocytes; elevated in chronic infections and inflammatory conditions" },
+    { name: "Absolute Eosinophils", range: "0.0–0.7 K/cmm", low: 0.0, high: 0.7, unit: "K/cmm", desc: "Absolute count of eosinophils; elevated in allergies, asthma, and parasitic infections" },
+    { name: "Absolute Basophils", range: "0.0–0.1 K/cmm", low: 0.0, high: 0.1, unit: "K/cmm", desc: "Absolute count of basophils; rarely elevated outside of specific blood disorders" }
+  ]},
   { cat: "Hormones & Endocrine", icon: "⚙️", markers: [
+    { name: "TSH", range: "0.35–5.00 µIU/mL", low: 0.35, high: 5.00, unit: "µIU/mL", desc: "Thyroid stimulating hormone; regulates metabolism, energy, and body temperature; primary screening test for thyroid function" },
     { name: "Total Testosterone", range: "300–1000 ng/dL", low: 300, high: 1000, unit: "ng/dL", desc: "Measures overall testosterone production; baseline helps detect age-related decline" },
     { name: "SHBG", range: "10–57 nmol/L", low: 10, high: 57, unit: "nmol/L", desc: "Binding protein that controls how much testosterone is biologically available" },
     { name: "Free Testosterone", range: "5–20 ng/dL", low: 5, high: 20, unit: "ng/dL", desc: "Active fraction of testosterone that affects energy, muscle, mood, and metabolism" },
@@ -2586,43 +2608,74 @@ const BIOMARKER_DEFS = [
 ];
 
 // Historical biomarker data (dates newest → oldest)
-const BIOMARKER_HISTORY_DATES = ["11/11/24", "12/19/22", "8/9/21", "12/2/15", "5/2/14"];
+const BIOMARKER_HISTORY_DATES = ["2/3/26", "11/11/24", "12/19/22", "8/9/21", "12/2/15", "5/2/14"];
 const BIOMARKER_HISTORY = {
-  "Fasting Glucose":      [104, 105, 102, 95, 81],
-  "HbA1c":                [null, 4.9, null, null, null],
-  "Fasting Insulin":      [],
-  "eAG":                  [null, 94, null, null, null],
-  "BUN":                  [17, 13, 19, 21, 14],
-  "Creatinine":           [1.1, 1, 1.11, 1.14, 0.97],
-  "eGFR":                 [85, null, 83, null, null],
-  "Sodium":               [141, 141, 140, 138, 138],
-  "Potassium":            [4.4, 4.4, 4.8, 4.5, 4.2],
-  "Chloride":             [109, 109, 106, 105, 103],
-  "CO2 (Bicarbonate)":    [24, 26, 25, 26, 27],
-  "Calcium":              [9.6, 9.9, 10.5, 10, 9.2],
-  "ALT (SGPT)":           [20, 16, 26, 20, 17],
-  "AST (SGOT)":           [19, 19, 21, 23, 19],
-  "Alkaline Phosphatase": [51, 43, 54, 52, 42],
-  "Total Bilirubin":      [0.5, 0.7, 0.6, 1.1, 0.7],
-  "GGT":                  [],
-  "Total Protein":        [7.6, 7.7, 8.4, 8, 7.2],
-  "Albumin":              [4.6, 4.6, 4.8, 4.9, 4.4],
-  "Total Cholesterol":    [169, 181, 193, 185, null],
-  "Triglycerides":        [120, 73, 133, 51, null],
-  "HDL-C":                [50, 53, 54, 59, null],
-  "LDL-C":                [95, 113, 112, 116, null],
-  "Apolipoprotein B":     [],
-  "Lipoprotein(a)":       [],
-  "hsCRP":                [1.6, null, null, null, null],
-  "Homocysteine":         [],
-  "Ferritin":             [],
-  "Total Testosterone":   [null, null, 585, null, null],
-  "SHBG":                 [null, null, 32, null, null],
-  "Free Testosterone":    [null, null, 134.4, null, null],
-  "Estradiol (E2)":       [],
-  "Cortisol (AM)":        [],
-  "DHEA-S":               [],
-  "Vitamin D (25-OH)":    []
+  // Metabolic Health
+  "Fasting Glucose":      [89, 104, 105, 102, 95, 81],
+  "HbA1c":                [5.2, null, 4.9, null, null, null],
+  "Fasting Insulin":      [null, null, null, null, null, null],
+  "eAG":                  [103, null, 94, null, null, null],
+  // Kidney Function
+  "BUN":                  [18, 17, 13, 19, 21, 14],
+  "Creatinine":           [1.21, 1.1, 1, 1.11, 1.14, 0.97],
+  "eGFR":                 [76, 85, null, 83, null, null],
+  // Electrolytes
+  "Sodium":               [141, 141, 141, 140, 138, 138],
+  "Potassium":            [4.1, 4.4, 4.4, 4.8, 4.5, 4.2],
+  "Chloride":             [105, 109, 109, 106, 105, 103],
+  "CO2 (Bicarbonate)":    [22, 24, 26, 25, 26, 27],
+  "Calcium":              [9.7, 9.6, 9.9, 10.5, 10, 9.2],
+  // Liver Function
+  "ALT (SGPT)":           [24, 20, 16, 26, 20, 17],
+  "AST (SGOT)":           [23, 19, 19, 21, 23, 19],
+  "Alkaline Phosphatase": [58, 51, 43, 54, 52, 42],
+  "Total Bilirubin":      [0.5, 0.5, 0.7, 0.6, 1.1, 0.7],
+  "GGT":                  [null, null, null, null, null, null],
+  // Proteins
+  "Total Protein":        [8.1, 7.6, 7.7, 8.4, 8, 7.2],
+  "Albumin":              [5.1, 4.6, 4.6, 4.8, 4.9, 4.4],
+  // Lipids
+  "Total Cholesterol":    [163, 169, 181, 193, 185, null],
+  "Triglycerides":        [70, 120, 73, 133, 51, null],
+  "HDL-C":                [54, 50, 53, 54, 59, null],
+  "LDL-C":                [95, 95, 113, 112, 116, null],
+  "Apolipoprotein B":     [null, null, null, null, null, null],
+  "Lipoprotein(a)":       [null, null, null, null, null, null],
+  // Inflammation
+  "hsCRP":                [null, 1.6, null, null, null, null],
+  "Homocysteine":         [null, null, null, null, null, null],
+  // Complete Blood Count
+  "WBC":                  [6.4, null, null, null, null, null],
+  "RBC":                  [5.36, null, null, null, null, null],
+  "Hemoglobin":           [16.5, null, null, null, null, null],
+  "Hematocrit":           [48.5, null, null, null, null, null],
+  "MCV":                  [90.5, null, null, null, null, null],
+  "MCHC":                 [34.1, null, null, null, null, null],
+  "RDW":                  [12.8, null, null, null, null, null],
+  "Platelets":            [259, null, null, null, null, null],
+  "MPV":                  [8.4, null, null, null, null, null],
+  "Ferritin":             [null, null, null, null, null, null],
+  // White Cell Differential
+  "Neutrophils %":        [50, null, null, null, null, null],
+  "Lymphocytes %":        [40, null, null, null, null, null],
+  "Monocytes %":          [7, null, null, null, null, null],
+  "Eosinophils %":        [2, null, null, null, null, null],
+  "Basophils %":          [1, null, null, null, null, null],
+  "Absolute Neutrophils": [3.2, null, null, null, null, null],
+  "Absolute Lymphocytes": [2.6, null, null, null, null, null],
+  "Absolute Monocytes":   [0.5, null, null, null, null, null],
+  "Absolute Eosinophils": [0.1, null, null, null, null, null],
+  "Absolute Basophils":   [0.1, null, null, null, null, null],
+  // Hormones
+  "TSH":                  [0.86, null, null, null, null, null],
+  "Total Testosterone":   [null, null, null, 585, null, null],
+  "SHBG":                 [null, null, null, 32, null, null],
+  "Free Testosterone":    [null, null, null, 134.4, null, null],
+  "Estradiol (E2)":       [null, null, null, null, null, null],
+  "Cortisol (AM)":        [null, null, null, null, null, null],
+  "DHEA-S":               [null, null, null, null, null, null],
+  // Vitamins
+  "Vitamin D (25-OH)":    [null, null, null, null, null, null]
 };
 
 function renderBiomarkersTable(definition, latestValues) {
@@ -2752,6 +2805,12 @@ function renderBiomarkersTable(definition, latestValues) {
   if (submitBtn) {
     submitBtn.onclick = saveBiomarkers;
   }
+
+  // Setup export button
+  const exportBtn = document.getElementById("biomarkersExportBtn");
+  if (exportBtn) {
+    exportBtn.onclick = exportBiomarkersCSV;
+  }
 }
 
 async function saveBiomarkers() {
@@ -2793,6 +2852,117 @@ async function saveBiomarkers() {
     console.error("Save failed:", err);
     alert("Failed to save biomarkers");
   }
+}
+
+// Export biomarkers to CSV
+function exportBiomarkersCSV() {
+  const mostRecentDate = BIOMARKER_HISTORY_DATES[0] || "unknown";
+
+  // Abbreviation mappings for common biomarkers
+  const abbreviations = {
+    "Fasting Glucose": "Gluc",
+    "HbA1c": "A1c",
+    "Fasting Insulin": "Insulin",
+    "eAG": "eAG",
+    "BUN": "BUN",
+    "Creatinine": "Creat",
+    "eGFR": "eGFR",
+    "Sodium": "Na",
+    "Potassium": "K",
+    "Chloride": "Cl",
+    "CO2 (Bicarbonate)": "CO2",
+    "Calcium": "Ca",
+    "ALT (SGPT)": "ALT",
+    "AST (SGOT)": "AST",
+    "Alkaline Phosphatase": "ALP",
+    "Total Bilirubin": "T Bili",
+    "GGT": "GGT",
+    "Total Protein": "TP",
+    "Albumin": "Alb",
+    "Total Cholesterol": "Chol",
+    "Triglycerides": "Trig",
+    "HDL-C": "HDL",
+    "LDL-C": "LDL",
+    "Apolipoprotein B": "ApoB",
+    "Lipoprotein(a)": "Lp(a)",
+    "hsCRP": "hsCRP",
+    "Homocysteine": "Hcy",
+    "WBC": "WBC",
+    "RBC": "RBC",
+    "Hemoglobin": "Hgb",
+    "Hematocrit": "Hct",
+    "MCV": "MCV",
+    "MCHC": "MCHC",
+    "RDW": "RDW",
+    "Platelets": "Plt",
+    "MPV": "MPV",
+    "Ferritin": "Ferr",
+    "Neutrophils %": "Neut %",
+    "Lymphocytes %": "Lymph %",
+    "Monocytes %": "Mono %",
+    "Eosinophils %": "Eos %",
+    "Basophils %": "Baso %",
+    "Absolute Neutrophils": "ANC",
+    "Absolute Lymphocytes": "ALC",
+    "Absolute Monocytes": "AMC",
+    "Absolute Eosinophils": "AEC",
+    "Absolute Basophils": "ABC",
+    "TSH": "TSH",
+    "Total Testosterone": "Total T",
+    "SHBG": "SHBG",
+    "Free Testosterone": "Free T",
+    "Estradiol (E2)": "E2",
+    "Cortisol (AM)": "Cortisol",
+    "DHEA-S": "DHEA-S",
+    "Vitamin D (25-OH)": "Vit D"
+  };
+
+  // Build CSV rows
+  const rows = [["Abbreviation", "Full Name", "Category", "Value", "Unit", "Reference Range"]];
+
+  BIOMARKER_DEFS.forEach(cat => {
+    cat.markers.forEach(m => {
+      const history = BIOMARKER_HISTORY[m.name] || [];
+      const latestValue = history[0];
+      const abbrev = abbreviations[m.name] || m.name;
+
+      // Only include if there's a value
+      if (latestValue != null) {
+        rows.push([
+          abbrev,
+          m.name,
+          cat.cat,
+          latestValue,
+          m.unit,
+          m.range
+        ]);
+      }
+    });
+  });
+
+  // Convert to CSV string
+  const csvContent = rows.map(row =>
+    row.map(cell => {
+      // Escape quotes and wrap in quotes if contains comma or quote
+      const str = String(cell);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }).join(',')
+  ).join('\n');
+
+  // Create and download file
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `biomarkers_${mostRecentDate.replace(/\//g, '-')}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 // Biomarker history chart
