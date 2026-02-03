@@ -1699,6 +1699,15 @@
       /* Better text sizes */
       .card-title { font-size: 16px; }
       .sec-name { font-size: 16px; }
+
+      /* Expand all sections on desktop */
+      .sec-content.collapsed {
+        display: block !important;
+        max-height: none !important;
+      }
+      .sec-head.collapsed .sec-toggle {
+        transform: rotate(0deg);
+      }
     }
 
     /* Large Desktop */
@@ -1942,7 +1951,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v6.31</span></h1>
+<h1>Habits <span class="version">v6.32</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
