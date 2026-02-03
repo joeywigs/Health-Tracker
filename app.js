@@ -179,7 +179,6 @@ window.addEventListener('online', () => {
 let currentDate = new Date();
 let dataChanged = false;
 
-let movements = [];
 let readings = [];
 let honeyDos = [];
 let currentAverages = null;
@@ -3076,8 +3075,13 @@ function buildPayloadFromUI() {
     diastolic: document.getElementById("diastolic")?.value || "",
     heartRate: document.getElementById("heartRate")?.value || "",
 
+    // Movement breaks (morning/afternoon)
+    morningMovementType: document.getElementById("morningMovementType")?.value || "",
+    morningMovementDuration: document.getElementById("morningMovementDuration")?.value || "",
+    afternoonMovementType: document.getElementById("afternoonMovementType")?.value || "",
+    afternoonMovementDuration: document.getElementById("afternoonMovementDuration")?.value || "",
+
     // Lists + text
-    movements,
     readings,
     honeyDos,
     reflections: document.getElementById("reflections")?.value || "",
@@ -3380,7 +3384,6 @@ async function populateForm(data) {
   // syncAllChips() see them as unchecked and remove the chip .on class.
 
   // reset state
-  movements = [];
   readings = [];
   honeyDos = [];
   currentAverages = null;
@@ -3414,11 +3417,15 @@ async function populateForm(data) {
     aguaCount = 0;
     updateAguaDisplay();
 
-    movements = (data?.movements || []).map(m => ({
-      duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
-      type: m.type ?? m["type"] ?? m["Type"]
-    }));
-    renderMovements();
+    // Clear movement fields
+    const morningTypeEl = document.getElementById("morningMovementType");
+    const morningDurationEl = document.getElementById("morningMovementDuration");
+    const afternoonTypeEl = document.getElementById("afternoonMovementType");
+    const afternoonDurationEl = document.getElementById("afternoonMovementDuration");
+    if (morningTypeEl) morningTypeEl.value = data?.morningMovementType || "";
+    if (morningDurationEl) morningDurationEl.value = data?.morningMovementDuration || "";
+    if (afternoonTypeEl) afternoonTypeEl.value = data?.afternoonMovementType || "";
+    if (afternoonDurationEl) afternoonDurationEl.value = data?.afternoonMovementDuration || "";
 
     readings = (data?.readings || []).map(r => ({
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
@@ -3529,12 +3536,18 @@ async function populateForm(data) {
     systolicEl.dispatchEvent(new Event("input"));
   }
 
-  // Lists
-  movements = (data?.movements || []).map(m => ({
-    duration: m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"],
-    type: m.type ?? m["Type"] ?? m["type"]
-  }));
+  // Movement breaks (morning/afternoon)
+  const morningTypeEl = document.getElementById("morningMovementType");
+  const morningDurationEl = document.getElementById("morningMovementDuration");
+  const afternoonTypeEl = document.getElementById("afternoonMovementType");
+  const afternoonDurationEl = document.getElementById("afternoonMovementDuration");
 
+  if (morningTypeEl) morningTypeEl.value = data?.morningMovementType || "";
+  if (morningDurationEl) morningDurationEl.value = data?.morningMovementDuration || "";
+  if (afternoonTypeEl) afternoonTypeEl.value = data?.afternoonMovementType || "";
+  if (afternoonDurationEl) afternoonDurationEl.value = data?.afternoonMovementDuration || "";
+
+  // Lists
   readings = (data?.readings || []).map(r => ({
     duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
     book: r.book ?? r["Book"] ?? r["book"]
@@ -3563,7 +3576,6 @@ async function populateForm(data) {
 
   // Optional renders/averages/completion
   if (typeof updateAverages === "function") updateAverages(data?.averages);
-  if (typeof renderMovements === "function") renderMovements();
   if (typeof renderReadings === "function") renderReadings();
   if (typeof renderHoneyDos === "function") renderHoneyDos();
   if (typeof checkSectionCompletion === "function") checkSectionCompletion();
@@ -3648,54 +3660,14 @@ function prefetchAround(dateObj) {
 }
 
 function setupMovementUI() {
-  const btn = document.getElementById("addMovementBtn");
-  if (!btn) {
-    console.warn("addMovementBtn not found");
-    return;
-  }
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    promptAddMovement();
+  // Movement inputs are now inline - wire up change handlers
+  ['morningMovementType', 'morningMovementDuration', 'afternoonMovementType', 'afternoonMovementDuration'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', () => triggerSaveSoon());
+    }
   });
-
   console.log("✅ Movement UI wired");
-}
-
-function promptAddMovement() {
-  window.openMovementModal();
-}
-
-function removeMovement(index) {
-  movements.splice(index, 1);
-  renderMovements();
-  triggerSaveSoon();
-}
-
-function renderMovements() {
-  const list = document.getElementById("movementList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  movements.forEach((m, idx) => {
-    const duration = m.duration ?? m["duration (min)"] ?? m["Duration"] ?? m["Duration (min)"];
-    const type = m.type ?? m["Type"] ?? m["type"] ?? "";
-    const time = m.time ?? m["time"] ?? "";
-
-    const item = document.createElement("div");
-    item.className = "item";
-    item.innerHTML = `
-      <span class="item-text">${duration} min (${type})${time ? ' <span class="item-time">' + time + '</span>' : ''}</span>
-      <button type="button" class="btn btn-danger" data-idx="${idx}">×</button>
-    `;
-
-    item.querySelector("button").addEventListener("click", () => removeMovement(idx));
-    list.appendChild(item);
-  });
-
-  // If you have completion logic, call it safely
-  if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 }
 
 function setupReadingUI() {
