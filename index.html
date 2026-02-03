@@ -2708,6 +2708,8 @@
         dot.classList.toggle('on', i < Math.min(weekCount, 4));
       });
     }
+    // Expose globally so app.js can call it
+    window.updateRehitDots = updateRehitDots;
     
     // Hook populateForm - wait for app.js to define it first
     function setupPopulateFormHook() {

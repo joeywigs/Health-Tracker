@@ -3179,14 +3179,16 @@ function setupRehitMutualExclusion() {
       syncCheckboxVisual(rehit3);
     }
     toggleRehitFields();
+    if (typeof window.updateRehitDots === 'function') window.updateRehitDots();
   });
-  
+
   rehit3.addEventListener("change", () => {
     if (rehit3.checked && rehit2.checked) {
       rehit2.checked = false;
       syncCheckboxVisual(rehit2);
     }
     toggleRehitFields();
+    if (typeof window.updateRehitDots === 'function') window.updateRehitDots();
   });
   
   // Initial state
