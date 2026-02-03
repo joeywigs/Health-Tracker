@@ -646,8 +646,21 @@
       font-size: 20px;
       font-weight: 700;
     }
+    .rehit-stat-input {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: none;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+    }
+    .rehit-stat-input::placeholder { color: var(--text-muted); opacity: 0.5; }
+    .rehit-stat-input:focus { background: rgba(255,255,255,0.05); border-radius: 4px; }
     .rehit-edit-btn {
-      display: flex;
+      display: none; /* Hidden - no longer used */
       align-items: center;
       gap: 8px;
       padding: 10px 16px;
@@ -1833,33 +1846,6 @@
     </div>
   </div>
 
-  <!-- REHIT Modal -->
-  <div id="rehitModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-pink),var(--accent-orange));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-pink)">🚴</div>
-          <div>
-            <div style="font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700">REHIT Stats</div>
-            <div style="font-size:12px;color:var(--text-muted)">Enter your workout data</div>
-          </div>
-        </div>
-        <button class="modal-close" onclick="closeRehitModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="body-grid">
-          <div class="body-cell"><div class="body-label">Fitness Score</div><input type="number" inputmode="decimal" class="body-input" id="fitnessScore" step="0.1" placeholder="0.0"></div>
-          <div class="body-cell"><div class="body-label">Calories</div><input type="number" inputmode="numeric" class="body-input" id="calories" placeholder="0"></div>
-          <div class="body-cell"><div class="body-label">Peak Watts</div><input type="number" inputmode="numeric" class="body-input" id="peakWatts" placeholder="0"></div>
-          <div class="body-cell"><div class="body-label">Watt Seconds</div><input type="number" inputmode="numeric" class="body-input" id="wattSeconds" placeholder="0"></div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" onclick="saveRehitAndClose()" style="width:100%">Save Stats</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Weekly Goals Review Modal (Sunday) -->
   <div id="weeklyReviewModal" class="modal">
     <div class="modal-content" style="max-width:380px">
@@ -1900,7 +1886,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v6.26</span></h1>
+          <h1>Habits <span class="version">v6.27</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2008,12 +1994,23 @@
         </div>
         <div class="rehit-right">
           <div class="rehit-stats-grid">
-            <div class="rehit-stat"><span class="rehit-stat-label">Score</span><span id="rehitScoreDisplay" class="rehit-stat-value" style="color:var(--accent-teal)">--</span></div>
-            <div class="rehit-stat"><span class="rehit-stat-label">Cals</span><span id="rehitCalsDisplay" class="rehit-stat-value" style="color:var(--accent-orange)">--</span></div>
-            <div class="rehit-stat"><span class="rehit-stat-label">Watts</span><span id="rehitWattsDisplay" class="rehit-stat-value" style="color:var(--accent-pink)">--</span></div>
-            <div class="rehit-stat"><span class="rehit-stat-label">W-Sec</span><span id="rehitWsDisplay" class="rehit-stat-value" style="color:var(--accent-purple)">--</span></div>
+            <div class="rehit-stat">
+              <span class="rehit-stat-label">Score</span>
+              <input type="number" id="fitnessScore" class="rehit-stat-input" inputmode="decimal" step="0.1" placeholder="--" style="color:var(--accent-teal)">
+            </div>
+            <div class="rehit-stat">
+              <span class="rehit-stat-label">Cals</span>
+              <input type="number" id="calories" class="rehit-stat-input" inputmode="numeric" placeholder="--" style="color:var(--accent-orange)">
+            </div>
+            <div class="rehit-stat">
+              <span class="rehit-stat-label">Watts</span>
+              <input type="number" id="peakWatts" class="rehit-stat-input" inputmode="numeric" placeholder="--" style="color:var(--accent-pink)">
+            </div>
+            <div class="rehit-stat">
+              <span class="rehit-stat-label">W-Sec</span>
+              <input type="number" id="wattSeconds" class="rehit-stat-input" inputmode="numeric" placeholder="--" style="color:var(--accent-purple)">
+            </div>
           </div>
-          <button type="button" class="rehit-edit-btn" id="editRehitBtn"><span class="chip-dot">+</span><span class="chip-text">Edit</span></button>
         </div>
       </div>
     </div>
@@ -3295,39 +3292,20 @@
       updateCompletionRingAurora();
     }, 2000);
     
-    // REHIT Modal
-    function openRehitModal() { document.getElementById('rehitModal').classList.add('show'); }
-    function closeRehitModal() { document.getElementById('rehitModal').classList.remove('show'); }
-    function saveRehitAndClose() { updateRehitDisplay(); closeRehitModal(); if(typeof triggerSaveSoon==='function')triggerSaveSoon(); }
-    
+    // REHIT inline inputs - wire up autosave
     function updateRehitDisplay() {
-      const score=document.getElementById('fitnessScore')?.value;
-      const cals=document.getElementById('calories')?.value;
-      const watts=document.getElementById('peakWatts')?.value;
-      const ws=document.getElementById('wattSeconds')?.value;
-      const rehit2=document.getElementById('rehit2')?.checked;
-      const rehit3=document.getElementById('rehit3')?.checked;
-      const statsDiv=document.getElementById('rehitStats');
-      if(statsDiv){const hasData=score||cals||watts||ws;const isChecked=rehit2||rehit3;statsDiv.style.display=(isChecked||hasData)?'block':'none'}
-      document.getElementById('rehitScoreDisplay').textContent=score||'--';
-      document.getElementById('rehitCalsDisplay').textContent=cals||'--';
-      document.getElementById('rehitWattsDisplay').textContent=watts||'--';
-      document.getElementById('rehitWsDisplay').textContent=ws?parseInt(ws).toLocaleString():'--';
+      // No longer needed - inputs show their own values
     }
-    
+
     document.addEventListener('DOMContentLoaded', () => {
-      const rehit2=document.getElementById('rehit2');
-      const rehit3=document.getElementById('rehit3');
-      const editBtn=document.getElementById('editRehitBtn');
-      const showModal=(e)=>{if(e.target.checked)setTimeout(openRehitModal,300);updateRehitDisplay()};
-      if(rehit2)rehit2.addEventListener('change',showModal);
-      if(rehit3)rehit3.addEventListener('change',showModal);
-      if(editBtn)editBtn.addEventListener('click',openRehitModal);
-      ['fitnessScore','calories','peakWatts','wattSeconds'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',updateRehitDisplay)});
-      setTimeout(updateRehitDisplay,1000);
+      // Wire up REHIT stat inputs to trigger save
+      ['fitnessScore','calories','peakWatts','wattSeconds'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.addEventListener('change', () => {
+          if(typeof triggerSaveSoon==='function') triggerSaveSoon();
+        });
+      });
     });
-    
-    document.getElementById('rehitModal')?.addEventListener('click',(e)=>{if(e.target.id==='rehitModal')closeRehitModal()});
     
     // =============================================
     // SETTINGS & THEME SYSTEM
