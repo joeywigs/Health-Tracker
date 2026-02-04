@@ -2738,14 +2738,19 @@ function renderBiomarkersTable(definition, latestValues) {
         bubbleHTML = `<div class="bio-bubble-wrap" style="left:${bubblePct}%"><div class="bio-bubble ${rangeClass}">${prev}</div><div class="bio-bubble-arrow"></div></div>`;
       }
 
+      // Check if most recent date has a value (first element in history array)
+      const historyArr = BIOMARKER_HISTORY[m.name] || [];
+      const mostRecentValue = historyArr[0];
+      const hasRecentData = mostRecentValue != null;
+
       markersHTML += `
-        <div class="bio-card">
+        <div class="bio-card${!hasRecentData ? ' no-data' : ''}">
           <div class="bio-card-top">
             <div class="bio-name" data-marker="${m.name}">${m.name}</div>
-            <button type="button" class="bio-info-btn" data-bio="${m.name}">i</button>
+            ${!hasRecentData ? '<span class="bio-no-data-badge">No Data</span>' : ''}
           </div>
           <div class="bio-range-text">Normal: ${m.range}</div>
-          <div class="bio-tooltip" id="bio-tip-${m.name.replace(/[^a-zA-Z0-9]/g, '')}">${m.desc}</div>
+          <div class="bio-desc">${m.desc}</div>
           <div style="position:relative;margin-bottom:2px;padding-top:${hasPrev ? '30' : '0'}px">
             <div class="bio-bar-wrap">
               <div class="bio-bar-low" style="width:${lowPct}%"></div>
@@ -2779,25 +2784,6 @@ function renderBiomarkersTable(definition, latestValues) {
     header.addEventListener('click', () => {
       header.classList.toggle('collapsed');
       header.nextElementSibling.classList.toggle('collapsed');
-    });
-  });
-
-  // Wire info buttons
-  table.querySelectorAll('.bio-info-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const name = btn.dataset.bio.replace(/[^a-zA-Z0-9]/g, '');
-      const tip = document.getElementById('bio-tip-' + name);
-      if (tip) {
-        const isShowing = tip.classList.contains('show');
-        // Close all tooltips
-        table.querySelectorAll('.bio-tooltip.show').forEach(t => t.classList.remove('show'));
-        table.querySelectorAll('.bio-info-btn.active').forEach(b => b.classList.remove('active'));
-        if (!isShowing) {
-          tip.classList.add('show');
-          btn.classList.add('active');
-        }
-      }
     });
   });
 
