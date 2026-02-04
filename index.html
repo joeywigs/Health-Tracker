@@ -533,6 +533,46 @@
     .date-center { flex: 1; text-align: center; }
     .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: white; }
     .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Day Lock - prevents accidental edits on past days */
+    .day-locked #healthForm input:not([type="hidden"]),
+    .day-locked #healthForm textarea,
+    .day-locked #healthForm select,
+    .day-locked #healthForm button:not(.unlock-day-btn),
+    .day-locked .mini-supp,
+    .day-locked .checkbox-field,
+    .day-locked .water-btn,
+    .day-locked .section-item-drag {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .day-locked .sec-head { pointer-events: auto; opacity: 1; }
+    .unlock-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, rgba(255,159,28,0.15), rgba(230,57,70,0.15));
+      border: 1px solid rgba(255,159,28,0.3);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .day-locked .unlock-banner { display: flex; }
+    .unlock-day-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink));
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .unlock-day-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px var(--glow-orange); }
     
     /* Progress Ring - Glowing */
     .ring-wrap { position: relative; width: 72px; height: 72px; }
@@ -2175,7 +2215,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v7.2</span></h1>
+<h1>Habits <span class="version">v7.3</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2236,6 +2276,10 @@
   </div>
 
   <form id="healthForm">
+    <div class="unlock-banner" id="unlockBanner">
+      <span>🔒 This day is locked to prevent accidental edits</span>
+      <button type="button" class="unlock-day-btn" onclick="unlockDay()">Unlock</button>
+    </div>
     <div class="quick-grid">
       <div class="card sleep" id="sleepSection">
         <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
@@ -2824,7 +2868,7 @@
             <button type="button" class="duration-preset reading-duration-preset" data-mins="45">45</button>
           </div>
           <div class="duration-custom-row">
-            <input type="number" id="readingCustomMins" placeholder="--" min="1" max="300">
+            <input type="number" id="readingCustomMins" placeholder="--" min="1" max="300" inputmode="numeric">
             <span>minutes</span>
           </div>
         </div>
@@ -3329,7 +3373,8 @@
 
       if (typeof readings !== 'undefined') {
         readings.push({ duration: selectedReadingDuration, book: bookTitle, time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Chicago' }) });
-        if (typeof window.lastBookTitle !== 'undefined' || true) window.lastBookTitle = bookTitle;
+        lastBookTitle = bookTitle;
+        localStorage.setItem('lastBookTitle', bookTitle);
         if (typeof renderReadings === 'function') renderReadings();
         if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
       }

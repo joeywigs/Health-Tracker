@@ -182,7 +182,7 @@ let dataChanged = false;
 let readings = [];
 let honeyDos = [];
 let currentAverages = null;
-let lastBookTitle = "";
+let lastBookTitle = localStorage.getItem('lastBookTitle') || "";
 let aguaCount = 0;
 
 // Track which daily goals have been celebrated today (reset on date change)
@@ -234,6 +234,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // before flushOfflineQueue runs — otherwise buildPayloadFromUI reads
   // unchecked checkboxes and saves stale data to the backend/cache.
   try { await loadDataForCurrentDate(); console.log("22 ok"); } catch(e) { console.error("loadDataForCurrentDate failed:", e); }
+
+  // Lock past days to prevent accidental edits
+  try { updateDayLock(); } catch(e) { console.error("updateDayLock failed:", e); }
 
   // Re-check weigh-in reminder now that weight field is populated with loaded data
   try { updateWeighReminder(); } catch(e) { console.error("updateWeighReminder post-load failed:", e); }
@@ -328,7 +331,37 @@ function changeDate(days) {
   loadDataForCurrentDate();
   updateWeighReminder();
   updateWeeklySummaryButton();
+  updateDayLock();
 }
+
+// =====================================
+// DAY LOCK - Prevent accidental edits on past days
+// =====================================
+let dayUnlocked = false;
+
+function isPastDay() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const viewing = new Date(currentDate);
+  viewing.setHours(0, 0, 0, 0);
+  return viewing < today;
+}
+
+function updateDayLock() {
+  const body = document.body;
+  if (isPastDay() && !dayUnlocked) {
+    body.classList.add('day-locked');
+  } else {
+    body.classList.remove('day-locked');
+  }
+}
+
+window.unlockDay = function() {
+  dayUnlocked = true;
+  document.body.classList.remove('day-locked');
+  // Reset unlock flag when navigating away
+  setTimeout(() => { dayUnlocked = false; }, 100);
+};
 
 // =====================================
 // SWIPE NAVIGATION
@@ -3930,7 +3963,10 @@ async function populateForm(data) {
 
   honeyDos = data?.honeyDos || [];
 
-  if (readings.length > 0) lastBookTitle = String(readings[readings.length - 1].book || "");
+  if (readings.length > 0) {
+    lastBookTitle = String(readings[readings.length - 1].book || "");
+    localStorage.setItem('lastBookTitle', lastBookTitle);
+  }
 
   // Textareas
   const reflectionsEl = document.getElementById("reflections");
