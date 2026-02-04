@@ -2175,7 +2175,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v7.0</span></h1>
+<h1>Habits <span class="version">v7.2</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -3644,48 +3644,113 @@
     }
     
     function setupDragAndDrop() {
-      const items = document.querySelectorAll('.section-item');
+      const list = document.getElementById('sectionList');
+      const items = list.querySelectorAll('.section-item');
       let draggedItem = null;
-      
+      let touchCurrentItem = null;
+
       items.forEach(item => {
+        // Desktop drag events
         item.addEventListener('dragstart', (e) => {
           draggedItem = item;
           item.classList.add('dragging');
           e.dataTransfer.effectAllowed = 'move';
         });
-        
+
         item.addEventListener('dragend', () => {
           item.classList.remove('dragging');
           document.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
           draggedItem = null;
         });
-        
+
         item.addEventListener('dragover', (e) => {
           e.preventDefault();
           if (item !== draggedItem) {
             item.classList.add('drag-over');
           }
         });
-        
+
         item.addEventListener('dragleave', () => {
           item.classList.remove('drag-over');
         });
-        
+
         item.addEventListener('drop', (e) => {
           e.preventDefault();
           if (item !== draggedItem && draggedItem) {
             const fromIdx = parseInt(draggedItem.dataset.idx);
             const toIdx = parseInt(item.dataset.idx);
-            
-            // Reorder array
+
             const [moved] = appSettings.sections.splice(fromIdx, 1);
             appSettings.sections.splice(toIdx, 0, moved);
-            
+
             saveSettings(appSettings);
             renderSectionList();
             applySectionSettings();
           }
         });
+
+        // Mobile touch events - only on the drag handle
+        const dragHandle = item.querySelector('.section-item-drag');
+        if (dragHandle) {
+          dragHandle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchCurrentItem = item;
+            item.classList.add('dragging');
+            if (navigator.vibrate) navigator.vibrate(30);
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchmove', (e) => {
+            if (!touchCurrentItem) return;
+            e.preventDefault();
+
+            const touchY = e.touches[0].clientY;
+            const allItems = Array.from(list.querySelectorAll('.section-item'));
+
+            allItems.forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              if (touchY > rect.top && touchY < rect.bottom) {
+                otherItem.classList.add('drag-over');
+              } else {
+                otherItem.classList.remove('drag-over');
+              }
+            });
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchend', (e) => {
+            if (!touchCurrentItem) return;
+
+            const touchY = e.changedTouches[0].clientY;
+            const allItems = Array.from(list.querySelectorAll('.section-item'));
+
+            let targetItem = null;
+            allItems.forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              if (touchY > rect.top && touchY < rect.bottom) {
+                targetItem = otherItem;
+              }
+            });
+
+            if (targetItem) {
+              const fromIdx = parseInt(touchCurrentItem.dataset.idx);
+              const toIdx = parseInt(targetItem.dataset.idx);
+
+              const [moved] = appSettings.sections.splice(fromIdx, 1);
+              appSettings.sections.splice(toIdx, 0, moved);
+
+              saveSettings(appSettings);
+              renderSectionList();
+              applySectionSettings();
+
+              if (navigator.vibrate) navigator.vibrate(50);
+            }
+
+            touchCurrentItem.classList.remove('dragging');
+            allItems.forEach(i => i.classList.remove('drag-over'));
+            touchCurrentItem = null;
+          });
+        }
       });
     }
     
@@ -4686,14 +4751,18 @@
       setupBedtimeDragDrop();
     }
 
-    // Setup drag and drop for bedtime settings
+    // Setup drag and drop for bedtime settings (desktop + mobile touch)
     function setupBedtimeDragDrop() {
       const list = document.getElementById('bedtimeItemsList');
       if (!list) return;
 
       let draggedItem = null;
+      let touchStartY = 0;
+      let touchCurrentItem = null;
+      let placeholder = null;
 
       list.querySelectorAll('.section-item').forEach(item => {
+        // Desktop drag events
         item.addEventListener('dragstart', (e) => {
           draggedItem = item;
           item.classList.add('dragging');
@@ -4727,12 +4796,84 @@
 
           const [moved] = bedtimeItems.splice(fromIdx, 1);
           bedtimeItems.splice(toIdx, 0, moved);
-          // Update order values
           bedtimeItems.forEach((item, i) => item.order = i);
           saveBedtimeItems();
           renderBedtimeSettings();
           renderBedtimeItems();
         });
+
+        // Mobile touch events - only on the drag handle
+        const dragHandle = item.querySelector('.section-item-drag');
+        if (dragHandle) {
+          dragHandle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchCurrentItem = item;
+            touchStartY = e.touches[0].clientY;
+            item.classList.add('dragging');
+
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(30);
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchmove', (e) => {
+            if (!touchCurrentItem) return;
+            e.preventDefault();
+
+            const touchY = e.touches[0].clientY;
+            const items = Array.from(list.querySelectorAll('.section-item'));
+
+            // Find which item we're over
+            items.forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+
+              if (touchY > rect.top && touchY < rect.bottom) {
+                otherItem.classList.add('drag-over');
+              } else {
+                otherItem.classList.remove('drag-over');
+              }
+            });
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchend', (e) => {
+            if (!touchCurrentItem) return;
+
+            const touchY = e.changedTouches[0].clientY;
+            const items = Array.from(list.querySelectorAll('.section-item'));
+
+            // Find target item
+            let targetItem = null;
+            items.forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              if (touchY > rect.top && touchY < rect.bottom) {
+                targetItem = otherItem;
+              }
+            });
+
+            // Perform the swap
+            if (targetItem) {
+              const fromIdx = parseInt(touchCurrentItem.dataset.idx);
+              const toIdx = parseInt(targetItem.dataset.idx);
+
+              const [moved] = bedtimeItems.splice(fromIdx, 1);
+              bedtimeItems.splice(toIdx, 0, moved);
+              bedtimeItems.forEach((item, i) => item.order = i);
+              saveBedtimeItems();
+              renderBedtimeSettings();
+              renderBedtimeItems();
+
+              // Haptic feedback on successful drop
+              if (navigator.vibrate) navigator.vibrate(50);
+            }
+
+            // Cleanup
+            touchCurrentItem.classList.remove('dragging');
+            items.forEach(i => i.classList.remove('drag-over'));
+            touchCurrentItem = null;
+          });
+        }
       });
     }
 

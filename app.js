@@ -2365,6 +2365,11 @@ function celebrateGoalAchievement(goalKey) {
 
   dailyGoalsAchieved[goalKey] = true;
 
+  // Haptic feedback - celebratory double-pulse pattern
+  if (navigator.vibrate) {
+    navigator.vibrate([50, 50, 100]); // short, pause, longer
+  }
+
   // Small delay to let the UI update first
   setTimeout(() => {
     showMilestone(reward.emoji, reward.title, getRandomMessage(goalKey));
