@@ -2217,7 +2217,7 @@ async function quickLogMovement() {
 }
 
 // Start Outdoor Walk via iOS Shortcuts
-window.startOutdoorWalk = function() {
+function startOutdoorWalk() {
   // Haptic feedback
   if (navigator.vibrate) navigator.vibrate(50);
 
@@ -2230,9 +2230,13 @@ window.startOutdoorWalk = function() {
     window.location.href = 'shortcuts://run-shortcut?name=Start%20Outdoor%20Walk';
   } else {
     // Fallback for non-iOS devices
-    showQuickConfirmation('📱 iOS Shortcuts required for this feature');
+    if (typeof showQuickConfirmation === 'function') {
+      showQuickConfirmation('📱 iOS Shortcuts required for this feature');
+    } else {
+      alert('iOS Shortcuts required for this feature');
+    }
   }
-};
+}
 
 async function quickLogAgua() {
   // Sync from DOM first (inline handlers may have changed it)
