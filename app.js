@@ -4187,40 +4187,24 @@ function renderWorkouts() {
   }
 
   workouts.forEach((w) => {
-    const type = w.type || 'Workout';
-    const duration = w.duration ? Math.round(w.duration) : 0;
+    // Duration comes in seconds from iOS, convert to minutes
+    const durationRaw = w.duration || 0;
+    const durationMin = durationRaw > 200 ? Math.round(durationRaw / 60) : Math.round(durationRaw);
     const calories = w.calories ? Math.round(w.calories) : 0;
     const distance = w.distance ? (w.distance * 0.000621371).toFixed(2) : null; // meters to miles
     const startTime = w.startTime ? new Date(w.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
 
-    // Workout type icons
-    const typeIcons = {
-      'Walking': '🚶',
-      'Outdoor Walk': '🚶',
-      'Running': '🏃',
-      'Outdoor Run': '🏃',
-      'Cycling': '🚴',
-      'Outdoor Cycle': '🚴',
-      'Swimming': '🏊',
-      'Yoga': '🧘',
-      'HIIT': '💪',
-      'Strength': '🏋️',
-      'Functional Strength Training': '🏋️',
-      'Other': '🏃'
-    };
-    const icon = typeIcons[type] || '🏃';
-
     const item = document.createElement("div");
     item.className = "workout-item";
 
-    let details = `${duration} min`;
+    let details = `${durationMin} min`;
     if (calories > 0) details += ` · ${calories} cal`;
-    if (distance) details += ` · ${distance} mi`;
+    if (distance && parseFloat(distance) > 0) details += ` · ${distance} mi`;
 
     item.innerHTML = `
-      <span class="workout-icon">${icon}</span>
+      <span class="workout-icon">🏃</span>
       <div class="workout-info">
-        <span class="workout-type">${type}</span>
+        <span class="workout-type">Workout</span>
         <span class="workout-details">${details}</span>
       </div>
       <span class="workout-time">${startTime}</span>
