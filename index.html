@@ -2568,6 +2568,30 @@
     </div>
   </div>
 
+  <!-- Trash Reminder Modal -->
+  <div id="trashReminderModal" class="modal">
+    <div class="modal-content" style="max-width:340px">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-orange),var(--accent-pink));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 15px var(--glow-orange)">🗑️</div>
+          <div>
+            <div style="font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700">Trash Night!</div>
+            <div style="font-size:12px;color:var(--text-muted)">Tuesday reminder</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="dismissTrashReminder()">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:24px">
+        <div style="font-size:48px;margin-bottom:12px">🚮</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text)">Take out the trash!</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:6px">Don't forget to put the bins out tonight</div>
+      </div>
+      <div class="modal-footer" style="padding:14px 18px">
+        <button type="button" class="btn btn-primary" onclick="dismissTrashReminder()" style="width:100%;background:linear-gradient(135deg,var(--accent-orange),var(--accent-pink))">Got it!</button>
+      </div>
+    </div>
+  </div>
+
   <button id="quickLogFab" class="fab">+</button>
   <div id="quickLogMenu" class="fab-menu">
     <button class="fab-item quick-log-item" data-action="movement"><div class="fab-icon" style="background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple))">🚶</div><span class="fab-label">Movement</span></button>
@@ -4213,6 +4237,41 @@
       setTimeout(checkWeeklyReview, 1500);
       document.getElementById('weeklyReviewModal').addEventListener('click', (e) => {
         if (e.target.id === 'weeklyReviewModal') closeWeeklyReview();
+      });
+    });
+
+    // Trash Reminder (Tuesday after 6 PM)
+    function getTuesdayKey() {
+      const now = new Date();
+      // Find the Tuesday of the current week (or most recent Tuesday if today is Mon)
+      const day = now.getDay();
+      const diff = day >= 2 ? day - 2 : day + 5; // days since last Tuesday
+      const tue = new Date(now);
+      tue.setDate(now.getDate() - diff);
+      return 'trashReminder-' + tue.toISOString().slice(0, 10);
+    }
+
+    function checkTrashReminder() {
+      const now = new Date();
+      // Only show on Tuesday (day 2) after 6 PM (18:00)
+      if (now.getDay() !== 2) return;
+      if (now.getHours() < 18) return;
+
+      const key = getTuesdayKey();
+      if (localStorage.getItem(key)) return; // Already dismissed this week
+
+      document.getElementById('trashReminderModal').classList.add('show');
+    }
+
+    window.dismissTrashReminder = function() {
+      document.getElementById('trashReminderModal').classList.remove('show');
+      localStorage.setItem(getTuesdayKey(), 'true');
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(checkTrashReminder, 2000);
+      document.getElementById('trashReminderModal').addEventListener('click', (e) => {
+        if (e.target.id === 'trashReminderModal') dismissTrashReminder();
       });
     });
 
