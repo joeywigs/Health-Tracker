@@ -3373,7 +3373,17 @@ async function saveData(payload) {
   });
 
   // Cache locally wrapped in the format populateForm expects
-  const wrappedPayload = { daily: { ...payload }, date: payload.date };
+  // readings, honeyDos, reflections, stories, carly, customSections go at top level
+  const wrappedPayload = {
+    daily: { ...payload },
+    date: payload.date,
+    readings: payload.readings || [],
+    honeyDos: payload.honeyDos || [],
+    reflections: payload.reflections || "",
+    stories: payload.stories || "",
+    carly: payload.carly || "",
+    customSections: payload.customSections || {}
+  };
   cacheDayLocally(payload.date, wrappedPayload);
   cacheSet(formatDateForAPI(currentDate), wrappedPayload);
 
@@ -3950,10 +3960,10 @@ async function populateForm(data) {
     fullDaily: d
   });
 
-  if (morningTypeEl) morningTypeEl.value = d?.["Morning Movement Type"] || "";
-  if (morningDurationEl) morningDurationEl.value = d?.["Morning Movement Duration"] || "";
-  if (afternoonTypeEl) afternoonTypeEl.value = d?.["Afternoon Movement Type"] || "";
-  if (afternoonDurationEl) afternoonDurationEl.value = d?.["Afternoon Movement Duration"] || "";
+  if (morningTypeEl) morningTypeEl.value = d?.["Morning Movement Type"] ?? d?.morningMovementType ?? "";
+  if (morningDurationEl) morningDurationEl.value = d?.["Morning Movement Duration"] ?? d?.morningMovementDuration ?? "";
+  if (afternoonTypeEl) afternoonTypeEl.value = d?.["Afternoon Movement Type"] ?? d?.afternoonMovementType ?? "";
+  if (afternoonDurationEl) afternoonDurationEl.value = d?.["Afternoon Movement Duration"] ?? d?.afternoonMovementDuration ?? "";
 
   // Lists
   readings = (data?.readings || []).map(r => ({
