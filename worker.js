@@ -9,6 +9,7 @@
  * - biomarkers:values → { date: [...values], date2: [...values] }
  * - meta:lastWeekAverages → { cached averages }
  * - bedtime:items → [ array of bedtime routine items ]
+ * - workouts:{date} → [ array of workouts for that date ]
  */
 
 export default {
@@ -118,6 +119,14 @@ async function handlePost(request, env, corsHeaders) {
     return await updateSteps(steps, body.date, env, corsHeaders);
   }
 
+  // iOS Shortcut endpoint - sync workout data
+  if (action === "workout") {
+    if (!body.workouts || !Array.isArray(body.workouts)) {
+      return jsonResponse({ error: true, message: "Missing workouts array", received: body }, 400, corsHeaders);
+    }
+    return await syncWorkouts(body.workouts, body.date, env, corsHeaders);
+  }
+
   if (action === "biomarkers_save") {
     if (!body.date || !body.values) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
@@ -140,12 +149,13 @@ async function loadDay(dateStr, env, corsHeaders) {
   const normalizedDate = normalizeDate(dateStr);
 
   // Fetch all data for this day in parallel
-  const [daily, movements, readings, honeyDos, customSections] = await Promise.all([
+  const [daily, movements, readings, honeyDos, customSections, workouts] = await Promise.all([
     env.HABIT_DATA.get(`daily:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`movements:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`readings:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`honeyDos:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`custom:${normalizedDate}`, "json"),
+    env.HABIT_DATA.get(`workouts:${normalizedDate}`, "json"),
   ]);
 
   // Calculate averages
@@ -163,6 +173,7 @@ async function loadDay(dateStr, env, corsHeaders) {
     readings: readings || [],
     honeyDos: honeyDos || [],
     customSections: customSections || {},
+    workouts: workouts || [],
     averages,
     bodyCarryForward,
   }, 200, corsHeaders);
@@ -274,6 +285,51 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
     date: normalizedDate,
     steps: daily["Steps"],
     message: `Updated steps to ${daily["Steps"]} for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Sync Workouts (for iOS Shortcut) =====
+async function syncWorkouts(workouts, dateStr, env, corsHeaders) {
+  // Use provided date or today
+  const normalizedDate = dateStr ? normalizeDate(dateStr) : normalizeDate(formatDateForKV(new Date()));
+
+  // Get existing workouts for this date
+  let existing = await env.HABIT_DATA.get(`workouts:${normalizedDate}`, "json") || [];
+
+  // Merge new workouts, avoiding duplicates by start time
+  const existingStarts = new Set(existing.map(w => w.startTime));
+
+  for (const workout of workouts) {
+    // Normalize workout data
+    const normalized = {
+      type: workout.type || workout.workoutType || 'Unknown',
+      duration: workout.duration || workout.durationMinutes || 0,
+      calories: workout.calories || workout.activeCalories || 0,
+      startTime: workout.startTime || workout.start || new Date().toISOString(),
+      endTime: workout.endTime || workout.end || null,
+      distance: workout.distance || null,
+      avgHeartRate: workout.avgHeartRate || workout.heartRate || null,
+    };
+
+    // Only add if not already present (by start time)
+    if (!existingStarts.has(normalized.startTime)) {
+      existing.push(normalized);
+      existingStarts.add(normalized.startTime);
+    }
+  }
+
+  // Sort by start time (newest first)
+  existing.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+  // Save back
+  await env.HABIT_DATA.put(`workouts:${normalizedDate}`, JSON.stringify(existing));
+
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    workoutCount: existing.length,
+    workouts: existing,
+    message: `Synced ${workouts.length} workout(s) for ${normalizedDate}`
   }, 200, corsHeaders);
 }
 

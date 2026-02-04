@@ -181,6 +181,7 @@ let dataChanged = false;
 
 let readings = [];
 let honeyDos = [];
+let workouts = [];
 let currentAverages = null;
 let lastBookTitle = localStorage.getItem('lastBookTitle') || "";
 let aguaCount = 0;
@@ -3394,12 +3395,13 @@ async function saveData(payload) {
   });
 
   // Cache locally wrapped in the format populateForm expects
-  // readings, honeyDos, reflections, stories, carly, customSections go at top level
+  // readings, honeyDos, workouts, reflections, stories, carly, customSections go at top level
   const wrappedPayload = {
     daily: { ...payload },
     date: payload.date,
     readings: payload.readings || [],
     honeyDos: payload.honeyDos || [],
+    workouts: workouts || [], // Keep workouts from API (synced via iOS Shortcut)
     reflections: payload.reflections || "",
     stories: payload.stories || "",
     carly: payload.carly || "",
@@ -3864,6 +3866,8 @@ async function populateForm(data) {
     renderReadings();
 
     honeyDos = data?.honeyDos || [];
+    workouts = data?.workouts || [];
+    if (typeof renderWorkouts === "function") renderWorkouts();
 
     const reflectionsEl = document.getElementById("reflections");
     if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
@@ -3993,6 +3997,7 @@ async function populateForm(data) {
   }));
 
   honeyDos = data?.honeyDos || [];
+  workouts = data?.workouts || [];
 
   if (readings.length > 0) {
     lastBookTitle = String(readings[readings.length - 1].book || "");
@@ -4019,6 +4024,7 @@ async function populateForm(data) {
   // Optional renders/averages/completion
   if (typeof updateAverages === "function") updateAverages(data?.averages);
   if (typeof renderReadings === "function") renderReadings();
+  if (typeof renderWorkouts === "function") renderWorkouts();
   if (typeof renderHoneyDos === "function") renderHoneyDos();
   if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 
@@ -4167,6 +4173,61 @@ function renderReadings() {
 
   // If you have completion logic, call it safely
   if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+}
+
+function renderWorkouts() {
+  const list = document.getElementById("workoutList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  if (workouts.length === 0) {
+    list.innerHTML = '<div class="no-workouts">No workouts synced yet</div>';
+    return;
+  }
+
+  workouts.forEach((w) => {
+    const type = w.type || 'Workout';
+    const duration = w.duration ? Math.round(w.duration) : 0;
+    const calories = w.calories ? Math.round(w.calories) : 0;
+    const distance = w.distance ? (w.distance * 0.000621371).toFixed(2) : null; // meters to miles
+    const startTime = w.startTime ? new Date(w.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+
+    // Workout type icons
+    const typeIcons = {
+      'Walking': '🚶',
+      'Outdoor Walk': '🚶',
+      'Running': '🏃',
+      'Outdoor Run': '🏃',
+      'Cycling': '🚴',
+      'Outdoor Cycle': '🚴',
+      'Swimming': '🏊',
+      'Yoga': '🧘',
+      'HIIT': '💪',
+      'Strength': '🏋️',
+      'Functional Strength Training': '🏋️',
+      'Other': '🏃'
+    };
+    const icon = typeIcons[type] || '🏃';
+
+    const item = document.createElement("div");
+    item.className = "workout-item";
+
+    let details = `${duration} min`;
+    if (calories > 0) details += ` · ${calories} cal`;
+    if (distance) details += ` · ${distance} mi`;
+
+    item.innerHTML = `
+      <span class="workout-icon">${icon}</span>
+      <div class="workout-info">
+        <span class="workout-type">${type}</span>
+        <span class="workout-details">${details}</span>
+      </div>
+      <span class="workout-time">${startTime}</span>
+    `;
+
+    list.appendChild(item);
+  });
 }
 
 function updateAverages(averages) {
