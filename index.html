@@ -2250,6 +2250,7 @@
           el.textContent = n;
           if (typeof aguaCount !== 'undefined') aguaCount = n;
           if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          if (typeof checkWaterGoal === 'function') checkWaterGoal();
         };
         window.handleAguaMinus = function() {
           var el = document.getElementById('aguaCount');
