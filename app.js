@@ -191,8 +191,7 @@ let dailyGoalsAchieved = {
   steps: false,
   movement: false,
   meals: false,
-  snacks: false,
-  noAlcohol: false
+  cleanEating: false
 };
 
 let autoSaveTimeout = null;
@@ -2324,25 +2323,14 @@ const GOAL_REWARDS = {
       'Proper fuel, proper you!'
     ]
   },
-  snacks: {
-    emoji: '🥗',
-    title: 'Healthy Snacks Complete!',
+  cleanEating: {
+    emoji: '🌟',
+    title: 'Clean Eating Champion!',
     messages: [
-      'Snack attack conquered!',
-      'Healthy choices for the win!',
-      'Your future self thanks you!',
-      'Snack goals achieved!',
-      'Nourishment unlocked!'
-    ]
-  },
-  noAlcohol: {
-    emoji: '✨',
-    title: 'Alcohol-Free Day!',
-    messages: [
-      'Clear mind, clear vibes!',
-      'Your liver is celebrating!',
-      'Clarity mode activated!',
-      'Making great choices!',
+      'Healthy snacks + no alcohol = unstoppable!',
+      'Your body is thriving!',
+      'Clean fuel, clear mind!',
+      'Nourishment goals crushed!',
       'Tomorrow you will thank today you!'
     ]
   }
@@ -2359,8 +2347,7 @@ function resetDailyGoalsAchieved() {
     steps: false,
     movement: false,
     meals: false,
-    snacks: false,
-    noAlcohol: false
+    cleanEating: false
   };
 }
 
@@ -2428,20 +2415,13 @@ function checkMealsGoal() {
   }
 }
 
-function checkSnacksGoal() {
+function checkCleanEatingGoal() {
   const daySnacks = document.getElementById('daySnacks')?.checked || false;
   const nightSnacks = document.getElementById('nightSnacks')?.checked || false;
-
-  if (daySnacks && nightSnacks && !dailyGoalsAchieved.snacks) {
-    celebrateGoalAchievement('snacks');
-  }
-}
-
-function checkNoAlcoholGoal() {
   const noAlcohol = document.getElementById('noAlcohol')?.checked || false;
 
-  if (noAlcohol && !dailyGoalsAchieved.noAlcohol) {
-    celebrateGoalAchievement('noAlcohol');
+  if (daySnacks && nightSnacks && noAlcohol && !dailyGoalsAchieved.cleanEating) {
+    celebrateGoalAchievement('cleanEating');
   }
 }
 
@@ -2450,13 +2430,12 @@ function checkAllDailyGoals() {
   checkStepsGoal();
   checkMovementGoal();
   checkMealsGoal();
-  checkSnacksGoal();
-  checkNoAlcoholGoal();
+  checkCleanEatingGoal();
 }
 
 function setupDopamineBoosts() {
-  // Add confetti to all checkboxes
-  document.querySelectorAll('.checkbox-field input[type="checkbox"]').forEach(checkbox => {
+  // Add confetti to all checkboxes (including mini-supp checkboxes for meals/snacks/alcohol)
+  document.querySelectorAll('.checkbox-field input[type="checkbox"], .mini-supp input[type="checkbox"]').forEach(checkbox => {
     checkbox.addEventListener('change', (e) => {
       if (e.target.checked) {
         createConfetti(e.target);
@@ -2467,10 +2446,8 @@ function setupDopamineBoosts() {
         const id = e.target.id;
         if (id === 'breakfast' || id === 'lunch' || id === 'dinner') {
           checkMealsGoal();
-        } else if (id === 'daySnacks' || id === 'nightSnacks') {
-          checkSnacksGoal();
-        } else if (id === 'noAlcohol') {
-          checkNoAlcoholGoal();
+        } else if (id === 'daySnacks' || id === 'nightSnacks' || id === 'noAlcohol') {
+          checkCleanEatingGoal();
         }
       } else {
         updateCompletionRing();
