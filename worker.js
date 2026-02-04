@@ -8,6 +8,7 @@
  * - biomarkers:definition → [ biomarker definitions ]
  * - biomarkers:values → { date: [...values], date2: [...values] }
  * - meta:lastWeekAverages → { cached averages }
+ * - bedtime:items → [ array of bedtime routine items ]
  */
 
 export default {
@@ -74,6 +75,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadBiomarkers(env, corsHeaders);
   }
 
+  if (action === "bedtime_items_load") {
+    return await loadBedtimeItems(env, corsHeaders);
+  }
+
   if (action === "rehit_week") {
     const date = url.searchParams.get("date");
     if (!date) {
@@ -118,6 +123,13 @@ async function handlePost(request, env, corsHeaders) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
     }
     return await saveBiomarkers(body.date, body.values, env, corsHeaders);
+  }
+
+  if (action === "bedtime_items_save") {
+    if (!body.items || !Array.isArray(body.items)) {
+      return jsonResponse({ error: true, message: "Missing items array" }, 400, corsHeaders);
+    }
+    return await saveBedtimeItems(body.items, env, corsHeaders);
   }
 
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
@@ -467,6 +479,29 @@ async function saveBiomarkers(dateStr, values, env, corsHeaders) {
   await env.HABIT_DATA.put("biomarkers:values", JSON.stringify(valuesData));
 
   return jsonResponse({ success: true, date: dateStr }, 200, corsHeaders);
+}
+
+// ===== Bedtime Routine Items =====
+async function loadBedtimeItems(env, corsHeaders) {
+  const items = await env.HABIT_DATA.get("bedtime:items", "json");
+
+  // Return default items if none exist
+  const defaultItems = [
+    { id: 1, name: "Brush Teeth", order: 0 },
+    { id: 2, name: "Pick Clothes", order: 1 },
+    { id: 3, name: "Computer", order: 2 },
+    { id: 4, name: "Supplements", order: 3 },
+    { id: 5, name: "Water", order: 4 }
+  ];
+
+  return jsonResponse({
+    items: items || defaultItems
+  }, 200, corsHeaders);
+}
+
+async function saveBedtimeItems(items, env, corsHeaders) {
+  await env.HABIT_DATA.put("bedtime:items", JSON.stringify(items));
+  return jsonResponse({ success: true }, 200, corsHeaders);
 }
 
 // ===== Helpers =====

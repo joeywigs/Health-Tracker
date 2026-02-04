@@ -1647,7 +1647,230 @@
     .weekly-review-unit { font-size: 11px; color: var(--text-muted); min-width: 65px; }
     .weekly-review-input-wrap .goal-input { width: 70px; }
     body.day-mode .weekly-review-row { border-bottom-color: rgba(0,0,0,0.06); }
-    
+
+    /* Bedtime Routine Section */
+    .bedtime-routine {
+      background: linear-gradient(135deg, rgba(196,113,237,0.15), rgba(109,213,237,0.1));
+      border: 1px solid rgba(196,113,237,0.3);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .bedtime-routine.show { display: block; }
+    .bedtime-routine.done-state {
+      background: linear-gradient(135deg, rgba(109,213,237,0.1), rgba(196,113,237,0.05));
+      padding: 12px 16px;
+    }
+    .bedtime-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .bedtime-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .bedtime-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 15px var(--glow-purple);
+    }
+    .bedtime-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .bedtime-sublabel {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .bedtime-done-btn {
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .bedtime-done-btn:hover {
+      background: rgba(255,255,255,0.15);
+      color: var(--text);
+    }
+    .bedtime-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bedtime-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .bedtime-item:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    .bedtime-item.checked {
+      background: rgba(109,213,237,0.1);
+      border-color: var(--accent-teal);
+    }
+    .bedtime-item.checked .bedtime-item-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+    .bedtime-checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .bedtime-item.checked .bedtime-checkbox {
+      background: linear-gradient(135deg, var(--accent-teal), var(--accent-purple));
+      border-color: var(--accent-teal);
+      color: white;
+      font-size: 12px;
+    }
+    .bedtime-item-text {
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .bedtime-done-message {
+      text-align: center;
+      font-size: 14px;
+      color: var(--accent-teal);
+      font-weight: 600;
+    }
+    body.day-mode .bedtime-routine {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(13,148,136,0.08));
+      border-color: rgba(99,102,241,0.2);
+    }
+    body.day-mode .bedtime-item {
+      background: rgba(255,255,255,0.5);
+    }
+    body.day-mode .bedtime-item.checked {
+      background: rgba(13,148,136,0.15);
+      border-color: var(--accent-teal);
+    }
+
+    /* Bedtime Celebration Animation */
+    .bedtime-celebration {
+      position: fixed;
+      inset: 0;
+      background: rgba(26,26,46,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      backdrop-filter: blur(15px);
+    }
+    .bedtime-celebration.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .celebration-content {
+      text-align: center;
+      animation: celebrationPop 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes celebrationPop {
+      0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+      50% { transform: scale(1.1) rotate(3deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .celebration-emoji {
+      font-size: 80px;
+      animation: celebrationBounce 0.8s ease-in-out infinite;
+    }
+    @keyframes celebrationBounce {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(1.1); }
+    }
+    .celebration-stars {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .celebration-star {
+      position: absolute;
+      font-size: 24px;
+      animation: starFloat 2s ease-out forwards;
+    }
+    @keyframes starFloat {
+      0% { transform: translateY(100vh) scale(0); opacity: 1; }
+      100% { transform: translateY(-100px) scale(1); opacity: 0; }
+    }
+    .celebration-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 20px;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-teal), var(--accent-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+    .celebration-subtitle {
+      font-size: 16px;
+      color: var(--text-dim);
+      margin-top: 10px;
+      opacity: 0;
+      animation: fadeInUp 0.5s ease-out 0.3s forwards;
+    }
+    @keyframes fadeInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .celebration-dismiss {
+      margin-top: 30px;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+      border: none;
+      border-radius: var(--radius-pill);
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 30px var(--glow-purple);
+      opacity: 0;
+      animation: fadeInUp 0.5s ease-out 0.5s forwards;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .celebration-dismiss:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 40px var(--glow-purple);
+    }
+
     /* Responsive */
     @media (max-width: 430px) {
       body { padding: 12px; padding-top: max(66px, calc(12px + env(safe-area-inset-top, 54px))); padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
@@ -1952,7 +2175,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v6.36</span></h1>
+<h1>Habits <span class="version">v6.37</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1983,6 +2206,34 @@
       </div>
     </div>
   </header>
+
+  <!-- Bedtime Routine Section -->
+  <div id="bedtimeRoutine" class="bedtime-routine">
+    <div class="bedtime-header">
+      <div class="bedtime-title">
+        <div class="bedtime-icon">🌙</div>
+        <div>
+          <div class="bedtime-label">Bedtime Routine</div>
+          <div class="bedtime-sublabel">Wind down for a great tomorrow</div>
+        </div>
+      </div>
+      <button type="button" class="bedtime-done-btn" onclick="dismissBedtimeRoutine()">Done</button>
+    </div>
+    <div class="bedtime-items" id="bedtimeItems">
+      <!-- Items populated by JS -->
+    </div>
+  </div>
+
+  <!-- Bedtime Celebration Overlay -->
+  <div id="bedtimeCelebration" class="bedtime-celebration">
+    <div class="celebration-stars" id="celebrationStars"></div>
+    <div class="celebration-content">
+      <div class="celebration-emoji">🌟</div>
+      <div class="celebration-title">Goodnight!</div>
+      <div class="celebration-subtitle">Have a great workout in the morning!</div>
+      <button type="button" class="celebration-dismiss" onclick="dismissCelebration()">Sweet Dreams</button>
+    </div>
+  </div>
 
   <form id="healthForm">
     <div class="quick-grid">
@@ -2414,7 +2665,22 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- Bedtime Routine Settings -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-teal);--icon-glow:var(--glow-purple)">🌙</div><span class="sec-name">Bedtime Habit Stack</span></div></div>
+      <div class="sec-content">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows weekdays 9:45pm-midnight. Drag to reorder.</p>
+        <div id="bedtimeItemsList" class="section-list">
+          <!-- Populated by JS -->
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <input type="text" class="input" id="newBedtimeItem" placeholder="New item name..." style="flex:1">
+          <button type="button" class="btn btn-primary" id="addBedtimeItemBtn" style="padding:8px 16px">Add</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Section Management -->
     <div class="section">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
@@ -4241,6 +4507,281 @@
     });
 
     // Trash Reminder (Tuesday after 6 PM)
+    // ===== Bedtime Routine =====
+    let bedtimeItems = [];
+    let bedtimeCheckedState = {};
+
+    // Get tonight's key for localStorage dismissal
+    function getBedtimeKey() {
+      const now = new Date();
+      return 'bedtimeDismissed-' + now.toISOString().slice(0, 10);
+    }
+
+    // Check if bedtime routine should show (weekdays 9:45pm-midnight)
+    function shouldShowBedtimeRoutine() {
+      const now = new Date();
+      const day = now.getDay(); // 0=Sun, 1-5=weekdays, 6=Sat
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+
+      // Only weekdays (Mon-Fri = 1-5)
+      if (day === 0 || day === 6) return false;
+
+      // Only 9:45pm (21:45) to midnight
+      if (hour < 21) return false;
+      if (hour === 21 && minute < 45) return false;
+
+      // Already dismissed tonight?
+      if (localStorage.getItem(getBedtimeKey())) return false;
+
+      return true;
+    }
+
+    // Load bedtime items from KV
+    async function loadBedtimeItems() {
+      try {
+        const result = await apiGet('bedtime_items_load');
+        bedtimeItems = result.items || [];
+        bedtimeItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+        renderBedtimeItems();
+        renderBedtimeSettings();
+        checkBedtimeRoutine();
+      } catch (err) {
+        console.error('Failed to load bedtime items:', err);
+        // Use defaults
+        bedtimeItems = [
+          { id: 1, name: "Brush Teeth", order: 0 },
+          { id: 2, name: "Pick Clothes", order: 1 },
+          { id: 3, name: "Computer", order: 2 },
+          { id: 4, name: "Supplements", order: 3 },
+          { id: 5, name: "Water", order: 4 }
+        ];
+        renderBedtimeItems();
+        renderBedtimeSettings();
+        checkBedtimeRoutine();
+      }
+    }
+
+    // Save bedtime items to KV
+    async function saveBedtimeItems() {
+      try {
+        await apiPost('bedtime_items_save', { items: bedtimeItems });
+      } catch (err) {
+        console.error('Failed to save bedtime items:', err);
+      }
+    }
+
+    // Render bedtime items in the routine section
+    function renderBedtimeItems() {
+      const container = document.getElementById('bedtimeItems');
+      if (!container) return;
+
+      container.innerHTML = bedtimeItems.map(item => `
+        <div class="bedtime-item ${bedtimeCheckedState[item.id] ? 'checked' : ''}" data-id="${item.id}" onclick="toggleBedtimeItem(${item.id})">
+          <div class="bedtime-checkbox">${bedtimeCheckedState[item.id] ? '✓' : ''}</div>
+          <span class="bedtime-item-text">${item.name}</span>
+        </div>
+      `).join('');
+    }
+
+    // Toggle a bedtime item
+    window.toggleBedtimeItem = function(id) {
+      bedtimeCheckedState[id] = !bedtimeCheckedState[id];
+      renderBedtimeItems();
+
+      // Check if all items are checked
+      const allChecked = bedtimeItems.every(item => bedtimeCheckedState[item.id]);
+      if (allChecked && bedtimeItems.length > 0) {
+        showBedtimeCelebration();
+      }
+    };
+
+    // Check and show bedtime routine if conditions are met
+    function checkBedtimeRoutine() {
+      const section = document.getElementById('bedtimeRoutine');
+      if (!section) return;
+
+      if (shouldShowBedtimeRoutine()) {
+        section.classList.add('show');
+        section.classList.remove('done-state');
+      } else {
+        section.classList.remove('show');
+      }
+    }
+
+    // Dismiss bedtime routine (Done button)
+    window.dismissBedtimeRoutine = function() {
+      localStorage.setItem(getBedtimeKey(), 'true');
+      const section = document.getElementById('bedtimeRoutine');
+      if (section) {
+        section.classList.remove('show');
+      }
+    };
+
+    // Show celebration animation
+    function showBedtimeCelebration() {
+      const celebration = document.getElementById('bedtimeCelebration');
+      const starsContainer = document.getElementById('celebrationStars');
+
+      // Generate random stars
+      starsContainer.innerHTML = '';
+      const starEmojis = ['⭐', '✨', '🌟', '💫', '🌙', '💜', '💙'];
+      for (let i = 0; i < 30; i++) {
+        const star = document.createElement('div');
+        star.className = 'celebration-star';
+        star.textContent = starEmojis[Math.floor(Math.random() * starEmojis.length)];
+        star.style.left = Math.random() * 100 + '%';
+        star.style.animationDelay = Math.random() * 2 + 's';
+        star.style.animationDuration = (1.5 + Math.random()) + 's';
+        starsContainer.appendChild(star);
+      }
+
+      celebration.classList.add('show');
+    }
+
+    // Dismiss celebration
+    window.dismissCelebration = function() {
+      const celebration = document.getElementById('bedtimeCelebration');
+      celebration.classList.remove('show');
+      dismissBedtimeRoutine();
+    };
+
+    // ===== Bedtime Settings Management =====
+    function renderBedtimeSettings() {
+      const list = document.getElementById('bedtimeItemsList');
+      if (!list) return;
+
+      list.innerHTML = bedtimeItems.map((item, idx) => `
+        <div class="section-item" draggable="true" data-idx="${idx}" data-id="${item.id}">
+          <span class="section-item-drag">⋮⋮</span>
+          <input type="text" class="input bedtime-edit-input" value="${item.name}" data-id="${item.id}" style="flex:1;padding:6px 10px;font-size:13px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          <button class="section-item-delete" data-id="${item.id}">🗑️</button>
+        </div>
+      `).join('');
+
+      // Add change handlers for editing names
+      list.querySelectorAll('.bedtime-edit-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const id = parseInt(e.target.dataset.id);
+          const item = bedtimeItems.find(i => i.id === id);
+          if (item) {
+            item.name = e.target.value.trim() || item.name;
+            saveBedtimeItems();
+            renderBedtimeItems();
+          }
+        });
+      });
+
+      // Add delete handlers
+      list.querySelectorAll('.section-item-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.dataset.id);
+          deleteBedtimeItem(id);
+        });
+      });
+
+      // Setup drag and drop
+      setupBedtimeDragDrop();
+    }
+
+    // Setup drag and drop for bedtime settings
+    function setupBedtimeDragDrop() {
+      const list = document.getElementById('bedtimeItemsList');
+      if (!list) return;
+
+      let draggedItem = null;
+
+      list.querySelectorAll('.section-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          draggedItem = item;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          list.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
+          draggedItem = null;
+        });
+
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (draggedItem && draggedItem !== item) {
+            item.classList.add('drag-over');
+          }
+        });
+
+        item.addEventListener('dragleave', () => {
+          item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          if (!draggedItem || draggedItem === item) return;
+
+          const fromIdx = parseInt(draggedItem.dataset.idx);
+          const toIdx = parseInt(item.dataset.idx);
+
+          const [moved] = bedtimeItems.splice(fromIdx, 1);
+          bedtimeItems.splice(toIdx, 0, moved);
+          // Update order values
+          bedtimeItems.forEach((item, i) => item.order = i);
+          saveBedtimeItems();
+          renderBedtimeSettings();
+          renderBedtimeItems();
+        });
+      });
+    }
+
+    // Add new bedtime item
+    window.addBedtimeItem = function() {
+      const input = document.getElementById('newBedtimeItem');
+      const name = input.value.trim();
+      if (!name) return;
+
+      const maxId = bedtimeItems.reduce((max, i) => Math.max(max, i.id), 0);
+      bedtimeItems.push({
+        id: maxId + 1,
+        name: name,
+        order: bedtimeItems.length
+      });
+
+      saveBedtimeItems();
+      renderBedtimeSettings();
+      renderBedtimeItems();
+      input.value = '';
+    };
+
+    // Delete bedtime item
+    window.deleteBedtimeItem = function(id) {
+      bedtimeItems = bedtimeItems.filter(i => i.id !== id);
+      bedtimeItems.forEach((item, i) => item.order = i);
+      saveBedtimeItems();
+      renderBedtimeSettings();
+      renderBedtimeItems();
+    };
+
+    // Initialize bedtime routine on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBedtimeItems();
+
+      // Add button click handler
+      document.getElementById('addBedtimeItemBtn')?.addEventListener('click', addBedtimeItem);
+
+      // Allow Enter key to add item
+      document.getElementById('newBedtimeItem')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addBedtimeItem();
+        }
+      });
+
+      // Check every minute if bedtime routine should show
+      setInterval(checkBedtimeRoutine, 60000);
+    });
+
+    // ===== Trash Reminder =====
     function getTuesdayKey() {
       const now = new Date();
       // Find the Tuesday of the current week (or most recent Tuesday if today is Mon)
