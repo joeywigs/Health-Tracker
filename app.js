@@ -2216,7 +2216,7 @@ async function quickLogMovement() {
   window.openMovementModal();
 }
 
-// Start Outdoor Walk via iOS Shortcuts
+// Start Outdoor Walk - opens Workout app on iOS
 function startOutdoorWalk() {
   // Haptic feedback
   if (navigator.vibrate) navigator.vibrate(50);
@@ -2225,15 +2225,14 @@ function startOutdoorWalk() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   if (isIOS) {
-    // Open iOS Shortcut to start outdoor walk workout
-    // User must have a Shortcut named "Start Outdoor Walk" that uses "Start Workout" action
-    window.location.href = 'shortcuts://run-shortcut?name=Start%20Outdoor%20Walk';
+    // Open the Workout app directly
+    window.location.href = 'workout://';
   } else {
     // Fallback for non-iOS devices
     if (typeof showQuickConfirmation === 'function') {
-      showQuickConfirmation('📱 iOS Shortcuts required for this feature');
+      showQuickConfirmation('📱 iOS only - opens Workout app');
     } else {
-      alert('iOS Shortcuts required for this feature');
+      alert('This feature opens the iOS Workout app');
     }
   }
 }
