@@ -1620,36 +1620,6 @@
     body.day-mode .movement-row select,
     body.day-mode .movement-row input[type="number"] { background: white; }
 
-    /* Start Walk Button */
-    .start-walk-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      margin-top: 12px;
-      padding: 12px 16px;
-      background: linear-gradient(135deg, var(--accent-teal), var(--accent-purple));
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 15px var(--glow-teal);
-    }
-    .start-walk-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--glow-teal);
-    }
-    .start-walk-btn:active { transform: translateY(0); }
-    .start-walk-icon { font-size: 18px; }
-    body.day-mode .start-walk-btn {
-      background: linear-gradient(135deg, #2a9d8f, #7c3aed);
-    }
-
     /* FAB - Glowing */
     .fab { 
       position: fixed; bottom: 24px; right: 24px; 
@@ -2246,7 +2216,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v7.6</span></h1>
+<h1>Habits <span class="version">v7.8</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -2460,10 +2430,6 @@
           <input type="number" id="afternoonMovementDuration" placeholder="--" min="1" max="120" inputmode="numeric">
           <span class="min-label">min</span>
         </div>
-        <button type="button" class="start-walk-btn" onclick="startOutdoorWalk()">
-          <span class="start-walk-icon">🚶‍♂️</span>
-          <span>Start Outdoor Walk</span>
-        </button>
         <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span></div>
       </div>
     </div>
