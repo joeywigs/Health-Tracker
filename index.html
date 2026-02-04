@@ -1620,87 +1620,6 @@
     body.day-mode .movement-row select,
     body.day-mode .movement-row input[type="number"] { background: white; }
 
-    /* Start Walk Button */
-    .start-walk-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      margin-top: 12px;
-      padding: 12px 16px;
-      background: linear-gradient(135deg, var(--accent-teal), var(--accent-purple));
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 15px var(--glow-teal);
-    }
-    .start-walk-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px var(--glow-teal);
-    }
-    .start-walk-btn:active { transform: translateY(0); }
-    .start-walk-icon { font-size: 18px; }
-    body.day-mode .start-walk-btn {
-      background: linear-gradient(135deg, #2a9d8f, #7c3aed);
-    }
-
-    /* Workout List */
-    .workout-list {
-      margin-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .workout-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-    }
-    .workout-icon {
-      font-size: 20px;
-      min-width: 28px;
-      text-align: center;
-    }
-    .workout-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .workout-type {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--text);
-    }
-    .workout-details {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .workout-time {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .no-workouts {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 13px;
-      padding: 8px;
-    }
-    body.day-mode .workout-item {
-      background: white;
-      border-color: rgba(0,0,0,0.1);
-    }
-
     /* FAB - Glowing */
     .fab { 
       position: fixed; bottom: 24px; right: 24px; 
@@ -2511,11 +2430,6 @@
           <input type="number" id="afternoonMovementDuration" placeholder="--" min="1" max="120" inputmode="numeric">
           <span class="min-label">min</span>
         </div>
-        <button type="button" class="start-walk-btn" onclick="startOutdoorWalk()">
-          <span class="start-walk-icon">🚶‍♂️</span>
-          <span>Start Outdoor Walk</span>
-        </button>
-        <div id="workoutList" class="workout-list"></div>
         <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span></div>
       </div>
     </div>
