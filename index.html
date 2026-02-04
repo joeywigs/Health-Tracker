@@ -3175,6 +3175,7 @@
           const cb = supp.querySelector('input[type="checkbox"]');
           if (cb) {
             cb.checked = !cb.checked;
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
             updateCompletionRingAurora();
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
           }
