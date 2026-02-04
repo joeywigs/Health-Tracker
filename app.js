@@ -185,6 +185,16 @@ let currentAverages = null;
 let lastBookTitle = "";
 let aguaCount = 0;
 
+// Track which daily goals have been celebrated today (reset on date change)
+let dailyGoalsAchieved = {
+  water: false,
+  steps: false,
+  movement: false,
+  meals: false,
+  snacks: false,
+  noAlcohol: false
+};
+
 let autoSaveTimeout = null;
 
 const PREFETCH_RANGE = 3;          // how many days ahead/behind to prefetch
@@ -2180,9 +2190,12 @@ async function quickLogAgua() {
   aguaCount = waterEl ? (parseInt(waterEl.textContent) || 0) : aguaCount;
   aguaCount++;
   if (waterEl) waterEl.textContent = aguaCount;
-  
+
   triggerSaveSoon();
   showQuickConfirmation(`✓ Water: ${aguaCount} glasses`);
+
+  // Check for water goal achievement
+  checkWaterGoal();
 }
 
 async function quickLogReading() {
@@ -2265,6 +2278,182 @@ function showQuickConfirmation(message) {
 let lastCompletionCount = 0;
 let personalBests = {};
 
+// Dopamine reward messages for goal achievements
+const GOAL_REWARDS = {
+  water: {
+    emoji: '💧',
+    title: 'Hydration Goal!',
+    messages: [
+      'Your cells are celebrating!',
+      'Hydration hero status unlocked!',
+      'Your kidneys thank you!',
+      'Peak hydration achieved!',
+      'Water warrior mode activated!'
+    ]
+  },
+  steps: {
+    emoji: '👟',
+    title: 'Step Goal Crushed!',
+    messages: [
+      'Your feet are champions!',
+      'Every step counts - and you counted them all!',
+      'Walking your way to greatness!',
+      'Movement milestone achieved!',
+      'Steps on steps on steps!'
+    ]
+  },
+  movement: {
+    emoji: '🚶',
+    title: 'Movement Breaks Done!',
+    messages: [
+      'Your body says thank you!',
+      'Breaks make breakthroughs!',
+      'Sedentary? Not today!',
+      'Movement master unlocked!',
+      'Your joints are doing a happy dance!'
+    ]
+  },
+  meals: {
+    emoji: '🍽️',
+    title: 'Meals On Point!',
+    messages: [
+      'Fueling your success!',
+      'Nutrition game strong!',
+      'Eating like a champion!',
+      'Your metabolism approves!',
+      'Proper fuel, proper you!'
+    ]
+  },
+  snacks: {
+    emoji: '🥗',
+    title: 'Healthy Snacks Complete!',
+    messages: [
+      'Snack attack conquered!',
+      'Healthy choices for the win!',
+      'Your future self thanks you!',
+      'Snack goals achieved!',
+      'Nourishment unlocked!'
+    ]
+  },
+  noAlcohol: {
+    emoji: '✨',
+    title: 'Alcohol-Free Day!',
+    messages: [
+      'Clear mind, clear vibes!',
+      'Your liver is celebrating!',
+      'Clarity mode activated!',
+      'Making great choices!',
+      'Tomorrow you will thank today you!'
+    ]
+  }
+};
+
+function getRandomMessage(goalKey) {
+  const messages = GOAL_REWARDS[goalKey]?.messages || ['Great job!'];
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
+function resetDailyGoalsAchieved() {
+  dailyGoalsAchieved = {
+    water: false,
+    steps: false,
+    movement: false,
+    meals: false,
+    snacks: false,
+    noAlcohol: false
+  };
+}
+
+function isViewingToday() {
+  const today = new Date();
+  return currentDate.toDateString() === today.toDateString();
+}
+
+function celebrateGoalAchievement(goalKey) {
+  if (dailyGoalsAchieved[goalKey]) return; // Already celebrated today
+  if (!isViewingToday()) return; // Only celebrate when viewing today
+
+  const reward = GOAL_REWARDS[goalKey];
+  if (!reward) return;
+
+  dailyGoalsAchieved[goalKey] = true;
+
+  // Small delay to let the UI update first
+  setTimeout(() => {
+    showMilestone(reward.emoji, reward.title, getRandomMessage(goalKey));
+  }, 300);
+}
+
+function checkWaterGoal() {
+  const target = getGoalTarget('agua');
+  if (aguaCount >= target && !dailyGoalsAchieved.water) {
+    celebrateGoalAchievement('water');
+  }
+}
+
+function checkStepsGoal() {
+  const stepsInput = document.getElementById('steps');
+  const steps = parseInt(stepsInput?.value) || 0;
+  const target = getGoalTarget('steps');
+  if (steps >= target && !dailyGoalsAchieved.steps) {
+    celebrateGoalAchievement('steps');
+  }
+}
+
+function checkMovementGoal() {
+  // Count morning and afternoon movement breaks
+  let breakCount = 0;
+
+  const morningType = document.getElementById('morningMovementType')?.value;
+  const afternoonType = document.getElementById('afternoonMovementType')?.value;
+
+  if (morningType && morningType !== '') breakCount++;
+  if (afternoonType && afternoonType !== '') breakCount++;
+
+  const target = getGoalTarget('movement');
+  if (breakCount >= target && !dailyGoalsAchieved.movement) {
+    celebrateGoalAchievement('movement');
+  }
+}
+
+function checkMealsGoal() {
+  const breakfast = document.getElementById('breakfast')?.checked || false;
+  const lunch = document.getElementById('lunch')?.checked || false;
+  const dinner = document.getElementById('dinner')?.checked || false;
+
+  const mealsCount = [breakfast, lunch, dinner].filter(Boolean).length;
+
+  if (mealsCount >= 2 && !dailyGoalsAchieved.meals) {
+    celebrateGoalAchievement('meals');
+  }
+}
+
+function checkSnacksGoal() {
+  const daySnacks = document.getElementById('daySnacks')?.checked || false;
+  const nightSnacks = document.getElementById('nightSnacks')?.checked || false;
+
+  if (daySnacks && nightSnacks && !dailyGoalsAchieved.snacks) {
+    celebrateGoalAchievement('snacks');
+  }
+}
+
+function checkNoAlcoholGoal() {
+  const noAlcohol = document.getElementById('noAlcohol')?.checked || false;
+
+  if (noAlcohol && !dailyGoalsAchieved.noAlcohol) {
+    celebrateGoalAchievement('noAlcohol');
+  }
+}
+
+function checkAllDailyGoals() {
+  checkWaterGoal();
+  checkStepsGoal();
+  checkMovementGoal();
+  checkMealsGoal();
+  checkSnacksGoal();
+  checkNoAlcoholGoal();
+}
+
 function setupDopamineBoosts() {
   // Add confetti to all checkboxes
   document.querySelectorAll('.checkbox-field input[type="checkbox"]').forEach(checkbox => {
@@ -2273,22 +2462,37 @@ function setupDopamineBoosts() {
         createConfetti(e.target);
         updateCompletionRing();
         checkForMilestones();
+
+        // Check for daily goal achievements based on which checkbox changed
+        const id = e.target.id;
+        if (id === 'breakfast' || id === 'lunch' || id === 'dinner') {
+          checkMealsGoal();
+        } else if (id === 'daySnacks' || id === 'nightSnacks') {
+          checkSnacksGoal();
+        } else if (id === 'noAlcohol') {
+          checkNoAlcoholGoal();
+        }
       } else {
         updateCompletionRing();
       }
     });
   });
-  
-  // Track number inputs for personal bests
+
+  // Track number inputs for personal bests and goal achievements
   document.querySelectorAll('input[type="number"]').forEach(input => {
     input.addEventListener('change', () => {
       checkPersonalBest(input);
+
+      // Check for steps goal achievement
+      if (input.id === 'steps') {
+        checkStepsGoal();
+      }
     });
   });
-  
+
   // Initial completion ring update
   setTimeout(updateCompletionRing, 500);
-  
+
   console.log("✅ Dopamine boosts wired");
 }
 
@@ -3092,6 +3296,9 @@ async function loadDataForCurrentDate(options = {}) {
   const dateStr = formatDateForAPI(currentDate);
   console.log("Loading data for", dateStr);
 
+  // Reset daily goals celebration tracking when loading new date
+  resetDailyGoalsAchieved();
+
   // Show loading if not cached
   const cached = cacheGet(dateStr);
   if (!cached || options.force) {
@@ -3850,7 +4057,13 @@ function setupMovementUI() {
   ['morningMovementType', 'morningMovementDuration', 'afternoonMovementType', 'afternoonMovementDuration'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('change', () => triggerSaveSoon());
+      el.addEventListener('change', () => {
+        triggerSaveSoon();
+        // Check for movement goal achievement when movement type changes
+        if (id === 'morningMovementType' || id === 'afternoonMovementType') {
+          checkMovementGoal();
+        }
+      });
     }
   });
   console.log("✅ Movement UI wired");
