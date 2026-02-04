@@ -2216,6 +2216,24 @@ async function quickLogMovement() {
   window.openMovementModal();
 }
 
+// Start Outdoor Walk via iOS Shortcuts
+window.startOutdoorWalk = function() {
+  // Haptic feedback
+  if (navigator.vibrate) navigator.vibrate(50);
+
+  // Check if on iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS) {
+    // Open iOS Shortcut to start outdoor walk workout
+    // User must have a Shortcut named "Start Outdoor Walk" that uses "Start Workout" action
+    window.location.href = 'shortcuts://run-shortcut?name=Start%20Outdoor%20Walk';
+  } else {
+    // Fallback for non-iOS devices
+    showQuickConfirmation('📱 iOS Shortcuts required for this feature');
+  }
+};
+
 async function quickLogAgua() {
   // Sync from DOM first (inline handlers may have changed it)
   const waterEl = document.getElementById("aguaCount");
