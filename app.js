@@ -2216,6 +2216,24 @@ async function quickLogMovement() {
   window.openMovementModal();
 }
 
+// Start Outdoor Walk via iOS Shortcuts
+window.startOutdoorWalk = function() {
+  // Haptic feedback
+  if (navigator.vibrate) navigator.vibrate(50);
+
+  // Check if on iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS) {
+    // Open iOS Shortcut to start outdoor walk workout
+    // User must have a Shortcut named "Start Outdoor Walk" that uses "Start Workout" action
+    window.location.href = 'shortcuts://run-shortcut?name=Start%20Outdoor%20Walk';
+  } else {
+    // Fallback for non-iOS devices
+    showQuickConfirmation('📱 iOS Shortcuts required for this feature');
+  }
+};
+
 async function quickLogAgua() {
   // Sync from DOM first (inline handlers may have changed it)
   const waterEl = document.getElementById("aguaCount");
@@ -3373,7 +3391,17 @@ async function saveData(payload) {
   });
 
   // Cache locally wrapped in the format populateForm expects
-  const wrappedPayload = { daily: { ...payload }, date: payload.date };
+  // readings, honeyDos, reflections, stories, carly, customSections go at top level
+  const wrappedPayload = {
+    daily: { ...payload },
+    date: payload.date,
+    readings: payload.readings || [],
+    honeyDos: payload.honeyDos || [],
+    reflections: payload.reflections || "",
+    stories: payload.stories || "",
+    carly: payload.carly || "",
+    customSections: payload.customSections || {}
+  };
   cacheDayLocally(payload.date, wrappedPayload);
   cacheSet(formatDateForAPI(currentDate), wrappedPayload);
 
@@ -3950,10 +3978,10 @@ async function populateForm(data) {
     fullDaily: d
   });
 
-  if (morningTypeEl) morningTypeEl.value = d?.["Morning Movement Type"] || "";
-  if (morningDurationEl) morningDurationEl.value = d?.["Morning Movement Duration"] || "";
-  if (afternoonTypeEl) afternoonTypeEl.value = d?.["Afternoon Movement Type"] || "";
-  if (afternoonDurationEl) afternoonDurationEl.value = d?.["Afternoon Movement Duration"] || "";
+  if (morningTypeEl) morningTypeEl.value = d?.["Morning Movement Type"] ?? d?.morningMovementType ?? "";
+  if (morningDurationEl) morningDurationEl.value = d?.["Morning Movement Duration"] ?? d?.morningMovementDuration ?? "";
+  if (afternoonTypeEl) afternoonTypeEl.value = d?.["Afternoon Movement Type"] ?? d?.afternoonMovementType ?? "";
+  if (afternoonDurationEl) afternoonDurationEl.value = d?.["Afternoon Movement Duration"] ?? d?.afternoonMovementDuration ?? "";
 
   // Lists
   readings = (data?.readings || []).map(r => ({
