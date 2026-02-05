@@ -1030,7 +1030,7 @@ function getUpcomingPhaseNeeded() {
 }
 
 // Open modal to create a new phase
-function openNewPhaseModal(fromPhaseId = null) {
+async function openNewPhaseModal(fromPhaseId = null) {
   const currentPhase = fromPhaseId ? getPhaseById(fromPhaseId) : getCurrentPhase();
   if (!currentPhase) return;
 
@@ -1040,13 +1040,26 @@ function openNewPhaseModal(fromPhaseId = null) {
   nextStart.setDate(phaseStart.getDate() + currentPhase.length);
   const nextStartStr = `${nextStart.getMonth() + 1}/${nextStart.getDate()}/${String(nextStart.getFullYear()).slice(-2)}`;
 
+  // Ensure chart data is loaded before calculating stats
+  if (!chartDataCache || chartDataCache.length === 0) {
+    console.log('Phase modal: Loading chart data...');
+    chartDataCache = await fetchChartData(null, true);
+  }
+
   // Calculate current phase stats for each goal
   const filteredData = chartDataCache ? getFilteredData(chartDataCache, 'phase', currentPhase.id) : [];
   const stats = filteredData.length > 0 ? calculateGoalStats(filteredData, 'phase', currentPhase.id) : {};
 
+  console.log('Phase modal - filteredData length:', filteredData.length, 'stats keys:', Object.keys(stats));
+
   // Build phase performance review HTML
   let performanceHtml = '<div class="phase-performance-review">';
   performanceHtml += `<h3 style="margin:0 0 16px;font-size:15px;color:var(--text);">${currentPhase.name} Performance</h3>`;
+
+  // Show message if no data
+  if (filteredData.length === 0) {
+    performanceHtml += `<p style="color:var(--text-muted);font-size:13px;margin:0;">No tracking data available for this phase yet.</p>`;
+  }
 
   // Sleep stats
   if (stats.sleep) {
