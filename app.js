@@ -423,6 +423,101 @@ window.migrateMovements = async function() {
   }
 };
 
+// Data Audit: Scan all historical data for inconsistencies
+window.auditData = async function() {
+  try {
+    console.log('Starting data audit...');
+    const audit = await apiPost('audit_data');
+
+    // Print summary
+    console.log('\n========== DATA AUDIT REPORT ==========\n');
+    console.log(`Total days with data: ${audit.totalDays}`);
+    console.log(`Date range: ${audit.dateRange.earliest} to ${audit.dateRange.latest}`);
+
+    // Issues summary
+    if (audit.issues.length > 0) {
+      console.log(`\n⚠️  ISSUES FOUND: ${audit.issues.length}`);
+      console.table(audit.issues.map(i => ({
+        Type: i.type,
+        Habit: i.habit || '-',
+        Message: i.message,
+        'Days Affected': i.daysAffected || '-'
+      })));
+    } else {
+      console.log('\n✅ No issues found!');
+    }
+
+    // Habits summary
+    console.log('\n📊 HABITS SUMMARY:');
+    const habitsSummary = Object.entries(audit.habits).map(([key, h]) => ({
+      Habit: key,
+      Description: h.description,
+      'Days With Data': h.daysWithData,
+      'Days Without': h.daysWithoutData,
+      'Coverage %': audit.totalDays > 0 ? Math.round(h.daysWithData / audit.totalDays * 100) + '%' : '0%',
+      'Unique Values': Object.keys(h.uniqueValues).length,
+      'Value Types': Object.keys(h.valueTypes).join(', ') || 'none'
+    }));
+    console.table(habitsSummary);
+
+    // Detailed value breakdown for each habit
+    console.log('\n📋 DETAILED VALUE BREAKDOWN:');
+    Object.entries(audit.habits).forEach(([key, h]) => {
+      if (h.daysWithData > 0) {
+        console.log(`\n${h.description} (${key}):`);
+        const valueRows = Object.entries(h.uniqueValues).map(([val, info]) => ({
+          Value: val.length > 50 ? val.substring(0, 50) + '...' : val,
+          Count: info.count,
+          Type: info.type,
+          'Sample Dates': info.sampleDates.join(', ')
+        }));
+        console.table(valueRows);
+      }
+    });
+
+    // Readings array info
+    if (audit.readingsArray.daysWithReadings > 0) {
+      console.log('\n📖 READINGS ARRAY:');
+      console.log(`  Days with readings: ${audit.readingsArray.daysWithReadings}`);
+      console.log(`  Total reading entries: ${audit.readingsArray.totalEntries}`);
+      console.log(`  Unique books: ${audit.readingsArray.uniqueBooks.length}`);
+      console.log(`  Books: ${audit.readingsArray.uniqueBooks.join(', ')}`);
+      console.log(`  Duration field formats:`, audit.readingsArray.durationFormats);
+      if (audit.readingsArray.samples.length > 0) {
+        console.log('  Samples:', audit.readingsArray.samples);
+      }
+    }
+
+    // Movements array info
+    if (audit.movementsArray.daysWithMovements > 0) {
+      console.log('\n🚶 MOVEMENTS ARRAY:');
+      console.log(`  Days with movements: ${audit.movementsArray.daysWithMovements}`);
+      console.log(`  Total movement entries: ${audit.movementsArray.totalEntries}`);
+      console.log(`  Movement types:`, audit.movementsArray.movementTypes);
+      console.log(`  Duration formats:`, audit.movementsArray.durationFormats);
+      if (audit.movementsArray.samples.length > 0) {
+        console.log('  Samples:', audit.movementsArray.samples);
+      }
+    }
+
+    console.log('\n========== END AUDIT REPORT ==========\n');
+
+    // Show alert summary
+    const issueCount = audit.issues.length;
+    alert(`Data Audit Complete!\n\n` +
+      `📅 ${audit.totalDays} days of data\n` +
+      `📆 ${audit.dateRange.earliest} to ${audit.dateRange.latest}\n` +
+      `${issueCount > 0 ? `⚠️ ${issueCount} issues found` : '✅ No issues found'}\n\n` +
+      `Check console for detailed report.`);
+
+    return audit;
+  } catch (err) {
+    console.error('Audit failed:', err);
+    alert('Audit failed: ' + err.message);
+    throw err;
+  }
+};
+
 // =====================================
 // SWIPE NAVIGATION
 // =====================================

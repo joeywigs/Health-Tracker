@@ -179,6 +179,10 @@ async function handlePost(request, env, corsHeaders) {
     return await migrateMovements(env, corsHeaders);
   }
 
+  if (action === "audit_data") {
+    return await auditData(env, corsHeaders);
+  }
+
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
 }
 
@@ -845,4 +849,240 @@ async function migrateMovements(env, corsHeaders) {
   }
 
   return jsonResponse(results, 200, corsHeaders);
+}
+
+// ===== Data Audit: Scan all data for inconsistencies =====
+async function auditData(env, corsHeaders) {
+  const audit = {
+    totalDays: 0,
+    dateRange: { earliest: null, latest: null },
+    habits: {},
+    issues: [],
+    rawSamples: {}
+  };
+
+  // Define habits to audit with their expected formats
+  const habitsToAudit = [
+    { key: 'sleep', field: 'Hours of Sleep', type: 'numeric', description: 'Sleep hours' },
+    { key: 'agua', fields: ['agua', 'Water', 'Water (glasses)', 'hydrationGood'], type: 'numeric', description: 'Water glasses' },
+    { key: 'steps', field: 'Steps', type: 'numeric', description: 'Daily steps' },
+    { key: 'rehit', field: 'REHIT 2x10', type: 'mixed', description: 'REHIT sessions' },
+    { key: 'movementMorningType', field: 'Morning Movement Type', type: 'string', description: 'Morning movement type' },
+    { key: 'movementMorningDuration', field: 'Morning Movement Duration', type: 'mixed', description: 'Morning movement duration' },
+    { key: 'movementAfternoonType', field: 'Afternoon Movement Type', type: 'string', description: 'Afternoon movement type' },
+    { key: 'movementAfternoonDuration', field: 'Afternoon Movement Duration', type: 'mixed', description: 'Afternoon movement duration' },
+    { key: 'movementsLegacy', field: 'Movements', type: 'legacy', description: 'Legacy movements field' },
+    { key: 'creatine', fields: ['Creatine Chews', 'Creatine'], type: 'boolean', description: 'Creatine supplement' },
+    { key: 'vitaminD', field: 'Vitamin D', type: 'boolean', description: 'Vitamin D supplement' },
+    { key: 'no2', field: 'NO2', type: 'boolean', description: 'NO2 supplement' },
+    { key: 'psyllium', fields: ['Psyllium Husk', 'Psyllium'], type: 'boolean', description: 'Psyllium supplement' },
+    { key: 'breakfast', field: 'Breakfast', type: 'boolean', description: 'Healthy breakfast' },
+    { key: 'lunch', field: 'Lunch', type: 'boolean', description: 'Healthy lunch' },
+    { key: 'dinner', field: 'Dinner', type: 'boolean', description: 'Healthy dinner' },
+    { key: 'daySnacks', fields: ['Healthy Day Snacks', 'Day Snacks'], type: 'boolean', description: 'Healthy day snacks' },
+    { key: 'nightSnacks', fields: ['Healthy Night Snacks', 'Night Snacks'], type: 'boolean', description: 'Healthy night snacks' },
+    { key: 'noAlcohol', field: 'No Alcohol', type: 'boolean', description: 'No alcohol' },
+    { key: 'meditation', fields: ['Meditation', 'Meditated'], type: 'boolean', description: 'Meditation' },
+    { key: 'readingMinutes', field: 'Reading Minutes', type: 'numeric', description: 'Reading minutes (legacy field)' },
+  ];
+
+  // Initialize audit structure for each habit
+  habitsToAudit.forEach(h => {
+    audit.habits[h.key] = {
+      description: h.description,
+      field: h.field || h.fields.join(' | '),
+      expectedType: h.type,
+      daysWithData: 0,
+      daysWithoutData: 0,
+      uniqueValues: {},
+      valueTypes: {},
+      samples: []
+    };
+  });
+
+  // Also track readings array separately
+  audit.readingsArray = {
+    daysWithReadings: 0,
+    totalEntries: 0,
+    uniqueBooks: new Set(),
+    durationFormats: {},
+    samples: []
+  };
+
+  // Also track movements array separately
+  audit.movementsArray = {
+    daysWithMovements: 0,
+    totalEntries: 0,
+    movementTypes: {},
+    durationFormats: {},
+    samples: []
+  };
+
+  // List all daily keys
+  const dailyKeys = await env.HABIT_DATA.list({ prefix: "daily:" });
+  audit.totalDays = dailyKeys.keys.length;
+
+  // Process each day
+  for (const key of dailyKeys.keys) {
+    try {
+      const dateStr = key.name.replace("daily:", "");
+      const daily = await env.HABIT_DATA.get(key.name, "json");
+
+      if (!daily) continue;
+
+      // Track date range
+      if (!audit.dateRange.earliest || dateStr < audit.dateRange.earliest) {
+        audit.dateRange.earliest = dateStr;
+      }
+      if (!audit.dateRange.latest || dateStr > audit.dateRange.latest) {
+        audit.dateRange.latest = dateStr;
+      }
+
+      // Audit each habit
+      habitsToAudit.forEach(h => {
+        const habitAudit = audit.habits[h.key];
+        let value = null;
+
+        // Get value (handle multiple field names)
+        if (h.fields) {
+          for (const f of h.fields) {
+            if (daily[f] !== undefined && daily[f] !== null && daily[f] !== "") {
+              value = daily[f];
+              break;
+            }
+          }
+        } else {
+          value = daily[h.field];
+        }
+
+        // Track if data exists
+        if (value !== undefined && value !== null && value !== "") {
+          habitAudit.daysWithData++;
+
+          // Track value type
+          const valueType = typeof value;
+          habitAudit.valueTypes[valueType] = (habitAudit.valueTypes[valueType] || 0) + 1;
+
+          // Track unique values (stringify for objects/arrays)
+          const valueKey = typeof value === 'object' ? JSON.stringify(value) : String(value);
+          if (!habitAudit.uniqueValues[valueKey]) {
+            habitAudit.uniqueValues[valueKey] = { count: 0, type: valueType, sampleDates: [] };
+          }
+          habitAudit.uniqueValues[valueKey].count++;
+          if (habitAudit.uniqueValues[valueKey].sampleDates.length < 3) {
+            habitAudit.uniqueValues[valueKey].sampleDates.push(dateStr);
+          }
+
+          // Keep some samples
+          if (habitAudit.samples.length < 5) {
+            habitAudit.samples.push({ date: dateStr, value });
+          }
+        } else {
+          habitAudit.daysWithoutData++;
+        }
+      });
+
+      // Check for readings array
+      const readings = await env.HABIT_DATA.get(`readings:${dateStr}`, "json");
+      if (readings && Array.isArray(readings) && readings.length > 0) {
+        audit.readingsArray.daysWithReadings++;
+        audit.readingsArray.totalEntries += readings.length;
+        readings.forEach(r => {
+          if (r.book) audit.readingsArray.uniqueBooks.add(r.book);
+          // Track duration field format
+          const durationKeys = Object.keys(r).filter(k => k.toLowerCase().includes('duration'));
+          durationKeys.forEach(dk => {
+            audit.readingsArray.durationFormats[dk] = (audit.readingsArray.durationFormats[dk] || 0) + 1;
+          });
+        });
+        if (audit.readingsArray.samples.length < 5) {
+          audit.readingsArray.samples.push({ date: dateStr, readings });
+        }
+      }
+
+      // Check for movements array
+      const movements = await env.HABIT_DATA.get(`movements:${dateStr}`, "json");
+      if (movements && Array.isArray(movements) && movements.length > 0) {
+        audit.movementsArray.daysWithMovements++;
+        audit.movementsArray.totalEntries += movements.length;
+        movements.forEach(m => {
+          if (m.type) {
+            audit.movementsArray.movementTypes[m.type] = (audit.movementsArray.movementTypes[m.type] || 0) + 1;
+          }
+          // Track duration format
+          if (m.duration !== undefined) {
+            const durType = typeof m.duration;
+            audit.movementsArray.durationFormats[durType] = (audit.movementsArray.durationFormats[durType] || 0) + 1;
+          }
+        });
+        if (audit.movementsArray.samples.length < 5) {
+          audit.movementsArray.samples.push({ date: dateStr, movements });
+        }
+      }
+
+    } catch (err) {
+      audit.issues.push({ type: 'error', date: key.name, message: err.message });
+    }
+  }
+
+  // Convert Set to array for JSON
+  audit.readingsArray.uniqueBooks = Array.from(audit.readingsArray.uniqueBooks);
+
+  // Analyze for issues
+  habitsToAudit.forEach(h => {
+    const habitAudit = audit.habits[h.key];
+
+    // Flag if multiple value types found for typed fields
+    const typeCount = Object.keys(habitAudit.valueTypes).length;
+    if (typeCount > 1 && h.type !== 'mixed' && h.type !== 'legacy') {
+      audit.issues.push({
+        type: 'mixed_types',
+        habit: h.key,
+        description: h.description,
+        message: `Found ${typeCount} different value types: ${Object.keys(habitAudit.valueTypes).join(', ')}`,
+        types: habitAudit.valueTypes
+      });
+    }
+
+    // Flag legacy data that might need migration
+    if (h.key === 'movementsLegacy' && habitAudit.daysWithData > 0) {
+      audit.issues.push({
+        type: 'legacy_data',
+        habit: h.key,
+        description: h.description,
+        message: `Found ${habitAudit.daysWithData} days with legacy Movements field - may need migration`,
+        daysAffected: habitAudit.daysWithData
+      });
+    }
+
+    // Flag REHIT values that might be ambiguous
+    if (h.key === 'rehit') {
+      const trueCount = (habitAudit.uniqueValues['true']?.count || 0) + (habitAudit.uniqueValues['TRUE']?.count || 0);
+      if (trueCount > 0) {
+        audit.issues.push({
+          type: 'ambiguous_data',
+          habit: h.key,
+          description: h.description,
+          message: `Found ${trueCount} REHIT entries with "true/TRUE" - these are counted as 2x10. Verify this is correct.`,
+          daysAffected: trueCount
+        });
+      }
+    }
+  });
+
+  // Flag if movements array has data but morning/afternoon fields are empty
+  if (audit.movementsArray.daysWithMovements > 0) {
+    const morningDays = audit.habits.movementMorningType.daysWithData;
+    const afternoonDays = audit.habits.movementAfternoonType.daysWithData;
+    if (audit.movementsArray.daysWithMovements > Math.max(morningDays, afternoonDays)) {
+      audit.issues.push({
+        type: 'unmigrated_data',
+        habit: 'movements',
+        message: `Found ${audit.movementsArray.daysWithMovements} days with movements array but only ${morningDays} days with Morning Movement Type. Consider running migration.`,
+        daysAffected: audit.movementsArray.daysWithMovements - morningDays
+      });
+    }
+  }
+
+  return jsonResponse(audit, 200, corsHeaders);
 }

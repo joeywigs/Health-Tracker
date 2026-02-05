@@ -4096,8 +4096,15 @@
         <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
         <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
         <input type="file" id="importSettingsFile" accept=".json" style="display:none">
-        <button type="button" class="btn btn-secondary" id="migrateMovementsBtn" style="width:100%;margin-top:12px;border-color:var(--accent-orange)" onclick="migrateMovements()">🔄 Migrate Movement Data</button>
-        <p style="color:var(--text-muted);font-size:11px;margin:6px 0 0 0">Converts legacy movement breaks to morning/afternoon format</p>
+
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <p style="color:var(--text);font-size:12px;font-weight:600;margin:0 0 8px 0">🔧 Data Tools</p>
+          <button type="button" class="btn btn-secondary" style="width:100%;margin-bottom:8px;border-color:var(--accent-teal)" onclick="auditData()">🔍 Audit All Data</button>
+          <p style="color:var(--text-muted);font-size:11px;margin:0 0 12px 0">Scans all historical data for inconsistencies and issues</p>
+
+          <button type="button" class="btn btn-secondary" style="width:100%;border-color:var(--accent-orange)" onclick="migrateMovements()">🔄 Migrate Movement Data</button>
+          <p style="color:var(--text-muted);font-size:11px;margin:6px 0 0 0">Converts legacy movement breaks to morning/afternoon format</p>
+        </div>
       </div>
     </div>
   </div>
