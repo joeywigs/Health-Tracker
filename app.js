@@ -207,6 +207,9 @@ const dayCache = new Map();        // key: "M/D/YY" -> loadResult
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Habit Tracker booting…");
 
+  // Load phases early so getGoalTarget works correctly
+  try { await loadPhases(); console.log("phases loaded"); } catch(e) { console.error("loadPhases failed:", e); }
+
   try { setupDateNav(); console.log("1 ok"); } catch(e) { console.error("setupDateNav failed:", e); }
   try { setupCheckboxes(); console.log("2 ok"); } catch(e) { console.error("setupCheckboxes failed:", e); }
   try { setupRehitMutualExclusion(); console.log("3 ok"); } catch(e) { console.error("setupRehitMutualExclusion failed:", e); }
@@ -247,37 +250,73 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-const PHASE_START_DATE = new Date("2026-01-19T00:00:00"); // Phase 1 start (local)
-const PHASE_LENGTH_DAYS = 21;
-
 function updatePhaseInfo() {
-  const start = new Date(PHASE_START_DATE);
-  start.setHours(0, 0, 0, 0);
+  const phase = getCurrentPhase();
+  if (!phase) {
+    // Fallback if phases haven't loaded yet
+    const phaseInfoEl = document.getElementById("phaseInfo");
+    if (phaseInfoEl) phaseInfoEl.textContent = "Loading...";
+    return;
+  }
 
+  const phaseStart = parseDataDate(phase.start);
   const cur = new Date(currentDate);
   cur.setHours(0, 0, 0, 0);
 
   const msPerDay = 1000 * 60 * 60 * 24;
-  const daysSinceStart = Math.floor((cur - start) / msPerDay);
-
-  // If before start date, treat as Phase 0 / Day 0
-  const safeDays = Math.max(0, daysSinceStart);
-  const phase = Math.floor(safeDays / PHASE_LENGTH_DAYS) + 1;
-  const dayInPhase = (safeDays % PHASE_LENGTH_DAYS) + 1;
+  const daysSinceStart = Math.floor((cur - phaseStart) / msPerDay);
+  const dayInPhase = Math.max(1, Math.min(phase.length, daysSinceStart + 1));
 
   const phaseInfoEl = document.getElementById("phaseInfo");
-  if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH_DAYS}`;
+  if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${phase.length}`;
 
-  // Update subtitle "Phase X"
+  // Update subtitle with phase name
   const subtitleEl = document.querySelector(".subtitle");
-  if (subtitleEl) subtitleEl.textContent = `Phase ${phase}`;
+  if (subtitleEl) subtitleEl.textContent = phase.name;
 
   // Progress bar width
   const bar = document.getElementById("phaseProgressBar");
   if (bar) {
-    const progress = (dayInPhase - 1) / PHASE_LENGTH_DAYS; // 0..(20/21)
+    const progress = (dayInPhase - 1) / phase.length;
     bar.style.width = `${Math.round(progress * 100)}%`;
   }
+
+  // Check if we need to prompt for new phase
+  checkPhaseTransition();
+}
+
+// Check if phase is ending soon and prompt for new phase setup
+function checkPhaseTransition() {
+  const upcoming = getUpcomingPhaseNeeded();
+  if (upcoming) {
+    showPhaseTransitionBanner(upcoming);
+  } else {
+    hidePhaseTransitionBanner();
+  }
+}
+
+function showPhaseTransitionBanner(upcoming) {
+  let banner = document.getElementById('phaseTransitionBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'phaseTransitionBanner';
+    banner.className = 'phase-transition-banner';
+    document.body.appendChild(banner);
+  }
+
+  const daysText = upcoming.daysRemaining === 1 ? '1 day' : `${upcoming.daysRemaining} days`;
+  banner.innerHTML = `
+    <div class="phase-banner-content">
+      <span>${upcoming.currentPhase.name} ends in ${daysText}!</span>
+      <button onclick="openNewPhaseModal()">Plan Phase ${upcoming.nextPhaseId}</button>
+    </div>
+  `;
+  banner.style.display = 'block';
+}
+
+function hidePhaseTransitionBanner() {
+  const banner = document.getElementById('phaseTransitionBanner');
+  if (banner) banner.style.display = 'none';
 }
 
 
@@ -551,17 +590,51 @@ function setupWeeklySummaryButton() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.summary-range-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      
+
       const range = btn.dataset.range;
-      const rangeValue = range === 'phase' ? 'phase' : 'all';
-      
+      if (range === 'all') {
+        currentSummaryPhaseId = null;
+        // Hide phase selector for All Time view
+        const selector = document.getElementById('phaseSelector');
+        if (selector) selector.style.display = 'none';
+      } else {
+        // Show phase selector for phase view
+        const selector = document.getElementById('phaseSelector');
+        if (selector) selector.style.display = 'block';
+        currentSummaryPhaseId = parseInt(selector?.value) || getCurrentPhase()?.id;
+      }
+
       if (chartDataCache && chartDataCache.length > 0) {
-        renderSummaryPage(chartDataCache, rangeValue);
+        renderSummaryPage(chartDataCache, range === 'all' ? 'all' : 'phase');
       }
     });
   });
-  
+
+  // Setup phase selector
+  const phaseSelector = document.getElementById('phaseSelector');
+  if (phaseSelector) {
+    phaseSelector.addEventListener('change', () => {
+      currentSummaryPhaseId = parseInt(phaseSelector.value);
+      if (chartDataCache && chartDataCache.length > 0) {
+        renderSummaryPage(chartDataCache, 'phase');
+      }
+    });
+  }
+
   console.log("✅ Weekly summary wired");
+}
+
+// Populate the phase selector dropdown
+function populatePhaseSelector() {
+  const selector = document.getElementById('phaseSelector');
+  if (!selector || !phasesData.length) return;
+
+  const currentPhase = getCurrentPhase();
+  selector.innerHTML = phasesData.map(p =>
+    `<option value="${p.id}" ${p.id === currentPhase?.id ? 'selected' : ''}>${p.name}</option>`
+  ).join('');
+
+  currentSummaryPhaseId = currentPhase?.id;
 }
 
 function updateWeeklySummaryButton() {
@@ -575,16 +648,19 @@ async function showWeeklySummaryPage() {
   const summaryPage = document.getElementById("weeklySummaryPage");
   const settingsPage = document.getElementById("settingsPage");
   const fab = document.getElementById("quickLogFab");
-  
+
   if (mainPage) mainPage.style.display = "none";
   if (chartsPage) chartsPage.style.display = "none";
   if (bioPage) bioPage.style.display = "none";
   if (settingsPage) settingsPage.style.display = "none";
   if (summaryPage) summaryPage.style.display = "block";
   if (fab) fab.style.display = "none";
-  
+
   window.scrollTo(0, 0);
-  
+
+  // Populate phase selector dropdown
+  populatePhaseSelector();
+
   await loadWeeklySummary();
 }
 
@@ -630,13 +706,275 @@ async function loadWeeklySummary() {
 
 // Summary page state
 let currentSummaryRange = 'phase';
+let currentSummaryPhaseId = null; // Which phase to show in summary
+
+// Phases system
+let phasesData = []; // Loaded from API
+
+// Legacy fallback constants (used if phases haven't loaded yet)
 const PHASE_START = new Date("2026-01-19");
 const PHASE_LENGTH = 21;
 
+// Load phases from API
+async function loadPhases() {
+  try {
+    const resp = await fetch(`${API_BASE}?action=phases_load`);
+    const data = await resp.json();
+    if (data.phases && Array.isArray(data.phases)) {
+      phasesData = data.phases;
+      console.log('Loaded phases:', phasesData.length);
+    }
+  } catch (err) {
+    console.error('Failed to load phases:', err);
+  }
+}
+
+// Save phases to API
+async function savePhases() {
+  try {
+    const resp = await fetch(`${API_BASE}?action=phases_save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phases: phasesData })
+    });
+    const data = await resp.json();
+    return data.success;
+  } catch (err) {
+    console.error('Failed to save phases:', err);
+    return false;
+  }
+}
+
+// Get current phase based on a date (defaults to today)
+function getCurrentPhase(forDate = new Date()) {
+  if (!phasesData.length) return null;
+
+  const checkDate = new Date(forDate);
+  checkDate.setHours(0, 0, 0, 0);
+
+  // Find which phase this date falls into
+  for (let i = phasesData.length - 1; i >= 0; i--) {
+    const phase = phasesData[i];
+    const phaseStart = parseDataDate(phase.start);
+    const phaseEnd = new Date(phaseStart);
+    phaseEnd.setDate(phaseStart.getDate() + phase.length - 1);
+
+    if (checkDate >= phaseStart && checkDate <= phaseEnd) {
+      return phase;
+    }
+  }
+
+  // If date is after all phases, return the last phase
+  const lastPhase = phasesData[phasesData.length - 1];
+  const lastPhaseStart = parseDataDate(lastPhase.start);
+  if (checkDate > lastPhaseStart) {
+    return lastPhase;
+  }
+
+  // If date is before all phases, return the first phase
+  return phasesData[0];
+}
+
+// Get a phase by ID
+function getPhaseById(id) {
+  return phasesData.find(p => p.id === id) || null;
+}
+
+// Get the next phase that needs to be created (if current phase is ending soon)
+function getUpcomingPhaseNeeded() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const currentPhase = getCurrentPhase();
+  if (!currentPhase) return null;
+
+  const phaseStart = parseDataDate(currentPhase.start);
+  const phaseEnd = new Date(phaseStart);
+  phaseEnd.setDate(phaseStart.getDate() + currentPhase.length - 1);
+
+  const daysRemaining = Math.ceil((phaseEnd - today) / (1000 * 60 * 60 * 24));
+
+  // Check if next phase already exists
+  const nextPhaseId = currentPhase.id + 1;
+  const nextPhaseExists = phasesData.some(p => p.id === nextPhaseId);
+
+  // If 3 or fewer days remaining and next phase doesn't exist, prompt for new phase
+  if (daysRemaining <= 3 && !nextPhaseExists) {
+    return {
+      nextPhaseId,
+      daysRemaining,
+      currentPhase
+    };
+  }
+
+  return null;
+}
+
+// Open modal to create a new phase
+function openNewPhaseModal(fromPhaseId = null) {
+  const currentPhase = fromPhaseId ? getPhaseById(fromPhaseId) : getCurrentPhase();
+  if (!currentPhase) return;
+
+  const nextPhaseId = currentPhase.id + 1;
+  const phaseStart = parseDataDate(currentPhase.start);
+  const nextStart = new Date(phaseStart);
+  nextStart.setDate(phaseStart.getDate() + currentPhase.length);
+  const nextStartStr = `${nextStart.getMonth() + 1}/${nextStart.getDate()}/${String(nextStart.getFullYear()).slice(-2)}`;
+
+  // Calculate current phase stats for each goal
+  const filteredData = chartDataCache ? getFilteredData(chartDataCache, 'phase', currentPhase.id) : [];
+  const stats = filteredData.length > 0 ? calculateGoalStats(filteredData, 'phase') : {};
+
+  // Build modal content
+  let goalsHtml = '';
+  const goalKeys = Object.keys(currentPhase.goals || {});
+
+  goalKeys.forEach(key => {
+    const goal = currentPhase.goals[key];
+    const stat = stats[key];
+    const currentTarget = goal.target;
+    const pct = stat?.pct || 0;
+
+    // Smart suggestion logic
+    let suggestion = currentTarget;
+    let suggestionText = '';
+    if (typeof currentTarget === 'number') {
+      if (pct >= 90) {
+        suggestion = key === 'steps' ? currentTarget + 500 : currentTarget + 1;
+        suggestionText = `<span class="suggestion-good">Great job at ${pct}%! Consider increasing.</span>`;
+      } else if (pct >= 70) {
+        suggestionText = `<span class="suggestion-ok">Good progress at ${pct}%. Keep building.</span>`;
+      } else if (pct > 0) {
+        suggestionText = `<span class="suggestion-work">At ${pct}%. Stay here or adjust down.</span>`;
+      }
+    }
+
+    const inputType = typeof currentTarget === 'boolean' ? 'checkbox' : 'number';
+    const inputValue = typeof currentTarget === 'boolean'
+      ? (currentTarget ? 'checked' : '')
+      : `value="${suggestion}"`;
+
+    goalsHtml += `
+      <div class="phase-goal-row">
+        <div class="phase-goal-info">
+          <span class="phase-goal-name">${goal.description || key}</span>
+          <span class="phase-goal-current">Current: ${currentTarget}${goal.unit !== 'bool' ? ' ' + goal.unit : ''}</span>
+          ${suggestionText}
+        </div>
+        <div class="phase-goal-input">
+          ${inputType === 'checkbox'
+            ? `<input type="checkbox" id="newPhaseGoal_${key}" ${inputValue}>`
+            : `<input type="number" id="newPhaseGoal_${key}" ${inputValue} min="0" step="${key === 'steps' ? 500 : 1}">`
+          }
+          ${goal.unit !== 'bool' ? `<span class="phase-goal-unit">${goal.unit}</span>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  // Create modal
+  let modal = document.getElementById('newPhaseModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'newPhaseModal';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="modal-content phase-modal">
+      <div class="modal-header">
+        <h2>Plan Phase ${nextPhaseId}</h2>
+        <button class="modal-close" onclick="closeNewPhaseModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="phase-modal-info">
+          <p>Review your ${currentPhase.name} performance and set goals for Phase ${nextPhaseId}.</p>
+          <p class="phase-dates">Starts: ${nextStartStr} (${currentPhase.length} days)</p>
+        </div>
+        <div class="phase-goals-list">
+          ${goalsHtml}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeNewPhaseModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveNewPhase(${nextPhaseId}, '${nextStartStr}', ${currentPhase.length})">Create Phase ${nextPhaseId}</button>
+      </div>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeNewPhaseModal() {
+  const modal = document.getElementById('newPhaseModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function saveNewPhase(phaseId, startDate, length) {
+  const currentPhase = getCurrentPhase();
+  if (!currentPhase) return;
+
+  // Build new phase goals from form inputs
+  const newGoals = {};
+  const goalKeys = Object.keys(currentPhase.goals || {});
+
+  goalKeys.forEach(key => {
+    const input = document.getElementById(`newPhaseGoal_${key}`);
+    const currentGoal = currentPhase.goals[key];
+
+    if (input) {
+      let target;
+      if (input.type === 'checkbox') {
+        target = input.checked;
+      } else {
+        target = parseFloat(input.value) || currentGoal.target;
+      }
+
+      newGoals[key] = {
+        ...currentGoal,
+        target
+      };
+    } else {
+      newGoals[key] = { ...currentGoal };
+    }
+  });
+
+  // Create new phase object
+  const newPhase = {
+    id: phaseId,
+    name: `Phase ${phaseId}`,
+    start: startDate,
+    length: length,
+    goals: newGoals
+  };
+
+  // Add to phases and save
+  phasesData.push(newPhase);
+  const success = await savePhases();
+
+  if (success) {
+    closeNewPhaseModal();
+    hidePhaseTransitionBanner();
+    updatePhaseInfo();
+    showToast(`Phase ${phaseId} created!`);
+  } else {
+    showToast('Failed to save phase. Please try again.');
+    // Remove the phase we just added since save failed
+    phasesData.pop();
+  }
+}
+
 // Goals configuration
-// Goal targets — getGoalTarget() reads from appSettings (set in index.html)
-// so changes in Settings apply retroactively to all calculations.
-function getGoalTarget(key) {
+// Goal targets — now reads from current phase goals first
+function getGoalTarget(key, phaseId = null) {
+  // If specific phase requested, use that phase's goals
+  const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
+  if (phase && phase.goals && phase.goals[key]) {
+    return phase.goals[key].target;
+  }
+
+  // Fallback to appSettings
   if (typeof appSettings !== 'undefined') {
     if (key === 'agua' && appSettings.aguaGoal) return appSettings.aguaGoal;
     if (key === 'steps' && appSettings.stepsGoal) return appSettings.stepsGoal;
@@ -658,11 +996,26 @@ const GOALS = {
   reading: { name: "Reading", icon: "📖", target: 60, unit: "min", type: "weekly" }
 };
 
-function getFilteredData(data, range) {
+function getFilteredData(data, range, phaseId = null) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (range === 'phase') {
+  if (range === 'phase' || typeof range === 'number') {
+    // If range is a number, treat it as a phase ID
+    const targetPhaseId = typeof range === 'number' ? range : (phaseId || getCurrentPhase()?.id);
+    const phase = getPhaseById(targetPhaseId);
+
+    if (phase) {
+      const phaseStart = parseDataDate(phase.start);
+      const phaseEnd = new Date(phaseStart);
+      phaseEnd.setDate(phaseStart.getDate() + phase.length - 1);
+      return data.filter(d => {
+        const date = parseDataDate(d.date);
+        return date >= phaseStart && date <= Math.min(phaseEnd, today);
+      });
+    }
+
+    // Fallback to legacy constants if no phase found
     const phaseStart = new Date(PHASE_START);
     phaseStart.setHours(0, 0, 0, 0);
     const phaseEnd = new Date(phaseStart);
@@ -689,16 +1042,28 @@ function parseDataDate(dateStr) {
   return new Date(dateStr);
 }
 
-function calculateGoalStats(data, range) {
+function calculateGoalStats(data, range, phaseId = null) {
   const stats = {};
   const totalDaysLogged = data.length;
+
+  // Get the phase for goal targets
+  const targetPhaseId = phaseId || currentSummaryPhaseId;
+  const phase = targetPhaseId ? getPhaseById(targetPhaseId) : getCurrentPhase();
 
   // Calculate elapsed days based on range
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   let elapsedDays, elapsedWeeks;
 
-  if (range === 'phase') {
+  if (range === 'phase' && phase) {
+    const phaseStart = parseDataDate(phase.start);
+    const phaseEnd = new Date(phaseStart);
+    phaseEnd.setDate(phaseStart.getDate() + phase.length - 1);
+    const effectiveEnd = phaseEnd < today ? phaseEnd : today;
+    elapsedDays = Math.max(1, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
+    elapsedWeeks = Math.max(1, Math.ceil(elapsedDays / 7));
+  } else if (range === 'phase') {
+    // Fallback to legacy constants
     const phaseStart = new Date(PHASE_START);
     phaseStart.setHours(0, 0, 0, 0);
     elapsedDays = Math.min(PHASE_LENGTH, Math.max(1, Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1));
@@ -716,22 +1081,29 @@ function calculateGoalStats(data, range) {
     }
   }
 
+  // Helper to get goal target for this specific phase
+  const getTarget = (key) => getGoalTarget(key, targetPhaseId);
+
   // Sleep: goal is 7+ hours
+  const sleepTarget = getTarget('sleep');
   const sleepValues = data.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
-  const sleepDaysMet = sleepValues.filter(v => v >= getGoalTarget('sleep')).length;
+  const sleepDaysMet = sleepValues.filter(v => v >= sleepTarget).length;
   stats.sleep = {
     pct: elapsedDays > 0 ? Math.round((sleepDaysMet / elapsedDays) * 100) : 0,
     avg: sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : 0,
-    detail: `${sleepDaysMet}/${elapsedDays} days 7+ hrs`
+    detail: `${sleepDaysMet}/${elapsedDays} days ${sleepTarget}+ hrs`,
+    target: sleepTarget
   };
 
   // Agua: goal is 6+ glasses per day
+  const aguaTarget = getTarget('agua');
   const waterValues = data.map(d => parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"])).filter(v => !isNaN(v));
-  const waterDaysMet = waterValues.filter(v => v >= getGoalTarget('agua')).length;
+  const waterDaysMet = waterValues.filter(v => v >= aguaTarget).length;
   stats.agua = {
     pct: elapsedDays > 0 ? Math.round((waterDaysMet / elapsedDays) * 100) : 0,
     avg: waterValues.length > 0 ? (waterValues.reduce((a,b) => a+b, 0) / waterValues.length).toFixed(1) : 0,
-    detail: `${waterDaysMet}/${elapsedDays} days at 6+`
+    detail: `${waterDaysMet}/${elapsedDays} days at ${aguaTarget}+`,
+    target: aguaTarget
   };
 
   // Supps: all 4 each day
@@ -749,25 +1121,30 @@ function calculateGoalStats(data, range) {
     detail: `${suppsDaysMet}/${elapsedDays} days all 4`
   };
 
-  // REHIT: 3 sessions per week
+  // REHIT: sessions per week
+  const rehitTarget = getTarget('rehit');
   const rehitCount = data.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
   const rehitPerWeek = rehitCount / elapsedWeeks;
   stats.rehit = {
-    pct: Math.min(100, Math.round((rehitPerWeek / getGoalTarget('rehit')) * 100)),
+    pct: Math.min(100, Math.round((rehitPerWeek / rehitTarget) * 100)),
     total: rehitCount,
-    detail: `${rehitCount} sessions (${rehitPerWeek.toFixed(1)}/wk)`
+    detail: `${rehitCount} sessions (${rehitPerWeek.toFixed(1)}/wk)`,
+    target: rehitTarget
   };
 
-  // Steps: 5000 per day average
+  // Steps: daily average
+  const stepsTarget = getTarget('steps');
   const stepsValues = data.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
   const avgSteps = stepsValues.length > 0 ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
   stats.steps = {
-    pct: Math.min(100, Math.round((avgSteps / getGoalTarget('steps')) * 100)),
+    pct: Math.min(100, Math.round((avgSteps / stepsTarget) * 100)),
     avg: Math.round(avgSteps),
-    detail: `${Math.round(avgSteps).toLocaleString()} avg steps`
+    detail: `${Math.round(avgSteps).toLocaleString()} avg steps`,
+    target: stepsTarget
   };
 
   // Movement: days with 2+ movement breaks
+  const movementTarget = getTarget('movement');
   let movementDaysMet = 0;
   data.forEach(d => {
     let breakCount = 0;
@@ -781,15 +1158,16 @@ function calculateGoalStats(data, range) {
     } else if (Array.isArray(movements)) {
       breakCount += movements.length;
     }
-    if (breakCount >= 2) movementDaysMet++;
+    if (breakCount >= movementTarget) movementDaysMet++;
   });
   stats.movement = {
     pct: elapsedDays > 0 ? Math.round((movementDaysMet / elapsedDays) * 100) : 0,
-    detail: `${movementDaysMet}/${elapsedDays} days 2+ breaks`
+    detail: `${movementDaysMet}/${elapsedDays} days ${movementTarget}+ breaks`,
+    target: movementTarget
   };
 
-  // Reading: weeks with 60+ minutes
-  // Group reading by week and count weeks meeting goal
+  // Reading: weeks with target minutes
+  const readingTarget = getTarget('reading');
   const weeklyReading = {};
   data.forEach(d => {
     const date = parseDataDate(d.date);
@@ -799,11 +1177,12 @@ function calculateGoalStats(data, range) {
     const mins = parseInt(d.daily["Reading Minutes"]) || 0;
     weeklyReading[weekKey] = (weeklyReading[weekKey] || 0) + mins;
   });
-  const weeksWithReading = Object.values(weeklyReading).filter(mins => mins >= getGoalTarget('reading')).length;
+  const weeksWithReading = Object.values(weeklyReading).filter(mins => mins >= readingTarget).length;
   stats.reading = {
     pct: elapsedWeeks > 0 ? Math.round((weeksWithReading / elapsedWeeks) * 100) : 0,
     total: Object.values(weeklyReading).reduce((a,b) => a+b, 0),
-    detail: `${weeksWithReading}/${elapsedWeeks} weeks 60+ min`
+    detail: `${weeksWithReading}/${elapsedWeeks} weeks ${readingTarget}+ min`,
+    target: readingTarget
   };
 
   // Nutrition stats
@@ -883,18 +1262,19 @@ function calculateGoalStats(data, range) {
 
 function renderSummaryPage(data, range) {
   currentSummaryRange = range;
-  const filteredData = getFilteredData(data, range);
-  const stats = calculateGoalStats(filteredData, range);
-  
+  const phaseId = range === 'phase' ? currentSummaryPhaseId : null;
+  const filteredData = getFilteredData(data, range, phaseId);
+  const stats = calculateGoalStats(filteredData, range, phaseId);
+
   // Overview stats
-  renderSummaryOverview(filteredData, stats, range, data);
-  
+  renderSummaryOverview(filteredData, stats, range, data, phaseId);
+
   // REHIT Calendar
-  renderSummaryRehitCalendar(data, range);
-  
+  renderSummaryRehitCalendar(data, range, phaseId);
+
   // Goal performance
   renderGoalPerformance(stats);
-  
+
   // Category stats
   renderHealthGoals(stats);
   renderNutritionStats(stats);
@@ -903,21 +1283,43 @@ function renderSummaryPage(data, range) {
   renderWritingStats(stats);
 }
 
-function renderSummaryOverview(data, stats, range, allData) {
+function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
   const container = document.getElementById('summaryOverview');
   if (!container) return;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const phaseStart = new Date(PHASE_START);
+
+  // Get the selected phase or current phase
+  const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
+
+  let phaseStart, phaseLength, phaseName;
+  if (phase) {
+    phaseStart = parseDataDate(phase.start);
+    phaseLength = phase.length;
+    phaseName = phase.name;
+  } else {
+    phaseStart = new Date(PHASE_START);
+    phaseLength = PHASE_LENGTH;
+    phaseName = 'Phase 1';
+  }
   phaseStart.setHours(0, 0, 0, 0);
 
-  const daysIntoPhase = Math.max(0, Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
-  const daysRemaining = Math.max(0, PHASE_LENGTH - daysIntoPhase);
-  const elapsedDays = range === 'phase' ? Math.min(daysIntoPhase, PHASE_LENGTH) : daysIntoPhase;
+  const phaseEnd = new Date(phaseStart);
+  phaseEnd.setDate(phaseStart.getDate() + phaseLength - 1);
+
+  // Calculate days for this phase
+  const isPhaseComplete = today > phaseEnd;
+  const effectiveEnd = isPhaseComplete ? phaseEnd : today;
+  const daysIntoPhase = Math.max(0, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
+  const daysRemaining = Math.max(0, phaseLength - daysIntoPhase);
+  const elapsedDays = range === 'phase' ? Math.min(daysIntoPhase, phaseLength) : daysIntoPhase;
   const totalDaysLogged = data.length;
   const currentStreak = calculateCurrentStreak();
   const pctLogged = elapsedDays > 0 ? Math.round((totalDaysLogged / elapsedDays) * 100) : 0;
+
+  // Show different content based on whether viewing current or past phase
+  const statusText = isPhaseComplete ? 'Complete!' : (daysRemaining > 0 ? daysRemaining + ' remaining' : 'Complete!');
 
   container.innerHTML = `
     <div class="summary-stat">
@@ -925,9 +1327,9 @@ function renderSummaryOverview(data, stats, range, allData) {
       <div class="summary-stat-label">${pctLogged}% of days logged</div>
     </div>
     <div class="summary-stat">
-      <div class="summary-stat-value">${Math.min(daysIntoPhase, PHASE_LENGTH)}</div>
-      <div class="summary-stat-label">Days into Phase</div>
-      <div class="summary-stat-sub">${daysRemaining > 0 ? daysRemaining + ' remaining' : 'Complete!'}</div>
+      <div class="summary-stat-value">${Math.min(daysIntoPhase, phaseLength)}</div>
+      <div class="summary-stat-label">Days ${isPhaseComplete ? 'in' : 'into'} ${phaseName}</div>
+      <div class="summary-stat-sub">${statusText}</div>
     </div>
     <div class="summary-stat">
       <div class="summary-stat-value">${stats.rehit.total}</div>
@@ -936,12 +1338,12 @@ function renderSummaryOverview(data, stats, range, allData) {
   `;
 }
 
-function renderSummaryRehitCalendar(data, range) {
+function renderSummaryRehitCalendar(data, range, phaseId = null) {
   const container = document.getElementById('summaryRehitCalendar');
   if (!container) return;
 
   // Build rehit data map from filtered data for the selected range
-  const filteredData = getFilteredData(data, range);
+  const filteredData = getFilteredData(data, range, phaseId);
   const rehitMap = {};
   filteredData.forEach(d => {
     const val = d.daily["REHIT 2x10"];
@@ -956,8 +1358,10 @@ function renderSummaryRehitCalendar(data, range) {
     // Show last 7 days (matching the data filter)
     renderLast7DaysCalendar(container, rehitMap);
   } else if (range === 'phase') {
-    // Show phase month(s)
-    renderMonthCalendar(container, rehitMap, new Date(PHASE_START));
+    // Show phase month(s) - use selected phase's start date
+    const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
+    const phaseStart = phase ? parseDataDate(phase.start) : new Date(PHASE_START);
+    renderMonthCalendar(container, rehitMap, phaseStart);
   } else {
     // Show 30 days
     renderMonthCalendar(container, rehitMap, new Date());

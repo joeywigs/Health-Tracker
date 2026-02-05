@@ -10,6 +10,7 @@
  * - meta:lastWeekAverages → { cached averages }
  * - bedtime:items → [ array of bedtime routine items ]
  * - workouts:{date} → [ array of workouts for that date ]
+ * - phases → [ array of phase configurations ]
  */
 
 export default {
@@ -80,6 +81,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadBedtimeItems(env, corsHeaders);
   }
 
+  if (action === "phases_load") {
+    return await loadPhases(env, corsHeaders);
+  }
+
   if (action === "rehit_week") {
     const date = url.searchParams.get("date");
     if (!date) {
@@ -139,6 +144,13 @@ async function handlePost(request, env, corsHeaders) {
       return jsonResponse({ error: true, message: "Missing items array" }, 400, corsHeaders);
     }
     return await saveBedtimeItems(body.items, env, corsHeaders);
+  }
+
+  if (action === "phases_save") {
+    if (!body.phases || !Array.isArray(body.phases)) {
+      return jsonResponse({ error: true, message: "Missing phases array" }, 400, corsHeaders);
+    }
+    return await savePhases(body.phases, env, corsHeaders);
   }
 
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
@@ -558,6 +570,43 @@ async function loadBedtimeItems(env, corsHeaders) {
 async function saveBedtimeItems(items, env, corsHeaders) {
   await env.HABIT_DATA.put("bedtime:items", JSON.stringify(items));
   return jsonResponse({ success: true }, 200, corsHeaders);
+}
+
+// ===== Phases =====
+async function loadPhases(env, corsHeaders) {
+  const phases = await env.HABIT_DATA.get("phases", "json");
+
+  // Return default Phase 1 if no phases exist
+  const defaultPhases = [
+    {
+      id: 1,
+      name: "Phase 1",
+      start: "1/19/26",
+      length: 21,
+      goals: {
+        sleep: { target: 7, unit: "hrs", type: "daily", description: "Hours of sleep" },
+        agua: { target: 6, unit: "glasses", type: "daily", description: "Glasses of water" },
+        steps: { target: 5000, unit: "steps", type: "daily", description: "Daily steps" },
+        rehit: { target: 3, unit: "sessions", type: "weekly", description: "REHIT sessions per week" },
+        reading: { target: 60, unit: "min", type: "weekly", description: "Reading minutes per week" },
+        movement: { target: 2, unit: "breaks", type: "daily", description: "Movement breaks" },
+        meals: { target: 2, unit: "meals", type: "daily", description: "Healthy meals" },
+        supps: { target: 4, unit: "supps", type: "daily", description: "All 4 supplements" },
+        noAlcohol: { target: true, unit: "bool", type: "daily", description: "No alcohol" },
+        meditation: { target: true, unit: "bool", type: "daily", description: "Daily meditation" },
+        snacks: { target: 2, unit: "checks", type: "daily", description: "Healthy snacks (day + night)" }
+      }
+    }
+  ];
+
+  return jsonResponse({
+    phases: phases || defaultPhases
+  }, 200, corsHeaders);
+}
+
+async function savePhases(phases, env, corsHeaders) {
+  await env.HABIT_DATA.put("phases", JSON.stringify(phases));
+  return jsonResponse({ success: true, count: phases.length }, 200, corsHeaders);
 }
 
 // ===== Helpers =====

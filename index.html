@@ -892,7 +892,200 @@
     body.day-mode #customLogModal .modal-content {
       background: rgba(255,255,255,0.95);
     }
-    
+
+    /* Phase System Styles */
+    .phase-transition-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 16px;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .phase-banner-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .phase-banner-content span {
+      font-weight: 500;
+    }
+    .phase-banner-content button {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+    }
+    .phase-modal {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-size: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .modal-footer button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border) !important;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .phase-modal-info {
+      margin-bottom: 20px;
+    }
+    .phase-modal-info p {
+      margin: 0 0 8px;
+      color: var(--text-muted);
+    }
+    .phase-dates {
+      font-weight: 500;
+      color: var(--text) !important;
+    }
+
+    .phase-goals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .phase-goal-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .phase-goal-info {
+      flex: 1;
+    }
+    .phase-goal-name {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .phase-goal-current {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .phase-goal-input {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .phase-goal-input input[type="number"] {
+      width: 70px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      text-align: center;
+      font-size: 16px;
+    }
+    .phase-goal-input input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+    }
+    .phase-goal-unit {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .suggestion-good { color: #4CAF50; font-size: 11px; display: block; margin-top: 4px; }
+    .suggestion-ok { color: #FF9800; font-size: 11px; display: block; margin-top: 4px; }
+    .suggestion-work { color: #f44336; font-size: 11px; display: block; margin-top: 4px; }
+
+    /* Phase selector */
+    .summary-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .phase-selector {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
     /* Mini Supplements (in own card) */
     .mini-supps-grid {
       display: grid;
@@ -2570,8 +2763,11 @@
         <div class="brand"><div class="logo">📈</div><div><h1>Phase Summary</h1></div></div>
         <button type="button" id="summaryCloseBtn" class="nav-link">✕</button>
       </div>
-      <div style="display:flex;gap:8px;margin-top:16px">
-        <button type="button" class="summary-range-btn btn btn-secondary active" data-range="phase">Phase</button>
+      <div class="summary-controls">
+        <select id="phaseSelector" class="phase-selector">
+          <!-- Populated by JS -->
+        </select>
+        <button type="button" class="summary-range-btn btn btn-secondary active" data-range="phase">Current Phase</button>
         <button type="button" class="summary-range-btn btn btn-secondary" data-range="all">All Time</button>
       </div>
     </header>
