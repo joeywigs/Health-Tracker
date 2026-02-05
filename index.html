@@ -4094,8 +4094,10 @@
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-pink);--icon-end:var(--accent-orange);--icon-glow:var(--glow-pink)">💾</div><span class="sec-name">Data</span></div></div>
       <div class="sec-content">
         <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
-        <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%">Import Settings</button>
+        <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
         <input type="file" id="importSettingsFile" accept=".json" style="display:none">
+        <button type="button" class="btn btn-secondary" id="migrateMovementsBtn" style="width:100%;margin-top:12px;border-color:var(--accent-orange)" onclick="migrateMovements()">🔄 Migrate Movement Data</button>
+        <p style="color:var(--text-muted);font-size:11px;margin:6px 0 0 0">Converts legacy movement breaks to morning/afternoon format</p>
       </div>
     </div>
   </div>

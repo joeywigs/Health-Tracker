@@ -403,6 +403,26 @@ window.unlockDay = function() {
   setTimeout(() => { dayUnlocked = false; }, 100);
 };
 
+// Migration: Convert legacy movements to morning/afternoon format
+window.migrateMovements = async function() {
+  try {
+    const result = await apiPost('migrate_movements');
+    console.log('Migration complete:', result);
+    alert(`Migration complete!\n\nMigrated: ${result.migrated} days\nSkipped: ${result.skipped} days\nErrors: ${result.errors?.length || 0}\n\nCheck console for details.`);
+    if (result.details && result.details.length > 0) {
+      console.table(result.details);
+    }
+    if (result.errors && result.errors.length > 0) {
+      console.warn('Migration errors:', result.errors);
+    }
+    return result;
+  } catch (err) {
+    console.error('Migration failed:', err);
+    alert('Migration failed: ' + err.message);
+    throw err;
+  }
+};
+
 // =====================================
 // SWIPE NAVIGATION
 // =====================================
