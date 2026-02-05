@@ -1231,6 +1231,17 @@
       box-shadow: 0 0 12px var(--icon-glow, var(--glow-purple));
     }
     .sec-name { font-size: 14px; font-weight: 600; color: #ffffff; }
+    .streak-badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: #ffa552;
+      margin-left: 8px;
+      animation: streak-glow 2s ease-in-out infinite;
+    }
+    @keyframes streak-glow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
     .sec-toggle { color: rgba(255,255,255,0.5); font-size: 11px; transition: transform 0.3s; }
     .sec-head.collapsed .sec-toggle { transform: rotate(-90deg); }
     .sec-content { transition: max-height 0.3s, opacity 0.3s; overflow: hidden; }
@@ -2216,7 +2227,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v7.8</span></h1>
+<h1>Habits <span class="version">v7.9</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>

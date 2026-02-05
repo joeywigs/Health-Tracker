@@ -1337,17 +1337,19 @@ let currentChartRange = 7; // Default to 7 days
 
 async function prefetchChartData() {
   if (chartDataCache || chartDataLoading) return;
-  
+
   chartDataLoading = true;
   console.log("📊 Prefetching chart data in background...");
-  
+
   try {
     chartDataCache = await fetchChartData(null, true); // silent mode for background
     console.log(`📊 Prefetched ${chartDataCache.length} days of chart data`);
+    // Update section titles with streak badges
+    if (typeof updateSectionStreaks === 'function') updateSectionStreaks();
   } catch (err) {
     console.error("Prefetch failed:", err);
   }
-  
+
   chartDataLoading = false;
 }
 
@@ -1481,6 +1483,8 @@ async function loadAndRenderCharts() {
   } else {
     allData = await fetchChartData();
     chartDataCache = allData;
+    // Update section titles with streak badges
+    if (typeof updateSectionStreaks === 'function') updateSectionStreaks();
   }
   
   // Update range buttons to show data availability
@@ -2638,17 +2642,159 @@ function checkForMilestones() {
 function calculateCurrentStreak() {
   // Simple streak calculation from cached chart data
   if (!chartDataCache || chartDataCache.length === 0) return 0;
-  
+
   let streak = 0;
   const sortedData = [...chartDataCache].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
+
   for (const d of sortedData) {
     const hasData = d.daily["Hours of Sleep"] || d.daily["Steps"];
     if (hasData) streak++;
     else break;
   }
-  
+
   return streak;
+}
+
+// Calculate streak for a specific goal (daily goals)
+function calculateDailyGoalStreak(goalChecker) {
+  if (!chartDataCache || chartDataCache.length === 0) return 0;
+
+  let streak = 0;
+  const sortedData = [...chartDataCache].sort((a, b) => {
+    const dateA = parseDataDate(a.date);
+    const dateB = parseDataDate(b.date);
+    return dateB - dateA;
+  });
+
+  for (const d of sortedData) {
+    if (goalChecker(d)) streak++;
+    else break;
+  }
+
+  return streak;
+}
+
+// Calculate streak for weekly goals
+function calculateWeeklyGoalStreak(goalChecker) {
+  if (!chartDataCache || chartDataCache.length === 0) return 0;
+
+  // Group data by week (Sun-Sat)
+  const weeklyData = {};
+  chartDataCache.forEach(d => {
+    const date = parseDataDate(d.date);
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() - date.getDay());
+    const weekKey = `${weekStart.getFullYear()}-${weekStart.getMonth()}-${weekStart.getDate()}`;
+    if (!weeklyData[weekKey]) weeklyData[weekKey] = [];
+    weeklyData[weekKey].push(d);
+  });
+
+  // Sort weeks from most recent
+  const sortedWeeks = Object.entries(weeklyData)
+    .sort((a, b) => {
+      const [aKey] = a;
+      const [bKey] = b;
+      const [aY, aM, aD] = aKey.split('-').map(Number);
+      const [bY, bM, bD] = bKey.split('-').map(Number);
+      return new Date(bY, bM, bD) - new Date(aY, aM, aD);
+    });
+
+  let streak = 0;
+  for (const [, weekData] of sortedWeeks) {
+    if (goalChecker(weekData)) streak++;
+    else break;
+  }
+
+  return streak;
+}
+
+// Goal checker functions
+const goalCheckers = {
+  water: (d) => {
+    const water = parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? 0);
+    return water >= 6;
+  },
+  movement: (d) => {
+    let breaks = 0;
+    if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breaks++;
+    if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breaks++;
+    return breaks >= 2;
+  },
+  meals: (d) => {
+    const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
+    const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
+    const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
+    return [breakfast, lunch, dinner].filter(Boolean).length >= 2;
+  },
+  cleanEating: (d) => {
+    const daySnacks = d.daily["Healthy Day Snacks"] || d.daily["Day Snacks"];
+    const nightSnacks = d.daily["Healthy Night Snacks"] || d.daily["Night Snacks"];
+    const noAlc = d.daily["No Alcohol"];
+    return (daySnacks === true || daySnacks === "TRUE") &&
+           (nightSnacks === true || nightSnacks === "TRUE") &&
+           (noAlc === true || noAlc === "TRUE");
+  },
+  steps: (d) => {
+    const steps = parseInt(d.daily["Steps"] || 0);
+    return steps >= 5000;
+  },
+  // Weekly goal checkers take an array of days in that week
+  reading: (weekData) => {
+    let totalMins = 0;
+    weekData.forEach(d => {
+      totalMins += parseInt(d.daily["Reading Minutes"] || 0);
+    });
+    return totalMins >= 60;
+  },
+  rehit: (weekData) => {
+    let sessions = 0;
+    weekData.forEach(d => {
+      if (d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "") sessions++;
+    });
+    return sessions >= 3;
+  }
+};
+
+// Update section titles with streak badges
+function updateSectionStreaks() {
+  if (!chartDataCache || chartDataCache.length === 0) return;
+
+  // Daily goals - show streak if 3+ days
+  const dailyGoals = [
+    { id: 'hydrationSection', checker: goalCheckers.water, name: 'Water' },
+    { id: 'movementSection', checker: goalCheckers.movement, name: 'Movement' },
+    { id: 'mealsSection', checker: goalCheckers.meals, name: 'Meals' },
+    { id: 'stepsSection', checker: goalCheckers.steps, name: 'Steps' }
+  ];
+
+  dailyGoals.forEach(goal => {
+    const streak = calculateDailyGoalStreak(goal.checker);
+    const section = document.getElementById(goal.id);
+    if (section && streak >= 3) {
+      const nameEl = section.querySelector('.sec-name');
+      if (nameEl && !nameEl.querySelector('.streak-badge')) {
+        nameEl.innerHTML = `${goal.name} <span class="streak-badge">🔥 ${streak}-day streak</span>`;
+      }
+    }
+  });
+
+  // Weekly goals - show streak if 3+ weeks
+  const weeklyGoals = [
+    { id: 'mentalHabitsSection', checker: goalCheckers.reading, name: 'Reading' },
+    { id: 'fitnessSection', checker: goalCheckers.rehit, name: 'Fitness' }
+  ];
+
+  weeklyGoals.forEach(goal => {
+    const streak = calculateWeeklyGoalStreak(goal.checker);
+    const section = document.getElementById(goal.id);
+    if (section && streak >= 3) {
+      const nameEl = section.querySelector('.sec-name');
+      if (nameEl && !nameEl.querySelector('.streak-badge')) {
+        const currentName = nameEl.textContent.split(' ')[0]; // Keep original name
+        nameEl.innerHTML = `${currentName} <span class="streak-badge">🔥 ${streak}-week streak</span>`;
+      }
+    }
+  });
 }
 
 function checkPersonalBest(input) {
