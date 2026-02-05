@@ -934,6 +934,14 @@
       background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
       box-shadow: 0 0 10px var(--glow-pink);
     }
+    .rehit-dots-row .rehit-dot.on-2x10 {
+      background: linear-gradient(90deg, #ec4899, #f43f5e);
+      box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+    }
+    .rehit-dots-row .rehit-dot.on-3x10 {
+      background: linear-gradient(90deg, #f97316, #fb923c);
+      box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+    }
     .rehit-layout {
       display: flex;
       gap: 20px;
@@ -1116,6 +1124,14 @@
     body.day-mode .rehit-dots-row .rehit-dot.on {
       background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
       box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+    }
+    body.day-mode .rehit-dots-row .rehit-dot.on-2x10 {
+      background: linear-gradient(90deg, #ec4899, #f43f5e);
+      box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+    }
+    body.day-mode .rehit-dots-row .rehit-dot.on-3x10 {
+      background: linear-gradient(90deg, #f97316, #fb923c);
+      box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
     }
     
     /* Counter dots (for weekly goals) */
@@ -4537,10 +4553,13 @@
       fill.style.width = pct + '%';
     }
     
-    // REHIT dots - count sessions this week (goal: 4 sessions per week)
+    // REHIT dots - count sessions this week with color coding
+    // Pink/red = 2x10, Orange = 3x10
     const REHIT_API = "https://habit-proxy.joeywigs.workers.dev/";
     window._rehitServerCount = 0;  // Count from server
     window._rehitTodaySaved = false; // Whether today's REHIT was saved on server
+    window._rehitSessionTypes = []; // Array of session types: '2x10' or '3x10'
+    window._rehitTodayType = null;  // Today's saved type
 
     // Fetch REHIT count from dedicated endpoint
     async function fetchRehitWeekCount() {
@@ -4554,10 +4573,30 @@
         if (data.ok) {
           window._rehitServerCount = data.count;
 
-          // Check if today's REHIT is already in the server count
+          // Build array of session types from details (excluding today)
+          window._rehitSessionTypes = [];
           const todayStr = date;
-          const todayDetail = data.details?.find(d => d.date === todayStr);
-          window._rehitTodaySaved = todayDetail?.hasRehit || false;
+
+          data.details?.forEach(detail => {
+            if (detail.date === todayStr) {
+              // Track today separately
+              window._rehitTodaySaved = detail.hasRehit || false;
+              if (detail.rehit3 && detail.rehit3 !== "" && detail.rehit3 !== "false") {
+                window._rehitTodayType = '3x10';
+              } else if (detail.rehit2 && detail.rehit2 !== "" && detail.rehit2 !== "false") {
+                window._rehitTodayType = '2x10';
+              } else {
+                window._rehitTodayType = null;
+              }
+            } else if (detail.hasRehit) {
+              // Past days - add to session types array
+              if (detail.rehit3 && detail.rehit3 !== "" && detail.rehit3 !== "false") {
+                window._rehitSessionTypes.push('3x10');
+              } else if (detail.rehit2 && detail.rehit2 !== "" && detail.rehit2 !== "false") {
+                window._rehitSessionTypes.push('2x10');
+              }
+            }
+          });
 
           // Update display
           updateRehitDotsFromState();
@@ -4568,29 +4607,45 @@
     }
 
     // Calculate display count based on server + current checkbox state
+    // Color dots based on session type: pink = 2x10, orange = 3x10
     function updateRehitDotsFromState() {
       const dotsContainer = document.getElementById('rehitDots');
       if (!dotsContainer) return;
       const dots = dotsContainer.querySelectorAll('.rehit-dot');
 
       // Current checkbox state
-      const todayChecked = document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
+      const today2x10Checked = document.getElementById('rehit2')?.checked;
+      const today3x10Checked = document.getElementById('rehit3')?.checked;
+      const todayChecked = today2x10Checked || today3x10Checked;
 
-      // Start with server count
-      let count = window._rehitServerCount || 0;
+      // Build session types array including today's current state
+      let sessionTypes = [...window._rehitSessionTypes];
 
-      // Adjust for unsaved changes:
-      // If today is checked but wasn't saved, add 1
-      // If today was saved but now unchecked, subtract 1
-      if (todayChecked && !window._rehitTodaySaved) {
-        count++;
-      } else if (!todayChecked && window._rehitTodaySaved) {
-        count--;
+      // Handle today's session
+      if (todayChecked) {
+        // Add today's type based on current checkbox state
+        if (today3x10Checked) {
+          sessionTypes.push('3x10');
+        } else if (today2x10Checked) {
+          sessionTypes.push('2x10');
+        }
       }
 
-      // Update dots (max 4)
+      // Update dots (max 4) with color coding
       dots.forEach((dot, i) => {
-        dot.classList.toggle('on', i < Math.min(count, 4));
+        // Clear all classes first
+        dot.classList.remove('on', 'on-2x10', 'on-3x10');
+
+        if (i < sessionTypes.length) {
+          const type = sessionTypes[i];
+          if (type === '3x10') {
+            dot.classList.add('on-3x10');
+          } else if (type === '2x10') {
+            dot.classList.add('on-2x10');
+          } else {
+            dot.classList.add('on');
+          }
+        }
       });
     }
 
