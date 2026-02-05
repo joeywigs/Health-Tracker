@@ -1378,6 +1378,53 @@
     .suggestion-ok { color: #FF9800; font-size: 11px; display: block; margin-top: 4px; }
     .suggestion-work { color: #f44336; font-size: 11px; display: block; margin-top: 4px; }
 
+    /* Phase performance review */
+    .phase-performance-review {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .phase-stat-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .phase-stat-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .phase-stat-row:first-of-type {
+      padding-top: 0;
+    }
+    .phase-stat-label {
+      width: 100px;
+      font-weight: 500;
+      color: var(--text);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .phase-stat-details {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .stat-highlight {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .stat-pct {
+      color: var(--accent-teal);
+      font-weight: 500;
+    }
+    .stat-avg {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
     /* Phase selector */
     .summary-controls {
       display: flex;
