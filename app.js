@@ -553,7 +553,7 @@ function setupWeeklySummaryButton() {
       btn.classList.add('active');
       
       const range = btn.dataset.range;
-      const rangeValue = range === 'phase' ? 'phase' : range === 'all' ? 'all' : 7;
+      const rangeValue = range === 'phase' ? 'phase' : 'all';
       
       if (chartDataCache && chartDataCache.length > 0) {
         renderSummaryPage(chartDataCache, rangeValue);
@@ -622,14 +622,14 @@ async function loadWeeklySummary() {
   
   // Now render with the data
   if (chartDataCache && chartDataCache.length > 0) {
-    renderSummaryPage(chartDataCache, 7);
+    renderSummaryPage(chartDataCache, 'phase');
   } else {
     document.getElementById("summaryOverview").innerHTML = '<div style="color: #999; text-align: center; padding: 20px;">No data available</div>';
   }
 }
 
 // Summary page state
-let currentSummaryRange = 7;
+let currentSummaryRange = 'phase';
 const PHASE_START = new Date("2026-01-19");
 const PHASE_LENGTH = 21;
 
@@ -661,15 +661,8 @@ const GOALS = {
 function getFilteredData(data, range) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
-  if (range === 7) {
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - 6);
-    return data.filter(d => {
-      const date = parseDataDate(d.date);
-      return date >= weekStart && date <= today;
-    });
-  } else if (range === 'phase') {
+
+  if (range === 'phase') {
     const phaseStart = new Date(PHASE_START);
     phaseStart.setHours(0, 0, 0, 0);
     const phaseEnd = new Date(phaseStart);
@@ -698,26 +691,49 @@ function parseDataDate(dateStr) {
 
 function calculateGoalStats(data, range) {
   const stats = {};
-  const totalDays = data.length;
-  
+  const totalDaysLogged = data.length;
+
+  // Calculate elapsed days based on range
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let elapsedDays, elapsedWeeks;
+
+  if (range === 'phase') {
+    const phaseStart = new Date(PHASE_START);
+    phaseStart.setHours(0, 0, 0, 0);
+    elapsedDays = Math.min(PHASE_LENGTH, Math.max(1, Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1));
+    elapsedWeeks = Math.max(1, Math.ceil(elapsedDays / 7));
+  } else {
+    // All time - use first data point to today
+    if (data.length > 0) {
+      const dates = data.map(d => parseDataDate(d.date)).sort((a, b) => a - b);
+      const firstDate = dates[0];
+      elapsedDays = Math.max(1, Math.floor((today - firstDate) / (1000 * 60 * 60 * 24)) + 1);
+      elapsedWeeks = Math.max(1, Math.ceil(elapsedDays / 7));
+    } else {
+      elapsedDays = 1;
+      elapsedWeeks = 1;
+    }
+  }
+
   // Sleep: goal is 7+ hours
   const sleepValues = data.map(d => parseFloat(d.daily["Hours of Sleep"])).filter(v => !isNaN(v) && v > 0);
   const sleepDaysMet = sleepValues.filter(v => v >= getGoalTarget('sleep')).length;
   stats.sleep = {
-    pct: totalDays > 0 ? Math.round((sleepDaysMet / totalDays) * 100) : 0,
+    pct: elapsedDays > 0 ? Math.round((sleepDaysMet / elapsedDays) * 100) : 0,
     avg: sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : 0,
-    detail: `${sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : '--'} avg hrs`
+    detail: `${sleepDaysMet}/${elapsedDays} days 7+ hrs`
   };
-  
-  // Agua: goal is 6 glasses
+
+  // Agua: goal is 6+ glasses per day
   const waterValues = data.map(d => parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"])).filter(v => !isNaN(v));
   const waterDaysMet = waterValues.filter(v => v >= getGoalTarget('agua')).length;
   stats.agua = {
-    pct: totalDays > 0 ? Math.round((waterDaysMet / totalDays) * 100) : 0,
+    pct: elapsedDays > 0 ? Math.round((waterDaysMet / elapsedDays) * 100) : 0,
     avg: waterValues.length > 0 ? (waterValues.reduce((a,b) => a+b, 0) / waterValues.length).toFixed(1) : 0,
-    detail: `${waterDaysMet}/${totalDays} days at 6+`
+    detail: `${waterDaysMet}/${elapsedDays} days at 6+`
   };
-  
+
   // Supps: all 4 each day
   let suppsDaysMet = 0;
   data.forEach(d => {
@@ -729,83 +745,102 @@ function calculateGoalStats(data, range) {
     if (allFour === 4) suppsDaysMet++;
   });
   stats.supps = {
-    pct: totalDays > 0 ? Math.round((suppsDaysMet / totalDays) * 100) : 0,
-    detail: `${suppsDaysMet}/${totalDays} days all 4`
+    pct: elapsedDays > 0 ? Math.round((suppsDaysMet / elapsedDays) * 100) : 0,
+    detail: `${suppsDaysMet}/${elapsedDays} days all 4`
   };
-  
+
   // REHIT: 3 sessions per week
-  const weeks = Math.max(1, Math.ceil(totalDays / 7));
   const rehitCount = data.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
-  const rehitPerWeek = rehitCount / weeks;
+  const rehitPerWeek = rehitCount / elapsedWeeks;
   stats.rehit = {
     pct: Math.min(100, Math.round((rehitPerWeek / getGoalTarget('rehit')) * 100)),
     total: rehitCount,
     detail: `${rehitCount} sessions (${rehitPerWeek.toFixed(1)}/wk)`
   };
-  
+
   // Steps: 5000 per day average
   const stepsValues = data.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
   const avgSteps = stepsValues.length > 0 ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
-  const stepsDaysMet = stepsValues.filter(v => v >= getGoalTarget('steps')).length;
   stats.steps = {
     pct: Math.min(100, Math.round((avgSteps / getGoalTarget('steps')) * 100)),
     avg: Math.round(avgSteps),
     detail: `${Math.round(avgSteps).toLocaleString()} avg steps`
   };
-  
-  // Movement: 2 breaks per day average
-  let totalMovements = 0;
+
+  // Movement: days with 2+ movement breaks
+  let movementDaysMet = 0;
   data.forEach(d => {
-    // Count movement breaks from Movements field
+    let breakCount = 0;
+    // Count from morning/afternoon movement fields
+    if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breakCount++;
+    if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breakCount++;
+    // Also check legacy Movements field
     const movements = d.daily["Movements"];
     if (movements && typeof movements === 'string') {
-      totalMovements += movements.split(',').filter(m => m.trim()).length;
+      breakCount += movements.split(',').filter(m => m.trim()).length;
     } else if (Array.isArray(movements)) {
-      totalMovements += movements.length;
+      breakCount += movements.length;
     }
+    if (breakCount >= 2) movementDaysMet++;
   });
-  const avgMovements = totalDays > 0 ? totalMovements / totalDays : 0;
   stats.movement = {
-    pct: Math.min(100, Math.round((avgMovements / getGoalTarget('movement')) * 100)),
-    avg: avgMovements.toFixed(1),
-    detail: `${avgMovements.toFixed(1)} avg/day`
+    pct: elapsedDays > 0 ? Math.round((movementDaysMet / elapsedDays) * 100) : 0,
+    detail: `${movementDaysMet}/${elapsedDays} days 2+ breaks`
   };
-  
-  // Reading: 60 min per week
-  let totalReadingMins = 0;
+
+  // Reading: weeks with 60+ minutes
+  // Group reading by week and count weeks meeting goal
+  const weeklyReading = {};
   data.forEach(d => {
+    const date = parseDataDate(d.date);
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() - date.getDay());
+    const weekKey = `${weekStart.getMonth()+1}/${weekStart.getDate()}/${weekStart.getFullYear()}`;
     const mins = parseInt(d.daily["Reading Minutes"]) || 0;
-    totalReadingMins += mins;
+    weeklyReading[weekKey] = (weeklyReading[weekKey] || 0) + mins;
   });
-  const readingPerWeek = weeks > 0 ? totalReadingMins / weeks : 0;
+  const weeksWithReading = Object.values(weeklyReading).filter(mins => mins >= getGoalTarget('reading')).length;
   stats.reading = {
-    pct: Math.min(100, Math.round((readingPerWeek / getGoalTarget('reading')) * 100)),
-    total: totalReadingMins,
-    detail: `${totalReadingMins} min total`
+    pct: elapsedWeeks > 0 ? Math.round((weeksWithReading / elapsedWeeks) * 100) : 0,
+    total: Object.values(weeklyReading).reduce((a,b) => a+b, 0),
+    detail: `${weeksWithReading}/${elapsedWeeks} weeks 60+ min`
   };
-  
+
   // Nutrition stats
   let goodMealsDays = 0;
-  let healthySnacksDays = 0;
+  let totalSnacksChecked = 0;
   data.forEach(d => {
     const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
     const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
     const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
     const mealsCount = [breakfast, lunch, dinner].filter(Boolean).length;
     if (mealsCount >= 2) goodMealsDays++;
-    
+
     const daySnacks = d.daily["Healthy Day Snacks"] || d.daily["Day Snacks"];
     const nightSnacks = d.daily["Healthy Night Snacks"] || d.daily["Night Snacks"];
-    const snacksHealthy = [daySnacks, nightSnacks].filter(v => v === true || v === "TRUE").length;
-    if (snacksHealthy >= 2) healthySnacksDays++;
+    if (daySnacks === true || daySnacks === "TRUE") totalSnacksChecked++;
+    if (nightSnacks === true || nightSnacks === "TRUE") totalSnacksChecked++;
   });
   stats.meals = {
-    pct: totalDays > 0 ? Math.round((goodMealsDays / totalDays) * 100) : 0,
-    detail: `${goodMealsDays}/${totalDays} days 2+ meals`
+    pct: elapsedDays > 0 ? Math.round((goodMealsDays / elapsedDays) * 100) : 0,
+    detail: `${goodMealsDays}/${elapsedDays} days 2+ meals`
   };
+  // Snacks: sum of day+night checks / (2 * elapsed days)
+  const maxSnackChecks = elapsedDays * 2;
   stats.snacks = {
-    pct: totalDays > 0 ? Math.round((healthySnacksDays / totalDays) * 100) : 0,
-    detail: `${healthySnacksDays}/${totalDays} days healthy`
+    pct: maxSnackChecks > 0 ? Math.round((totalSnacksChecked / maxSnackChecks) * 100) : 0,
+    detail: `${totalSnacksChecked}/${maxSnackChecks} checks`
+  };
+
+  // No Alcohol
+  let noAlcoholDays = 0;
+  data.forEach(d => {
+    const noAlc = d.daily["No Alcohol"];
+    if (noAlc === true || noAlc === "TRUE" || noAlc === "true") noAlcoholDays++;
+  });
+  stats.noAlcohol = {
+    pct: elapsedDays > 0 ? Math.round((noAlcoholDays / elapsedDays) * 100) : 0,
+    detail: `${noAlcoholDays}/${elapsedDays} days`
   };
   
   // Mindfulness (meditation)
@@ -879,48 +914,15 @@ function renderSummaryOverview(data, stats, range, allData) {
 
   const daysIntoPhase = Math.max(0, Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
   const daysRemaining = Math.max(0, PHASE_LENGTH - daysIntoPhase);
-  const totalDaysLogged = allData ? allData.length : data.length;
+  const elapsedDays = range === 'phase' ? Math.min(daysIntoPhase, PHASE_LENGTH) : daysIntoPhase;
+  const totalDaysLogged = data.length;
   const currentStreak = calculateCurrentStreak();
-  const streakIcon = currentStreak > 7 ? '🔥 ' : '';
-
-  // Calculate percent complete (days with 90%+ goals)
-  let daysComplete = 0;
-  data.forEach(d => {
-    // Count goals met: sleep 7+, water 6+, 4 supps, steps 5000+
-    let goalsMet = 0;
-    const totalGoals = 4;
-
-    const sleep = parseFloat(d.daily["Hours of Sleep"]);
-    if (!isNaN(sleep) && sleep >= getGoalTarget('sleep')) goalsMet++;
-
-    const water = parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? d.daily["hydrationGood"]);
-    if (!isNaN(water) && water >= getGoalTarget('agua')) goalsMet++;
-
-    const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
-    const vitD = d.daily["Vitamin D"];
-    const no2 = d.daily["NO2"];
-    const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
-    const allSupps = [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE").length === 4;
-    if (allSupps) goalsMet++;
-
-    const steps = parseInt(d.daily["Steps"]);
-    if (!isNaN(steps) && steps >= getGoalTarget('steps')) goalsMet++;
-
-    if (goalsMet / totalGoals >= 0.9) daysComplete++;
-  });
-
-  const pctComplete = totalDaysLogged > 0 ? Math.round((daysComplete / totalDaysLogged) * 100) : 0;
+  const pctLogged = elapsedDays > 0 ? Math.round((totalDaysLogged / elapsedDays) * 100) : 0;
 
   container.innerHTML = `
     <div class="summary-stat">
-      <div class="summary-stat-value">${totalDaysLogged}</div>
-      <div class="summary-stat-label">Days Logged</div>
-      <div class="summary-stat-sub">${streakIcon}${currentStreak} day streak</div>
-    </div>
-    <div class="summary-stat">
-      <div class="summary-stat-value">${pctComplete}%</div>
-      <div class="summary-stat-label">Days Complete</div>
-      <div class="summary-stat-sub">90%+ goals met</div>
+      <div class="summary-stat-value">🔥 ${currentStreak}-day streak</div>
+      <div class="summary-stat-label">${pctLogged}% of days logged</div>
     </div>
     <div class="summary-stat">
       <div class="summary-stat-value">${Math.min(daysIntoPhase, PHASE_LENGTH)}</div>
@@ -1131,17 +1133,20 @@ function renderGoalPerformance(stats) {
   const doingWell = document.getElementById('goalsDoingWell');
   const needsWork = document.getElementById('goalsNeedWork');
   if (!doingWell || !needsWork) return;
-  
+
   const goals = [
     { key: 'sleep', ...GOALS.sleep, ...stats.sleep },
     { key: 'agua', ...GOALS.agua, ...stats.agua },
-    { key: 'supps', ...GOALS.supps, name: 'Supplements', icon: '💊' },
+    { key: 'supps', name: 'Supplements', icon: '💊', ...stats.supps },
     { key: 'rehit', ...GOALS.rehit, ...stats.rehit },
     { key: 'steps', ...GOALS.steps, ...stats.steps },
     { key: 'movement', ...GOALS.movement, ...stats.movement },
-    { key: 'reading', ...GOALS.reading, ...stats.reading }
+    { key: 'reading', ...GOALS.reading, ...stats.reading },
+    { key: 'meals', name: 'Meals', icon: '🍽️', ...stats.meals },
+    { key: 'snacks', name: 'Snacks', icon: '🥗', ...stats.snacks },
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺', ...stats.noAlcohol }
   ];
-  
+
   const sorted = goals.sort((a, b) => b.pct - a.pct);
   const good = sorted.filter(g => g.pct >= 70);
   const work = sorted.filter(g => g.pct < 70);
@@ -1199,10 +1204,11 @@ function renderHealthGoals(stats) {
 function renderNutritionStats(stats) {
   const container = document.getElementById('nutritionStats');
   if (!container) return;
-  
+
   container.innerHTML = `
     ${renderGoalStatCard('Meals', '🍽️', stats.meals.pct, stats.meals.detail)}
     ${renderGoalStatCard('Snacks', '🥗', stats.snacks.pct, stats.snacks.detail)}
+    ${renderGoalStatCard('No Alcohol', '🚫🍺', stats.noAlcohol.pct, stats.noAlcohol.detail)}
   `;
 }
 
@@ -1331,17 +1337,19 @@ let currentChartRange = 7; // Default to 7 days
 
 async function prefetchChartData() {
   if (chartDataCache || chartDataLoading) return;
-  
+
   chartDataLoading = true;
   console.log("📊 Prefetching chart data in background...");
-  
+
   try {
     chartDataCache = await fetchChartData(null, true); // silent mode for background
     console.log(`📊 Prefetched ${chartDataCache.length} days of chart data`);
+    // Update section titles with streak badges
+    if (typeof updateSectionStreaks === 'function') updateSectionStreaks();
   } catch (err) {
     console.error("Prefetch failed:", err);
   }
-  
+
   chartDataLoading = false;
 }
 
@@ -1475,6 +1483,8 @@ async function loadAndRenderCharts() {
   } else {
     allData = await fetchChartData();
     chartDataCache = allData;
+    // Update section titles with streak badges
+    if (typeof updateSectionStreaks === 'function') updateSectionStreaks();
   }
   
   // Update range buttons to show data availability
@@ -2632,17 +2642,159 @@ function checkForMilestones() {
 function calculateCurrentStreak() {
   // Simple streak calculation from cached chart data
   if (!chartDataCache || chartDataCache.length === 0) return 0;
-  
+
   let streak = 0;
   const sortedData = [...chartDataCache].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
+
   for (const d of sortedData) {
     const hasData = d.daily["Hours of Sleep"] || d.daily["Steps"];
     if (hasData) streak++;
     else break;
   }
-  
+
   return streak;
+}
+
+// Calculate streak for a specific goal (daily goals)
+function calculateDailyGoalStreak(goalChecker) {
+  if (!chartDataCache || chartDataCache.length === 0) return 0;
+
+  let streak = 0;
+  const sortedData = [...chartDataCache].sort((a, b) => {
+    const dateA = parseDataDate(a.date);
+    const dateB = parseDataDate(b.date);
+    return dateB - dateA;
+  });
+
+  for (const d of sortedData) {
+    if (goalChecker(d)) streak++;
+    else break;
+  }
+
+  return streak;
+}
+
+// Calculate streak for weekly goals
+function calculateWeeklyGoalStreak(goalChecker) {
+  if (!chartDataCache || chartDataCache.length === 0) return 0;
+
+  // Group data by week (Sun-Sat)
+  const weeklyData = {};
+  chartDataCache.forEach(d => {
+    const date = parseDataDate(d.date);
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() - date.getDay());
+    const weekKey = `${weekStart.getFullYear()}-${weekStart.getMonth()}-${weekStart.getDate()}`;
+    if (!weeklyData[weekKey]) weeklyData[weekKey] = [];
+    weeklyData[weekKey].push(d);
+  });
+
+  // Sort weeks from most recent
+  const sortedWeeks = Object.entries(weeklyData)
+    .sort((a, b) => {
+      const [aKey] = a;
+      const [bKey] = b;
+      const [aY, aM, aD] = aKey.split('-').map(Number);
+      const [bY, bM, bD] = bKey.split('-').map(Number);
+      return new Date(bY, bM, bD) - new Date(aY, aM, aD);
+    });
+
+  let streak = 0;
+  for (const [, weekData] of sortedWeeks) {
+    if (goalChecker(weekData)) streak++;
+    else break;
+  }
+
+  return streak;
+}
+
+// Goal checker functions
+const goalCheckers = {
+  water: (d) => {
+    const water = parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? 0);
+    return water >= 6;
+  },
+  movement: (d) => {
+    let breaks = 0;
+    if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breaks++;
+    if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breaks++;
+    return breaks >= 2;
+  },
+  meals: (d) => {
+    const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
+    const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
+    const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
+    return [breakfast, lunch, dinner].filter(Boolean).length >= 2;
+  },
+  cleanEating: (d) => {
+    const daySnacks = d.daily["Healthy Day Snacks"] || d.daily["Day Snacks"];
+    const nightSnacks = d.daily["Healthy Night Snacks"] || d.daily["Night Snacks"];
+    const noAlc = d.daily["No Alcohol"];
+    return (daySnacks === true || daySnacks === "TRUE") &&
+           (nightSnacks === true || nightSnacks === "TRUE") &&
+           (noAlc === true || noAlc === "TRUE");
+  },
+  steps: (d) => {
+    const steps = parseInt(d.daily["Steps"] || 0);
+    return steps >= 5000;
+  },
+  // Weekly goal checkers take an array of days in that week
+  reading: (weekData) => {
+    let totalMins = 0;
+    weekData.forEach(d => {
+      totalMins += parseInt(d.daily["Reading Minutes"] || 0);
+    });
+    return totalMins >= 60;
+  },
+  rehit: (weekData) => {
+    let sessions = 0;
+    weekData.forEach(d => {
+      if (d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "") sessions++;
+    });
+    return sessions >= 3;
+  }
+};
+
+// Update section titles with streak badges
+function updateSectionStreaks() {
+  if (!chartDataCache || chartDataCache.length === 0) return;
+
+  // Daily goals - show streak if 3+ days
+  const dailyGoals = [
+    { id: 'hydrationSection', checker: goalCheckers.water, name: 'Water' },
+    { id: 'movementSection', checker: goalCheckers.movement, name: 'Movement' },
+    { id: 'mealsSection', checker: goalCheckers.meals, name: 'Meals' },
+    { id: 'stepsSection', checker: goalCheckers.steps, name: 'Steps' }
+  ];
+
+  dailyGoals.forEach(goal => {
+    const streak = calculateDailyGoalStreak(goal.checker);
+    const section = document.getElementById(goal.id);
+    if (section && streak >= 3) {
+      const nameEl = section.querySelector('.sec-name');
+      if (nameEl && !nameEl.querySelector('.streak-badge')) {
+        nameEl.innerHTML = `${goal.name} <span class="streak-badge">🔥 ${streak}-day streak</span>`;
+      }
+    }
+  });
+
+  // Weekly goals - show streak if 3+ weeks
+  const weeklyGoals = [
+    { id: 'mentalHabitsSection', checker: goalCheckers.reading, name: 'Reading' },
+    { id: 'fitnessSection', checker: goalCheckers.rehit, name: 'Fitness' }
+  ];
+
+  weeklyGoals.forEach(goal => {
+    const streak = calculateWeeklyGoalStreak(goal.checker);
+    const section = document.getElementById(goal.id);
+    if (section && streak >= 3) {
+      const nameEl = section.querySelector('.sec-name');
+      if (nameEl && !nameEl.querySelector('.streak-badge')) {
+        const currentName = nameEl.textContent.split(' ')[0]; // Keep original name
+        nameEl.innerHTML = `${currentName} <span class="streak-badge">🔥 ${streak}-week streak</span>`;
+      }
+    }
+  });
 }
 
 function checkPersonalBest(input) {
