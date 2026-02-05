@@ -2163,10 +2163,11 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
     // Show last 7 days (matching the data filter)
     renderLast7DaysCalendar(container, rehitMap);
   } else if (range === 'phase') {
-    // Show phase month(s) - use selected phase's start date
+    // Show phase weeks only - starting from the first week of the phase
     const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
     const phaseStart = phase ? parseDataDate(phase.start) : new Date(PHASE_START);
-    renderMonthCalendar(container, rehitMap, phaseStart);
+    const phaseLength = phase ? phase.length : PHASE_LENGTH;
+    renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength);
   } else {
     // Show 30 days
     renderMonthCalendar(container, rehitMap, new Date());
@@ -2335,6 +2336,82 @@ function renderMonthCalendar(container, rehitMap, startDate) {
     </div>
   `;
   
+  container.innerHTML = html;
+}
+
+function renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength) {
+  const today = new Date();
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+
+  const phaseEnd = new Date(phaseStart);
+  phaseEnd.setDate(phaseStart.getDate() + phaseLength - 1);
+
+  // Find the Sunday at the start of the week containing phaseStart
+  const calStart = new Date(phaseStart);
+  calStart.setDate(calStart.getDate() - calStart.getDay());
+
+  // Find the Saturday at the end of the week containing phaseEnd
+  const calEnd = new Date(phaseEnd);
+  calEnd.setDate(calEnd.getDate() + (6 - calEnd.getDay()));
+
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+
+  // Build title from phase date range
+  const startMonth = monthNames[phaseStart.getMonth()];
+  const endMonth = monthNames[phaseEnd.getMonth()];
+  const title = startMonth === endMonth
+    ? `${startMonth} ${phaseStart.getFullYear()}`
+    : `${startMonth} – ${endMonth} ${phaseEnd.getFullYear()}`;
+
+  let html = `
+    <div class="rehit-cal-header">
+      <div class="rehit-cal-title">${title}</div>
+    </div>
+    <div class="rehit-cal-weekdays">
+      <div class="rehit-cal-weekday">S</div>
+      <div class="rehit-cal-weekday">M</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">W</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">F</div>
+      <div class="rehit-cal-weekday">S</div>
+    </div>
+    <div class="rehit-cal-days">
+  `;
+
+  // Iterate day by day from calStart to calEnd
+  const cursor = new Date(calStart);
+  while (cursor <= calEnd) {
+    const dateStr = `${cursor.getMonth() + 1}/${cursor.getDate()}/${String(cursor.getFullYear()).slice(-2)}`;
+    const isInPhase = cursor >= phaseStart && cursor <= phaseEnd;
+    const isToday = dateStr === todayStr;
+    const rehitVal = rehitMap[dateStr];
+
+    let classes = "rehit-cal-day";
+    if (!isInPhase) {
+      classes += " other-month";
+    } else {
+      if (isToday) classes += " today";
+      if (rehitVal) {
+        classes += " has-rehit";
+        if (rehitVal === "2x10") classes += " rehit-2x10";
+        if (rehitVal === "3x10") classes += " rehit-3x10";
+      }
+    }
+
+    html += `<div class="${classes}">${cursor.getDate()}</div>`;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  html += `
+    </div>
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
+    </div>
+  `;
+
   container.innerHTML = html;
 }
 
