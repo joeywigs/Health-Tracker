@@ -674,7 +674,230 @@
       50% { filter: drop-shadow(0 0 30px var(--glow-teal)) drop-shadow(0 0 60px var(--glow-pink)); }
       100% { filter: drop-shadow(0 0 6px var(--glow-teal)); }
     }
-    
+
+    /* Cue Detected Button */
+    .cue-detected-btn {
+      width: 100%;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, rgba(196,113,237,0.2), rgba(109,213,237,0.15));
+      border: 2px dashed rgba(196,113,237,0.5);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .cue-detected-btn:hover {
+      background: linear-gradient(135deg, rgba(196,113,237,0.3), rgba(109,213,237,0.25));
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 20px var(--glow-purple);
+      transform: scale(1.02);
+    }
+    .cue-detected-btn:active {
+      transform: scale(0.98);
+    }
+    .cue-detected-btn .cue-icon {
+      font-size: 24px;
+    }
+
+    /* Cue Modal */
+    .cue-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(26,26,46,0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      backdrop-filter: blur(15px);
+      padding: 20px;
+    }
+    .cue-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .cue-modal-content {
+      background: var(--bg-mid);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 400px;
+      padding: 24px;
+      animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .cue-modal-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .cue-modal-header .cue-emoji {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .cue-modal-header h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cue-modal-header p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin: 8px 0 0 0;
+    }
+    .cue-timestamp {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      padding: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+    }
+    .cue-note-input {
+      width: 100%;
+      padding: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 15px;
+      resize: none;
+      min-height: 100px;
+      margin-bottom: 16px;
+    }
+    .cue-note-input:focus {
+      outline: none;
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 10px var(--glow-purple);
+    }
+    .cue-note-input::placeholder {
+      color: var(--text-muted);
+    }
+    .cue-modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .cue-modal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cue-cancel-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .cue-cancel-btn:hover {
+      background: rgba(255,255,255,0.15);
+      color: var(--text);
+    }
+    .cue-save-btn {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+      border: none;
+      color: white;
+    }
+    .cue-save-btn:hover {
+      box-shadow: 0 0 20px var(--glow-purple);
+      transform: scale(1.02);
+    }
+
+    /* Full Screen Cue Celebration */
+    .cue-celebration {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(26,26,46,0.98), rgba(50,30,80,0.98));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+    }
+    .cue-celebration.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .cue-celebration-content {
+      text-align: center;
+      z-index: 1;
+      padding: 40px;
+    }
+    .cue-celebration-emoji {
+      font-size: 80px;
+      animation: celebrationBounce 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes celebrationBounce {
+      0% { transform: scale(0) rotate(-20deg); }
+      60% { transform: scale(1.2) rotate(10deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .cue-celebration-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 20px 0 10px;
+      background: linear-gradient(135deg, #ffd93d, #ff6b9d, #c471ed, #6dd5ed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: titleSlide 0.5s ease-out 0.2s both;
+    }
+    @keyframes titleSlide {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .cue-celebration-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 300px;
+      margin: 0 auto;
+      animation: titleSlide 0.5s ease-out 0.4s both;
+      line-height: 1.5;
+    }
+    .cue-celebration-dismiss {
+      margin-top: 30px;
+      padding: 14px 40px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      border: none;
+      border-radius: var(--radius-pill);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      animation: titleSlide 0.5s ease-out 0.6s both;
+      transition: all 0.2s;
+    }
+    .cue-celebration-dismiss:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px var(--glow-pink);
+    }
+    .cue-celebration-particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
     /* Phase Bar */
     .phase { margin-top: 0; }
     .phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
@@ -2674,11 +2897,45 @@
     </div>
   </div>
 
+  <!-- Cue Detection Modal -->
+  <div id="cueModal" class="cue-modal">
+    <div class="cue-modal-content">
+      <div class="cue-modal-header">
+        <div class="cue-emoji">🧠</div>
+        <h3>Cue Detected!</h3>
+        <p>What triggered this awareness?</p>
+      </div>
+      <div class="cue-timestamp" id="cueTimestamp"></div>
+      <textarea class="cue-note-input" id="cueNoteInput" placeholder="What cue did you notice? (e.g., feeling stressed, saw a snack, phone notification...)"></textarea>
+      <div class="cue-modal-buttons">
+        <button type="button" class="cue-cancel-btn" onclick="closeCueModal()">Cancel</button>
+        <button type="button" class="cue-save-btn" onclick="saveCueAndCelebrate()">Log It! 🎉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cue Celebration Full Screen -->
+  <div id="cueCelebration" class="cue-celebration">
+    <div class="cue-celebration-particles" id="cueCelebrationParticles"></div>
+    <div class="cue-celebration-content">
+      <div class="cue-celebration-emoji" id="cueCelebrationEmoji">🧠</div>
+      <div class="cue-celebration-title" id="cueCelebrationTitle">Amazing Awareness!</div>
+      <div class="cue-celebration-subtitle" id="cueCelebrationSubtitle">You just took the first step to building a better habit.</div>
+      <button type="button" class="cue-celebration-dismiss" onclick="dismissCueCelebration()">Keep Going! 💪</button>
+    </div>
+  </div>
+
   <form id="healthForm">
     <div class="unlock-banner" id="unlockBanner">
       <span>🔒 This day is locked to prevent accidental edits</span>
       <button type="button" class="unlock-day-btn" onclick="unlockDay()">Unlock</button>
     </div>
+
+    <!-- Cue Detected Button -->
+    <button type="button" class="cue-detected-btn" onclick="openCueModal()">
+      <span class="cue-icon">🧠</span>
+      <span>Cue Detected</span>
+    </button>
     <div class="quick-grid">
       <div class="card sleep" id="sleepSection">
         <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
@@ -3695,6 +3952,226 @@
     window.addEventListener('dateChanged', () => {
       window._ringCelebratedToday = false;
     });
+
+    // ===== CUE DETECTION SYSTEM =====
+    let cueTimestamp = null;
+
+    // Haptic feedback helper (works on Android, not iOS Safari)
+    function triggerHaptic(pattern) {
+      if ('vibrate' in navigator) {
+        try {
+          navigator.vibrate(pattern);
+        } catch (e) {
+          console.log('Haptic not supported');
+        }
+      }
+    }
+
+    window.openCueModal = function() {
+      const modal = document.getElementById('cueModal');
+      const timestampEl = document.getElementById('cueTimestamp');
+      const noteInput = document.getElementById('cueNoteInput');
+
+      cueTimestamp = new Date();
+      const timeStr = cueTimestamp.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      const dateStr = cueTimestamp.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+
+      timestampEl.textContent = `📍 ${dateStr} at ${timeStr}`;
+      noteInput.value = '';
+      modal.classList.add('show');
+
+      // Focus the input after animation
+      setTimeout(() => noteInput.focus(), 300);
+
+      triggerHaptic(50);
+    };
+
+    window.closeCueModal = function() {
+      document.getElementById('cueModal').classList.remove('show');
+      cueTimestamp = null;
+    };
+
+    window.saveCueAndCelebrate = function() {
+      const noteInput = document.getElementById('cueNoteInput');
+      const note = noteInput.value.trim();
+
+      if (!note) {
+        noteInput.style.borderColor = '#ff6b9d';
+        noteInput.placeholder = 'Please describe the cue you noticed...';
+        triggerHaptic([50, 50, 50]);
+        setTimeout(() => {
+          noteInput.style.borderColor = '';
+          noteInput.placeholder = 'What cue did you notice? (e.g., feeling stressed, saw a snack, phone notification...)';
+        }, 2000);
+        return;
+      }
+
+      // Save the cue log
+      saveCueLog({
+        timestamp: cueTimestamp.toISOString(),
+        note: note,
+        date: cueTimestamp.toLocaleDateString()
+      });
+
+      // Close modal
+      closeCueModal();
+
+      // Show celebration
+      showCueCelebration();
+    };
+
+    async function saveCueLog(cueData) {
+      // Get existing cue logs from localStorage
+      let cueLogs = [];
+      try {
+        const stored = localStorage.getItem('cueLogs');
+        if (stored) cueLogs = JSON.parse(stored);
+      } catch (e) {}
+
+      cueLogs.push(cueData);
+      localStorage.setItem('cueLogs', JSON.stringify(cueLogs));
+
+      // Also try to save to API
+      try {
+        await apiPost('cue_log_save', cueData);
+      } catch (e) {
+        console.log('Cue log saved locally only');
+      }
+    }
+
+    const cueCelebrations = [
+      {
+        emoji: '🧠',
+        title: 'Amazing Awareness!',
+        subtitle: 'You just took the first step to building a better habit.'
+      },
+      {
+        emoji: '👁️',
+        title: 'Great Job Detecting That Cue!',
+        subtitle: 'Awareness is the foundation of all change.'
+      },
+      {
+        emoji: '🎯',
+        title: 'Cue Spotted!',
+        subtitle: 'Now you can choose how to respond. That\'s real power!'
+      },
+      {
+        emoji: '💡',
+        title: 'Brilliant Catch!',
+        subtitle: 'Every cue you notice is a chance to create a new habit.'
+      },
+      {
+        emoji: '🔥',
+        title: 'You\'re On Fire!',
+        subtitle: 'Self-awareness is a superpower. Keep using it!'
+      },
+      {
+        emoji: '⚡',
+        title: 'Lightning Reflexes!',
+        subtitle: 'You caught that cue before it controlled you.'
+      },
+      {
+        emoji: '🏆',
+        title: 'Champion Mindset!',
+        subtitle: 'The best habit builders notice their triggers. You\'re one of them!'
+      },
+      {
+        emoji: '🌟',
+        title: 'Star Performer!',
+        subtitle: 'That awareness just rewired a tiny part of your brain. For real!'
+      },
+      {
+        emoji: '💪',
+        title: 'Mental Muscle Flexed!',
+        subtitle: 'Each time you notice a cue, your self-control grows stronger.'
+      },
+      {
+        emoji: '🚀',
+        title: 'Launching New Habits!',
+        subtitle: 'You\'ve identified a trigger. Now you can build something amazing.'
+      },
+      {
+        emoji: '✨',
+        title: 'Mindfulness Master!',
+        subtitle: 'Being present in the moment is a gift. You just gave it to yourself.'
+      },
+      {
+        emoji: '🎉',
+        title: 'Celebration Time!',
+        subtitle: 'You\'re breaking the autopilot cycle. That deserves applause!'
+      }
+    ];
+
+    function showCueCelebration() {
+      const celebration = document.getElementById('cueCelebration');
+      const particles = document.getElementById('cueCelebrationParticles');
+      const emojiEl = document.getElementById('cueCelebrationEmoji');
+      const titleEl = document.getElementById('cueCelebrationTitle');
+      const subtitleEl = document.getElementById('cueCelebrationSubtitle');
+
+      // Pick random celebration
+      const cel = cueCelebrations[Math.floor(Math.random() * cueCelebrations.length)];
+      emojiEl.textContent = cel.emoji;
+      titleEl.textContent = cel.title;
+      subtitleEl.textContent = cel.subtitle;
+
+      // Clear and create particles
+      particles.innerHTML = '';
+      createCueParticles(particles);
+
+      // Show celebration
+      celebration.classList.add('show');
+
+      // Haptic celebration pattern
+      triggerHaptic([100, 50, 100, 50, 200]);
+    }
+
+    function createCueParticles(container) {
+      const colors = ['#ffd93d', '#ff6b9d', '#c471ed', '#6dd5ed', '#6bcf63'];
+      const emojis = ['✨', '⭐', '🌟', '💫', '🎉', '🎊', '💥', '🔥'];
+
+      // Create sparkles
+      for (let i = 0; i < 30; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'particle sparkle';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        sparkle.style.animationDelay = Math.random() * 2 + 's';
+        sparkle.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+        container.appendChild(sparkle);
+      }
+
+      // Create floating emojis
+      for (let i = 0; i < 12; i++) {
+        const emoji = document.createElement('div');
+        emoji.className = 'emoji-burst';
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.position = 'absolute';
+        emoji.style.left = Math.random() * 100 + '%';
+        emoji.style.top = Math.random() * 100 + '%';
+        emoji.style.fontSize = (20 + Math.random() * 20) + 'px';
+        emoji.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+        emoji.style.setProperty('--ty', (Math.random() - 0.5) * 200 + 'px');
+        emoji.style.animationDelay = Math.random() * 0.5 + 's';
+        container.appendChild(emoji);
+      }
+    }
+
+    window.dismissCueCelebration = function() {
+      const celebration = document.getElementById('cueCelebration');
+      celebration.classList.remove('show');
+      document.getElementById('cueCelebrationParticles').innerHTML = '';
+      triggerHaptic(30);
+    };
 
     // Agua progress bar
     function updateAguaBar(){
