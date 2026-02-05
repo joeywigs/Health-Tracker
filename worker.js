@@ -93,6 +93,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadPhases(env, corsHeaders);
   }
 
+  if (action === "habit_stacks_load") {
+    return await loadHabitStacks(env, corsHeaders);
+  }
+
   if (action === "rehit_week") {
     const date = url.searchParams.get("date");
     if (!date) {
@@ -181,6 +185,13 @@ async function handlePost(request, env, corsHeaders) {
 
   if (action === "audit_data") {
     return await auditData(env, corsHeaders);
+  }
+
+  if (action === "habit_stacks_save") {
+    if (!body.stacks || !Array.isArray(body.stacks)) {
+      return jsonResponse({ error: true, message: "Missing stacks array" }, 400, corsHeaders);
+    }
+    return await saveHabitStacks(body.stacks, env, corsHeaders);
   }
 
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
@@ -612,6 +623,19 @@ async function loadHabitNotes(env, corsHeaders) {
 
 async function saveHabitNotes(notes, env, corsHeaders) {
   await env.HABIT_DATA.put("habit:notes", JSON.stringify(notes));
+  return jsonResponse({ success: true }, 200, corsHeaders);
+}
+
+// ===== Habit Stacks =====
+async function loadHabitStacks(env, corsHeaders) {
+  const stacks = await env.HABIT_DATA.get("habit:stacks", "json");
+  return jsonResponse({
+    stacks: stacks || []
+  }, 200, corsHeaders);
+}
+
+async function saveHabitStacks(stacks, env, corsHeaders) {
+  await env.HABIT_DATA.put("habit:stacks", JSON.stringify(stacks));
   return jsonResponse({ success: true }, 200, corsHeaders);
 }
 
