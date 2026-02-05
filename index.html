@@ -2648,7 +2648,99 @@
       background: rgba(255,255,255,0.8);
       color: #1f2937;
     }
-    
+
+    /* Habit Notes */
+    .habit-notes-input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .habit-note-input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      resize: none;
+      min-height: 70px;
+      font-family: inherit;
+    }
+    .habit-note-input:focus {
+      outline: none;
+      border-color: var(--accent-orange);
+      box-shadow: 0 0 10px var(--glow-orange);
+    }
+    .habit-note-input::placeholder {
+      color: var(--text-muted);
+    }
+    .habit-note-add-btn {
+      align-self: flex-end;
+      padding: 10px 20px;
+    }
+    .habit-notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .habit-note-item {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      position: relative;
+    }
+    .habit-note-item:hover {
+      border-color: rgba(255,255,255,0.2);
+    }
+    .habit-note-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .habit-note-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .habit-note-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .habit-note-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+    }
+    .habit-note-delete:hover {
+      background: rgba(255,107,157,0.2);
+      color: #ff6b9d;
+    }
+    .habit-notes-empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 20px;
+      font-style: italic;
+    }
+    body.day-mode .habit-note-input {
+      background: rgba(255,255,255,0.8);
+      color: #1f2937;
+    }
+    body.day-mode .habit-note-item {
+      background: rgba(255,255,255,0.6);
+    }
+
     .theme-preview { display: flex; gap: 8px; }
     .theme-btn {
       width: 40px; height: 40px;
@@ -3387,6 +3479,21 @@
           <br><br>
           <strong>Fixed goals:</strong> Supplements (all 4 daily), No Alcohol, and Healthy Snacks are tracked as yes/no checkboxes.
         </p>
+      </div>
+    </div>
+
+    <!-- Habit Notes -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-yellow);--icon-end:var(--accent-orange);--icon-glow:var(--glow-orange)">📝</div><span class="sec-name">Habit Notes</span></div></div>
+      <div class="sec-content">
+        <p style="color:var(--text-muted);font-size:12px;margin:0 0 12px 0">Quick notes about your habits, triggers, or insights.</p>
+        <div class="habit-notes-input-row">
+          <textarea class="habit-note-input" id="newHabitNote" placeholder="Write a note about your habits..."></textarea>
+          <button type="button" class="btn btn-primary habit-note-add-btn" id="addHabitNoteBtn">Add Note</button>
+        </div>
+        <div id="habitNotesList" class="habit-notes-list">
+          <!-- Notes populated by JS -->
+        </div>
       </div>
     </div>
 
@@ -5008,6 +5115,104 @@
       saveSettings(appSettings);
       showToast('Meditation goal updated', 'success');
     });
+
+    // ===== HABIT NOTES =====
+    let habitNotes = [];
+
+    function loadHabitNotes() {
+      try {
+        const stored = localStorage.getItem('habitNotes');
+        if (stored) habitNotes = JSON.parse(stored);
+      } catch (e) {
+        habitNotes = [];
+      }
+      renderHabitNotes();
+    }
+
+    function saveHabitNotes() {
+      localStorage.setItem('habitNotes', JSON.stringify(habitNotes));
+    }
+
+    function renderHabitNotes() {
+      const list = document.getElementById('habitNotesList');
+      if (!list) return;
+
+      if (habitNotes.length === 0) {
+        list.innerHTML = '<div class="habit-notes-empty">No notes yet. Add your first habit note above!</div>';
+        return;
+      }
+
+      // Show newest first
+      const sortedNotes = [...habitNotes].reverse();
+      list.innerHTML = sortedNotes.map((note, idx) => {
+        const realIdx = habitNotes.length - 1 - idx; // Get actual index
+        const date = new Date(note.timestamp);
+        const timeStr = date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }) + ' at ' + date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        return `
+          <div class="habit-note-item" data-idx="${realIdx}">
+            <div class="habit-note-text">${escapeHtml(note.text)}</div>
+            <div class="habit-note-meta">
+              <span class="habit-note-time">📅 ${timeStr}</span>
+              <button type="button" class="habit-note-delete" onclick="deleteHabitNote(${realIdx})">🗑️ Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    window.addHabitNote = function() {
+      const input = document.getElementById('newHabitNote');
+      const text = input.value.trim();
+
+      if (!text) {
+        input.style.borderColor = '#ff6b9d';
+        setTimeout(() => input.style.borderColor = '', 1500);
+        return;
+      }
+
+      habitNotes.push({
+        text: text,
+        timestamp: new Date().toISOString()
+      });
+
+      saveHabitNotes();
+      renderHabitNotes();
+      input.value = '';
+      showToast('Note added!', 'success');
+    };
+
+    window.deleteHabitNote = function(idx) {
+      if (idx >= 0 && idx < habitNotes.length) {
+        habitNotes.splice(idx, 1);
+        saveHabitNotes();
+        renderHabitNotes();
+        showToast('Note deleted', 'success');
+      }
+    };
+
+    // Initialize habit notes
+    document.getElementById('addHabitNoteBtn')?.addEventListener('click', addHabitNote);
+    document.getElementById('newHabitNote')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        addHabitNote();
+      }
+    });
+    loadHabitNotes();
 
     // Theme preview buttons
     document.querySelectorAll('.theme-btn').forEach(btn => {
