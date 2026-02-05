@@ -588,6 +588,92 @@
       filter: drop-shadow(0 0 6px var(--glow-teal));
     }
     .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
+    .ring-text.celebrating { animation: ringTextPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes ringTextPop {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.5); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* Ring Completion Celebration */
+    .ring-celebration {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+    }
+    .ring-celebration .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .ring-celebration .confetti {
+      width: 10px;
+      height: 10px;
+      animation: confettiFall 3s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg) scale(0); opacity: 0; }
+    }
+    .ring-celebration .firework {
+      width: 6px;
+      height: 6px;
+      animation: fireworkBurst 1s ease-out forwards;
+    }
+    @keyframes fireworkBurst {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+    }
+    .ring-celebration .sparkle {
+      width: 4px;
+      height: 4px;
+      background: gold;
+      box-shadow: 0 0 6px gold, 0 0 12px orange;
+      animation: sparkleFloat 2s ease-out forwards;
+    }
+    @keyframes sparkleFloat {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      50% { opacity: 1; }
+      100% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+    }
+    .ring-celebration .star {
+      font-size: 24px;
+      animation: starBurst 1.5s ease-out forwards;
+    }
+    @keyframes starBurst {
+      0% { transform: translate(0, 0) scale(0) rotate(0deg); opacity: 1; }
+      50% { transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(180deg); opacity: 1; }
+      100% { transform: translate(calc(var(--tx) * 1.5), calc(var(--ty) * 1.5)) scale(0) rotate(360deg); opacity: 0; }
+    }
+    .ring-celebration .ring-pulse {
+      position: absolute;
+      border-radius: 50%;
+      border: 3px solid;
+      animation: ringPulse 1s ease-out forwards;
+    }
+    @keyframes ringPulse {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+    }
+    .ring-celebration .emoji-burst {
+      font-size: 32px;
+      animation: emojiBurst 2s ease-out forwards;
+    }
+    @keyframes emojiBurst {
+      0% { transform: translate(0, 0) scale(0); opacity: 1; }
+      20% { transform: translate(0, 0) scale(1.3); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0.5); opacity: 0; }
+    }
+    .ring-glow-burst {
+      animation: glowBurst 0.8s ease-out;
+    }
+    @keyframes glowBurst {
+      0% { filter: drop-shadow(0 0 6px var(--glow-teal)); }
+      50% { filter: drop-shadow(0 0 30px var(--glow-teal)) drop-shadow(0 0 60px var(--glow-pink)); }
+      100% { filter: drop-shadow(0 0 6px var(--glow-teal)); }
+    }
     
     /* Phase Bar */
     .phase { margin-top: 0; }
@@ -2557,6 +2643,9 @@
     </div>
   </header>
 
+  <!-- Ring Completion Celebration Container -->
+  <div id="ringCelebration" class="ring-celebration"></div>
+
   <!-- Bedtime Routine Section -->
   <div id="bedtimeRoutine" class="bedtime-routine">
     <div class="bedtime-header">
@@ -3441,14 +3530,172 @@
         } else {
           offset = circumference - (checked / total) * circumference;
         }
-        // Debug removed
         progress.style.strokeDashoffset = offset;
         number.textContent = checked;
-      } else {
-        // Debug removed
+
+        // Trigger celebration when ring is complete!
+        if (checked === total && total > 0 && !window._ringCelebratedToday) {
+          window._ringCelebratedToday = true;
+          triggerRingCelebration();
+        }
       }
     }
-    
+
+    // Track if we've celebrated today (resets on date change)
+    window._ringCelebratedToday = false;
+
+    // Ring completion celebration with random animations
+    function triggerRingCelebration() {
+      const container = document.getElementById('ringCelebration');
+      if (!container) return;
+
+      // Haptic feedback
+      if (navigator.vibrate) {
+        navigator.vibrate([50, 30, 100, 30, 150]); // Celebratory pattern
+      }
+
+      // Glow burst on the ring
+      const ringProgress = document.getElementById('completionProgress');
+      const ringText = document.getElementById('completionNumber');
+      if (ringProgress) {
+        ringProgress.classList.add('ring-glow-burst');
+        setTimeout(() => ringProgress.classList.remove('ring-glow-burst'), 800);
+      }
+      if (ringText) {
+        ringText.classList.add('celebrating');
+        setTimeout(() => ringText.classList.remove('celebrating'), 600);
+      }
+
+      // Pick random celebration type
+      const celebrations = [
+        createConfettiExplosion,
+        createFireworks,
+        createGoldenShower,
+        createEmojiParty,
+        createPulseWave
+      ];
+      const celebrate = celebrations[Math.floor(Math.random() * celebrations.length)];
+      celebrate(container);
+
+      // Clean up after animation
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 3500);
+    }
+
+    function createConfettiExplosion(container) {
+      const colors = ['#ff6b9d', '#c471ed', '#6dd5ed', '#ffd93d', '#6bcf63', '#ff9f43', '#ee5a5a'];
+      const ringRect = document.querySelector('.ring-wrap')?.getBoundingClientRect();
+      const centerX = ringRect ? ringRect.left + ringRect.width / 2 : window.innerWidth / 2;
+      const centerY = ringRect ? ringRect.top + ringRect.height / 2 : 100;
+
+      for (let i = 0; i < 60; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'particle confetti';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = centerX + (Math.random() - 0.5) * 100 + 'px';
+        confetti.style.top = centerY + 'px';
+        confetti.style.animationDelay = Math.random() * 0.3 + 's';
+        confetti.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+        if (Math.random() > 0.5) {
+          confetti.style.borderRadius = '2px';
+          confetti.style.width = '8px';
+          confetti.style.height = '14px';
+        }
+        container.appendChild(confetti);
+      }
+    }
+
+    function createFireworks(container) {
+      const colors = ['#ff6b9d', '#c471ed', '#6dd5ed', '#ffd93d', '#fff'];
+      const positions = [
+        { x: window.innerWidth * 0.3, y: 120 },
+        { x: window.innerWidth * 0.5, y: 80 },
+        { x: window.innerWidth * 0.7, y: 140 }
+      ];
+
+      positions.forEach((pos, idx) => {
+        setTimeout(() => {
+          for (let i = 0; i < 30; i++) {
+            const spark = document.createElement('div');
+            spark.className = 'particle firework';
+            spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+            spark.style.boxShadow = `0 0 6px ${spark.style.background}`;
+            spark.style.left = pos.x + 'px';
+            spark.style.top = pos.y + 'px';
+            const angle = (i / 30) * Math.PI * 2;
+            const distance = 80 + Math.random() * 60;
+            spark.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+            spark.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+            container.appendChild(spark);
+          }
+          // Extra haptic for each burst
+          if (navigator.vibrate) navigator.vibrate(30);
+        }, idx * 200);
+      });
+    }
+
+    function createGoldenShower(container) {
+      for (let i = 0; i < 50; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'particle sparkle';
+        sparkle.style.left = Math.random() * window.innerWidth + 'px';
+        sparkle.style.top = -10 + 'px';
+        sparkle.style.animationDelay = Math.random() * 1 + 's';
+        sparkle.style.animationDuration = (1.5 + Math.random() * 1) + 's';
+        container.appendChild(sparkle);
+      }
+    }
+
+    function createEmojiParty(container) {
+      const emojis = ['🎉', '🌟', '⭐', '✨', '💫', '🏆', '🔥', '💪', '🎊', '👏'];
+      const ringRect = document.querySelector('.ring-wrap')?.getBoundingClientRect();
+      const centerX = ringRect ? ringRect.left + ringRect.width / 2 : window.innerWidth / 2;
+      const centerY = ringRect ? ringRect.top + ringRect.height / 2 : 100;
+
+      for (let i = 0; i < 15; i++) {
+        const emoji = document.createElement('div');
+        emoji.className = 'emoji-burst';
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.position = 'absolute';
+        emoji.style.left = centerX + 'px';
+        emoji.style.top = centerY + 'px';
+        const angle = (i / 15) * Math.PI * 2;
+        const distance = 100 + Math.random() * 80;
+        emoji.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+        emoji.style.setProperty('--ty', Math.sin(angle) * distance - 50 + 'px');
+        emoji.style.animationDelay = Math.random() * 0.2 + 's';
+        container.appendChild(emoji);
+      }
+    }
+
+    function createPulseWave(container) {
+      const colors = ['#6dd5ed', '#c471ed', '#ff6b9d', '#ffd93d'];
+      const ringRect = document.querySelector('.ring-wrap')?.getBoundingClientRect();
+      const centerX = ringRect ? ringRect.left + ringRect.width / 2 : window.innerWidth / 2;
+      const centerY = ringRect ? ringRect.top + ringRect.height / 2 : 100;
+
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => {
+          const pulse = document.createElement('div');
+          pulse.className = 'ring-pulse';
+          pulse.style.left = centerX + 'px';
+          pulse.style.top = centerY + 'px';
+          pulse.style.width = '60px';
+          pulse.style.height = '60px';
+          pulse.style.borderColor = colors[i];
+          pulse.style.boxShadow = `0 0 20px ${colors[i]}`;
+          container.appendChild(pulse);
+          if (navigator.vibrate) navigator.vibrate(20);
+        }, i * 150);
+      }
+    }
+
+    // Reset celebration flag on date change
+    window.addEventListener('dateChanged', () => {
+      window._ringCelebratedToday = false;
+    });
+
     // Agua progress bar
     function updateAguaBar(){
       const aguaCount = document.getElementById('aguaCount');
