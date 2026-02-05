@@ -3396,15 +3396,23 @@
       const stepsGoal = (typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500;
       if (stepsVal >= stepsGoal) checked++;
 
-      // 4. Movement breaks ≥ 2
+      // 4. Movement breaks ≥ goal
       const movementGoal = (typeof appSettings !== 'undefined' && appSettings.movementGoal) ? appSettings.movementGoal : 2;
-      const movementItems = document.querySelectorAll('#movementList .item');
-      if (movementItems.length >= movementGoal) checked++;
+      // Count movements: morning and afternoon each count if type selected or duration entered
+      let movementCount = 0;
+      const morningType = document.getElementById('morningMovementType')?.value;
+      const morningDuration = document.getElementById('morningMovementDuration')?.value;
+      if (morningType || morningDuration) movementCount++;
+      const afternoonType = document.getElementById('afternoonMovementType')?.value;
+      const afternoonDuration = document.getElementById('afternoonMovementDuration')?.value;
+      if (afternoonType || afternoonDuration) movementCount++;
+      if (movementCount >= movementGoal) checked++;
 
-      // 5. Meals: 2 of 3 checked (breakfast, lunch, dinner)
+      // 5. Meals: breakfast, lunch, dinner checked >= goal
+      const mealsGoal = (typeof appSettings !== 'undefined' && appSettings.mealsGoal) ? appSettings.mealsGoal : 2;
       const mealsChecked = ['breakfast', 'lunch', 'dinner']
         .filter(id => document.getElementById(id)?.checked).length;
-      if (mealsChecked >= 2) checked++;
+      if (mealsChecked >= mealsGoal) checked++;
 
       // 6. No alcohol
       if (document.getElementById('noAlcohol')?.checked) checked++;
@@ -3622,12 +3630,14 @@
         sleepInput.addEventListener('change', updateCompletionRingAurora);
       }
 
-      // Movement list observer (for completion ring)
-      const movementList = document.getElementById('movementList');
-      if (movementList) {
-        const movObs = new MutationObserver(updateCompletionRingAurora);
-        movObs.observe(movementList, { childList: true });
-      }
+      // Movement inputs listener (for completion ring)
+      ['morningMovementType', 'morningMovementDuration', 'afternoonMovementType', 'afternoonMovementDuration'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('change', updateCompletionRingAurora);
+          el.addEventListener('input', updateCompletionRingAurora);
+        }
+      });
       
       // REHIT week observer
       const rehitWeek = document.getElementById('rehitWeek');
@@ -4221,6 +4231,7 @@
     document.getElementById('sleepGoal')?.addEventListener('change', (e) => {
       appSettings.sleepGoal = parseInt(e.target.value) || 7;
       saveSettings(appSettings);
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Sleep goal updated', 'success');
     });
 
@@ -4229,6 +4240,7 @@
       saveSettings(appSettings);
       // Update agua bar goal
       if (typeof updateAguaBar === 'function') updateAguaBar();
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Water goal updated', 'success');
     });
 
@@ -4237,18 +4249,21 @@
       saveSettings(appSettings);
       // Update steps bar goal
       if (typeof updateStepsBar === 'function') updateStepsBar();
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Steps goal updated', 'success');
     });
 
     document.getElementById('movementGoal')?.addEventListener('change', (e) => {
       appSettings.movementGoal = parseInt(e.target.value) || 2;
       saveSettings(appSettings);
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Movement goal updated', 'success');
     });
 
     document.getElementById('mealsGoal')?.addEventListener('change', (e) => {
       appSettings.mealsGoal = parseInt(e.target.value) || 2;
       saveSettings(appSettings);
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Meals goal updated', 'success');
     });
 
