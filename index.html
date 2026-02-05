@@ -2154,6 +2154,210 @@
       color: var(--text-muted);
       margin-top: 2px;
     }
+
+    /* Habit Grid */
+    .habit-grid-container {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .habit-grid-banner {
+      background: linear-gradient(135deg, #2a1f1a 0%, var(--bg-card) 100%);
+      border: 1px solid #4a3520;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .habit-grid-banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #ff9f1c, #e76f51);
+    }
+    .banner-header { margin-bottom: 10px; }
+    .banner-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ff9f1c;
+    }
+    .banner-subtitle {
+      font-size: 12px;
+      color: #998877;
+      margin-top: 2px;
+    }
+    .banner-habits { display: flex; flex-direction: column; gap: 6px; }
+    .banner-habit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(255,159,28,0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(255,159,28,0.15);
+    }
+    .banner-habit-icon { font-size: 14px; }
+    .banner-habit-name { font-size: 12px; font-weight: 500; color: var(--text); }
+    .banner-streak-note { font-size: 10px; color: #887766; margin-left: auto; }
+
+    .habit-grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .habit-grid-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .habit-grid-dates {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .habit-grid-row {
+      display: grid;
+      grid-template-columns: 90px repeat(7, 1fr);
+      gap: 3px;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .habit-grid-labels { margin-bottom: 4px; }
+    .habit-grid-day-label {
+      text-align: center;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .habit-grid-day-label.today { color: var(--accent-green); }
+    .habit-grid-name {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow: hidden;
+    }
+    .habit-grid-icon { font-size: 12px; flex-shrink: 0; }
+    .habit-grid-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .habit-streak-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 6px;
+      background: rgba(82,183,136,0.15);
+      color: #52b788;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+    .habit-grid-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      transition: transform 0.15s ease;
+    }
+    .habit-grid-cell:hover {
+      transform: scale(1.2);
+      z-index: 2;
+    }
+    .habit-grid-cell.hit {
+      background: #52b788;
+      box-shadow: 0 0 4px rgba(82,183,136,0.3);
+    }
+    .habit-grid-cell.miss {
+      background: #3a2a2e;
+      border: 1px solid #5a3a3e;
+    }
+    .habit-grid-cell.today {
+      background: var(--bg-input);
+      border: 1.5px dashed var(--text-muted);
+    }
+    .habit-grid-cell.no-data {
+      background: var(--bg-input);
+      opacity: 0.5;
+    }
+    .habit-grid-pct-row {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .habit-grid-pct {
+      text-align: center;
+      font-size: 9px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .habit-pct-bar {
+      height: 2px;
+      background: var(--bg-input);
+      border-radius: 1px;
+      margin-top: 2px;
+      overflow: hidden;
+    }
+    .habit-pct-fill {
+      height: 100%;
+      border-radius: 1px;
+      transition: width 0.5s ease;
+    }
+    .habit-grid-legend {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .legend-cell {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+    .legend-cell.hit { background: #52b788; }
+    .legend-cell.miss { background: #3a2a2e; border: 1px solid #5a3a3e; }
+    .legend-cell.today { border: 1.5px dashed var(--text-muted); }
+
+    /* Day mode habit grid */
+    body.day-mode .habit-grid-container {
+      background: var(--bg-card);
+    }
+    body.day-mode .habit-grid-banner {
+      background: linear-gradient(135deg, #fff5eb 0%, var(--bg-card) 100%);
+      border-color: #e8d5c4;
+    }
+    body.day-mode .banner-habit {
+      background: rgba(255,159,28,0.1);
+      border-color: rgba(255,159,28,0.2);
+    }
+    body.day-mode .habit-grid-cell.miss {
+      background: #f5e8e8;
+      border-color: #e0c4c4;
+    }
+    body.day-mode .legend-cell.miss {
+      background: #f5e8e8;
+      border-color: #e0c4c4;
+    }
+
     .goal-stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -3449,6 +3653,13 @@
     <!-- Overview Stats -->
     <div class="section">
       <div class="summary-overview" id="summaryOverview">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Habit Grid -->
+    <div class="section">
+      <div id="habitGridContainer" class="habit-grid-container">
         <!-- Populated by JS -->
       </div>
     </div>
