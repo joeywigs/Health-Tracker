@@ -85,6 +85,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadHabitNotes(env, corsHeaders);
   }
 
+  if (action === "cue_logs_load") {
+    return await loadCueLogs(env, corsHeaders);
+  }
+
   if (action === "phases_load") {
     return await loadPhases(env, corsHeaders);
   }
@@ -155,6 +159,13 @@ async function handlePost(request, env, corsHeaders) {
       return jsonResponse({ error: true, message: "Missing notes array" }, 400, corsHeaders);
     }
     return await saveHabitNotes(body.notes, env, corsHeaders);
+  }
+
+  if (action === "cue_log_save") {
+    if (!body.cueData) {
+      return jsonResponse({ error: true, message: "Missing cueData" }, 400, corsHeaders);
+    }
+    return await saveCueLog(body.cueData, env, corsHeaders);
   }
 
   if (action === "phases_save") {
@@ -594,6 +605,30 @@ async function loadHabitNotes(env, corsHeaders) {
 async function saveHabitNotes(notes, env, corsHeaders) {
   await env.HABIT_DATA.put("habit:notes", JSON.stringify(notes));
   return jsonResponse({ success: true }, 200, corsHeaders);
+}
+
+// ===== Cue Logs =====
+async function loadCueLogs(env, corsHeaders) {
+  const logs = await env.HABIT_DATA.get("cue:logs", "json");
+  return jsonResponse({
+    logs: logs || []
+  }, 200, corsHeaders);
+}
+
+async function saveCueLog(cueData, env, corsHeaders) {
+  // Get existing logs
+  let logs = await env.HABIT_DATA.get("cue:logs", "json") || [];
+
+  // Add new log entry
+  logs.push(cueData);
+
+  // Keep only the last 500 entries to prevent unbounded growth
+  if (logs.length > 500) {
+    logs = logs.slice(-500);
+  }
+
+  await env.HABIT_DATA.put("cue:logs", JSON.stringify(logs));
+  return jsonResponse({ success: true, count: logs.length }, 200, corsHeaders);
 }
 
 // ===== Phases =====
