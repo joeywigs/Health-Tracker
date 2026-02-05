@@ -2121,7 +2121,63 @@
     body.day-mode .rehit-cal-day.today {
       color: white;
     }
-    
+
+    /* REHIT Progress Card */
+    .rehit-progress-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+    }
+    .rehit-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .rehit-progress-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .rehit-progress-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent-orange);
+    }
+    .rehit-progress-bar {
+      height: 8px;
+      background: var(--bg-input);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .rehit-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-orange), var(--accent-pink));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .rehit-progress-breakdown {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .rehit-type-badge {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .rehit-type-badge.type-2x10 {
+      background: rgba(255, 107, 157, 0.2);
+      color: #ff6b9d;
+    }
+    .rehit-type-badge.type-3x10 {
+      background: rgba(255, 159, 67, 0.2);
+      color: #ff9f43;
+    }
+
     /* Summary Page Styles */
     .summary-overview {
       display: grid;
@@ -3744,17 +3800,6 @@
       </div>
     </header>
 
-    <!-- Phase Management -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📅</div><span class="sec-name">Phase Management</span></div></div>
-      <div class="sec-content">
-        <div id="phaseManagementInfo" style="margin-bottom:12px">
-          <!-- Populated by JS -->
-        </div>
-        <button type="button" class="btn btn-primary" id="planNextPhaseBtn" style="width:100%">Plan Next Phase</button>
-      </div>
-    </div>
-
     <!-- Goals Settings -->
     <div class="section">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Goal Settings</span></div></div>
@@ -4188,7 +4233,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=9.19" defer></script>
+  <script src="app.js?v=9.20" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -4887,9 +4932,9 @@
       const dotsContainer = document.getElementById('rehitDots');
       if (!dotsContainer) return;
 
-      // Get targets from settings (default 2+2=4)
+      // Get targets from settings (default 2+3=5)
       const target2x10 = parseInt(window.appSettings?.rehit2x10Goal) || 2;
-      const target3x10 = parseInt(window.appSettings?.rehit3x10Goal) || 2;
+      const target3x10 = parseInt(window.appSettings?.rehit3x10Goal) || 3;
       const totalDots = target2x10 + target3x10;
 
       // Rebuild dots
@@ -5435,85 +5480,9 @@
 
       window.scrollTo(0, 0);
       renderSectionList();
-      updatePhaseManagementInfo();
       loadHabitNotes(); // Reload habit notes when settings page opens
     }
 
-    function updatePhaseManagementInfo() {
-      const infoEl = document.getElementById('phaseManagementInfo');
-      const btn = document.getElementById('planNextPhaseBtn');
-      if (!infoEl || !btn) return;
-
-      // Get current phase info from app.js
-      const currentPhase = typeof getCurrentPhase === 'function' ? getCurrentPhase() : null;
-      const phases = typeof phasesData !== 'undefined' ? phasesData : [];
-
-      if (!currentPhase) {
-        infoEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin:0">No phase data available.</p>';
-        btn.textContent = 'Create Phase 1';
-        btn.onclick = () => {
-          if (typeof openNewPhaseModal === 'function') openNewPhaseModal();
-        };
-        return;
-      }
-
-      // Calculate days remaining in current phase
-      const phaseStart = typeof parseDataDate === 'function' ? parseDataDate(currentPhase.start) : new Date(currentPhase.start);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dayInPhase = Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1;
-      const daysRemaining = currentPhase.length - dayInPhase;
-
-      const nextPhaseId = currentPhase.id + 1;
-      const nextPhaseExists = phases.some(p => p.id === nextPhaseId);
-
-      let statusHtml = `
-        <p style="color:var(--text);font-size:14px;margin:0 0 8px 0"><strong>${currentPhase.name}</strong></p>
-        <p style="color:var(--text-muted);font-size:13px;margin:0">Day ${dayInPhase} of ${currentPhase.length} (${daysRemaining > 0 ? daysRemaining + ' days remaining' : 'Phase complete!'})</p>
-      `;
-
-      if (nextPhaseExists) {
-        const nextPhase = phases.find(p => p.id === nextPhaseId);
-        statusHtml += `<p style="color:var(--accent-teal);font-size:13px;margin:8px 0 0 0">✓ ${nextPhase.name} is planned</p>`;
-
-        // Show next phase goals
-        if (nextPhase.goals) {
-          statusHtml += `<div style="margin-top:12px;padding:12px;background:var(--bg-input);border-radius:8px;">`;
-          statusHtml += `<p style="color:var(--text);font-size:12px;font-weight:600;margin:0 0 8px 0">${nextPhase.name} Goals:</p>`;
-          const goalIcons = { sleep: '🌙', agua: '💧', steps: '👟', rehit: '🚴', movement: '🚶', reading: '📖', meals: '🍽️', meditation: '🧘' };
-          Object.entries(nextPhase.goals).forEach(([key, goal]) => {
-            if (goal && goal.target) {
-              const icon = goalIcons[key] || '🎯';
-              statusHtml += `<p style="color:var(--text-muted);font-size:11px;margin:4px 0">${icon} ${key}: ${goal.target}</p>`;
-            }
-          });
-          statusHtml += `</div>`;
-        }
-
-        // Only show "Plan Phase 3" button if within 3 days of current phase ending
-        const phaseAfterNextId = nextPhaseId + 1;
-        const phaseAfterNextExists = phases.some(p => p.id === phaseAfterNextId);
-        if (daysRemaining <= 3 && !phaseAfterNextExists) {
-          btn.style.display = 'block';
-          btn.textContent = `Plan Phase ${phaseAfterNextId}`;
-          btn.onclick = () => {
-            if (typeof openNewPhaseModal === 'function') openNewPhaseModal(nextPhaseId);
-          };
-        } else {
-          btn.style.display = 'none';
-        }
-      } else {
-        statusHtml += `<p style="color:var(--accent-orange);font-size:13px;margin:8px 0 0 0">⚠️ Phase ${nextPhaseId} not yet planned</p>`;
-        btn.style.display = 'block';
-        btn.textContent = `Plan Phase ${nextPhaseId}`;
-        btn.onclick = () => {
-          if (typeof openNewPhaseModal === 'function') openNewPhaseModal();
-        };
-      }
-
-      infoEl.innerHTML = statusHtml;
-    }
-    
     function closeSettingsPage() {
       document.getElementById('settingsPage').style.display = 'none';
       document.getElementById('healthForm').style.display = 'block';

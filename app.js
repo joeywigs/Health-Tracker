@@ -1884,19 +1884,31 @@ function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
   const isPhaseComplete = today > phaseEnd;
   const effectiveEnd = isPhaseComplete ? phaseEnd : today;
   const daysIntoPhase = Math.max(0, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
-  const daysRemaining = Math.max(0, phaseLength - daysIntoPhase);
-  const elapsedDays = range === 'phase' ? Math.min(daysIntoPhase, phaseLength) : daysIntoPhase;
-  const totalDaysLogged = data.length;
-  const currentStreak = calculateCurrentStreak();
-  const pctLogged = elapsedDays > 0 ? Math.round((totalDaysLogged / elapsedDays) * 100) : 0;
 
-  // Show different content based on whether viewing current or past phase
-  const statusText = isPhaseComplete ? 'Complete!' : (daysRemaining > 0 ? daysRemaining + ' remaining' : 'Complete!');
+  // For "all time" range, use all data
+  let totalDaysLogged, elapsedDays;
+  if (range === 'all') {
+    totalDaysLogged = allData?.length || 0;
+    // Calculate total days from earliest data to today
+    if (allData && allData.length > 0) {
+      const dates = allData.map(d => parseDataDate(d.date)).filter(d => d);
+      const earliest = new Date(Math.min(...dates));
+      elapsedDays = Math.max(1, Math.floor((today - earliest) / (1000 * 60 * 60 * 24)) + 1);
+    } else {
+      elapsedDays = 1;
+    }
+  } else {
+    totalDaysLogged = data?.length || 0;
+    elapsedDays = Math.min(daysIntoPhase, phaseLength);
+  }
+
+  const currentStreak = calculateCurrentStreak();
+  const pctLogged = elapsedDays > 0 ? Math.min(100, Math.round((totalDaysLogged / elapsedDays) * 100)) : 0;
 
   container.innerHTML = `
     <div class="summary-stat full-width">
       <div class="summary-stat-value">🔥 ${currentStreak}-day streak</div>
-      <div class="summary-stat-label">${pctLogged}% of days logged</div>
+      <div class="summary-stat-label">${totalDaysLogged} days logged${range === 'phase' ? ` (${pctLogged}%)` : ''}</div>
     </div>
   `;
 }
@@ -2147,31 +2159,46 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
   const container = document.getElementById('summaryRehitCalendar');
   if (!container) return;
 
-  // Build rehit data map from filtered data for the selected range
+  // Count REHIT sessions from filtered data
   const filteredData = getFilteredData(data, range, phaseId);
-  const rehitMap = {};
+  let sessions2x10 = 0;
+  let sessions3x10 = 0;
+
   filteredData.forEach(d => {
-    const val = d.daily["REHIT 2x10"];
+    const val = d.daily?.["REHIT 2x10"];
     if (val === "2x10" || val === true || val === "TRUE") {
-      rehitMap[d.date] = "2x10";
+      sessions2x10++;
     } else if (val === "3x10") {
-      rehitMap[d.date] = "3x10";
+      sessions3x10++;
     }
   });
 
-  if (range === 7) {
-    // Show last 7 days (matching the data filter)
-    renderLast7DaysCalendar(container, rehitMap);
-  } else if (range === 'phase') {
-    // Show phase weeks starting from phase start date
-    const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
-    const phaseStart = phase ? parseDataDate(phase.start) : new Date(PHASE_START);
-    const phaseLength = phase ? phase.length : PHASE_LENGTH;
-    renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength);
-  } else {
-    // Show 30 days
-    renderMonthCalendar(container, rehitMap, new Date());
-  }
+  const totalSessions = sessions2x10 + sessions3x10;
+
+  // Get target from settings
+  const target2x10 = parseInt(window.appSettings?.rehit2x10Goal) || 2;
+  const target3x10 = parseInt(window.appSettings?.rehit3x10Goal) || 2;
+  const totalTarget = target2x10 + target3x10;
+
+  // For phase view, multiply weekly target by 3 weeks
+  const phaseTarget = range === 'phase' ? totalTarget * 3 : totalTarget;
+  const pct = phaseTarget > 0 ? Math.min(100, Math.round((totalSessions / phaseTarget) * 100)) : 0;
+
+  container.innerHTML = `
+    <div class="rehit-progress-card">
+      <div class="rehit-progress-header">
+        <span class="rehit-progress-title">🚴 REHIT Sessions</span>
+        <span class="rehit-progress-count">${totalSessions}/${phaseTarget}</span>
+      </div>
+      <div class="rehit-progress-bar">
+        <div class="rehit-progress-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="rehit-progress-breakdown">
+        <span class="rehit-type-badge type-2x10">${sessions2x10} × 2x10</span>
+        <span class="rehit-type-badge type-3x10">${sessions3x10} × 3x10</span>
+      </div>
+    </div>
+  `;
 }
 
 function renderLast7DaysCalendar(container, rehitMap) {
@@ -2470,64 +2497,74 @@ function renderGoalStatCard(name, icon, pct, detail, color = null) {
 
 function renderHealthGoals(stats) {
   const container = document.getElementById('healthGoalsStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
+
   container.innerHTML = `
-    ${renderGoalStatCard('Sleep', '🌙', stats.sleep.pct, stats.sleep.detail)}
-    ${renderGoalStatCard('Water', '💧', stats.agua.pct, stats.agua.detail)}
-    ${renderGoalStatCard('Supps', '💊', stats.supps.pct, stats.supps.detail)}
-    ${renderGoalStatCard('REHIT', '🚴', stats.rehit.pct, stats.rehit.detail)}
-    ${renderGoalStatCard('Steps', '👟', stats.steps.pct, stats.steps.detail)}
-    ${renderGoalStatCard('Movement', '🚶', stats.movement.pct, stats.movement.detail)}
-    ${renderGoalStatCard('Reading', '📖', stats.reading.pct, stats.reading.detail)}
+    ${renderGoalStatCard('Sleep', '🌙', safe(stats.sleep).pct, safe(stats.sleep).detail)}
+    ${renderGoalStatCard('Water', '💧', safe(stats.agua).pct, safe(stats.agua).detail)}
+    ${renderGoalStatCard('Supps', '💊', safe(stats.supps).pct, safe(stats.supps).detail)}
+    ${renderGoalStatCard('REHIT', '🚴', safe(stats.rehit).pct, safe(stats.rehit).detail)}
+    ${renderGoalStatCard('Steps', '👟', safe(stats.steps).pct, safe(stats.steps).detail)}
+    ${renderGoalStatCard('Movement', '🚶', safe(stats.movement).pct, safe(stats.movement).detail)}
+    ${renderGoalStatCard('Reading', '📖', safe(stats.reading).pct, safe(stats.reading).detail)}
   `;
 }
 
 function renderNutritionStats(stats) {
   const container = document.getElementById('nutritionStats');
-  if (!container) return;
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
 
   container.innerHTML = `
-    ${renderGoalStatCard('Meals', '🍽️', stats.meals.pct, stats.meals.detail)}
-    ${renderGoalStatCard('Snacks', '🥗', stats.snacks.pct, stats.snacks.detail)}
-    ${renderGoalStatCard('No Alcohol', '🍺', stats.noAlcohol.pct, stats.noAlcohol.detail)}
+    ${renderGoalStatCard('Meals', '🍽️', safe(stats.meals).pct, safe(stats.meals).detail)}
+    ${renderGoalStatCard('Snacks', '🥗', safe(stats.snacks).pct, safe(stats.snacks).detail)}
+    ${renderGoalStatCard('No Alcohol', '🍺', safe(stats.noAlcohol).pct, safe(stats.noAlcohol).detail)}
   `;
 }
 
 function renderMindfulnessStats(stats) {
   const container = document.getElementById('mindfulnessStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const detail = stats.meditation?.detail || 'No data';
+
   container.innerHTML = `
     <div class="goal-stat-card" style="grid-column: 1 / -1;">
       <div class="goal-stat-header">
         <span class="goal-stat-name">🧘 Meditation</span>
         <span style="font-size: 12px; color: var(--text-muted);">No goal - tracking only</span>
       </div>
-      <div class="goal-stat-detail">${stats.meditation.detail}</div>
+      <div class="goal-stat-detail">${detail}</div>
     </div>
   `;
 }
 
 function renderKidsHabitsStats(stats) {
   const container = document.getElementById('kidsHabitsStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
+
   container.innerHTML = `
-    ${renderGoalStatCard('Inhaler AM', '💨', stats.inhalerAM.pct, stats.inhalerAM.detail)}
-    ${renderGoalStatCard('Inhaler PM', '💨', stats.inhalerPM.pct, stats.inhalerPM.detail)}
-    ${renderGoalStatCard('Math', '🔢', stats.math.pct, stats.math.detail)}
+    ${renderGoalStatCard('Inhaler AM', '💨', safe(stats.inhalerAM).pct, safe(stats.inhalerAM).detail)}
+    ${renderGoalStatCard('Inhaler PM', '💨', safe(stats.inhalerPM).pct, safe(stats.inhalerPM).detail)}
+    ${renderGoalStatCard('Math', '🔢', safe(stats.math).pct, safe(stats.math).detail)}
   `;
 }
 
 function renderWritingStats(stats) {
   const container = document.getElementById('writingStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
+
   container.innerHTML = `
-    ${renderGoalStatCard('Reflections', '✍️', stats.reflections.pct, stats.reflections.detail)}
-    ${renderGoalStatCard('Stories', '📝', stats.stories.pct, stats.stories.detail)}
-    ${renderGoalStatCard('Carly', '💛', stats.carly.pct, stats.carly.detail)}
+    ${renderGoalStatCard('Reflections', '✍️', safe(stats.reflections).pct, safe(stats.reflections).detail)}
+    ${renderGoalStatCard('Stories', '📝', safe(stats.stories).pct, safe(stats.stories).detail)}
+    ${renderGoalStatCard('Carly', '💛', safe(stats.carly).pct, safe(stats.carly).detail)}
   `;
 }
 
