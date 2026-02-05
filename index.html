@@ -2275,12 +2275,12 @@
       z-index: 2;
     }
     .habit-grid-cell.hit {
-      background: #52b788;
-      box-shadow: 0 0 4px rgba(82,183,136,0.3);
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
     }
     .habit-grid-cell.miss {
-      background: #3a2a2e;
-      border: 1px solid #5a3a3e;
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
     }
     .habit-grid-cell.today {
       background: var(--bg-input);
@@ -2333,8 +2333,8 @@
       height: 10px;
       border-radius: 2px;
     }
-    .legend-cell.hit { background: #52b788; }
-    .legend-cell.miss { background: #3a2a2e; border: 1px solid #5a3a3e; }
+    .legend-cell.hit { background: #fef3c7; border: 1px solid #fcd34d; }
+    .legend-cell.miss { background: #fee2e2; border: 1px solid #fca5a5; }
     .legend-cell.today { border: 1.5px dashed var(--text-muted); }
 
     /* Day mode habit grid */
@@ -2348,14 +2348,6 @@
     body.day-mode .banner-habit {
       background: rgba(255,159,28,0.1);
       border-color: rgba(255,159,28,0.2);
-    }
-    body.day-mode .habit-grid-cell.miss {
-      background: #f5e8e8;
-      border-color: #e0c4c4;
-    }
-    body.day-mode .legend-cell.miss {
-      background: #f5e8e8;
-      border-color: #e0c4c4;
     }
 
     .goal-stats-grid {
