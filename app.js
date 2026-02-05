@@ -1108,7 +1108,8 @@ async function openNewPhaseModal(fromPhaseId = null) {
         <div class="phase-stat-details">
           <span class="stat-highlight">${stats.rehit.weeksMet}/${stats.rehit.totalWeeks}</span> weeks achieved goal
           <span class="stat-pct">(${stats.rehit.pct}%)</span>
-          <br><span class="stat-avg">Avg: ${stats.rehit.avg} sessions/week</span>
+          <br><span class="stat-avg">2x10: ${stats.rehit.total2x10} sessions (${stats.rehit.avg2x10}/wk)</span>
+          <br><span class="stat-avg">3x10: ${stats.rehit.total3x10} sessions (${stats.rehit.avg3x10}/wk)</span>
         </div>
       </div>`;
   }
@@ -1120,7 +1121,7 @@ async function openNewPhaseModal(fromPhaseId = null) {
         <div class="phase-stat-label">Reading</div>
         <div class="phase-stat-details">
           <span class="stat-highlight">${stats.reading.weeksMet}/${stats.reading.totalWeeks}</span> weeks achieved goal
-          <br><span class="stat-avg">Avg: ${stats.reading.avg} min/week</span>
+          <br><span class="stat-avg">Total: ${stats.reading.total} min | Avg: ${stats.reading.avg} min/week</span>
         </div>
       </div>`;
   }
@@ -1480,28 +1481,52 @@ function calculateGoalStats(data, range, phaseId = null) {
     detail: `${suppsDaysMet}/${elapsedDays} days all 4`
   };
 
-  // REHIT: sessions per week
+  // REHIT: split into 2x10 and 3x10 sessions per week
   const rehitTarget = getTarget('rehit');
-  // Group REHIT sessions by week
-  const weeklyRehit = {};
+  // Group REHIT sessions by week, tracking 2x10 and 3x10 separately
+  const weeklyRehit2x10 = {};
+  const weeklyRehit3x10 = {};
+  let total2x10 = 0;
+  let total3x10 = 0;
   data.forEach(d => {
-    if (d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "") {
+    const rehitVal = d.daily["REHIT 2x10"];
+    if (rehitVal && rehitVal !== "") {
       const date = parseDataDate(d.date);
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay());
       const weekKey = `${weekStart.getMonth()+1}/${weekStart.getDate()}/${weekStart.getFullYear()}`;
-      weeklyRehit[weekKey] = (weeklyRehit[weekKey] || 0) + 1;
+
+      if (rehitVal === "3x10") {
+        weeklyRehit3x10[weekKey] = (weeklyRehit3x10[weekKey] || 0) + 1;
+        total3x10++;
+      } else {
+        // "2x10", true, or "TRUE" all count as 2x10
+        weeklyRehit2x10[weekKey] = (weeklyRehit2x10[weekKey] || 0) + 1;
+        total2x10++;
+      }
     }
   });
-  const rehitCount = Object.values(weeklyRehit).reduce((a,b) => a+b, 0);
-  const rehitWeeksMet = Object.values(weeklyRehit).filter(count => count >= rehitTarget).length;
+  const rehitCount = total2x10 + total3x10;
+  // Calculate weeks where combined sessions met goal
+  const allWeeks = new Set([...Object.keys(weeklyRehit2x10), ...Object.keys(weeklyRehit3x10)]);
+  let rehitWeeksMet = 0;
+  allWeeks.forEach(weekKey => {
+    const weekTotal = (weeklyRehit2x10[weekKey] || 0) + (weeklyRehit3x10[weekKey] || 0);
+    if (weekTotal >= rehitTarget) rehitWeeksMet++;
+  });
   const rehitPerWeek = elapsedWeeks > 0 ? rehitCount / elapsedWeeks : 0;
+  const avg2x10PerWeek = elapsedWeeks > 0 ? total2x10 / elapsedWeeks : 0;
+  const avg3x10PerWeek = elapsedWeeks > 0 ? total3x10 / elapsedWeeks : 0;
   stats.rehit = {
     pct: elapsedWeeks > 0 ? Math.round((rehitWeeksMet / elapsedWeeks) * 100) : 0,
     weeksMet: rehitWeeksMet,
     totalWeeks: elapsedWeeks,
     total: rehitCount,
+    total2x10: total2x10,
+    total3x10: total3x10,
     avg: rehitPerWeek.toFixed(1),
+    avg2x10: avg2x10PerWeek.toFixed(1),
+    avg3x10: avg3x10PerWeek.toFixed(1),
     detail: `${rehitCount} sessions (${rehitPerWeek.toFixed(1)}/wk)`,
     target: rehitTarget
   };
@@ -1550,6 +1575,7 @@ function calculateGoalStats(data, range, phaseId = null) {
   };
 
   // Reading: weeks with target minutes
+  // Calculate from readings array (list of {book, duration} objects)
   const readingTarget = getTarget('reading');
   const weeklyReading = {};
   data.forEach(d => {
@@ -1557,8 +1583,20 @@ function calculateGoalStats(data, range, phaseId = null) {
     const weekStart = new Date(date);
     weekStart.setDate(date.getDate() - date.getDay());
     const weekKey = `${weekStart.getMonth()+1}/${weekStart.getDate()}/${weekStart.getFullYear()}`;
-    const mins = parseInt(d.daily["Reading Minutes"]) || 0;
-    weeklyReading[weekKey] = (weeklyReading[weekKey] || 0) + mins;
+
+    // Sum up reading minutes from the readings array
+    let dayMins = 0;
+    if (d.readings && Array.isArray(d.readings)) {
+      d.readings.forEach(r => {
+        const mins = parseInt(r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"]) || 0;
+        dayMins += mins;
+      });
+    }
+    // Also check the daily field as fallback
+    if (dayMins === 0) {
+      dayMins = parseInt(d.daily["Reading Minutes"]) || 0;
+    }
+    weeklyReading[weekKey] = (weeklyReading[weekKey] || 0) + dayMins;
   });
   const weeksWithReading = Object.values(weeklyReading).filter(mins => mins >= readingTarget).length;
   const totalReadingMins = Object.values(weeklyReading).reduce((a,b) => a+b, 0);
@@ -2232,12 +2270,13 @@ async function fetchChartData(maxDays = null, silent = false) {
         (daily["Weight (lbs)"] && daily["Weight (lbs)"] !== "") ||
         (daily["REHIT 2x10"] && daily["REHIT 2x10"] !== "")
       );
-      
+
       if (hasData) {
         emptyDaysInARow = 0;
         dataPoints.push({
           date: dateStr,
           daily: daily || {},
+          readings: result?.readings || [],
           averages: result?.averages || {}
         });
       } else {
