@@ -935,7 +935,7 @@ let phasesData = [DEFAULT_PHASE_1];
 // Load phases from API (falls back to DEFAULT_PHASE_1 already in phasesData)
 async function loadPhases() {
   try {
-    const resp = await fetch(`${API_BASE}?action=phases_load`);
+    const resp = await fetch(`${API_URL}?action=phases_load`);
     const data = await resp.json();
     if (data.phases && Array.isArray(data.phases) && data.phases.length > 0) {
       phasesData = data.phases;
@@ -951,7 +951,7 @@ async function loadPhases() {
 // Save phases to API
 async function savePhases() {
   try {
-    const resp = await fetch(`${API_BASE}?action=phases_save`, {
+    const resp = await fetch(`${API_URL}?action=phases_save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phases: phasesData })
