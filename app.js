@@ -1195,11 +1195,13 @@ function getGoalTarget(key, phaseId = null) {
 
   // Fallback to appSettings
   if (typeof appSettings !== 'undefined') {
+    if (key === 'sleep' && appSettings.sleepGoal) return appSettings.sleepGoal;
     if (key === 'agua' && appSettings.aguaGoal) return appSettings.aguaGoal;
     if (key === 'steps' && appSettings.stepsGoal) return appSettings.stepsGoal;
+    if (key === 'movement' && appSettings.movementGoal) return appSettings.movementGoal;
+    if (key === 'meals' && appSettings.mealsGoal) return appSettings.mealsGoal;
     if (key === 'rehit' && appSettings.rehitGoal) return appSettings.rehitGoal;
     if (key === 'reading' && appSettings.readingGoal) return appSettings.readingGoal;
-    if (key === 'movement' && appSettings.movementGoal) return appSettings.movementGoal;
     if (key === 'meditation' && appSettings.meditationGoal) return appSettings.meditationGoal;
   }
   return GOALS[key]?.target;
