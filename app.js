@@ -1824,10 +1824,12 @@ function renderHabitGrid(allData) {
 
   const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+  // Helper to format date as M/D/YY (matching data format)
+  const toDateKey = (d) => `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+
   // Get last 7 days
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = formatDateKey(today);
 
   // Build date map from all data
   const dataMap = {};
@@ -1838,7 +1840,7 @@ function renderHabitGrid(allData) {
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
-    const dateStr = formatDateKey(date);
+    const dateStr = toDateKey(date);
     days.push({ date, dateStr, data: dataMap[dateStr] || null, isToday: i === 0 });
   }
 
