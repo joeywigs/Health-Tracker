@@ -850,23 +850,23 @@ function calculateGoalStats(data, range) {
     if (med === true || med === "TRUE" || med === "true") meditationDays++;
   });
   stats.meditation = {
-    pct: totalDays > 0 ? Math.round((meditationDays / totalDays) * 100) : 0,
-    detail: `${meditationDays}/${totalDays} days`
+    pct: elapsedDays > 0 ? Math.round((meditationDays / elapsedDays) * 100) : 0,
+    detail: `${meditationDays}/${elapsedDays} days`
   };
-  
+
   // Kid's habits
   let inhalerMorningDays = 0, inhalerEveningDays = 0, mathDays = 0;
   data.forEach(d => {
-    if (d.daily["Grey's Inhaler Morning"] === true || d.daily["Inhaler Morning"] === true || 
+    if (d.daily["Grey's Inhaler Morning"] === true || d.daily["Inhaler Morning"] === true ||
         d.daily["Grey's Inhaler Morning"] === "TRUE" || d.daily["Inhaler Morning"] === "TRUE") inhalerMorningDays++;
     if (d.daily["Grey's Inhaler Evening"] === true || d.daily["Inhaler Evening"] === true ||
         d.daily["Grey's Inhaler Evening"] === "TRUE" || d.daily["Inhaler Evening"] === "TRUE") inhalerEveningDays++;
     if (d.daily["5 min Multiplication"] === true || d.daily["5 min Multiplication"] === "TRUE") mathDays++;
   });
-  stats.inhalerAM = { pct: totalDays > 0 ? Math.round((inhalerMorningDays / totalDays) * 100) : 0, detail: `${inhalerMorningDays}/${totalDays} days` };
-  stats.inhalerPM = { pct: totalDays > 0 ? Math.round((inhalerEveningDays / totalDays) * 100) : 0, detail: `${inhalerEveningDays}/${totalDays} days` };
-  stats.math = { pct: totalDays > 0 ? Math.round((mathDays / totalDays) * 100) : 0, detail: `${mathDays}/${totalDays} days` };
-  
+  stats.inhalerAM = { pct: elapsedDays > 0 ? Math.round((inhalerMorningDays / elapsedDays) * 100) : 0, detail: `${inhalerMorningDays}/${elapsedDays} days` };
+  stats.inhalerPM = { pct: elapsedDays > 0 ? Math.round((inhalerEveningDays / elapsedDays) * 100) : 0, detail: `${inhalerEveningDays}/${elapsedDays} days` };
+  stats.math = { pct: elapsedDays > 0 ? Math.round((mathDays / elapsedDays) * 100) : 0, detail: `${mathDays}/${elapsedDays} days` };
+
   // Writing (reflections, stories, carly)
   let reflectionsDays = 0, storiesDays = 0, carlyDays = 0;
   data.forEach(d => {
@@ -874,10 +874,10 @@ function calculateGoalStats(data, range) {
     if (d.daily["Grey & Sloane Story"] && d.daily["Grey & Sloane Story"].trim() !== "") storiesDays++;
     if (d.daily["Carly"] && d.daily["Carly"].trim() !== "") carlyDays++;
   });
-  stats.reflections = { pct: totalDays > 0 ? Math.round((reflectionsDays / totalDays) * 100) : 0, detail: `${reflectionsDays}/${totalDays} days` };
-  stats.stories = { pct: totalDays > 0 ? Math.round((storiesDays / totalDays) * 100) : 0, detail: `${storiesDays}/${totalDays} days` };
-  stats.carly = { pct: totalDays > 0 ? Math.round((carlyDays / totalDays) * 100) : 0, detail: `${carlyDays}/${totalDays} days` };
-  
+  stats.reflections = { pct: elapsedDays > 0 ? Math.round((reflectionsDays / elapsedDays) * 100) : 0, detail: `${reflectionsDays}/${elapsedDays} days` };
+  stats.stories = { pct: elapsedDays > 0 ? Math.round((storiesDays / elapsedDays) * 100) : 0, detail: `${storiesDays}/${elapsedDays} days` };
+  stats.carly = { pct: elapsedDays > 0 ? Math.round((carlyDays / elapsedDays) * 100) : 0, detail: `${carlyDays}/${elapsedDays} days` };
+
   return stats;
 }
 
