@@ -1042,9 +1042,128 @@ function openNewPhaseModal(fromPhaseId = null) {
 
   // Calculate current phase stats for each goal
   const filteredData = chartDataCache ? getFilteredData(chartDataCache, 'phase', currentPhase.id) : [];
-  const stats = filteredData.length > 0 ? calculateGoalStats(filteredData, 'phase') : {};
+  const stats = filteredData.length > 0 ? calculateGoalStats(filteredData, 'phase', currentPhase.id) : {};
 
-  // Build modal content
+  // Build phase performance review HTML
+  let performanceHtml = '<div class="phase-performance-review">';
+  performanceHtml += `<h3 style="margin:0 0 16px;font-size:15px;color:var(--text);">${currentPhase.name} Performance</h3>`;
+
+  // Sleep stats
+  if (stats.sleep) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Sleep</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.sleep.daysMet}/${stats.sleep.totalDays}</span> days achieved goal
+          <span class="stat-pct">(${stats.sleep.pct}%)</span>
+          <br><span class="stat-avg">Avg: ${stats.sleep.avg} hrs/night</span>
+        </div>
+      </div>`;
+  }
+
+  // Water stats
+  if (stats.agua) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Water</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.agua.daysMet}/${stats.agua.totalDays}</span> days achieved goal
+          <span class="stat-pct">(${stats.agua.pct}%)</span>
+          <br><span class="stat-avg">Avg: ${stats.agua.avg} glasses/day</span>
+        </div>
+      </div>`;
+  }
+
+  // Steps stats
+  if (stats.steps) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Steps</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.steps.daysMet}/${stats.steps.totalDays}</span> days achieved goal
+          <span class="stat-pct">(${stats.steps.pct}%)</span>
+          <br><span class="stat-avg">Avg: ${stats.steps.avg.toLocaleString()} steps/day</span>
+        </div>
+      </div>`;
+  }
+
+  // REHIT stats
+  if (stats.rehit) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">REHIT</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.rehit.weeksMet}/${stats.rehit.totalWeeks}</span> weeks achieved goal
+          <span class="stat-pct">(${stats.rehit.pct}%)</span>
+          <br><span class="stat-avg">Avg: ${stats.rehit.avg} sessions/week</span>
+        </div>
+      </div>`;
+  }
+
+  // Reading stats
+  if (stats.reading) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Reading</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.reading.weeksMet}/${stats.reading.totalWeeks}</span> weeks achieved goal
+          <br><span class="stat-avg">Avg: ${stats.reading.avg} min/week</span>
+        </div>
+      </div>`;
+  }
+
+  // Movement stats
+  if (stats.movement) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Movement</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.movement.daysMet}/${stats.movement.totalDays}</span> days achieved goal
+          <span class="stat-pct">(${stats.movement.pct}%)</span>
+          <br><span class="stat-avg">Avg: ${stats.movement.avg} breaks/day</span>
+        </div>
+      </div>`;
+  }
+
+  // Meals stats
+  if (stats.meals) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Healthy Meals</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.meals.daysMet}/${stats.meals.totalDays}</span> days achieved goal
+          <span class="stat-pct">(${stats.meals.pct}%)</span>
+        </div>
+      </div>`;
+  }
+
+  // Meditation stats
+  if (stats.meditation) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Meditation</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.meditation.daysMet}/${stats.meditation.totalDays}</span> days achieved goal
+          <span class="stat-pct">(${stats.meditation.pct}%)</span>
+        </div>
+      </div>`;
+  }
+
+  // Snacks stats
+  if (stats.snacks) {
+    performanceHtml += `
+      <div class="phase-stat-row">
+        <div class="phase-stat-label">Healthy Snacks</div>
+        <div class="phase-stat-details">
+          <span class="stat-highlight">${stats.snacks.daysMet}/${stats.snacks.totalDays}</span> days achieved goal
+          <span class="stat-pct">(${stats.snacks.pct}%)</span>
+        </div>
+      </div>`;
+  }
+
+  performanceHtml += '</div>';
+
+  // Build goals input HTML
   let goalsHtml = '';
   const goalKeys = Object.keys(currentPhase.goals || {});
 
@@ -1111,6 +1230,8 @@ function openNewPhaseModal(fromPhaseId = null) {
           <p>Review your ${currentPhase.name} performance and set goals for Phase ${nextPhaseId}.</p>
           <p class="phase-dates">Starts: ${nextStartStr} (${currentPhase.length} days)</p>
         </div>
+        ${performanceHtml}
+        <h3 style="margin:20px 0 12px;font-size:15px;color:var(--text);">Set Phase ${nextPhaseId} Goals</h3>
         <div class="phase-goals-list">
           ${goalsHtml}
         </div>
@@ -1311,6 +1432,8 @@ function calculateGoalStats(data, range, phaseId = null) {
   const sleepDaysMet = sleepValues.filter(v => v >= sleepTarget).length;
   stats.sleep = {
     pct: elapsedDays > 0 ? Math.round((sleepDaysMet / elapsedDays) * 100) : 0,
+    daysMet: sleepDaysMet,
+    totalDays: elapsedDays,
     avg: sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : 0,
     detail: `${sleepDaysMet}/${elapsedDays} days ${sleepTarget}+ hrs`,
     target: sleepTarget
@@ -1322,6 +1445,8 @@ function calculateGoalStats(data, range, phaseId = null) {
   const waterDaysMet = waterValues.filter(v => v >= aguaTarget).length;
   stats.agua = {
     pct: elapsedDays > 0 ? Math.round((waterDaysMet / elapsedDays) * 100) : 0,
+    daysMet: waterDaysMet,
+    totalDays: elapsedDays,
     avg: waterValues.length > 0 ? (waterValues.reduce((a,b) => a+b, 0) / waterValues.length).toFixed(1) : 0,
     detail: `${waterDaysMet}/${elapsedDays} days at ${aguaTarget}+`,
     target: aguaTarget
@@ -1344,11 +1469,26 @@ function calculateGoalStats(data, range, phaseId = null) {
 
   // REHIT: sessions per week
   const rehitTarget = getTarget('rehit');
-  const rehitCount = data.filter(d => d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "").length;
-  const rehitPerWeek = rehitCount / elapsedWeeks;
+  // Group REHIT sessions by week
+  const weeklyRehit = {};
+  data.forEach(d => {
+    if (d.daily["REHIT 2x10"] && d.daily["REHIT 2x10"] !== "") {
+      const date = parseDataDate(d.date);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const weekKey = `${weekStart.getMonth()+1}/${weekStart.getDate()}/${weekStart.getFullYear()}`;
+      weeklyRehit[weekKey] = (weeklyRehit[weekKey] || 0) + 1;
+    }
+  });
+  const rehitCount = Object.values(weeklyRehit).reduce((a,b) => a+b, 0);
+  const rehitWeeksMet = Object.values(weeklyRehit).filter(count => count >= rehitTarget).length;
+  const rehitPerWeek = elapsedWeeks > 0 ? rehitCount / elapsedWeeks : 0;
   stats.rehit = {
-    pct: Math.min(100, Math.round((rehitPerWeek / rehitTarget) * 100)),
+    pct: elapsedWeeks > 0 ? Math.round((rehitWeeksMet / elapsedWeeks) * 100) : 0,
+    weeksMet: rehitWeeksMet,
+    totalWeeks: elapsedWeeks,
     total: rehitCount,
+    avg: rehitPerWeek.toFixed(1),
     detail: `${rehitCount} sessions (${rehitPerWeek.toFixed(1)}/wk)`,
     target: rehitTarget
   };
@@ -1357,8 +1497,11 @@ function calculateGoalStats(data, range, phaseId = null) {
   const stepsTarget = getTarget('steps');
   const stepsValues = data.map(d => parseInt(d.daily["Steps"])).filter(v => !isNaN(v) && v > 0);
   const avgSteps = stepsValues.length > 0 ? stepsValues.reduce((a,b) => a+b, 0) / stepsValues.length : 0;
+  const stepsDaysMet = stepsValues.filter(v => v >= stepsTarget).length;
   stats.steps = {
-    pct: Math.min(100, Math.round((avgSteps / stepsTarget) * 100)),
+    pct: elapsedDays > 0 ? Math.round((stepsDaysMet / elapsedDays) * 100) : 0,
+    daysMet: stepsDaysMet,
+    totalDays: elapsedDays,
     avg: Math.round(avgSteps),
     detail: `${Math.round(avgSteps).toLocaleString()} avg steps`,
     target: stepsTarget
@@ -1367,6 +1510,7 @@ function calculateGoalStats(data, range, phaseId = null) {
   // Movement: days with 2+ movement breaks
   const movementTarget = getTarget('movement');
   let movementDaysMet = 0;
+  let totalMovementBreaks = 0;
   data.forEach(d => {
     let breakCount = 0;
     // Count from morning/afternoon movement fields
@@ -1379,10 +1523,15 @@ function calculateGoalStats(data, range, phaseId = null) {
     } else if (Array.isArray(movements)) {
       breakCount += movements.length;
     }
+    totalMovementBreaks += breakCount;
     if (breakCount >= movementTarget) movementDaysMet++;
   });
+  const avgMovementPerDay = elapsedDays > 0 ? totalMovementBreaks / elapsedDays : 0;
   stats.movement = {
     pct: elapsedDays > 0 ? Math.round((movementDaysMet / elapsedDays) * 100) : 0,
+    daysMet: movementDaysMet,
+    totalDays: elapsedDays,
+    avg: avgMovementPerDay.toFixed(1),
     detail: `${movementDaysMet}/${elapsedDays} days ${movementTarget}+ breaks`,
     target: movementTarget
   };
@@ -1399,16 +1548,21 @@ function calculateGoalStats(data, range, phaseId = null) {
     weeklyReading[weekKey] = (weeklyReading[weekKey] || 0) + mins;
   });
   const weeksWithReading = Object.values(weeklyReading).filter(mins => mins >= readingTarget).length;
+  const totalReadingMins = Object.values(weeklyReading).reduce((a,b) => a+b, 0);
+  const avgReadingPerWeek = elapsedWeeks > 0 ? totalReadingMins / elapsedWeeks : 0;
   stats.reading = {
     pct: elapsedWeeks > 0 ? Math.round((weeksWithReading / elapsedWeeks) * 100) : 0,
-    total: Object.values(weeklyReading).reduce((a,b) => a+b, 0),
+    weeksMet: weeksWithReading,
+    totalWeeks: elapsedWeeks,
+    total: totalReadingMins,
+    avg: Math.round(avgReadingPerWeek),
     detail: `${weeksWithReading}/${elapsedWeeks} weeks ${readingTarget}+ min`,
     target: readingTarget
   };
 
   // Nutrition stats
   let goodMealsDays = 0;
-  let totalSnacksChecked = 0;
+  let healthySnacksDays = 0;
   data.forEach(d => {
     const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
     const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
@@ -1418,18 +1572,22 @@ function calculateGoalStats(data, range, phaseId = null) {
 
     const daySnacks = d.daily["Healthy Day Snacks"] || d.daily["Day Snacks"];
     const nightSnacks = d.daily["Healthy Night Snacks"] || d.daily["Night Snacks"];
-    if (daySnacks === true || daySnacks === "TRUE") totalSnacksChecked++;
-    if (nightSnacks === true || nightSnacks === "TRUE") totalSnacksChecked++;
+    const daySnacksOk = daySnacks === true || daySnacks === "TRUE" || daySnacks === "true";
+    const nightSnacksOk = nightSnacks === true || nightSnacks === "TRUE" || nightSnacks === "true";
+    // Count days where both day AND night snacks were healthy
+    if (daySnacksOk && nightSnacksOk) healthySnacksDays++;
   });
   stats.meals = {
     pct: elapsedDays > 0 ? Math.round((goodMealsDays / elapsedDays) * 100) : 0,
+    daysMet: goodMealsDays,
+    totalDays: elapsedDays,
     detail: `${goodMealsDays}/${elapsedDays} days 2+ meals`
   };
-  // Snacks: sum of day+night checks / (2 * elapsed days)
-  const maxSnackChecks = elapsedDays * 2;
   stats.snacks = {
-    pct: maxSnackChecks > 0 ? Math.round((totalSnacksChecked / maxSnackChecks) * 100) : 0,
-    detail: `${totalSnacksChecked}/${maxSnackChecks} checks`
+    pct: elapsedDays > 0 ? Math.round((healthySnacksDays / elapsedDays) * 100) : 0,
+    daysMet: healthySnacksDays,
+    totalDays: elapsedDays,
+    detail: `${healthySnacksDays}/${elapsedDays} days healthy snacks`
   };
 
   // No Alcohol
@@ -1451,6 +1609,8 @@ function calculateGoalStats(data, range, phaseId = null) {
   });
   stats.meditation = {
     pct: elapsedDays > 0 ? Math.round((meditationDays / elapsedDays) * 100) : 0,
+    daysMet: meditationDays,
+    totalDays: elapsedDays,
     detail: `${meditationDays}/${elapsedDays} days`
   };
 
