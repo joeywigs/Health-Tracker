@@ -2696,6 +2696,59 @@
       color: #1f2937;
     }
 
+    /* Goal Settings Rows */
+    .goal-setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .goal-setting-row:last-child { border-bottom: none; }
+    .goal-setting-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+    .goal-setting-icon {
+      font-size: 18px;
+      width: 28px;
+      text-align: center;
+    }
+    .goal-setting-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .goal-setting-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .goal-setting-controls .goal-input {
+      width: 65px;
+    }
+    .goal-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+      min-width: 50px;
+    }
+    .goal-freq {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 12px;
+      padding: 6px 8px;
+      min-width: 70px;
+    }
+    .goal-freq:focus { border-color: var(--accent-teal); }
+    body.day-mode .goal-freq {
+      background: rgba(255,255,255,0.8);
+      color: #1f2937;
+    }
+
     /* Habit Notes */
     .habit-notes-input-row {
       display: flex;
@@ -3461,70 +3514,175 @@
 
     <!-- Goals Settings -->
     <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Daily Goals</span></div></div>
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Goal Settings</span></div></div>
       <div class="sec-content">
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">🌙 Sleep Goal</span>
-            <span class="setting-desc">Hours per night</span>
-          </div>
-          <input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">💧 Water Goal</span>
-            <span class="setting-desc">Glasses per day</span>
-          </div>
-          <input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">👟 Steps Goal</span>
-            <span class="setting-desc">Steps per day</span>
-          </div>
-          <input type="number" class="goal-input" id="stepsGoal" value="7500" min="1000" max="50000" step="500">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">🚶 Movement Goal</span>
-            <span class="setting-desc">Breaks per day</span>
-          </div>
-          <input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">🍽️ Meals Goal</span>
-            <span class="setting-desc">Healthy meals per day</span>
-          </div>
-          <input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3">
-        </div>
-      </div>
-    </div>
+        <p style="color:var(--text-muted);font-size:12px;margin:0 0 16px 0">Set your target for each goal and choose daily or weekly frequency.</p>
 
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-orange);--icon-glow:var(--glow-purple)">📅</div><span class="sec-name">Weekly Goals</span></div></div>
-      <div class="sec-content">
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">🚴 REHIT Goal</span>
-            <span class="setting-desc">Sessions per week</span>
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🌙</span>
+            <span class="goal-setting-name">Sleep</span>
           </div>
-          <input type="number" class="goal-input" id="rehitGoal" value="4" min="1" max="7">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">📖 Reading Goal</span>
-            <span class="setting-desc">Minutes per week</span>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12">
+            <span class="goal-unit">hrs</span>
+            <select class="goal-freq" id="sleepFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
           </div>
-          <input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5">
         </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">🧘 Meditation Goal</span>
-            <span class="setting-desc">Minutes per week</span>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">💧</span>
+            <span class="goal-setting-name">Water</span>
           </div>
-          <input type="number" class="goal-input" id="meditationGoal" value="60" min="5" max="500" step="5">
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20">
+            <span class="goal-unit">glasses</span>
+            <select class="goal-freq" id="aguaFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
         </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">👟</span>
+            <span class="goal-setting-name">Steps</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="stepsGoal" value="5000" min="1000" max="50000" step="500">
+            <span class="goal-unit">steps</span>
+            <select class="goal-freq" id="stepsFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🚶</span>
+            <span class="goal-setting-name">Movement</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10">
+            <span class="goal-unit">sessions</span>
+            <select class="goal-freq" id="movementFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🍽️</span>
+            <span class="goal-setting-name">Meals</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3">
+            <span class="goal-unit">meals</span>
+            <select class="goal-freq" id="mealsFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🥗</span>
+            <span class="goal-setting-name">Healthy Snacks</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2">
+            <span class="goal-unit">checks</span>
+            <select class="goal-freq" id="snacksFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🚫🍺</span>
+            <span class="goal-setting-name">No Alcohol</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="noAlcoholGoal" value="1" min="1" max="1" disabled style="opacity:0.5">
+            <span class="goal-unit">check</span>
+            <select class="goal-freq" id="noAlcoholFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🚴</span>
+            <span class="goal-setting-name">REHIT 2x10</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7">
+            <span class="goal-unit">sessions</span>
+            <select class="goal-freq" id="rehit2x10Freq">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🚴</span>
+            <span class="goal-setting-name">REHIT 3x10</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7">
+            <span class="goal-unit">sessions</span>
+            <select class="goal-freq" id="rehit3x10Freq">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">📖</span>
+            <span class="goal-setting-name">Reading</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5">
+            <span class="goal-unit">min</span>
+            <select class="goal-freq" id="readingFreq">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">🧘</span>
+            <span class="goal-setting-name">Meditation</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="meditationGoal" value="3" min="1" max="7">
+            <span class="goal-unit">sessions</span>
+            <select class="goal-freq" id="meditationFreq">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+            </select>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -3535,7 +3693,7 @@
           These are your default goals. When you create a new Phase, these values are used as starting points.
           Each Phase can have its own targets that you set during the Phase planning process.
           <br><br>
-          <strong>Fixed goals:</strong> Supplements (all 4 daily), No Alcohol, and Healthy Snacks are tracked as yes/no checkboxes.
+          <strong>Supplements</strong> (all 4 daily) is tracked separately as a fixed goal.
         </p>
       </div>
     </div>
@@ -4778,12 +4936,31 @@
     const defaultSettings = {
       dayStartTime: '05:00',
       nightStartTime: '17:00',
+      // Goal values
+      sleepGoal: 7,
       aguaGoal: 6,
-      stepsGoal: 7500,
-      rehitGoal: 4,
-      readingGoal: 60,
+      stepsGoal: 5000,
       movementGoal: 2,
-      meditationGoal: 60,
+      mealsGoal: 2,
+      snacksGoal: 2,
+      noAlcoholGoal: 1,
+      rehit2x10Goal: 2,
+      rehit3x10Goal: 3,
+      rehitGoal: 4, // legacy - combined total
+      readingGoal: 60,
+      meditationGoal: 3,
+      // Goal frequencies
+      sleepFreq: 'daily',
+      aguaFreq: 'daily',
+      stepsFreq: 'daily',
+      movementFreq: 'daily',
+      mealsFreq: 'daily',
+      snacksFreq: 'daily',
+      noAlcoholFreq: 'daily',
+      rehit2x10Freq: 'weekly',
+      rehit3x10Freq: 'weekly',
+      readingFreq: 'weekly',
+      meditationFreq: 'weekly',
       sections: [
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
@@ -4912,14 +5089,31 @@
       // Populate settings
       document.getElementById('dayStartTime').value = appSettings.dayStartTime;
       document.getElementById('nightStartTime').value = appSettings.nightStartTime;
+
+      // Goal values
       document.getElementById('sleepGoal').value = appSettings.sleepGoal || 7;
       document.getElementById('aguaGoal').value = appSettings.aguaGoal || 6;
-      document.getElementById('stepsGoal').value = appSettings.stepsGoal || 7500;
+      document.getElementById('stepsGoal').value = appSettings.stepsGoal || 5000;
       document.getElementById('movementGoal').value = appSettings.movementGoal || 2;
       document.getElementById('mealsGoal').value = appSettings.mealsGoal || 2;
-      document.getElementById('rehitGoal').value = appSettings.rehitGoal || 4;
+      document.getElementById('snacksGoal').value = appSettings.snacksGoal || 2;
+      document.getElementById('rehit2x10Goal').value = appSettings.rehit2x10Goal || 2;
+      document.getElementById('rehit3x10Goal').value = appSettings.rehit3x10Goal || 3;
       document.getElementById('readingGoal').value = appSettings.readingGoal || 60;
-      document.getElementById('meditationGoal').value = appSettings.meditationGoal || 60;
+      document.getElementById('meditationGoal').value = appSettings.meditationGoal || 3;
+
+      // Goal frequencies
+      document.getElementById('sleepFreq').value = appSettings.sleepFreq || 'daily';
+      document.getElementById('aguaFreq').value = appSettings.aguaFreq || 'daily';
+      document.getElementById('stepsFreq').value = appSettings.stepsFreq || 'daily';
+      document.getElementById('movementFreq').value = appSettings.movementFreq || 'daily';
+      document.getElementById('mealsFreq').value = appSettings.mealsFreq || 'daily';
+      document.getElementById('snacksFreq').value = appSettings.snacksFreq || 'daily';
+      document.getElementById('noAlcoholFreq').value = appSettings.noAlcoholFreq || 'daily';
+      document.getElementById('rehit2x10Freq').value = appSettings.rehit2x10Freq || 'weekly';
+      document.getElementById('rehit3x10Freq').value = appSettings.rehit3x10Freq || 'weekly';
+      document.getElementById('readingFreq').value = appSettings.readingFreq || 'weekly';
+      document.getElementById('meditationFreq').value = appSettings.meditationFreq || 'weekly';
 
       window.scrollTo(0, 0);
       renderSectionList();
@@ -5187,62 +5381,43 @@
       applyTheme(currentTheme, true);
     });
     
-    // Goal inputs
-    document.getElementById('sleepGoal')?.addEventListener('change', (e) => {
-      appSettings.sleepGoal = parseInt(e.target.value) || 7;
-      saveSettings(appSettings);
-      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-      showToast('Sleep goal updated', 'success');
+    // Goal inputs - unified handler
+    const goalInputConfigs = [
+      { id: 'sleepGoal', key: 'sleepGoal', default: 7, name: 'Sleep', updateRing: true },
+      { id: 'aguaGoal', key: 'aguaGoal', default: 6, name: 'Water', updateRing: true, updateAguaBar: true },
+      { id: 'stepsGoal', key: 'stepsGoal', default: 5000, name: 'Steps', updateRing: true, updateStepsBar: true },
+      { id: 'movementGoal', key: 'movementGoal', default: 2, name: 'Movement', updateRing: true },
+      { id: 'mealsGoal', key: 'mealsGoal', default: 2, name: 'Meals', updateRing: true },
+      { id: 'snacksGoal', key: 'snacksGoal', default: 2, name: 'Snacks', updateRing: true },
+      { id: 'rehit2x10Goal', key: 'rehit2x10Goal', default: 2, name: 'REHIT 2x10' },
+      { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10' },
+      { id: 'readingGoal', key: 'readingGoal', default: 60, name: 'Reading' },
+      { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' }
+    ];
+
+    goalInputConfigs.forEach(config => {
+      document.getElementById(config.id)?.addEventListener('change', (e) => {
+        appSettings[config.key] = parseInt(e.target.value) || config.default;
+        saveSettings(appSettings);
+        if (config.updateRing && typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+        if (config.updateAguaBar && typeof updateAguaBar === 'function') updateAguaBar();
+        if (config.updateStepsBar && typeof updateStepsBar === 'function') updateStepsBar();
+        showToast(`${config.name} goal updated`, 'success');
+      });
     });
 
-    document.getElementById('aguaGoal')?.addEventListener('change', (e) => {
-      appSettings.aguaGoal = parseInt(e.target.value) || 6;
-      saveSettings(appSettings);
-      // Update agua bar goal
-      if (typeof updateAguaBar === 'function') updateAguaBar();
-      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-      showToast('Water goal updated', 'success');
-    });
+    // Goal frequency selectors
+    const freqConfigs = [
+      'sleepFreq', 'aguaFreq', 'stepsFreq', 'movementFreq', 'mealsFreq',
+      'snacksFreq', 'noAlcoholFreq', 'rehit2x10Freq', 'rehit3x10Freq', 'readingFreq', 'meditationFreq'
+    ];
 
-    document.getElementById('stepsGoal')?.addEventListener('change', (e) => {
-      appSettings.stepsGoal = parseInt(e.target.value) || 7500;
-      saveSettings(appSettings);
-      // Update steps bar goal
-      if (typeof updateStepsBar === 'function') updateStepsBar();
-      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-      showToast('Steps goal updated', 'success');
-    });
-
-    document.getElementById('movementGoal')?.addEventListener('change', (e) => {
-      appSettings.movementGoal = parseInt(e.target.value) || 2;
-      saveSettings(appSettings);
-      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-      showToast('Movement goal updated', 'success');
-    });
-
-    document.getElementById('mealsGoal')?.addEventListener('change', (e) => {
-      appSettings.mealsGoal = parseInt(e.target.value) || 2;
-      saveSettings(appSettings);
-      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-      showToast('Meals goal updated', 'success');
-    });
-
-    document.getElementById('rehitGoal')?.addEventListener('change', (e) => {
-      appSettings.rehitGoal = parseInt(e.target.value) || 4;
-      saveSettings(appSettings);
-      showToast('REHIT goal updated', 'success');
-    });
-
-    document.getElementById('readingGoal')?.addEventListener('change', (e) => {
-      appSettings.readingGoal = parseInt(e.target.value) || 60;
-      saveSettings(appSettings);
-      showToast('Reading goal updated', 'success');
-    });
-
-    document.getElementById('meditationGoal')?.addEventListener('change', (e) => {
-      appSettings.meditationGoal = parseInt(e.target.value) || 60;
-      saveSettings(appSettings);
-      showToast('Meditation goal updated', 'success');
+    freqConfigs.forEach(freqId => {
+      document.getElementById(freqId)?.addEventListener('change', (e) => {
+        appSettings[freqId] = e.target.value;
+        saveSettings(appSettings);
+        showToast('Frequency updated', 'success');
+      });
     });
 
     // ===== HABIT NOTES =====
