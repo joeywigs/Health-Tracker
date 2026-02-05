@@ -774,6 +774,65 @@ function renderPhaseComparison() {
   container.innerHTML = html;
 }
 
+// Render phase goals for the selected phase
+function renderPhaseGoals(phaseId = null) {
+  const container = document.getElementById('phaseGoalsContent');
+  const section = document.getElementById('phaseGoalsSection');
+  if (!container) return;
+
+  const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
+  if (!phase || !phase.goals) {
+    if (section) section.style.display = 'none';
+    return;
+  }
+
+  if (section) section.style.display = 'block';
+
+  const goalConfig = [
+    { key: 'sleep', name: 'Sleep', icon: '🌙', format: (t) => `${t}+ hrs/night` },
+    { key: 'agua', name: 'Water', icon: '💧', format: (t) => `${t}+ glasses/day` },
+    { key: 'steps', name: 'Steps', icon: '👟', format: (t) => `${t.toLocaleString()}+/day` },
+    { key: 'rehit', name: 'REHIT', icon: '🚴', format: (t) => `${t}x/week` },
+    { key: 'movement', name: 'Movement', icon: '🚶', format: (t) => `${t}+ breaks/day` },
+    { key: 'reading', name: 'Reading', icon: '📖', format: (t) => `${t}+ min/week` },
+    { key: 'meals', name: 'Meals', icon: '🍽️', format: (t) => `${t}+ healthy/day` },
+    { key: 'supps', name: 'Supplements', icon: '💊', format: (t) => `All ${t} daily` },
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺', format: (t) => t ? 'Daily' : 'Not tracked' },
+    { key: 'meditation', name: 'Meditation', icon: '🧘', format: (t) => t ? 'Daily' : 'Not tracked' },
+    { key: 'snacks', name: 'Healthy Snacks', icon: '🥗', format: (t) => `${t}x/day` }
+  ];
+
+  let html = '';
+  goalConfig.forEach(g => {
+    const goal = phase.goals[g.key];
+    if (!goal) return;
+
+    const targetDisplay = g.format(goal.target);
+    html += `
+      <div class="phase-goal-card">
+        <span class="goal-icon">${g.icon}</span>
+        <div class="goal-details">
+          <div class="goal-name">${g.name}</div>
+          <div class="goal-target">${targetDisplay}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html || '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted)">No goals defined</div>';
+}
+
+// Toggle phase goals visibility
+function togglePhaseGoals() {
+  const content = document.getElementById('phaseGoalsContent');
+  const toggle = document.getElementById('phaseGoalsToggle');
+  if (!content || !toggle) return;
+
+  const isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? 'grid' : 'none';
+  toggle.textContent = isHidden ? '▼' : '▶';
+}
+
 function updateWeeklySummaryButton() {
   // No longer needed - link is always visible
 }
@@ -1405,6 +1464,14 @@ function renderSummaryPage(data, range) {
 
   // Overview stats
   renderSummaryOverview(filteredData, stats, range, data, phaseId);
+
+  // Phase goals (show targets for selected phase)
+  if (range === 'phase') {
+    renderPhaseGoals(phaseId);
+    document.getElementById('phaseGoalsSection')?.style.setProperty('display', 'block');
+  } else {
+    document.getElementById('phaseGoalsSection')?.style.setProperty('display', 'none');
+  }
 
   // REHIT Calendar
   renderSummaryRehitCalendar(data, range, phaseId);
