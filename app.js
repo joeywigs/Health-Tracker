@@ -2350,19 +2350,20 @@ function renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength) {
   const calStart = new Date(phaseStart);
   calStart.setDate(calStart.getDate() - calStart.getDay());
 
-  // Find the Saturday at the end of the week containing phaseEnd
-  const calEnd = new Date(phaseEnd);
-  calEnd.setDate(calEnd.getDate() + (6 - calEnd.getDay()));
+  // Show exactly N weeks based on phase length (e.g. 21 days = 3 weeks)
+  const numWeeks = Math.ceil(phaseLength / 7);
+  const calEnd = new Date(calStart);
+  calEnd.setDate(calStart.getDate() + (numWeeks * 7) - 1);
 
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
 
   // Build title from phase date range
-  const startMonth = monthNames[phaseStart.getMonth()];
-  const endMonth = monthNames[phaseEnd.getMonth()];
+  const startMonth = monthNames[calStart.getMonth()];
+  const endMonth = monthNames[calEnd.getMonth()];
   const title = startMonth === endMonth
-    ? `${startMonth} ${phaseStart.getFullYear()}`
-    : `${startMonth} – ${endMonth} ${phaseEnd.getFullYear()}`;
+    ? `${startMonth} ${calStart.getFullYear()}`
+    : `${startMonth} – ${endMonth} ${calEnd.getFullYear()}`;
 
   let html = `
     <div class="rehit-cal-header">
