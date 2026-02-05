@@ -853,13 +853,14 @@ async function migrateMovements(env, corsHeaders) {
 
 // ===== Data Audit: Scan all data for inconsistencies =====
 async function auditData(env, corsHeaders) {
-  const audit = {
-    totalDays: 0,
-    dateRange: { earliest: null, latest: null },
-    habits: {},
-    issues: [],
-    rawSamples: {}
-  };
+  try {
+    const audit = {
+      totalDays: 0,
+      dateRange: { earliest: null, latest: null },
+      habits: {},
+      issues: [],
+      rawSamples: {}
+    };
 
   // Define habits to audit with their expected formats
   const habitsToAudit = [
@@ -1084,5 +1085,9 @@ async function auditData(env, corsHeaders) {
     }
   }
 
-  return jsonResponse(audit, 200, corsHeaders);
+    return jsonResponse(audit, 200, corsHeaders);
+  } catch (err) {
+    console.error('Audit error:', err);
+    return jsonResponse({ error: true, message: err.message, stack: err.stack }, 500, corsHeaders);
+  }
 }

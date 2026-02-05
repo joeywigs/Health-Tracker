@@ -429,10 +429,24 @@ window.auditData = async function() {
     console.log('Starting data audit...');
     const audit = await apiPost('audit_data');
 
+    // Check for error response
+    if (audit.error) {
+      console.error('Audit error:', audit.message);
+      alert('Audit failed: ' + audit.message);
+      return;
+    }
+
+    // Debug: log raw response if structure seems wrong
+    if (!audit.dateRange) {
+      console.log('Raw audit response:', audit);
+      alert('Audit returned unexpected data. Check console.');
+      return audit;
+    }
+
     // Print summary
     console.log('\n========== DATA AUDIT REPORT ==========\n');
     console.log(`Total days with data: ${audit.totalDays}`);
-    console.log(`Date range: ${audit.dateRange.earliest} to ${audit.dateRange.latest}`);
+    console.log(`Date range: ${audit.dateRange?.earliest || 'none'} to ${audit.dateRange?.latest || 'none'}`);
 
     // Issues summary
     if (audit.issues.length > 0) {
