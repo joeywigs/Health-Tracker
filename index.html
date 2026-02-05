@@ -3400,7 +3400,18 @@
         <button type="button" id="settingsCloseBtn" class="nav-link">✕</button>
       </div>
     </header>
-    
+
+    <!-- Phase Management -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📅</div><span class="sec-name">Phase Management</span></div></div>
+      <div class="sec-content">
+        <div id="phaseManagementInfo" style="margin-bottom:12px">
+          <!-- Populated by JS -->
+        </div>
+        <button type="button" class="btn btn-primary" id="planNextPhaseBtn" style="width:100%">Plan Next Phase</button>
+      </div>
+    </div>
+
     <!-- Goals Settings -->
     <div class="section">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Daily Goals</span></div></div>
@@ -4146,12 +4157,31 @@
       cueLogs.push(cueData);
       localStorage.setItem('cueLogs', JSON.stringify(cueLogs));
 
-      // Also try to save to API
+      // Save to KV storage
       try {
-        await apiPost('cue_log_save', cueData);
+        await apiPost('cue_log_save', { cueData: cueData });
       } catch (e) {
         console.log('Cue log saved locally only');
       }
+    }
+
+    async function loadCueLogs() {
+      try {
+        const result = await apiGet('cue_logs_load');
+        if (result && result.logs) {
+          // Merge with local storage (KV is source of truth)
+          localStorage.setItem('cueLogs', JSON.stringify(result.logs));
+          return result.logs;
+        }
+      } catch (e) {
+        console.log('Loading cue logs from localStorage');
+      }
+      // Fallback to localStorage
+      try {
+        const stored = localStorage.getItem('cueLogs');
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      return [];
     }
 
     const cueCelebrations = [
@@ -4846,6 +4876,58 @@
 
       window.scrollTo(0, 0);
       renderSectionList();
+      updatePhaseManagementInfo();
+    }
+
+    function updatePhaseManagementInfo() {
+      const infoEl = document.getElementById('phaseManagementInfo');
+      const btn = document.getElementById('planNextPhaseBtn');
+      if (!infoEl || !btn) return;
+
+      // Get current phase info from app.js
+      const currentPhase = typeof getCurrentPhase === 'function' ? getCurrentPhase() : null;
+      const phases = typeof phasesData !== 'undefined' ? phasesData : [];
+
+      if (!currentPhase) {
+        infoEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin:0">No phase data available.</p>';
+        btn.textContent = 'Create Phase 1';
+        btn.onclick = () => {
+          if (typeof openNewPhaseModal === 'function') openNewPhaseModal();
+        };
+        return;
+      }
+
+      // Calculate days remaining in current phase
+      const phaseStart = typeof parseDataDate === 'function' ? parseDataDate(currentPhase.start) : new Date(currentPhase.start);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dayInPhase = Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1;
+      const daysRemaining = currentPhase.length - dayInPhase;
+
+      const nextPhaseId = currentPhase.id + 1;
+      const nextPhaseExists = phases.some(p => p.id === nextPhaseId);
+
+      let statusHtml = `
+        <p style="color:var(--text);font-size:14px;margin:0 0 8px 0"><strong>${currentPhase.name}</strong></p>
+        <p style="color:var(--text-muted);font-size:13px;margin:0">Day ${dayInPhase} of ${currentPhase.length} (${daysRemaining > 0 ? daysRemaining + ' days remaining' : 'Phase complete!'})</p>
+      `;
+
+      if (nextPhaseExists) {
+        const nextPhase = phases.find(p => p.id === nextPhaseId);
+        statusHtml += `<p style="color:var(--accent-teal);font-size:13px;margin:8px 0 0 0">✓ ${nextPhase.name} is planned</p>`;
+        btn.textContent = `Plan Phase ${nextPhaseId + 1}`;
+        btn.onclick = () => {
+          if (typeof openNewPhaseModal === 'function') openNewPhaseModal(nextPhaseId);
+        };
+      } else {
+        statusHtml += `<p style="color:var(--accent-orange);font-size:13px;margin:8px 0 0 0">⚠️ Phase ${nextPhaseId} not yet planned</p>`;
+        btn.textContent = `Plan Phase ${nextPhaseId}`;
+        btn.onclick = () => {
+          if (typeof openNewPhaseModal === 'function') openNewPhaseModal();
+        };
+      }
+
+      infoEl.innerHTML = statusHtml;
     }
     
     function closeSettingsPage() {
