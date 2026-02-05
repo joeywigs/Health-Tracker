@@ -3396,10 +3396,17 @@
       const stepsGoal = (typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500;
       if (stepsVal >= stepsGoal) checked++;
 
-      // 4. Movement breaks ≥ 2
+      // 4. Movement breaks ≥ goal
       const movementGoal = (typeof appSettings !== 'undefined' && appSettings.movementGoal) ? appSettings.movementGoal : 2;
-      const movementItems = document.querySelectorAll('#movementList .item');
-      if (movementItems.length >= movementGoal) checked++;
+      // Count movements: morning and afternoon each count if type selected or duration entered
+      let movementCount = 0;
+      const morningType = document.getElementById('morningMovementType')?.value;
+      const morningDuration = document.getElementById('morningMovementDuration')?.value;
+      if (morningType || morningDuration) movementCount++;
+      const afternoonType = document.getElementById('afternoonMovementType')?.value;
+      const afternoonDuration = document.getElementById('afternoonMovementDuration')?.value;
+      if (afternoonType || afternoonDuration) movementCount++;
+      if (movementCount >= movementGoal) checked++;
 
       // 5. Meals: breakfast, lunch, dinner checked >= goal
       const mealsGoal = (typeof appSettings !== 'undefined' && appSettings.mealsGoal) ? appSettings.mealsGoal : 2;
@@ -3623,12 +3630,14 @@
         sleepInput.addEventListener('change', updateCompletionRingAurora);
       }
 
-      // Movement list observer (for completion ring)
-      const movementList = document.getElementById('movementList');
-      if (movementList) {
-        const movObs = new MutationObserver(updateCompletionRingAurora);
-        movObs.observe(movementList, { childList: true });
-      }
+      // Movement inputs listener (for completion ring)
+      ['morningMovementType', 'morningMovementDuration', 'afternoonMovementType', 'afternoonMovementDuration'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('change', updateCompletionRingAurora);
+          el.addEventListener('input', updateCompletionRingAurora);
+        }
+      });
       
       // REHIT week observer
       const rehitWeek = document.getElementById('rehitWeek');
