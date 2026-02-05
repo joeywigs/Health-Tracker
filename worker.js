@@ -175,6 +175,10 @@ async function handlePost(request, env, corsHeaders) {
     return await savePhases(body.phases, env, corsHeaders);
   }
 
+  if (action === "migrate_movements") {
+    return await migrateMovements(env, corsHeaders);
+  }
+
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
 }
 
@@ -701,4 +705,144 @@ function formatDateForKV(date) {
   const options = { timeZone: 'America/Chicago', year: 'numeric', month: 'numeric', day: 'numeric' };
   const localDate = new Date(date.toLocaleString('en-US', options));
   return `${localDate.getMonth() + 1}/${localDate.getDate()}/${String(localDate.getFullYear()).slice(-2)}`;
+}
+
+// ===== Migration: Convert legacy movements to morning/afternoon format =====
+async function migrateMovements(env, corsHeaders) {
+  const results = { migrated: 0, skipped: 0, errors: [], details: [] };
+
+  // List all keys with movements: prefix
+  const movementKeys = await env.HABIT_DATA.list({ prefix: "movements:" });
+
+  for (const key of movementKeys.keys) {
+    try {
+      const dateStr = key.name.replace("movements:", "");
+
+      // Get the movements array for this day
+      const movements = await env.HABIT_DATA.get(key.name, "json");
+
+      // Get the daily data for this day
+      let daily = await env.HABIT_DATA.get(`daily:${dateStr}`, "json") || {};
+
+      // Skip if already has morning/afternoon data
+      if (daily["Morning Movement Type"] || daily["Afternoon Movement Type"]) {
+        results.skipped++;
+        continue;
+      }
+
+      // Check if there's legacy movements data to migrate
+      let movementsToMigrate = [];
+
+      // First check the movements array (separate storage)
+      if (movements && Array.isArray(movements) && movements.length > 0) {
+        movementsToMigrate = movements;
+      }
+      // Also check legacy "Movements" field in daily data
+      else if (daily["Movements"]) {
+        const legacyMovements = daily["Movements"];
+        if (typeof legacyMovements === 'string' && legacyMovements.trim()) {
+          // Parse comma-separated string like "Walk,Stretch"
+          movementsToMigrate = legacyMovements.split(',').map(m => ({ type: m.trim(), duration: "" }));
+        } else if (Array.isArray(legacyMovements)) {
+          movementsToMigrate = legacyMovements.map(m => {
+            if (typeof m === 'string') return { type: m, duration: "" };
+            return m;
+          });
+        }
+      }
+
+      if (movementsToMigrate.length === 0) {
+        results.skipped++;
+        continue;
+      }
+
+      // Migrate: first movement -> morning, second -> afternoon
+      const morning = movementsToMigrate[0];
+      const afternoon = movementsToMigrate[1];
+
+      if (morning) {
+        daily["Morning Movement Type"] = morning.type || "";
+        daily["Morning Movement Duration"] = morning.duration || "";
+      }
+      if (afternoon) {
+        daily["Afternoon Movement Type"] = afternoon.type || "";
+        daily["Afternoon Movement Duration"] = afternoon.duration || "";
+      }
+
+      // Save updated daily data
+      await env.HABIT_DATA.put(`daily:${dateStr}`, JSON.stringify(daily));
+
+      results.migrated++;
+      results.details.push({
+        date: dateStr,
+        morning: morning ? `${morning.type} (${morning.duration || 'no duration'})` : null,
+        afternoon: afternoon ? `${afternoon.type} (${afternoon.duration || 'no duration'})` : null
+      });
+
+    } catch (err) {
+      results.errors.push({ key: key.name, error: err.message });
+    }
+  }
+
+  // Also check daily: keys for legacy Movements field that wasn't in movements: storage
+  const dailyKeys = await env.HABIT_DATA.list({ prefix: "daily:" });
+
+  for (const key of dailyKeys.keys) {
+    try {
+      const dateStr = key.name.replace("daily:", "");
+      let daily = await env.HABIT_DATA.get(key.name, "json");
+
+      if (!daily) continue;
+
+      // Skip if already has morning/afternoon data
+      if (daily["Morning Movement Type"] || daily["Afternoon Movement Type"]) {
+        continue;
+      }
+
+      // Check for legacy "Movements" field
+      if (!daily["Movements"]) continue;
+
+      const legacyMovements = daily["Movements"];
+      let movementsToMigrate = [];
+
+      if (typeof legacyMovements === 'string' && legacyMovements.trim()) {
+        movementsToMigrate = legacyMovements.split(',').map(m => ({ type: m.trim(), duration: "" }));
+      } else if (Array.isArray(legacyMovements)) {
+        movementsToMigrate = legacyMovements.map(m => {
+          if (typeof m === 'string') return { type: m, duration: "" };
+          return m;
+        });
+      }
+
+      if (movementsToMigrate.length === 0) continue;
+
+      // Migrate
+      const morning = movementsToMigrate[0];
+      const afternoon = movementsToMigrate[1];
+
+      if (morning) {
+        daily["Morning Movement Type"] = morning.type || "";
+        daily["Morning Movement Duration"] = morning.duration || "";
+      }
+      if (afternoon) {
+        daily["Afternoon Movement Type"] = afternoon.type || "";
+        daily["Afternoon Movement Duration"] = afternoon.duration || "";
+      }
+
+      await env.HABIT_DATA.put(key.name, JSON.stringify(daily));
+
+      results.migrated++;
+      results.details.push({
+        date: dateStr,
+        morning: morning ? `${morning.type} (${morning.duration || 'no duration'})` : null,
+        afternoon: afternoon ? `${afternoon.type} (${afternoon.duration || 'no duration'})` : null,
+        source: 'legacy_field'
+      });
+
+    } catch (err) {
+      results.errors.push({ key: key.name, error: err.message });
+    }
+  }
+
+  return jsonResponse(results, 200, corsHeaders);
 }
