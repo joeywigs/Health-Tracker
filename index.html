@@ -1075,6 +1075,7 @@
       gap: 8px;
       margin-top: 16px;
       flex-wrap: wrap;
+      align-items: center;
     }
     .phase-selector {
       padding: 8px 12px;
@@ -1085,6 +1086,74 @@
       font-size: 14px;
       cursor: pointer;
     }
+
+    /* Phase Comparison */
+    .comparison-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .comparison-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .comparison-selectors {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .comparison-vs {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .comparison-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .comparison-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 80px 60px;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .comparison-row.header {
+      background: transparent;
+      border: none;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .comparison-goal-name {
+      font-weight: 500;
+    }
+    .comparison-goal-target {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .comparison-value {
+      text-align: center;
+      font-weight: 600;
+    }
+    .comparison-change {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .comparison-change.positive { color: #4CAF50; }
+    .comparison-change.negative { color: #f44336; }
+    .comparison-change.neutral { color: var(--text-muted); }
 
     /* Mini Supplements (in own card) */
     .mini-supps-grid {
@@ -2769,9 +2838,24 @@
         </select>
         <button type="button" class="summary-range-btn btn btn-secondary active" data-range="phase">Current Phase</button>
         <button type="button" class="summary-range-btn btn btn-secondary" data-range="all">All Time</button>
+        <button type="button" id="comparePhaseBtn" class="btn btn-secondary" style="margin-left:auto">⚖️ Compare</button>
       </div>
     </header>
-    
+
+    <!-- Phase Comparison Section (hidden by default) -->
+    <div id="phaseComparisonSection" class="section" style="display:none">
+      <div class="comparison-header">
+        <div class="sec-name">Phase Comparison</div>
+        <button type="button" id="closeComparisonBtn" class="comparison-close">&times;</button>
+      </div>
+      <div class="comparison-selectors">
+        <select id="comparePhase1" class="phase-selector"></select>
+        <span class="comparison-vs">vs</span>
+        <select id="comparePhase2" class="phase-selector"></select>
+      </div>
+      <div id="phaseComparisonContent"></div>
+    </div>
+
     <!-- Overview Stats -->
     <div class="section">
       <div class="summary-overview" id="summaryOverview">

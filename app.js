@@ -223,6 +223,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { setupPullToRefresh(); console.log("11 ok"); } catch(e) { console.error("setupPullToRefresh failed:", e); }
   try { setupWeeklyReminders(); console.log("12 ok"); } catch(e) { console.error("setupWeeklyReminders failed:", e); }
   try { setupWeeklySummaryButton(); console.log("13 ok"); } catch(e) { console.error("setupWeeklySummaryButton failed:", e); }
+  try { setupPhaseComparison(); console.log("13b ok"); } catch(e) { console.error("setupPhaseComparison failed:", e); }
   try { setupChartsPage(); console.log("14 ok"); } catch(e) { console.error("setupChartsPage failed:", e); }
   try { setupChartRangeToggle(); console.log("15 ok"); } catch(e) { console.error("setupChartRangeToggle failed:", e); }
   try { setupBiomarkersPage(); console.log("16 ok"); } catch(e) { console.error("setupBiomarkersPage failed:", e); }
@@ -635,6 +636,142 @@ function populatePhaseSelector() {
   ).join('');
 
   currentSummaryPhaseId = currentPhase?.id;
+}
+
+// Setup phase comparison feature
+function setupPhaseComparison() {
+  const compareBtn = document.getElementById('comparePhaseBtn');
+  const closeBtn = document.getElementById('closeComparisonBtn');
+  const section = document.getElementById('phaseComparisonSection');
+  const select1 = document.getElementById('comparePhase1');
+  const select2 = document.getElementById('comparePhase2');
+
+  if (compareBtn) {
+    compareBtn.addEventListener('click', () => {
+      if (phasesData.length < 2) {
+        showToast('Need at least 2 phases to compare');
+        return;
+      }
+      populateComparisonSelectors();
+      section.style.display = 'block';
+      renderPhaseComparison();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      section.style.display = 'none';
+    });
+  }
+
+  if (select1) {
+    select1.addEventListener('change', renderPhaseComparison);
+  }
+  if (select2) {
+    select2.addEventListener('change', renderPhaseComparison);
+  }
+}
+
+function populateComparisonSelectors() {
+  const select1 = document.getElementById('comparePhase1');
+  const select2 = document.getElementById('comparePhase2');
+  if (!select1 || !select2 || !phasesData.length) return;
+
+  const options = phasesData.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  select1.innerHTML = options;
+  select2.innerHTML = options;
+
+  // Default: compare previous phase to current phase
+  if (phasesData.length >= 2) {
+    select1.value = phasesData[phasesData.length - 2].id; // Previous
+    select2.value = phasesData[phasesData.length - 1].id; // Current
+  }
+}
+
+function renderPhaseComparison() {
+  const container = document.getElementById('phaseComparisonContent');
+  const phase1Id = parseInt(document.getElementById('comparePhase1')?.value);
+  const phase2Id = parseInt(document.getElementById('comparePhase2')?.value);
+
+  if (!container || !phase1Id || !phase2Id) return;
+
+  const phase1 = getPhaseById(phase1Id);
+  const phase2 = getPhaseById(phase2Id);
+
+  if (!phase1 || !phase2 || !chartDataCache) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted)">No data available</div>';
+    return;
+  }
+
+  // Get filtered data and stats for each phase
+  const data1 = getFilteredData(chartDataCache, 'phase', phase1Id);
+  const data2 = getFilteredData(chartDataCache, 'phase', phase2Id);
+  const stats1 = calculateGoalStats(data1, 'phase', phase1Id);
+  const stats2 = calculateGoalStats(data2, 'phase', phase2Id);
+
+  // Build comparison rows
+  const goals = [
+    { key: 'sleep', name: 'Sleep', icon: '🌙' },
+    { key: 'agua', name: 'Water', icon: '💧' },
+    { key: 'steps', name: 'Steps', icon: '👟' },
+    { key: 'rehit', name: 'REHIT', icon: '🚴' },
+    { key: 'movement', name: 'Movement', icon: '🚶' },
+    { key: 'reading', name: 'Reading', icon: '📖' },
+    { key: 'meals', name: 'Meals', icon: '🍽️' },
+    { key: 'supps', name: 'Supplements', icon: '💊' },
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺' }
+  ];
+
+  let html = `
+    <div class="comparison-grid">
+      <div class="comparison-row header">
+        <div>Goal</div>
+        <div style="text-align:center">${phase1.name}</div>
+        <div style="text-align:center">${phase2.name}</div>
+        <div style="text-align:center">Change</div>
+      </div>
+  `;
+
+  goals.forEach(goal => {
+    const s1 = stats1[goal.key];
+    const s2 = stats2[goal.key];
+    if (!s1 || !s2) return;
+
+    const pct1 = s1.pct || 0;
+    const pct2 = s2.pct || 0;
+    const diff = pct2 - pct1;
+
+    let changeClass = 'neutral';
+    let changeText = '—';
+    if (diff > 0) {
+      changeClass = 'positive';
+      changeText = `+${diff}%`;
+    } else if (diff < 0) {
+      changeClass = 'negative';
+      changeText = `${diff}%`;
+    }
+
+    // Show target changes if different
+    const target1 = phase1.goals?.[goal.key]?.target;
+    const target2 = phase2.goals?.[goal.key]?.target;
+    const targetChanged = target1 !== target2 && target1 !== undefined && target2 !== undefined;
+    const targetNote = targetChanged ? `<div class="comparison-goal-target">Target: ${target1} → ${target2}</div>` : '';
+
+    html += `
+      <div class="comparison-row">
+        <div>
+          <span class="comparison-goal-name">${goal.icon} ${goal.name}</span>
+          ${targetNote}
+        </div>
+        <div class="comparison-value">${pct1}%</div>
+        <div class="comparison-value">${pct2}%</div>
+        <div class="comparison-change ${changeClass}">${changeText}</div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 function updateWeeklySummaryButton() {
