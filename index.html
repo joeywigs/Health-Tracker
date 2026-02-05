@@ -3401,10 +3401,11 @@
       const movementItems = document.querySelectorAll('#movementList .item');
       if (movementItems.length >= movementGoal) checked++;
 
-      // 5. Meals: 2 of 3 checked (breakfast, lunch, dinner)
+      // 5. Meals: breakfast, lunch, dinner checked >= goal
+      const mealsGoal = (typeof appSettings !== 'undefined' && appSettings.mealsGoal) ? appSettings.mealsGoal : 2;
       const mealsChecked = ['breakfast', 'lunch', 'dinner']
         .filter(id => document.getElementById(id)?.checked).length;
-      if (mealsChecked >= 2) checked++;
+      if (mealsChecked >= mealsGoal) checked++;
 
       // 6. No alcohol
       if (document.getElementById('noAlcohol')?.checked) checked++;
@@ -4221,6 +4222,7 @@
     document.getElementById('sleepGoal')?.addEventListener('change', (e) => {
       appSettings.sleepGoal = parseInt(e.target.value) || 7;
       saveSettings(appSettings);
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Sleep goal updated', 'success');
     });
 
@@ -4229,6 +4231,7 @@
       saveSettings(appSettings);
       // Update agua bar goal
       if (typeof updateAguaBar === 'function') updateAguaBar();
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Water goal updated', 'success');
     });
 
@@ -4237,18 +4240,21 @@
       saveSettings(appSettings);
       // Update steps bar goal
       if (typeof updateStepsBar === 'function') updateStepsBar();
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Steps goal updated', 'success');
     });
 
     document.getElementById('movementGoal')?.addEventListener('change', (e) => {
       appSettings.movementGoal = parseInt(e.target.value) || 2;
       saveSettings(appSettings);
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Movement goal updated', 'success');
     });
 
     document.getElementById('mealsGoal')?.addEventListener('change', (e) => {
       appSettings.mealsGoal = parseInt(e.target.value) || 2;
       saveSettings(appSettings);
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
       showToast('Meals goal updated', 'success');
     });
 
