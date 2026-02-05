@@ -848,7 +848,7 @@ function renderPhaseComparison() {
     { key: 'reading', name: 'Reading', icon: '📖' },
     { key: 'meals', name: 'Meals', icon: '🍽️' },
     { key: 'supps', name: 'Supplements', icon: '💊' },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺' }
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺' }
   ];
 
   let html = `
@@ -926,7 +926,7 @@ function renderPhaseGoals(phaseId = null) {
     { key: 'reading', name: 'Reading', icon: '📖', format: (t) => `${t}+ min/week` },
     { key: 'meals', name: 'Meals', icon: '🍽️', format: (t) => `${t}+ healthy/day` },
     { key: 'supps', name: 'Supplements', icon: '💊', format: (t) => `All ${t} daily` },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺', format: (t) => t ? 'Daily' : 'Not tracked' },
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', format: (t) => t ? 'Daily' : 'Not tracked' },
     { key: 'meditation', name: 'Meditation', icon: '🧘', format: (t) => t ? 'Daily' : 'Not tracked' },
     { key: 'snacks', name: 'Healthy Snacks', icon: '🥗', format: (t) => `${t}x/day` }
   ];
@@ -2163,10 +2163,11 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
     // Show last 7 days (matching the data filter)
     renderLast7DaysCalendar(container, rehitMap);
   } else if (range === 'phase') {
-    // Show phase month(s) - use selected phase's start date
+    // Show phase weeks starting from phase start date
     const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
     const phaseStart = phase ? parseDataDate(phase.start) : new Date(PHASE_START);
-    renderMonthCalendar(container, rehitMap, phaseStart);
+    const phaseLength = phase ? phase.length : PHASE_LENGTH;
+    renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength);
   } else {
     // Show 30 days
     renderMonthCalendar(container, rehitMap, new Date());
@@ -2214,6 +2215,78 @@ function renderLast7DaysCalendar(container, rehitMap) {
       <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
     </div>
   `;
+}
+
+function renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+
+  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const startDayOfWeek = phaseStart.getDay();
+
+  // Calculate number of weeks needed
+  const totalDays = phaseLength;
+  const weeksNeeded = Math.ceil((startDayOfWeek + totalDays) / 7);
+
+  let html = `
+    <div class="rehit-cal-header">
+      <div class="rehit-cal-title">Phase REHIT Calendar</div>
+    </div>
+    <div class="rehit-cal-weekdays">
+      ${dayNames.map(d => `<div class="rehit-cal-weekday">${d}</div>`).join('')}
+    </div>
+    <div class="rehit-cal-days">
+  `;
+
+  let dayCounter = 0;
+
+  for (let week = 0; week < weeksNeeded; week++) {
+    for (let dow = 0; dow < 7; dow++) {
+      // Before phase starts (empty cells for first week)
+      if (week === 0 && dow < startDayOfWeek) {
+        html += `<div class="rehit-cal-day other-month"></div>`;
+        continue;
+      }
+
+      // After phase ends
+      if (dayCounter >= totalDays) {
+        html += `<div class="rehit-cal-day other-month"></div>`;
+        continue;
+      }
+
+      // Calculate the actual date
+      const currentDate = new Date(phaseStart);
+      currentDate.setDate(phaseStart.getDate() + dayCounter);
+      const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}/${String(currentDate.getFullYear()).slice(-2)}`;
+
+      const rehitVal = rehitMap[dateStr];
+      const isToday = dateStr === todayStr;
+      const isFuture = currentDate > today;
+
+      let classes = "rehit-cal-day";
+      if (isToday) classes += " today";
+      if (isFuture) classes += " future";
+      if (rehitVal) {
+        classes += " has-rehit";
+        if (rehitVal === "2x10") classes += " rehit-2x10";
+        if (rehitVal === "3x10") classes += " rehit-3x10";
+      }
+
+      html += `<div class="${classes}">${currentDate.getDate()}</div>`;
+      dayCounter++;
+    }
+  }
+
+  html += `
+    </div>
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
+    </div>
+  `;
+
+  container.innerHTML = html;
 }
 
 function renderWeekCalendar(container, rehitMap) {
@@ -2353,7 +2426,7 @@ function renderGoalPerformance(stats) {
     { key: 'reading', ...GOALS.reading, ...stats.reading },
     { key: 'meals', name: 'Meals', icon: '🍽️', ...stats.meals },
     { key: 'snacks', name: 'Snacks', icon: '🥗', ...stats.snacks },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺', ...stats.noAlcohol }
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', ...stats.noAlcohol }
   ];
 
   const sorted = goals.sort((a, b) => b.pct - a.pct);
@@ -2417,7 +2490,7 @@ function renderNutritionStats(stats) {
   container.innerHTML = `
     ${renderGoalStatCard('Meals', '🍽️', stats.meals.pct, stats.meals.detail)}
     ${renderGoalStatCard('Snacks', '🥗', stats.snacks.pct, stats.snacks.detail)}
-    ${renderGoalStatCard('No Alcohol', '🚫🍺', stats.noAlcohol.pct, stats.noAlcohol.detail)}
+    ${renderGoalStatCard('No Alcohol', '🍺', stats.noAlcohol.pct, stats.noAlcohol.detail)}
   `;
 }
 
