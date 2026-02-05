@@ -531,7 +531,9 @@
     .date-btn:hover { transform: scale(1.1); box-shadow: 0 6px 25px var(--glow-pink); }
     .date-btn:active { transform: scale(0.95); }
     .date-center { flex: 1; text-align: center; }
-    .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: white; }
+    .date-phase-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent-green); margin-bottom: 2px; }
+    .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: white; }
+    .date-phase-day { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
     /* Day Lock - prevents accidental edits on past days */
@@ -1555,7 +1557,7 @@
     }
     .phase-goal-card .goal-target {
       font-weight: 600;
-      font-size: 15px;
+      font-size: 12px;
     }
     #phaseGoalsSection .sec-head {
       display: flex;
@@ -3243,9 +3245,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-<h1>Habits <span class="version">v7.9</span></h1>
-          <div class="tagline">Phase 1</div>
-          <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
+          <h1>Habits</h1>
         </div>
       </div>
       <div class="nav-links">
@@ -3259,7 +3259,9 @@
     <div class="date-nav">
       <button class="date-btn" id="prevBtn">←</button>
       <div class="date-center">
+        <div class="date-phase-title" id="phaseTitle">Phase 1</div>
         <div class="date-main" id="dateDisplay"></div>
+        <div class="date-phase-day" id="phaseDayCount">Day -- of 21</div>
       </div>
       <button class="date-btn" id="nextBtn">→</button>
       <div class="ring-wrap">
@@ -3316,6 +3318,22 @@
       </div>
       <div class="cue-timestamp" id="cueTimestamp"></div>
       <textarea class="cue-note-input" id="cueNoteInput" placeholder="What cue did you notice? (e.g., feeling stressed, saw a snack, phone notification...)"></textarea>
+      <div class="habit-stack-section">
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px 0;">🔗 Habit Stack (optional)</p>
+        <select id="habitStackSelect" class="habit-stack-select" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:14px;">
+          <option value="">— Link a habit to practice —</option>
+          <option value="sleep">🌙 Better Sleep Routine</option>
+          <option value="water">💧 Drink Water</option>
+          <option value="steps">👟 Go for a Walk</option>
+          <option value="rehit">🚴 REHIT Workout</option>
+          <option value="movement">🚶 Movement Break</option>
+          <option value="reading">📖 Read</option>
+          <option value="meditation">🧘 Meditate</option>
+          <option value="meals">🍽️ Healthy Meal</option>
+          <option value="noAlcohol">🚫🍺 Skip the Drink</option>
+          <option value="supps">💊 Take Supplements</option>
+        </select>
+      </div>
       <div class="cue-modal-buttons">
         <button type="button" class="cue-cancel-btn" onclick="closeCueModal()">Cancel</button>
         <button type="button" class="cue-save-btn" onclick="saveCueAndCelebrate()">Log It! 🎉</button>
@@ -3624,13 +3642,13 @@
         <div class="brand"><div class="logo">📈</div><div><h1>Phase Summary</h1></div></div>
         <button type="button" id="summaryCloseBtn" class="nav-link">✕</button>
       </div>
-      <div class="summary-controls">
-        <select id="phaseSelector" class="phase-selector">
+      <div class="summary-controls" style="display:flex;gap:8px;">
+        <select id="phaseSelector" class="phase-selector" style="display:none;">
           <!-- Populated by JS -->
         </select>
-        <button type="button" class="summary-range-btn btn btn-secondary active" data-range="phase">Current Phase</button>
-        <button type="button" class="summary-range-btn btn btn-secondary" data-range="all">All Time</button>
-        <button type="button" id="comparePhaseBtn" class="btn btn-secondary" style="margin-left:auto">⚖️ Compare</button>
+        <button type="button" class="summary-range-btn btn btn-secondary active" data-range="phase" style="flex:1;">Current Phase</button>
+        <button type="button" class="summary-range-btn btn btn-secondary" data-range="all" style="flex:1;">All Time</button>
+        <button type="button" id="comparePhaseBtn" class="btn btn-secondary" style="flex:1;">Compare</button>
       </div>
     </header>
 
@@ -3839,11 +3857,11 @@
             <span class="goal-setting-name">No Alcohol</span>
           </div>
           <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="noAlcoholGoal" value="1" min="1" max="1" disabled style="opacity:0.5">
-            <span class="goal-unit">check</span>
+            <input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7">
+            <span class="goal-unit">days</span>
             <select class="goal-freq" id="noAlcoholFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
+              <option value="weekly" selected>Weekly</option>
+              <option value="daily">Daily</option>
             </select>
           </div>
         </div>
@@ -4094,15 +4112,6 @@
         <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
         <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
         <input type="file" id="importSettingsFile" accept=".json" style="display:none">
-
-        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-          <p style="color:var(--text);font-size:12px;font-weight:600;margin:0 0 8px 0">🔧 Data Tools</p>
-          <button type="button" class="btn btn-secondary" style="width:100%;margin-bottom:8px;border-color:var(--accent-teal)" onclick="auditData()">🔍 Audit All Data</button>
-          <p style="color:var(--text-muted);font-size:11px;margin:0 0 12px 0">Scans all historical data for inconsistencies and issues</p>
-
-          <button type="button" class="btn btn-secondary" style="width:100%;border-color:var(--accent-orange)" onclick="migrateMovements()">🔄 Migrate Movement Data</button>
-          <p style="color:var(--text-muted);font-size:11px;margin:6px 0 0 0">Converts legacy movement breaks to morning/afternoon format</p>
-        </div>
       </div>
     </div>
   </div>
@@ -4559,6 +4568,8 @@
     window.saveCueAndCelebrate = function() {
       const noteInput = document.getElementById('cueNoteInput');
       const note = noteInput.value.trim();
+      const habitStackSelect = document.getElementById('habitStackSelect');
+      const linkedHabit = habitStackSelect?.value || '';
 
       if (!note) {
         noteInput.style.borderColor = '#ff6b9d';
@@ -4571,12 +4582,16 @@
         return;
       }
 
-      // Save the cue log
+      // Save the cue log with linked habit
       saveCueLog({
         timestamp: cueTimestamp.toISOString(),
         note: note,
-        date: cueTimestamp.toLocaleDateString()
+        date: cueTimestamp.toLocaleDateString(),
+        linkedHabit: linkedHabit
       });
+
+      // Reset habit stack select
+      if (habitStackSelect) habitStackSelect.value = '';
 
       // Close modal
       closeCueModal();
@@ -4867,6 +4882,28 @@
       });
     }
 
+    // Update the number of REHIT dots based on targets
+    function updateRehitDotsCount() {
+      const dotsContainer = document.getElementById('rehitDots');
+      if (!dotsContainer) return;
+
+      // Get targets from settings (default 2+2=4)
+      const target2x10 = parseInt(window.appSettings?.rehit2x10Goal) || 2;
+      const target3x10 = parseInt(window.appSettings?.rehit3x10Goal) || 2;
+      const totalDots = target2x10 + target3x10;
+
+      // Rebuild dots
+      dotsContainer.innerHTML = '';
+      for (let i = 0; i < totalDots; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'rehit-dot';
+        dotsContainer.appendChild(dot);
+      }
+
+      // Re-update the dot states
+      updateRehitDotsFromState();
+    }
+
     // Called when checkbox changes - update display immediately (optimistic)
     function updateRehitDots() {
       updateRehitDotsFromState();
@@ -4874,6 +4911,7 @@
 
     // Expose globally
     window.updateRehitDots = updateRehitDots;
+    window.updateRehitDotsCount = updateRehitDotsCount;
     window.fetchRehitWeekCount = fetchRehitWeekCount;
     
     // Hook populateForm - wait for app.js to define it first
@@ -4905,7 +4943,10 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Setup populateForm hook (must happen before app.js calls loadDataForCurrentDate)
       setupPopulateFormHook();
-      
+
+      // Update REHIT dots based on target settings
+      if (typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
+
       // Wire up chip toggles
       document.querySelectorAll('.chip').forEach(c => {
         c.addEventListener('click', e => {
@@ -5139,6 +5180,8 @@
       
       if (diffDays < 0) {
         // Before phase start
+        const phaseTitleEl = document.getElementById("phaseTitle");
+        if (phaseTitleEl) phaseTitleEl.textContent = "Phase 1";
         const phaseDayEl = document.getElementById("phaseDayCount");
         if (phaseDayEl) phaseDayEl.textContent = "Starting soon";
         return;
@@ -5148,13 +5191,13 @@
       const dayInPhase = (diffDays % PHASE_LENGTH) + 1;
       const daysRemaining = PHASE_LENGTH - dayInPhase + 1;
       
+      // Update the phase title in date card
+      const phaseTitleEl = document.getElementById("phaseTitle");
+      if (phaseTitleEl) phaseTitleEl.textContent = `Phase ${phase}`;
+
       // Update the day counter under Phase title
       const phaseDayEl = document.getElementById("phaseDayCount");
       if (phaseDayEl) phaseDayEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH}`;
-      
-      // Update tagline to show current phase number
-      const subtitleEl = document.querySelector(".tagline");
-      if (subtitleEl) subtitleEl.textContent = `Phase ${phase}`;
       
       // Update progress bar
       const progressBar = document.getElementById("phaseProgressBar");
@@ -5216,7 +5259,7 @@
       movementGoal: 2,
       mealsGoal: 2,
       snacksGoal: 2,
-      noAlcoholGoal: 1,
+      noAlcoholGoal: 7,
       rehit2x10Goal: 2,
       rehit3x10Goal: 3,
       rehitGoal: 4, // legacy - combined total
@@ -5229,7 +5272,7 @@
       movementFreq: 'daily',
       mealsFreq: 'daily',
       snacksFreq: 'daily',
-      noAlcoholFreq: 'daily',
+      noAlcoholFreq: 'weekly',
       rehit2x10Freq: 'weekly',
       rehit3x10Freq: 'weekly',
       readingFreq: 'weekly',
@@ -5272,6 +5315,7 @@
     }
     
     let appSettings = loadSettings();
+    window.appSettings = appSettings;
 
     // Migrate old waterGoal → aguaGoal
     if (appSettings.waterGoal && !appSettings.aguaGoal) {
@@ -5370,6 +5414,7 @@
       document.getElementById('movementGoal').value = appSettings.movementGoal || 2;
       document.getElementById('mealsGoal').value = appSettings.mealsGoal || 2;
       document.getElementById('snacksGoal').value = appSettings.snacksGoal || 2;
+      document.getElementById('noAlcoholGoal').value = appSettings.noAlcoholGoal || 7;
       document.getElementById('rehit2x10Goal').value = appSettings.rehit2x10Goal || 2;
       document.getElementById('rehit3x10Goal').value = appSettings.rehit3x10Goal || 3;
       document.getElementById('readingGoal').value = appSettings.readingGoal || 60;
@@ -5382,7 +5427,7 @@
       document.getElementById('movementFreq').value = appSettings.movementFreq || 'daily';
       document.getElementById('mealsFreq').value = appSettings.mealsFreq || 'daily';
       document.getElementById('snacksFreq').value = appSettings.snacksFreq || 'daily';
-      document.getElementById('noAlcoholFreq').value = appSettings.noAlcoholFreq || 'daily';
+      document.getElementById('noAlcoholFreq').value = appSettings.noAlcoholFreq || 'weekly';
       document.getElementById('rehit2x10Freq').value = appSettings.rehit2x10Freq || 'weekly';
       document.getElementById('rehit3x10Freq').value = appSettings.rehit3x10Freq || 'weekly';
       document.getElementById('readingFreq').value = appSettings.readingFreq || 'weekly';
@@ -5430,12 +5475,36 @@
       if (nextPhaseExists) {
         const nextPhase = phases.find(p => p.id === nextPhaseId);
         statusHtml += `<p style="color:var(--accent-teal);font-size:13px;margin:8px 0 0 0">✓ ${nextPhase.name} is planned</p>`;
-        btn.textContent = `Plan Phase ${nextPhaseId + 1}`;
-        btn.onclick = () => {
-          if (typeof openNewPhaseModal === 'function') openNewPhaseModal(nextPhaseId);
-        };
+
+        // Show next phase goals
+        if (nextPhase.goals) {
+          statusHtml += `<div style="margin-top:12px;padding:12px;background:var(--bg-input);border-radius:8px;">`;
+          statusHtml += `<p style="color:var(--text);font-size:12px;font-weight:600;margin:0 0 8px 0">${nextPhase.name} Goals:</p>`;
+          const goalIcons = { sleep: '🌙', agua: '💧', steps: '👟', rehit: '🚴', movement: '🚶', reading: '📖', meals: '🍽️', meditation: '🧘' };
+          Object.entries(nextPhase.goals).forEach(([key, goal]) => {
+            if (goal && goal.target) {
+              const icon = goalIcons[key] || '🎯';
+              statusHtml += `<p style="color:var(--text-muted);font-size:11px;margin:4px 0">${icon} ${key}: ${goal.target}</p>`;
+            }
+          });
+          statusHtml += `</div>`;
+        }
+
+        // Only show "Plan Phase 3" button if within 3 days of current phase ending
+        const phaseAfterNextId = nextPhaseId + 1;
+        const phaseAfterNextExists = phases.some(p => p.id === phaseAfterNextId);
+        if (daysRemaining <= 3 && !phaseAfterNextExists) {
+          btn.style.display = 'block';
+          btn.textContent = `Plan Phase ${phaseAfterNextId}`;
+          btn.onclick = () => {
+            if (typeof openNewPhaseModal === 'function') openNewPhaseModal(nextPhaseId);
+          };
+        } else {
+          btn.style.display = 'none';
+        }
       } else {
         statusHtml += `<p style="color:var(--accent-orange);font-size:13px;margin:8px 0 0 0">⚠️ Phase ${nextPhaseId} not yet planned</p>`;
+        btn.style.display = 'block';
         btn.textContent = `Plan Phase ${nextPhaseId}`;
         btn.onclick = () => {
           if (typeof openNewPhaseModal === 'function') openNewPhaseModal();
@@ -5663,8 +5732,9 @@
       { id: 'movementGoal', key: 'movementGoal', default: 2, name: 'Movement', updateRing: true },
       { id: 'mealsGoal', key: 'mealsGoal', default: 2, name: 'Meals', updateRing: true },
       { id: 'snacksGoal', key: 'snacksGoal', default: 2, name: 'Snacks', updateRing: true },
-      { id: 'rehit2x10Goal', key: 'rehit2x10Goal', default: 2, name: 'REHIT 2x10' },
-      { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10' },
+      { id: 'noAlcoholGoal', key: 'noAlcoholGoal', default: 7, name: 'No Alcohol' },
+      { id: 'rehit2x10Goal', key: 'rehit2x10Goal', default: 2, name: 'REHIT 2x10', updateRehitDots: true },
+      { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10', updateRehitDots: true },
       { id: 'readingGoal', key: 'readingGoal', default: 60, name: 'Reading' },
       { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' }
     ];
@@ -5672,10 +5742,12 @@
     goalInputConfigs.forEach(config => {
       document.getElementById(config.id)?.addEventListener('change', (e) => {
         appSettings[config.key] = parseInt(e.target.value) || config.default;
+        window.appSettings = appSettings;
         saveSettings(appSettings);
         if (config.updateRing && typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
         if (config.updateAguaBar && typeof updateAguaBar === 'function') updateAguaBar();
         if (config.updateStepsBar && typeof updateStepsBar === 'function') updateStepsBar();
+        if (config.updateRehitDots && typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
         showToast(`${config.name} goal updated`, 'success');
       });
     });

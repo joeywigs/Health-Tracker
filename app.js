@@ -1894,7 +1894,7 @@ function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
   const statusText = isPhaseComplete ? 'Complete!' : (daysRemaining > 0 ? daysRemaining + ' remaining' : 'Complete!');
 
   container.innerHTML = `
-    <div class="summary-stat">
+    <div class="summary-stat full-width">
       <div class="summary-stat-value">🔥 ${currentStreak}-day streak</div>
       <div class="summary-stat-label">${pctLogged}% of days logged</div>
     </div>
@@ -3324,7 +3324,7 @@ function renderBodyCompositionChart(dataPoints) {
         tooltip: {
           callbacks: {
             label: function(context) {
-              return context.parsed.y + '%';
+              return context.parsed.y?.toFixed(1) + '%';
             }
           }
         }
@@ -3338,7 +3338,7 @@ function renderBodyCompositionChart(dataPoints) {
           ticks: {
             color: colors.text,
             callback: function(value) {
-              return value + '%';
+              return value?.toFixed(1) + '%';
             }
           },
           grid: { color: colors.grid },
