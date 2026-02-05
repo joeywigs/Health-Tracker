@@ -1155,6 +1155,42 @@
     .comparison-change.negative { color: #f44336; }
     .comparison-change.neutral { color: var(--text-muted); }
 
+    /* Phase Goals Section */
+    .phase-goals-content {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .phase-goal-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .phase-goal-card .goal-icon {
+      font-size: 18px;
+    }
+    .phase-goal-card .goal-details {
+      flex: 1;
+    }
+    .phase-goal-card .goal-name {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .phase-goal-card .goal-target {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    #phaseGoalsSection .sec-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     /* Mini Supplements (in own card) */
     .mini-supps-grid {
       display: grid;
@@ -2862,7 +2898,18 @@
         <!-- Populated by JS -->
       </div>
     </div>
-    
+
+    <!-- Phase Goals (shows targets for selected phase) -->
+    <div id="phaseGoalsSection" class="section">
+      <div class="sec-head" style="cursor:pointer" onclick="togglePhaseGoals()">
+        <div class="sec-name">🎯 Phase Goals</div>
+        <span class="sec-toggle" id="phaseGoalsToggle">▼</span>
+      </div>
+      <div id="phaseGoalsContent" class="phase-goals-content">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
     <!-- REHIT Calendar -->
     <div class="section">
       <div class="sec-name" style="margin-bottom:12px">REHIT Sessions</div>
