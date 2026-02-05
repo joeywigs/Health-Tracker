@@ -2274,7 +2274,11 @@
       transform: scale(1.2);
       z-index: 2;
     }
-    .habit-grid-cell.hit {
+    .habit-grid-cell.goal-met {
+      background: #d1fae5;
+      border: 1px solid #6ee7b7;
+    }
+    .habit-grid-cell.partial {
       background: #fef3c7;
       border: 1px solid #fcd34d;
     }
@@ -2333,7 +2337,8 @@
       height: 10px;
       border-radius: 2px;
     }
-    .legend-cell.hit { background: #fef3c7; border: 1px solid #fcd34d; }
+    .legend-cell.goal-met { background: #d1fae5; border: 1px solid #6ee7b7; }
+    .legend-cell.partial { background: #fef3c7; border: 1px solid #fcd34d; }
     .legend-cell.miss { background: #fee2e2; border: 1px solid #fca5a5; }
     .legend-cell.today { border: 1.5px dashed var(--text-muted); }
 

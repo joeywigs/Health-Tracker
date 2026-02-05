@@ -1906,49 +1906,99 @@ function renderHabitGrid(allData) {
   if (!container) return;
 
   // Define habits to show in grid
+  // Each habit has hasAny (did anything) and metGoal (met the target)
   const HABITS = [
-    { key: 'sleep', icon: '🌙', name: 'Sleep', check: (d, target) => parseFloat(d.daily["Hours of Sleep"]) >= target, targetKey: 'sleep' },
-    { key: 'agua', icon: '💧', name: 'Water', check: (d, target) => parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"]) >= target, targetKey: 'agua' },
-    { key: 'steps', icon: '👟', name: 'Steps', check: (d, target) => parseInt(d.daily["Steps"]) >= target, targetKey: 'steps' },
-    { key: 'rehit', icon: '🚴', name: 'REHIT', check: (d) => { const v = d.daily["REHIT 2x10"]; return v && v !== ""; } },
-    { key: 'movement', icon: '🚶', name: 'Movement', check: (d, target) => {
-      let breakCount = 0;
-      if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breakCount++;
-      if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breakCount++;
-      const movements = d.daily["Movements"];
-      if (movements && typeof movements === 'string') breakCount += movements.split(',').filter(m => m.trim()).length;
-      else if (Array.isArray(movements)) breakCount += movements.length;
-      return breakCount >= target;
-    }, targetKey: 'movement' },
-    { key: 'supps', icon: '💊', name: 'Supps', check: (d) => {
-      const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
-      const vitD = d.daily["Vitamin D"];
-      const no2 = d.daily["NO2"];
-      const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
-      return [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE" || v === "true").length === 4;
-    } },
-    { key: 'meals', icon: '🍽️', name: 'Meals', check: (d) => {
-      const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
-      const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
-      const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
-      return [breakfast, lunch, dinner].filter(Boolean).length >= 2;
-    } },
-    { key: 'reading', icon: '📖', name: 'Reading', check: (d) => {
-      let mins = 0;
-      if (d.readings && Array.isArray(d.readings)) {
-        d.readings.forEach(r => { mins += parseInt(r.duration ?? r["duration (min)"] ?? 0) || 0; });
+    { key: 'sleep', icon: '🌙', name: 'Sleep', targetKey: 'sleep',
+      hasAny: (d) => { const v = parseFloat(d.daily["Hours of Sleep"]); return !isNaN(v) && v > 0; },
+      metGoal: (d, target) => parseFloat(d.daily["Hours of Sleep"]) >= target
+    },
+    { key: 'agua', icon: '💧', name: 'Water', targetKey: 'agua',
+      hasAny: (d) => { const v = parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"]); return !isNaN(v) && v > 0; },
+      metGoal: (d, target) => parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"]) >= target
+    },
+    { key: 'steps', icon: '👟', name: 'Steps', targetKey: 'steps',
+      hasAny: (d) => { const v = parseInt(d.daily["Steps"]); return !isNaN(v) && v > 0; },
+      metGoal: (d, target) => parseInt(d.daily["Steps"]) >= target
+    },
+    { key: 'rehit', icon: '🚴', name: 'REHIT',
+      hasAny: (d) => { const v = d.daily["REHIT 2x10"]; return v && v !== ""; },
+      metGoal: (d) => { const v = d.daily["REHIT 2x10"]; return v && v !== ""; }
+    },
+    { key: 'movement', icon: '🚶', name: 'Movement', targetKey: 'movement',
+      hasAny: (d) => {
+        if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") return true;
+        if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") return true;
+        const movements = d.daily["Movements"];
+        if (movements && typeof movements === 'string' && movements.split(',').filter(m => m.trim()).length > 0) return true;
+        if (Array.isArray(movements) && movements.length > 0) return true;
+        return false;
+      },
+      metGoal: (d, target) => {
+        let breakCount = 0;
+        if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breakCount++;
+        if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breakCount++;
+        const movements = d.daily["Movements"];
+        if (movements && typeof movements === 'string') breakCount += movements.split(',').filter(m => m.trim()).length;
+        else if (Array.isArray(movements)) breakCount += movements.length;
+        return breakCount >= target;
       }
-      if (mins === 0) mins = parseInt(d.daily["Reading Minutes"]) || 0;
-      return mins > 0;
-    } },
-    { key: 'noAlcohol', icon: '🚫', name: 'No Alcohol', check: (d) => {
-      const v = d.daily["No Alcohol"];
-      return v === true || v === "TRUE" || v === "true";
-    } },
-    { key: 'meditation', icon: '🧘', name: 'Meditation', check: (d) => {
-      const v = d.daily["Meditation"] || d.daily["Meditated"];
-      return v === true || v === "TRUE" || v === "true";
-    } },
+    },
+    { key: 'supps', icon: '💊', name: 'Supps',
+      hasAny: (d) => {
+        const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
+        const vitD = d.daily["Vitamin D"];
+        const no2 = d.daily["NO2"];
+        const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
+        return [creatine, vitD, no2, psyllium].some(v => v === true || v === "TRUE" || v === "true");
+      },
+      metGoal: (d) => {
+        const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
+        const vitD = d.daily["Vitamin D"];
+        const no2 = d.daily["NO2"];
+        const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
+        return [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE" || v === "true").length === 4;
+      }
+    },
+    { key: 'meals', icon: '🍽️', name: 'Meals',
+      hasAny: (d) => {
+        const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
+        const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
+        const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
+        return breakfast || lunch || dinner;
+      },
+      metGoal: (d) => {
+        const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
+        const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
+        const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
+        return [breakfast, lunch, dinner].filter(Boolean).length >= 2;
+      }
+    },
+    { key: 'reading', icon: '📖', name: 'Reading',
+      hasAny: (d) => {
+        let mins = 0;
+        if (d.readings && Array.isArray(d.readings)) {
+          d.readings.forEach(r => { mins += parseInt(r.duration ?? r["duration (min)"] ?? 0) || 0; });
+        }
+        if (mins === 0) mins = parseInt(d.daily["Reading Minutes"]) || 0;
+        return mins > 0;
+      },
+      metGoal: (d) => {
+        let mins = 0;
+        if (d.readings && Array.isArray(d.readings)) {
+          d.readings.forEach(r => { mins += parseInt(r.duration ?? r["duration (min)"] ?? 0) || 0; });
+        }
+        if (mins === 0) mins = parseInt(d.daily["Reading Minutes"]) || 0;
+        return mins > 0;
+      }
+    },
+    { key: 'noAlcohol', icon: '🚫', name: 'No Alcohol',
+      hasAny: (d) => { const v = d.daily["No Alcohol"]; return v === true || v === "TRUE" || v === "true"; },
+      metGoal: (d) => { const v = d.daily["No Alcohol"]; return v === true || v === "TRUE" || v === "true"; }
+    },
+    { key: 'meditation', icon: '🧘', name: 'Meditation',
+      hasAny: (d) => { const v = d.daily["Meditation"] || d.daily["Meditated"]; return v === true || v === "TRUE" || v === "true"; },
+      metGoal: (d) => { const v = d.daily["Meditation"] || d.daily["Meditated"]; return v === true || v === "TRUE" || v === "true"; }
+    },
   ];
 
   const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -1983,7 +2033,7 @@ function renderHabitGrid(allData) {
     let streak = 0;
     for (let i = days.length - 2; i >= 0; i--) {
       const d = days[i].data;
-      if (d && h.check(d, h.targetKey ? getTarget(h.targetKey) : null)) streak++;
+      if (d && h.metGoal(d, h.targetKey ? getTarget(h.targetKey) : null)) streak++;
       else break;
     }
     streaks[h.key] = streak;
@@ -1993,13 +2043,13 @@ function renderHabitGrid(allData) {
   const yesterday = days[days.length - 2];
   const missedYesterday = HABITS.filter(h => {
     if (!yesterday.data) return true;
-    return !h.check(yesterday.data, h.targetKey ? getTarget(h.targetKey) : null);
+    return !h.metGoal(yesterday.data, h.targetKey ? getTarget(h.targetKey) : null);
   });
 
   // Calculate daily completion percentages
   const dailyPcts = days.map(day => {
     if (day.isToday || !day.data) return null;
-    const done = HABITS.filter(h => h.check(day.data, h.targetKey ? getTarget(h.targetKey) : null)).length;
+    const done = HABITS.filter(h => h.metGoal(day.data, h.targetKey ? getTarget(h.targetKey) : null)).length;
     return Math.round((done / HABITS.length) * 100);
   });
 
@@ -2057,8 +2107,10 @@ function renderHabitGrid(allData) {
           cellClass += ' today';
         } else if (!d.data) {
           cellClass += ' no-data';
-        } else if (h.check(d.data, h.targetKey ? getTarget(h.targetKey) : null)) {
-          cellClass += ' hit';
+        } else if (h.metGoal(d.data, h.targetKey ? getTarget(h.targetKey) : null)) {
+          cellClass += ' goal-met';
+        } else if (h.hasAny(d.data)) {
+          cellClass += ' partial';
         } else {
           cellClass += ' miss';
         }
@@ -2082,7 +2134,8 @@ function renderHabitGrid(allData) {
 
   // Legend
   html += `<div class="habit-grid-legend">
-    <div class="legend-item"><div class="legend-cell hit"></div><span>Done</span></div>
+    <div class="legend-item"><div class="legend-cell goal-met"></div><span>Goal Met</span></div>
+    <div class="legend-item"><div class="legend-cell partial"></div><span>Partial</span></div>
     <div class="legend-item"><div class="legend-cell miss"></div><span>Missed</span></div>
     <div class="legend-item"><div class="legend-cell today"></div><span>Today</span></div>
   </div>`;
