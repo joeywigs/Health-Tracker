@@ -5119,18 +5119,32 @@
     // ===== HABIT NOTES =====
     let habitNotes = [];
 
-    function loadHabitNotes() {
+    async function loadHabitNotes() {
       try {
-        const stored = localStorage.getItem('habitNotes');
-        if (stored) habitNotes = JSON.parse(stored);
+        const result = await apiGet('habit_notes_load');
+        habitNotes = result.notes || [];
       } catch (e) {
-        habitNotes = [];
+        console.error('Failed to load habit notes:', e);
+        // Fall back to localStorage
+        try {
+          const stored = localStorage.getItem('habitNotes');
+          if (stored) habitNotes = JSON.parse(stored);
+        } catch (e2) {
+          habitNotes = [];
+        }
       }
       renderHabitNotes();
     }
 
-    function saveHabitNotes() {
+    async function saveHabitNotes() {
+      // Save to localStorage as backup
       localStorage.setItem('habitNotes', JSON.stringify(habitNotes));
+      // Save to KV
+      try {
+        await apiPost('habit_notes_save', { notes: habitNotes });
+      } catch (e) {
+        console.error('Failed to save habit notes to KV:', e);
+      }
     }
 
     function renderHabitNotes() {

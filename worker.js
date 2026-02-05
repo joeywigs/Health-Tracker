@@ -81,6 +81,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadBedtimeItems(env, corsHeaders);
   }
 
+  if (action === "habit_notes_load") {
+    return await loadHabitNotes(env, corsHeaders);
+  }
+
   if (action === "phases_load") {
     return await loadPhases(env, corsHeaders);
   }
@@ -144,6 +148,13 @@ async function handlePost(request, env, corsHeaders) {
       return jsonResponse({ error: true, message: "Missing items array" }, 400, corsHeaders);
     }
     return await saveBedtimeItems(body.items, env, corsHeaders);
+  }
+
+  if (action === "habit_notes_save") {
+    if (!body.notes || !Array.isArray(body.notes)) {
+      return jsonResponse({ error: true, message: "Missing notes array" }, 400, corsHeaders);
+    }
+    return await saveHabitNotes(body.notes, env, corsHeaders);
   }
 
   if (action === "phases_save") {
@@ -569,6 +580,19 @@ async function loadBedtimeItems(env, corsHeaders) {
 
 async function saveBedtimeItems(items, env, corsHeaders) {
   await env.HABIT_DATA.put("bedtime:items", JSON.stringify(items));
+  return jsonResponse({ success: true }, 200, corsHeaders);
+}
+
+// ===== Habit Notes =====
+async function loadHabitNotes(env, corsHeaders) {
+  const notes = await env.HABIT_DATA.get("habit:notes", "json");
+  return jsonResponse({
+    notes: notes || []
+  }, 200, corsHeaders);
+}
+
+async function saveHabitNotes(notes, env, corsHeaders) {
+  await env.HABIT_DATA.put("habit:notes", JSON.stringify(notes));
   return jsonResponse({ success: true }, 200, corsHeaders);
 }
 
