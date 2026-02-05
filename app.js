@@ -2911,8 +2911,12 @@ function renderStepsChart(dataPoints) {
 }
 
 function renderMovementChart(dataPoints) {
-  const canvas = document.getElementById("movementChart");
-  if (!canvas) return;
+  try {
+    const canvas = document.getElementById("movementChart");
+    if (!canvas) {
+      console.log('Movement chart: canvas not found');
+      return;
+    }
 
   const ctx = canvas.getContext("2d");
   const colors = getChartColors();
@@ -2926,11 +2930,11 @@ function renderMovementChart(dataPoints) {
     let count = 0;
 
     // Check new morning/afternoon format
-    if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") count++;
-    if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") count++;
+    if (d.daily && d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") count++;
+    if (d.daily && d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") count++;
 
     // Also check legacy Movements field (if no new format data)
-    if (count === 0 && d.daily["Movements"]) {
+    if (count === 0 && d.daily && d.daily["Movements"]) {
       const legacy = d.daily["Movements"];
       if (typeof legacy === 'string' && legacy.trim()) {
         count = legacy.split(',').filter(m => m.trim()).length;
@@ -2939,8 +2943,10 @@ function renderMovementChart(dataPoints) {
       }
     }
 
-    return count || null;
+    return count > 0 ? count : null;
   });
+
+  console.log('Movement chart data:', movements.filter(m => m !== null).length, 'days with data');
 
   // Calculate average
   const validMovements = movements.filter(m => m !== null && m > 0);
@@ -3018,6 +3024,9 @@ function renderMovementChart(dataPoints) {
       }
     }
   });
+  } catch (err) {
+    console.error('Error rendering movement chart:', err);
+  }
 }
 
 // Store REHIT data globally for calendar
