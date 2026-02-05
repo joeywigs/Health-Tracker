@@ -423,6 +423,101 @@ window.migrateMovements = async function() {
   }
 };
 
+// Data Audit: Scan all historical data for inconsistencies
+window.auditData = async function() {
+  try {
+    console.log('Starting data audit...');
+    const audit = await apiPost('audit_data');
+
+    // Print summary
+    console.log('\n========== DATA AUDIT REPORT ==========\n');
+    console.log(`Total days with data: ${audit.totalDays}`);
+    console.log(`Date range: ${audit.dateRange.earliest} to ${audit.dateRange.latest}`);
+
+    // Issues summary
+    if (audit.issues.length > 0) {
+      console.log(`\n⚠️  ISSUES FOUND: ${audit.issues.length}`);
+      console.table(audit.issues.map(i => ({
+        Type: i.type,
+        Habit: i.habit || '-',
+        Message: i.message,
+        'Days Affected': i.daysAffected || '-'
+      })));
+    } else {
+      console.log('\n✅ No issues found!');
+    }
+
+    // Habits summary
+    console.log('\n📊 HABITS SUMMARY:');
+    const habitsSummary = Object.entries(audit.habits).map(([key, h]) => ({
+      Habit: key,
+      Description: h.description,
+      'Days With Data': h.daysWithData,
+      'Days Without': h.daysWithoutData,
+      'Coverage %': audit.totalDays > 0 ? Math.round(h.daysWithData / audit.totalDays * 100) + '%' : '0%',
+      'Unique Values': Object.keys(h.uniqueValues).length,
+      'Value Types': Object.keys(h.valueTypes).join(', ') || 'none'
+    }));
+    console.table(habitsSummary);
+
+    // Detailed value breakdown for each habit
+    console.log('\n📋 DETAILED VALUE BREAKDOWN:');
+    Object.entries(audit.habits).forEach(([key, h]) => {
+      if (h.daysWithData > 0) {
+        console.log(`\n${h.description} (${key}):`);
+        const valueRows = Object.entries(h.uniqueValues).map(([val, info]) => ({
+          Value: val.length > 50 ? val.substring(0, 50) + '...' : val,
+          Count: info.count,
+          Type: info.type,
+          'Sample Dates': info.sampleDates.join(', ')
+        }));
+        console.table(valueRows);
+      }
+    });
+
+    // Readings array info
+    if (audit.readingsArray.daysWithReadings > 0) {
+      console.log('\n📖 READINGS ARRAY:');
+      console.log(`  Days with readings: ${audit.readingsArray.daysWithReadings}`);
+      console.log(`  Total reading entries: ${audit.readingsArray.totalEntries}`);
+      console.log(`  Unique books: ${audit.readingsArray.uniqueBooks.length}`);
+      console.log(`  Books: ${audit.readingsArray.uniqueBooks.join(', ')}`);
+      console.log(`  Duration field formats:`, audit.readingsArray.durationFormats);
+      if (audit.readingsArray.samples.length > 0) {
+        console.log('  Samples:', audit.readingsArray.samples);
+      }
+    }
+
+    // Movements array info
+    if (audit.movementsArray.daysWithMovements > 0) {
+      console.log('\n🚶 MOVEMENTS ARRAY:');
+      console.log(`  Days with movements: ${audit.movementsArray.daysWithMovements}`);
+      console.log(`  Total movement entries: ${audit.movementsArray.totalEntries}`);
+      console.log(`  Movement types:`, audit.movementsArray.movementTypes);
+      console.log(`  Duration formats:`, audit.movementsArray.durationFormats);
+      if (audit.movementsArray.samples.length > 0) {
+        console.log('  Samples:', audit.movementsArray.samples);
+      }
+    }
+
+    console.log('\n========== END AUDIT REPORT ==========\n');
+
+    // Show alert summary
+    const issueCount = audit.issues.length;
+    alert(`Data Audit Complete!\n\n` +
+      `📅 ${audit.totalDays} days of data\n` +
+      `📆 ${audit.dateRange.earliest} to ${audit.dateRange.latest}\n` +
+      `${issueCount > 0 ? `⚠️ ${issueCount} issues found` : '✅ No issues found'}\n\n` +
+      `Check console for detailed report.`);
+
+    return audit;
+  } catch (err) {
+    console.error('Audit failed:', err);
+    alert('Audit failed: ' + err.message);
+    throw err;
+  }
+};
+
 // =====================================
 // SWIPE NAVIGATION
 // =====================================
@@ -2551,6 +2646,7 @@ async function loadAndRenderCharts() {
     renderWeightChart(dataPoints);
     renderSleepChart(dataPoints);
     renderStepsChart(dataPoints);
+    renderMovementChart(dataPoints);
     renderRehitChart(dataPoints);
     renderPeakWattsChart(dataPoints);
     renderBodyCompositionChart(dataPoints);
@@ -2598,7 +2694,7 @@ function updateRangeButtonsAvailability() {
   }
 }
 
-let weightChart, sleepChart, stepsChart, rehitChart, bodyCompChart, peakWattsChart;
+let weightChart, sleepChart, stepsChart, movementChart, rehitChart, bodyCompChart, peakWattsChart;
 let rehitCalendarMonth = new Date(); // Track current month for calendar
 
 // Helper to get chart colors based on theme
@@ -2794,6 +2890,116 @@ function renderStepsChart(dataPoints) {
           ticks: { color: colors.text },
           grid: { color: colors.grid },
           title: { display: true, text: 'Steps', color: colors.text }
+        }
+      }
+    }
+  });
+}
+
+function renderMovementChart(dataPoints) {
+  const canvas = document.getElementById("movementChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
+
+  if (movementChart) movementChart.destroy();
+
+  const labels = dataPoints.map(d => d.date);
+
+  // Count movement breaks per day from both new and legacy formats
+  const movements = dataPoints.map(d => {
+    let count = 0;
+
+    // Check new morning/afternoon format
+    if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") count++;
+    if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") count++;
+
+    // Also check legacy Movements field (if no new format data)
+    if (count === 0 && d.daily["Movements"]) {
+      const legacy = d.daily["Movements"];
+      if (typeof legacy === 'string' && legacy.trim()) {
+        count = legacy.split(',').filter(m => m.trim()).length;
+      } else if (Array.isArray(legacy)) {
+        count = legacy.length;
+      }
+    }
+
+    return count || null;
+  });
+
+  // Calculate average
+  const validMovements = movements.filter(m => m !== null && m > 0);
+  const avgMovements = validMovements.length > 0
+    ? validMovements.reduce((a, b) => a + b, 0) / validMovements.length
+    : null;
+
+  // Create average line
+  const avgLine = avgMovements ? labels.map(() => avgMovements) : [];
+
+  // Create goal line (2 breaks per day)
+  const goalLine = labels.map(() => 2);
+
+  movementChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Movement Breaks',
+          data: movements,
+          backgroundColor: '#52b788',
+          borderColor: '#52b788',
+          borderWidth: 1,
+          order: 3
+        },
+        {
+          label: `Average (${avgMovements ? avgMovements.toFixed(1) : '--'})`,
+          data: avgLine,
+          type: 'line',
+          borderColor: '#e0e0e0',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false,
+          order: 1
+        },
+        {
+          label: 'Goal (2/day)',
+          data: goalLine,
+          type: 'line',
+          borderColor: '#ff9f1c',
+          borderWidth: 2,
+          borderDash: [3, 3],
+          pointRadius: 0,
+          fill: false,
+          order: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: colors.text }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
+        },
+        y: {
+          beginAtZero: true,
+          max: 5,
+          ticks: {
+            color: colors.text,
+            stepSize: 1
+          },
+          grid: { color: colors.grid },
+          title: { display: true, text: 'Breaks', color: colors.text }
         }
       }
     }
