@@ -3108,8 +3108,10 @@
     // Fetch REHIT count from dedicated endpoint
     async function fetchRehitWeekCount() {
       try {
-        const date = window.currentDate || new Date().toISOString().slice(0, 10);
-        const resp = await fetch(`${REHIT_API}?action=rehit_week&date=${date}`);
+        // Format date as M/D/YY for the API
+        const d = window.currentDate || new Date();
+        const date = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+        const resp = await fetch(`${REHIT_API}?action=rehit_week&date=${encodeURIComponent(date)}`);
         const data = await resp.json();
 
         if (data.ok) {

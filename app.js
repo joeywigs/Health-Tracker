@@ -937,10 +937,11 @@ function renderSummaryOverview(data, stats, range, allData) {
 function renderSummaryRehitCalendar(data, range) {
   const container = document.getElementById('summaryRehitCalendar');
   if (!container) return;
-  
-  // Build rehit data map
+
+  // Build rehit data map from filtered data for the selected range
+  const filteredData = getFilteredData(data, range);
   const rehitMap = {};
-  data.forEach(d => {
+  filteredData.forEach(d => {
     const val = d.daily["REHIT 2x10"];
     if (val === "2x10" || val === true || val === "TRUE") {
       rehitMap[d.date] = "2x10";
@@ -948,10 +949,10 @@ function renderSummaryRehitCalendar(data, range) {
       rehitMap[d.date] = "3x10";
     }
   });
-  
+
   if (range === 7) {
-    // Show just this week
-    renderWeekCalendar(container, rehitMap);
+    // Show last 7 days (matching the data filter)
+    renderLast7DaysCalendar(container, rehitMap);
   } else if (range === 'phase') {
     // Show phase month(s)
     renderMonthCalendar(container, rehitMap, new Date(PHASE_START));
@@ -959,6 +960,49 @@ function renderSummaryRehitCalendar(data, range) {
     // Show 30 days
     renderMonthCalendar(container, rehitMap, new Date());
   }
+}
+
+function renderLast7DaysCalendar(container, rehitMap) {
+  const today = new Date();
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+
+  // Get weekday names for the last 7 days
+  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  let weekdaysHtml = '<div class="rehit-cal-weekdays">';
+  let daysHtml = '<div class="rehit-cal-days">';
+
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - i);
+    const dateStr = `${day.getMonth() + 1}/${day.getDate()}/${String(day.getFullYear()).slice(-2)}`;
+    const rehitVal = rehitMap[dateStr];
+    const isToday = i === 0;
+
+    weekdaysHtml += `<div class="rehit-cal-weekday">${dayNames[day.getDay()]}</div>`;
+
+    let classes = "rehit-cal-day";
+    if (isToday) classes += " today";
+    if (rehitVal) {
+      classes += " has-rehit";
+      if (rehitVal === "2x10") classes += " rehit-2x10";
+      if (rehitVal === "3x10") classes += " rehit-3x10";
+    }
+
+    daysHtml += `<div class="${classes}">${day.getDate()}</div>`;
+  }
+
+  weekdaysHtml += '</div>';
+  daysHtml += '</div>';
+
+  container.innerHTML = `
+    ${weekdaysHtml}
+    ${daysHtml}
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
+    </div>
+  `;
 }
 
 function renderWeekCalendar(container, rehitMap) {
