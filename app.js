@@ -904,24 +904,47 @@ async function loadWeeklySummary() {
 let currentSummaryRange = 'phase';
 let currentSummaryPhaseId = null; // Which phase to show in summary
 
-// Phases system
-let phasesData = []; // Loaded from API
-
 // Legacy fallback constants (used if phases haven't loaded yet)
 const PHASE_START = new Date("2026-01-19");
 const PHASE_LENGTH = 21;
 
-// Load phases from API
+// Default Phase 1 configuration (always available as fallback)
+const DEFAULT_PHASE_1 = {
+  id: 1,
+  name: "Phase 1",
+  start: "1/19/26",
+  length: 21,
+  goals: {
+    sleep: { target: 7, unit: "hrs", type: "daily", description: "Hours of sleep" },
+    agua: { target: 6, unit: "glasses", type: "daily", description: "Glasses of water" },
+    steps: { target: 5000, unit: "steps", type: "daily", description: "Daily steps" },
+    rehit: { target: 3, unit: "sessions", type: "weekly", description: "REHIT sessions per week" },
+    reading: { target: 60, unit: "min", type: "weekly", description: "Reading minutes per week" },
+    movement: { target: 2, unit: "breaks", type: "daily", description: "Movement breaks" },
+    meals: { target: 2, unit: "meals", type: "daily", description: "Healthy meals" },
+    supps: { target: 4, unit: "supps", type: "daily", description: "All 4 supplements" },
+    noAlcohol: { target: true, unit: "bool", type: "daily", description: "No alcohol" },
+    meditation: { target: true, unit: "bool", type: "daily", description: "Daily meditation" },
+    snacks: { target: 2, unit: "checks", type: "daily", description: "Healthy snacks (day + night)" }
+  }
+};
+
+// Phases system - initialized with Phase 1 so UI works immediately
+let phasesData = [DEFAULT_PHASE_1];
+
+// Load phases from API (falls back to DEFAULT_PHASE_1 already in phasesData)
 async function loadPhases() {
   try {
     const resp = await fetch(`${API_BASE}?action=phases_load`);
     const data = await resp.json();
-    if (data.phases && Array.isArray(data.phases)) {
+    if (data.phases && Array.isArray(data.phases) && data.phases.length > 0) {
       phasesData = data.phases;
-      console.log('Loaded phases:', phasesData.length);
+      console.log('Loaded phases from API:', phasesData.length);
+    } else {
+      console.log('Using default Phase 1 (API returned empty)');
     }
   } catch (err) {
-    console.error('Failed to load phases:', err);
+    console.error('Failed to load phases from API, using default Phase 1:', err);
   }
 }
 
