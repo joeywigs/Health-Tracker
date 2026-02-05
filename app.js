@@ -1701,6 +1701,9 @@ function renderSummaryPage(data, range) {
   // Overview stats
   renderSummaryOverview(filteredData, stats, range, data, phaseId);
 
+  // Habit grid (always shows last 7 days from all data)
+  renderHabitGrid(data);
+
   // Phase goals (show targets for selected phase)
   if (range === 'phase') {
     renderPhaseGoals(phaseId);
@@ -1766,16 +1769,194 @@ function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
       <div class="summary-stat-value">🔥 ${currentStreak}-day streak</div>
       <div class="summary-stat-label">${pctLogged}% of days logged</div>
     </div>
-    <div class="summary-stat">
-      <div class="summary-stat-value">${Math.min(daysIntoPhase, phaseLength)}</div>
-      <div class="summary-stat-label">Days ${isPhaseComplete ? 'in' : 'into'} ${phaseName}</div>
-      <div class="summary-stat-sub">${statusText}</div>
-    </div>
-    <div class="summary-stat">
-      <div class="summary-stat-value">${stats.rehit.total}</div>
-      <div class="summary-stat-label">REHIT Sessions</div>
-    </div>
   `;
+}
+
+function renderHabitGrid(allData) {
+  const container = document.getElementById('habitGridContainer');
+  if (!container) return;
+
+  // Define habits to show in grid
+  const HABITS = [
+    { key: 'sleep', icon: '🌙', name: 'Sleep', check: (d, target) => parseFloat(d.daily["Hours of Sleep"]) >= target, targetKey: 'sleep' },
+    { key: 'agua', icon: '💧', name: 'Water', check: (d, target) => parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"]) >= target, targetKey: 'agua' },
+    { key: 'steps', icon: '👟', name: 'Steps', check: (d, target) => parseInt(d.daily["Steps"]) >= target, targetKey: 'steps' },
+    { key: 'rehit', icon: '🚴', name: 'REHIT', check: (d) => { const v = d.daily["REHIT 2x10"]; return v && v !== ""; } },
+    { key: 'movement', icon: '🚶', name: 'Movement', check: (d, target) => {
+      let breakCount = 0;
+      if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breakCount++;
+      if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breakCount++;
+      const movements = d.daily["Movements"];
+      if (movements && typeof movements === 'string') breakCount += movements.split(',').filter(m => m.trim()).length;
+      else if (Array.isArray(movements)) breakCount += movements.length;
+      return breakCount >= target;
+    }, targetKey: 'movement' },
+    { key: 'supps', icon: '💊', name: 'Supps', check: (d) => {
+      const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
+      const vitD = d.daily["Vitamin D"];
+      const no2 = d.daily["NO2"];
+      const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
+      return [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE" || v === "true").length === 4;
+    } },
+    { key: 'meals', icon: '🍽️', name: 'Meals', check: (d) => {
+      const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
+      const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
+      const dinner = d.daily["Dinner"] === true || d.daily["Dinner"] === "TRUE";
+      return [breakfast, lunch, dinner].filter(Boolean).length >= 2;
+    } },
+    { key: 'reading', icon: '📖', name: 'Reading', check: (d) => {
+      let mins = 0;
+      if (d.readings && Array.isArray(d.readings)) {
+        d.readings.forEach(r => { mins += parseInt(r.duration ?? r["duration (min)"] ?? 0) || 0; });
+      }
+      if (mins === 0) mins = parseInt(d.daily["Reading Minutes"]) || 0;
+      return mins > 0;
+    } },
+    { key: 'noAlcohol', icon: '🚫', name: 'No Alcohol', check: (d) => {
+      const v = d.daily["No Alcohol"];
+      return v === true || v === "TRUE" || v === "true";
+    } },
+    { key: 'meditation', icon: '🧘', name: 'Meditation', check: (d) => {
+      const v = d.daily["Meditation"] || d.daily["Meditated"];
+      return v === true || v === "TRUE" || v === "true";
+    } },
+  ];
+
+  const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  // Get last 7 days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = formatDateKey(today);
+
+  // Build date map from all data
+  const dataMap = {};
+  allData.forEach(d => { dataMap[d.date] = d; });
+
+  // Get last 7 days dates
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    const dateStr = formatDateKey(date);
+    days.push({ date, dateStr, data: dataMap[dateStr] || null, isToday: i === 0 });
+  }
+
+  // Helper to get target for a habit
+  const getTarget = (key) => typeof getGoalTarget === 'function' ? getGoalTarget(key) :
+    ({ sleep: 7, agua: 6, steps: 5000, movement: 2 }[key] || 1);
+
+  // Calculate streaks per habit (counting backwards from yesterday)
+  const streaks = {};
+  HABITS.forEach(h => {
+    let streak = 0;
+    for (let i = days.length - 2; i >= 0; i--) {
+      const d = days[i].data;
+      if (d && h.check(d, h.targetKey ? getTarget(h.targetKey) : null)) streak++;
+      else break;
+    }
+    streaks[h.key] = streak;
+  });
+
+  // Find habits missed yesterday (for "never miss twice" banner)
+  const yesterday = days[days.length - 2];
+  const missedYesterday = HABITS.filter(h => {
+    if (!yesterday.data) return true;
+    return !h.check(yesterday.data, h.targetKey ? getTarget(h.targetKey) : null);
+  });
+
+  // Calculate daily completion percentages
+  const dailyPcts = days.map(day => {
+    if (day.isToday || !day.data) return null;
+    const done = HABITS.filter(h => h.check(day.data, h.targetKey ? getTarget(h.targetKey) : null)).length;
+    return Math.round((done / HABITS.length) * 100);
+  });
+
+  // Build HTML
+  let html = '';
+
+  // "Never Miss Twice" Banner (if habits were missed yesterday)
+  if (missedYesterday.length > 0 && missedYesterday.length < HABITS.length) {
+    html += `
+      <div class="habit-grid-banner">
+        <div class="banner-header">
+          <div class="banner-title">⚡ Don't break the chain</div>
+          <div class="banner-subtitle">You missed ${missedYesterday.length} habit${missedYesterday.length > 1 ? 's' : ''} yesterday</div>
+        </div>
+        <div class="banner-habits">
+          ${missedYesterday.slice(0, 3).map(h => `
+            <div class="banner-habit">
+              <span class="banner-habit-icon">${h.icon}</span>
+              <span class="banner-habit-name">${h.name}</span>
+              ${streaks[h.key] > 0 ? `<span class="banner-streak-note">Had ${streaks[h.key]}-day streak</span>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Date range header
+  const startDate = days[0].date;
+  const endDate = days[6].date;
+  const dateRangeStr = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} → ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+  html += `<div class="habit-grid-header">
+    <span class="habit-grid-title">Last 7 Days</span>
+    <span class="habit-grid-dates">${dateRangeStr}</span>
+  </div>`;
+
+  // Day labels row
+  html += `<div class="habit-grid-row habit-grid-labels">
+    <div class="habit-grid-name"></div>
+    ${days.map(d => `<div class="habit-grid-day-label ${d.isToday ? 'today' : ''}">${d.isToday ? 'today' : DAY_LABELS[d.date.getDay()]}</div>`).join('')}
+  </div>`;
+
+  // Habit rows
+  HABITS.forEach(h => {
+    html += `<div class="habit-grid-row">
+      <div class="habit-grid-name">
+        <span class="habit-grid-icon">${h.icon}</span>
+        <span class="habit-grid-label">${h.name}</span>
+        ${streaks[h.key] >= 3 ? `<span class="habit-streak-pill">🔥${streaks[h.key]}</span>` : ''}
+      </div>
+      ${days.map(d => {
+        let cellClass = 'habit-grid-cell';
+        if (d.isToday) {
+          cellClass += ' today';
+        } else if (!d.data) {
+          cellClass += ' no-data';
+        } else if (h.check(d.data, h.targetKey ? getTarget(h.targetKey) : null)) {
+          cellClass += ' hit';
+        } else {
+          cellClass += ' miss';
+        }
+        return `<div class="${cellClass}"></div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  // Daily completion percentage row
+  html += `<div class="habit-grid-row habit-grid-pct-row">
+    <div class="habit-grid-name"><span class="habit-grid-label" style="color:var(--text-muted)">Daily %</span></div>
+    ${dailyPcts.map((pct, i) => {
+      if (pct === null) return `<div class="habit-grid-pct">—</div>`;
+      const color = pct >= 80 ? 'var(--accent-green)' : pct >= 50 ? 'var(--accent-orange)' : 'var(--accent-pink)';
+      return `<div class="habit-grid-pct">
+        <span style="color:${color}">${pct}%</span>
+        <div class="habit-pct-bar"><div class="habit-pct-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // Legend
+  html += `<div class="habit-grid-legend">
+    <div class="legend-item"><div class="legend-cell hit"></div><span>Done</span></div>
+    <div class="legend-item"><div class="legend-cell miss"></div><span>Missed</span></div>
+    <div class="legend-item"><div class="legend-cell today"></div><span>Today</span></div>
+  </div>`;
+
+  container.innerHTML = html;
 }
 
 function renderSummaryRehitCalendar(data, range, phaseId = null) {
