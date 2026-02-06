@@ -363,6 +363,14 @@ function setupDateNav() {
 }
 
 function changeDate(days) {
+  // Flush any pending autosave for the current date before switching
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = null;
+    const payload = buildPayloadFromUI();
+    saveData(payload);
+  }
+
   currentDate.setDate(currentDate.getDate() + days);
   updateDateDisplay();
   updatePhaseInfo?.(); // if you have it
@@ -2446,6 +2454,83 @@ function renderMonthCalendar(container, rehitMap, startDate) {
   container.innerHTML = html;
 }
 
+function renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength) {
+  const today = new Date();
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+
+  const phaseEnd = new Date(phaseStart);
+  phaseEnd.setDate(phaseStart.getDate() + phaseLength - 1);
+
+  // Find the Sunday at the start of the week containing phaseStart
+  const calStart = new Date(phaseStart);
+  calStart.setDate(calStart.getDate() - calStart.getDay());
+
+  // Show exactly N weeks based on phase length (e.g. 21 days = 3 weeks)
+  const numWeeks = Math.ceil(phaseLength / 7);
+  const calEnd = new Date(calStart);
+  calEnd.setDate(calStart.getDate() + (numWeeks * 7) - 1);
+
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+
+  // Build title from phase date range
+  const startMonth = monthNames[calStart.getMonth()];
+  const endMonth = monthNames[calEnd.getMonth()];
+  const title = startMonth === endMonth
+    ? `${startMonth} ${calStart.getFullYear()}`
+    : `${startMonth} – ${endMonth} ${calEnd.getFullYear()}`;
+
+  let html = `
+    <div class="rehit-cal-header">
+      <div class="rehit-cal-title">${title}</div>
+    </div>
+    <div class="rehit-cal-weekdays">
+      <div class="rehit-cal-weekday">S</div>
+      <div class="rehit-cal-weekday">M</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">W</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">F</div>
+      <div class="rehit-cal-weekday">S</div>
+    </div>
+    <div class="rehit-cal-days">
+  `;
+
+  // Iterate day by day from calStart to calEnd
+  const cursor = new Date(calStart);
+  while (cursor <= calEnd) {
+    const dateStr = `${cursor.getMonth() + 1}/${cursor.getDate()}/${String(cursor.getFullYear()).slice(-2)}`;
+    const isInPhase = cursor >= phaseStart && cursor <= phaseEnd;
+    const isToday = dateStr === todayStr;
+    const rehitVal = rehitMap[dateStr];
+
+    let classes = "rehit-cal-day";
+    if (!isInPhase) {
+      classes += " other-month";
+    } else {
+      if (isToday) classes += " today";
+      if (rehitVal) {
+        classes += " has-rehit";
+        if (rehitVal === "2x10") classes += " rehit-2x10";
+        if (rehitVal === "3x10") classes += " rehit-3x10";
+      }
+    }
+
+    html += `<div class="${classes}">${cursor.getDate()}</div>`;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  html += `
+    </div>
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
 function renderGoalPerformance(stats) {
   const doingWell = document.getElementById('goalsDoingWell');
   const needsWork = document.getElementById('goalsNeedWork');
@@ -4098,7 +4183,7 @@ function calculateCurrentStreak() {
   if (!chartDataCache || chartDataCache.length === 0) return 0;
 
   let streak = 0;
-  const sortedData = [...chartDataCache].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedData = [...chartDataCache].sort((a, b) => parseDataDate(b.date) - parseDataDate(a.date));
 
   for (const d of sortedData) {
     const hasData = d.daily["Hours of Sleep"] || d.daily["Steps"];
@@ -5490,7 +5575,6 @@ async function populateForm(data) {
     if (morningDurationEl) morningDurationEl.value = "";
     if (afternoonTypeEl) afternoonTypeEl.value = "";
     if (afternoonDurationEl) afternoonDurationEl.value = "";
-    if (afternoonDurationEl) afternoonDurationEl.value = data?.afternoonMovementDuration || "";
 
     readings = (data?.readings || []).map(r => ({
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],

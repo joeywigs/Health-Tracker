@@ -677,24 +677,29 @@
       100% { filter: drop-shadow(0 0 6px var(--glow-teal)); }
     }
 
+    /* Awareness Buttons Row */
+    .awareness-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
     /* Cue Detected Button */
     .cue-detected-btn {
-      width: 100%;
-      padding: 16px 20px;
-      margin-bottom: 16px;
+      flex: 1;
+      padding: 14px 12px;
       background: linear-gradient(135deg, rgba(196,113,237,0.2), rgba(109,213,237,0.15));
       border: 2px dashed rgba(196,113,237,0.5);
       border-radius: var(--radius);
       color: var(--text);
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
     }
     .cue-detected-btn:hover {
       background: linear-gradient(135deg, rgba(196,113,237,0.3), rgba(109,213,237,0.25));
@@ -706,7 +711,52 @@
       transform: scale(0.98);
     }
     .cue-detected-btn .cue-icon {
-      font-size: 24px;
+      font-size: 22px;
+    }
+    .habit-spotted-btn {
+      background: linear-gradient(135deg, rgba(109,213,237,0.2), rgba(0,206,209,0.15));
+      border-color: rgba(109,213,237,0.5);
+    }
+    .habit-spotted-btn:hover {
+      background: linear-gradient(135deg, rgba(109,213,237,0.3), rgba(0,206,209,0.25));
+      border-color: var(--accent-teal);
+      box-shadow: 0 0 20px var(--glow-teal);
+    }
+    /* Habit Spotted Grid */
+    .habit-spotted-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .habit-spotted-item {
+      padding: 12px 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .habit-spotted-item:hover {
+      background: rgba(109,213,237,0.15);
+      border-color: var(--accent-teal);
+    }
+    .habit-spotted-item.selected {
+      background: rgba(109,213,237,0.25);
+      border-color: var(--accent-teal);
+      box-shadow: 0 0 10px var(--glow-teal);
+    }
+    body.day-mode .habit-spotted-item {
+      background: rgba(0,0,0,0.03);
+    }
+    body.day-mode .habit-spotted-item:hover,
+    body.day-mode .habit-spotted-item.selected {
+      background: rgba(109,213,237,0.15);
     }
 
     /* Cue Modal */
@@ -3415,17 +3465,50 @@
     </div>
   </div>
 
+  <!-- Habit Spotted Modal -->
+  <div id="habitSpottedModal" class="cue-modal">
+    <div class="cue-modal-content">
+      <div class="cue-modal-header">
+        <div class="cue-emoji">👀</div>
+        <h3>Habit Spotted!</h3>
+        <p>Which habit did you catch yourself doing?</p>
+      </div>
+      <div class="cue-timestamp" id="habitSpottedTimestamp"></div>
+      <div class="habit-spotted-grid">
+        <button type="button" class="habit-spotted-item" data-habit="sleep">🌙 Sleep Routine</button>
+        <button type="button" class="habit-spotted-item" data-habit="water">💧 Drank Water</button>
+        <button type="button" class="habit-spotted-item" data-habit="steps">👟 Went for Walk</button>
+        <button type="button" class="habit-spotted-item" data-habit="movement">🚶 Movement Break</button>
+        <button type="button" class="habit-spotted-item" data-habit="reading">📖 Read</button>
+        <button type="button" class="habit-spotted-item" data-habit="meditation">🧘 Meditated</button>
+        <button type="button" class="habit-spotted-item" data-habit="meals">🍽️ Healthy Meal</button>
+        <button type="button" class="habit-spotted-item" data-habit="noAlcohol">🚫🍺 Skipped Drink</button>
+        <button type="button" class="habit-spotted-item" data-habit="supps">💊 Took Supps</button>
+      </div>
+      <textarea class="cue-note-input" id="habitSpottedNote" placeholder="Any notes? (optional)"></textarea>
+      <div class="cue-modal-buttons">
+        <button type="button" class="cue-cancel-btn" onclick="closeHabitSpottedModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <form id="healthForm">
     <div class="unlock-banner" id="unlockBanner">
       <span>🔒 This day is locked to prevent accidental edits</span>
       <button type="button" class="unlock-day-btn" onclick="unlockDay()">Unlock</button>
     </div>
 
-    <!-- Cue Detected Button -->
-    <button type="button" class="cue-detected-btn" onclick="openCueModal()">
-      <span class="cue-icon">🧠</span>
-      <span>Cue Detected</span>
-    </button>
+    <!-- Cue & Habit Buttons -->
+    <div class="awareness-buttons">
+      <button type="button" class="cue-detected-btn" onclick="openCueModal()">
+        <span class="cue-icon">🧠</span>
+        <span>Cue Detected</span>
+      </button>
+      <button type="button" class="cue-detected-btn habit-spotted-btn" onclick="openHabitSpottedModal()">
+        <span class="cue-icon">👀</span>
+        <span>Habit Spotted</span>
+      </button>
+    </div>
     <div class="quick-grid">
       <div class="card sleep" id="sleepSection">
         <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
@@ -4620,9 +4703,6 @@
     window.saveCueAndCelebrate = function() {
       const noteInput = document.getElementById('cueNoteInput');
       const note = noteInput.value.trim();
-      const habitStackSelect = document.getElementById('habitStackSelect');
-      const linkedHabit = habitStackSelect?.value || '';
-
       if (!note) {
         noteInput.style.borderColor = '#ff6b9d';
         noteInput.placeholder = 'Please describe the cue you noticed...';
@@ -4634,16 +4714,12 @@
         return;
       }
 
-      // Save the cue log with linked habit
+      // Save the cue log
       saveCueLog({
         timestamp: cueTimestamp.toISOString(),
         note: note,
-        date: cueTimestamp.toLocaleDateString(),
-        linkedHabit: linkedHabit
+        date: cueTimestamp.toLocaleDateString()
       });
-
-      // Reset habit stack select
-      if (habitStackSelect) habitStackSelect.value = '';
 
       // Close modal
       closeCueModal();
@@ -4668,6 +4744,81 @@
         await apiPost('cue_log_save', { cueData: cueData });
       } catch (e) {
         console.log('Cue log saved locally only');
+      }
+    }
+
+    // ===== HABIT SPOTTED =====
+    let habitSpottedTimestamp = null;
+
+    window.openHabitSpottedModal = function() {
+      const modal = document.getElementById('habitSpottedModal');
+      const timestampEl = document.getElementById('habitSpottedTimestamp');
+      const noteInput = document.getElementById('habitSpottedNote');
+
+      habitSpottedTimestamp = new Date();
+      const timeStr = habitSpottedTimestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      const dateStr = habitSpottedTimestamp.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+      timestampEl.textContent = `📍 ${dateStr} at ${timeStr}`;
+      noteInput.value = '';
+      // Clear previous selections
+      modal.querySelectorAll('.habit-spotted-item').forEach(btn => btn.classList.remove('selected'));
+      modal.classList.add('show');
+      triggerHaptic(50);
+    };
+
+    window.closeHabitSpottedModal = function() {
+      document.getElementById('habitSpottedModal').classList.remove('show');
+      habitSpottedTimestamp = null;
+    };
+
+    // Handle habit item selection
+    document.querySelectorAll('.habit-spotted-item').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const habit = this.dataset.habit;
+        const note = document.getElementById('habitSpottedNote').value.trim();
+
+        // Save the habit log
+        saveHabitSpottedLog({
+          timestamp: habitSpottedTimestamp.toISOString(),
+          habit: habit,
+          note: note,
+          date: habitSpottedTimestamp.toLocaleDateString()
+        });
+
+        // Close modal
+        closeHabitSpottedModal();
+
+        // Show celebration reusing cue celebration
+        const habitNames = {
+          sleep: '🌙 Sleep Routine', water: '💧 Water', steps: '👟 Walking',
+          movement: '🚶 Movement', reading: '📖 Reading', meditation: '🧘 Meditation',
+          meals: '🍽️ Healthy Meal', noAlcohol: '🚫🍺 No Alcohol', supps: '💊 Supplements'
+        };
+        const celebrationEl = document.getElementById('cueCelebration');
+        document.getElementById('cueCelebrationEmoji').textContent = '👀';
+        document.getElementById('cueCelebrationTitle').textContent = 'Habit Spotted!';
+        document.getElementById('cueCelebrationSubtitle').textContent =
+          `You noticed yourself doing "${habitNames[habit] || habit}". That's identity reinforcement!`;
+        celebrationEl.classList.add('show');
+        triggerHaptic([100, 50, 100]);
+        setTimeout(() => dismissCueCelebration(), 3000);
+      });
+    });
+
+    async function saveHabitSpottedLog(logData) {
+      let logs = [];
+      try {
+        const stored = localStorage.getItem('habitSpottedLogs');
+        if (stored) logs = JSON.parse(stored);
+      } catch (e) {}
+      logs.push(logData);
+      localStorage.setItem('habitSpottedLogs', JSON.stringify(logs));
+
+      try {
+        await apiPost('habit_spotted_save', { logData: logData });
+      } catch (e) {
+        console.log('Habit spotted log saved locally only');
       }
     }
 
@@ -5557,10 +5708,13 @@
     }
 
     function closeSettingsPage() {
+      // Blur active element to flush any pending change events on goal inputs
+      if (document.activeElement) document.activeElement.blur();
+
       document.getElementById('settingsPage').style.display = 'none';
       document.getElementById('healthForm').style.display = 'block';
       document.getElementById('quickLogFab').style.display = 'block';
-      
+
       // Apply section visibility
       applySectionSettings();
       window.scrollTo(0, 0);
@@ -5782,16 +5936,20 @@
     ];
 
     goalInputConfigs.forEach(config => {
-      document.getElementById(config.id)?.addEventListener('change', (e) => {
-        appSettings[config.key] = parseInt(e.target.value) || config.default;
+      const el = document.getElementById(config.id);
+      if (!el) return;
+      const handler = (e) => {
+        const parsed = parseInt(e.target.value);
+        appSettings[config.key] = isNaN(parsed) ? config.default : parsed;
         window.appSettings = appSettings;
         saveSettings(appSettings);
         if (config.updateRing && typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
         if (config.updateAguaBar && typeof updateAguaBar === 'function') updateAguaBar();
         if (config.updateStepsBar && typeof updateStepsBar === 'function') updateStepsBar();
         if (config.updateRehitDots && typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
-        showToast(`${config.name} goal updated`, 'success');
-      });
+      };
+      el.addEventListener('change', handler);
+      el.addEventListener('input', handler);
     });
 
     // Goal frequency selectors
@@ -6599,12 +6757,12 @@
 
     function populateWeeklyReview() {
       document.getElementById('wr-sleep').value = 7;
-      document.getElementById('wr-agua').value = appSettings.aguaGoal || 6;
-      document.getElementById('wr-steps').value = appSettings.stepsGoal || 7500;
-      document.getElementById('wr-movement').value = appSettings.movementGoal || 2;
-      document.getElementById('wr-rehit').value = appSettings.rehitGoal || 4;
-      document.getElementById('wr-reading').value = appSettings.readingGoal || 60;
-      document.getElementById('wr-meditation').value = appSettings.meditationGoal || 60;
+      document.getElementById('wr-agua').value = appSettings.aguaGoal ?? 6;
+      document.getElementById('wr-steps').value = appSettings.stepsGoal ?? 7500;
+      document.getElementById('wr-movement').value = appSettings.movementGoal ?? 2;
+      document.getElementById('wr-rehit').value = appSettings.rehitGoal ?? 4;
+      document.getElementById('wr-reading').value = appSettings.readingGoal ?? 60;
+      document.getElementById('wr-meditation').value = appSettings.meditationGoal ?? 60;
     }
 
     window.closeWeeklyReview = function() {
