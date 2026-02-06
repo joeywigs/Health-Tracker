@@ -440,21 +440,35 @@ async function logMovement(body, env, corsHeaders) {
   const mappedType = typeMap[rawType.toLowerCase()] || "Other";
   const duration = Math.round(parseFloat(body.duration) || 0);
 
+  // Parse startTime - Apple Shortcuts may send various formats
+  let parsedStart = null;
+  if (body.startTime) {
+    // Try direct parse first (ISO, RFC 2822, etc.)
+    let d = new Date(body.startTime);
+    if (isNaN(d.getTime())) {
+      // Handle "February 6, 2026 at 8:30 AM" style from Shortcuts
+      const cleaned = String(body.startTime).replace(/\s+at\s+/i, " ");
+      d = new Date(cleaned);
+    }
+    if (!isNaN(d.getTime())) {
+      parsedStart = d;
+    }
+  }
+
   // Determine date: use provided date, or derive from startTime, or use today
   let normalizedDate;
   if (body.date) {
     normalizedDate = normalizeDate(body.date);
-  } else if (body.startTime) {
-    const d = new Date(body.startTime);
-    normalizedDate = normalizeDate(formatDateForKV(d));
+  } else if (parsedStart) {
+    normalizedDate = normalizeDate(formatDateForKV(parsedStart));
   } else {
     normalizedDate = normalizeDate(formatDateForKV(new Date()));
   }
 
   // Determine morning vs afternoon from startTime (default: before 12pm = morning)
   let slot = "morning";
-  if (body.startTime) {
-    const hour = new Date(body.startTime).getHours();
+  if (parsedStart) {
+    const hour = parsedStart.getHours();
     if (hour >= 12) slot = "afternoon";
   } else if (body.slot) {
     slot = body.slot === "afternoon" ? "afternoon" : "morning";
@@ -506,6 +520,7 @@ async function logMovement(body, env, corsHeaders) {
     type: mappedType,
     rawType,
     duration,
+    rawStartTime: body.startTime || null,
     message: `Logged ${mappedType} (${duration} min) as ${slot} movement for ${normalizedDate}`
   }, 200, corsHeaders);
 }
