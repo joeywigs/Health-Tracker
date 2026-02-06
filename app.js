@@ -5152,8 +5152,56 @@ async function saveData(payload) {
 
   // Cache locally wrapped in the format populateForm expects
   // readings, honeyDos, reflections, stories, carly, customSections go at top level
+  // Normalize camelCase payload keys to API column names so chart/summary functions can find the data
+  const keyMap = {
+    sleepHours: "Hours of Sleep",
+    steps: "Steps",
+    fitnessScore: "Fitness Score",
+    calories: "Calories",
+    peakWatts: "Peak Watts",
+    wattSeconds: "Watt Seconds",
+    inhalerMorning: "Inhaler Morning",
+    inhalerEvening: "Inhaler Evening",
+    multiplication: "5 min Multiplication",
+    creatine: "Creatine Chews",
+    vitaminD: "Vitamin D",
+    no2: "NO2",
+    psyllium: "Psyllium Husk",
+    breakfast: "Breakfast",
+    lunch: "Lunch",
+    dinner: "Dinner",
+    daySnacks: "Day Snacks",
+    nightSnacks: "Night Snacks",
+    noAlcohol: "No Alcohol",
+    meditation: "Meditation",
+    groomingHaircut: "Grooming Haircut",
+    groomingBeardTrim: "Grooming Beard Trim",
+    agua: "Water (glasses)",
+    weight: "Weight (lbs)",
+    waist: "Waist (in)",
+    leanMass: "Lean Mass (lbs)",
+    bodyFat: "Body Fat (lbs)",
+    boneMass: "Bone Mass (lbs)",
+    bodywater: "Water (lbs)",
+    systolic: "Systolic",
+    diastolic: "Diastolic",
+    heartRate: "Heart Rate",
+    morningMovementType: "Morning Movement Type",
+    morningMovementDuration: "Morning Movement Duration",
+    afternoonMovementType: "Afternoon Movement Type",
+    afternoonMovementDuration: "Afternoon Movement Duration"
+  };
+  const normalizedDaily = {};
+  for (const [k, v] of Object.entries(payload)) {
+    normalizedDaily[keyMap[k] || k] = v;
+  }
+  // REHIT needs special handling: payload has "rehit" but charts expect "REHIT 2x10"
+  if (payload.rehit !== undefined) {
+    normalizedDaily["REHIT 2x10"] = payload.rehit;
+    delete normalizedDaily.rehit;
+  }
   const wrappedPayload = {
-    daily: { ...payload },
+    daily: normalizedDaily,
     date: payload.date,
     readings: payload.readings || [],
     honeyDos: payload.honeyDos || [],
