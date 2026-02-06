@@ -516,11 +516,12 @@ async function getRehitWeekCount(dateStr, env, corsHeaders) {
 
   dailyData.forEach((data, i) => {
     const dateKey = dates[i];
-    const rehit2 = data?.["REHIT 2x10"];
-    const rehit3 = data?.["REHIT 3x10"];
-    const hasRehit = (rehit2 && rehit2 !== "") || (rehit3 && rehit3 !== "");
+    const rehitVal = data?.["REHIT 2x10"];
+    const is2x10 = rehitVal === "2x10" || rehitVal === true || rehitVal === "TRUE";
+    const is3x10 = rehitVal === "3x10";
+    const hasRehit = is2x10 || is3x10;
 
-    details.push({ date: dateKey, rehit2, rehit3, hasRehit });
+    details.push({ date: dateKey, rehit2: is2x10 ? "2x10" : "", rehit3: is3x10 ? "3x10" : "", hasRehit });
 
     if (hasRehit) count++;
   });
