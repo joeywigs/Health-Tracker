@@ -550,8 +550,10 @@ function setupPullToRefresh() {
   let pulling = false;
   let refreshing = false;
 
+  const isAtTop = () => window.scrollY < 5;
+
   document.addEventListener('touchstart', e => {
-    if (window.scrollY === 0 && !refreshing) {
+    if (isAtTop() && !refreshing) {
       touchStartY = e.touches[0].clientY;
       pulling = true;
     }
@@ -562,12 +564,15 @@ function setupPullToRefresh() {
 
     const pullDistance = e.touches[0].clientY - touchStartY;
 
-    // Prevent native pull-to-refresh while user is pulling down from top
-    if (pullDistance > 0 && window.scrollY === 0) {
-      e.preventDefault();
+    if (pullDistance > 0 && isAtTop()) {
+      try { e.preventDefault(); } catch (_) {}
+    } else if (pullDistance < 0) {
+      // User is scrolling up, not pulling - abort
+      pulling = false;
+      return;
     }
 
-    if (pullDistance > 100 && window.scrollY === 0) {
+    if (pullDistance > 80 && isAtTop()) {
       pulling = false;
       refreshing = true;
       if (typeof showToast === 'function') showToast('Refreshing...', 'info');
@@ -583,8 +588,6 @@ function setupPullToRefresh() {
   document.addEventListener('touchend', () => {
     pulling = false;
   }, { passive: true });
-
-  console.log("Pull-to-refresh wired");
 }
 
 // =====================================
