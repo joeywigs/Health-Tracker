@@ -1893,6 +1893,66 @@
       background: rgba(99, 102, 241, 0.32);
       border-color: rgba(99, 102, 241, 0.55);
     }
+    /* Friday Grooming Card */
+    .grooming-card {
+      background: linear-gradient(135deg, rgba(109,213,237,0.15), rgba(196,113,237,0.1));
+      border: 1px solid rgba(109,213,237,0.3);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .grooming-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .grooming-icon { font-size: 22px; }
+    .grooming-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .grooming-items { display: flex; gap: 16px; }
+    .grooming-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .grooming-item input[type="checkbox"] { display: none; }
+    .grooming-check {
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .grooming-item input:checked + .grooming-check {
+      background: var(--accent-teal);
+      border-color: var(--accent-teal);
+    }
+    .grooming-item input:checked + .grooming-check::after {
+      content: '\2713';
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .grooming-card.all-done {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+    body.day-mode .grooming-card {
+      background: linear-gradient(135deg, rgba(109,213,237,0.1), rgba(196,113,237,0.08));
+    }
+    body.day-mode .grooming-check {
+      background: rgba(0,0,0,0.03);
+    }
+    body.day-mode .grooming-item input:checked + .grooming-check {
+      background: var(--accent-teal);
+    }
+
     /* Biomarkers Page */
     .bio-category { margin-bottom: 14px; }
     .bio-cat-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; }
@@ -3431,22 +3491,6 @@
       </div>
       <div class="cue-timestamp" id="cueTimestamp"></div>
       <textarea class="cue-note-input" id="cueNoteInput" placeholder="What cue did you notice? (e.g., feeling stressed, saw a snack, phone notification...)"></textarea>
-      <div class="habit-stack-section">
-        <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px 0;">🔗 Habit Stack (optional)</p>
-        <select id="habitStackSelect" class="habit-stack-select" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:14px;">
-          <option value="">— Link a habit to practice —</option>
-          <option value="sleep">🌙 Better Sleep Routine</option>
-          <option value="water">💧 Drink Water</option>
-          <option value="steps">👟 Go for a Walk</option>
-          <option value="rehit">🚴 REHIT Workout</option>
-          <option value="movement">🚶 Movement Break</option>
-          <option value="reading">📖 Read</option>
-          <option value="meditation">🧘 Meditate</option>
-          <option value="meals">🍽️ Healthy Meal</option>
-          <option value="noAlcohol">🍺 Skip the Drink</option>
-          <option value="supps">💊 Take Supplements</option>
-        </select>
-      </div>
       <div class="cue-modal-buttons">
         <button type="button" class="cue-cancel-btn" onclick="closeCueModal()">Cancel</button>
         <button type="button" class="cue-save-btn" onclick="saveCueAndCelebrate()">Log It! 🎉</button>
@@ -3509,6 +3553,27 @@
         <span>Habit Spotted</span>
       </button>
     </div>
+
+    <!-- Friday Grooming Card -->
+    <div id="groomingCard" class="grooming-card" style="display:none">
+      <div class="grooming-header">
+        <span class="grooming-icon">💈</span>
+        <span class="grooming-title">Friday Grooming</span>
+      </div>
+      <div class="grooming-items">
+        <label class="grooming-item">
+          <input type="checkbox" id="groomingHaircut">
+          <span class="grooming-check"></span>
+          <span>Haircut</span>
+        </label>
+        <label class="grooming-item">
+          <input type="checkbox" id="groomingBeardTrim">
+          <span class="grooming-check"></span>
+          <span>Beard Trim</span>
+        </label>
+      </div>
+    </div>
+
     <div class="quick-grid">
       <div class="card sleep" id="sleepSection">
         <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
