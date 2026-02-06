@@ -181,6 +181,7 @@ let dataChanged = false;
 
 let readings = [];
 let honeyDos = [];
+let currentMovements = [];
 let currentAverages = null;
 let lastBookTitle = localStorage.getItem('lastBookTitle') || "";
 let aguaCount = 0;
@@ -1489,6 +1490,24 @@ function getGoalTarget(key, phaseId = null) {
   return GOALS[key]?.target;
 }
 
+// Count movement breaks for a day — checks movements array first, falls back to old daily fields
+function countMovementBreaks(d) {
+  // New format: movements array (top-level on data point)
+  if (d.movements && Array.isArray(d.movements) && d.movements.length > 0) {
+    return d.movements.length;
+  }
+  // Old format: morning/afternoon fields in daily
+  let count = 0;
+  const daily = d.daily || d;
+  if (daily["Morning Movement Type"] && daily["Morning Movement Type"] !== "") count++;
+  if (daily["Afternoon Movement Type"] && daily["Afternoon Movement Type"] !== "") count++;
+  // Legacy Movements field
+  const legacy = daily["Movements"];
+  if (legacy && typeof legacy === 'string') count += legacy.split(',').filter(m => m.trim()).length;
+  else if (Array.isArray(legacy)) count += legacy.length;
+  return count;
+}
+
 const GOALS = {
   sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "hrs", type: "daily-avg" },
   agua: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
@@ -1697,17 +1716,7 @@ function calculateGoalStats(data, range, phaseId = null) {
   let movementDaysMet = 0;
   let totalMovementBreaks = 0;
   data.forEach(d => {
-    let breakCount = 0;
-    // Count from morning/afternoon movement fields
-    if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breakCount++;
-    if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breakCount++;
-    // Also check legacy Movements field
-    const movements = d.daily["Movements"];
-    if (movements && typeof movements === 'string') {
-      breakCount += movements.split(',').filter(m => m.trim()).length;
-    } else if (Array.isArray(movements)) {
-      breakCount += movements.length;
-    }
+    const breakCount = countMovementBreaks(d);
     totalMovementBreaks += breakCount;
     if (breakCount >= movementTarget) movementDaysMet++;
   });
@@ -1955,23 +1964,8 @@ function renderHabitGrid(allData) {
       metGoal: (d) => { const v = d.daily["REHIT 2x10"]; return v && v !== ""; }
     },
     { key: 'movement', icon: '🚶', name: 'Movement', targetKey: 'movement',
-      hasAny: (d) => {
-        if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") return true;
-        if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") return true;
-        const movements = d.daily["Movements"];
-        if (movements && typeof movements === 'string' && movements.split(',').filter(m => m.trim()).length > 0) return true;
-        if (Array.isArray(movements) && movements.length > 0) return true;
-        return false;
-      },
-      metGoal: (d, target) => {
-        let breakCount = 0;
-        if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breakCount++;
-        if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breakCount++;
-        const movements = d.daily["Movements"];
-        if (movements && typeof movements === 'string') breakCount += movements.split(',').filter(m => m.trim()).length;
-        else if (Array.isArray(movements)) breakCount += movements.length;
-        return breakCount >= target;
-      }
+      hasAny: (d) => countMovementBreaks(d) > 0,
+      metGoal: (d, target) => countMovementBreaks(d) >= target
     },
     { key: 'supps', icon: '💊', name: 'Supps',
       hasAny: (d) => {
@@ -2854,6 +2848,7 @@ async function fetchChartData(maxDays = null, silent = false) {
         dataPoints.push({
           date: dateStr,
           daily: daily || {},
+          movements: result?.movements || [],
           readings: result?.readings || [],
           averages: result?.averages || {}
         });
@@ -3191,24 +3186,9 @@ function renderMovementChart(dataPoints) {
 
   const labels = dataPoints.map(d => d.date);
 
-  // Count movement breaks per day from both new and legacy formats
+  // Count movement breaks per day — new array format, then old daily fields
   const movements = dataPoints.map(d => {
-    let count = 0;
-
-    // Check new morning/afternoon format
-    if (d.daily && d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") count++;
-    if (d.daily && d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") count++;
-
-    // Also check legacy Movements field (if no new format data)
-    if (count === 0 && d.daily && d.daily["Movements"]) {
-      const legacy = d.daily["Movements"];
-      if (typeof legacy === 'string' && legacy.trim()) {
-        count = legacy.split(',').filter(m => m.trim()).length;
-      } else if (Array.isArray(legacy)) {
-        count = legacy.length;
-      }
-    }
-
+    const count = countMovementBreaks(d);
     return count > 0 ? count : null;
   });
 
@@ -4029,15 +4009,7 @@ function checkStepsGoal() {
 }
 
 function checkMovementGoal() {
-  // Count morning and afternoon movement breaks
-  let breakCount = 0;
-
-  const morningType = document.getElementById('morningMovementType')?.value;
-  const afternoonType = document.getElementById('afternoonMovementType')?.value;
-
-  if (morningType && morningType !== '') breakCount++;
-  if (afternoonType && afternoonType !== '') breakCount++;
-
+  const breakCount = currentMovements.length;
   const target = getGoalTarget('movement');
   if (breakCount >= target && !dailyGoalsAchieved.movement) {
     celebrateGoalAchievement('movement');
@@ -4263,12 +4235,7 @@ const goalCheckers = {
     const water = parseInt(d.daily["agua"] ?? d.daily["Water"] ?? d.daily["Water (glasses)"] ?? 0);
     return water >= 6;
   },
-  movement: (d) => {
-    let breaks = 0;
-    if (d.daily["Morning Movement Type"] && d.daily["Morning Movement Type"] !== "") breaks++;
-    if (d.daily["Afternoon Movement Type"] && d.daily["Afternoon Movement Type"] !== "") breaks++;
-    return breaks >= 2;
-  },
+  movement: (d) => countMovementBreaks(d) >= 2,
   meals: (d) => {
     const breakfast = d.daily["Breakfast"] === true || d.daily["Breakfast"] === "TRUE";
     const lunch = d.daily["Lunch"] === true || d.daily["Lunch"] === "TRUE";
@@ -5110,12 +5077,7 @@ async function loadDataForCurrentDate(options = {}) {
 
 async function saveData(payload) {
   // Debug: log movement data being saved
-  console.log("Saving movement data:", {
-    morningType: payload.morningMovementType,
-    morningDuration: payload.morningMovementDuration,
-    afternoonType: payload.afternoonMovementType,
-    afternoonDuration: payload.afternoonMovementDuration
-  });
+  console.log("Saving movement data:", payload.movements);
 
   // Cache locally wrapped in the format populateForm expects
   // readings, honeyDos, reflections, stories, carly, customSections go at top level
@@ -5153,10 +5115,7 @@ async function saveData(payload) {
     systolic: "Systolic",
     diastolic: "Diastolic",
     heartRate: "Heart Rate",
-    morningMovementType: "Morning Movement Type",
-    morningMovementDuration: "Morning Movement Duration",
-    afternoonMovementType: "Afternoon Movement Type",
-    afternoonMovementDuration: "Afternoon Movement Duration"
+    // movements handled separately as array, not in daily normalization
   };
   const normalizedDaily = {};
   for (const [k, v] of Object.entries(payload)) {
@@ -5170,6 +5129,7 @@ async function saveData(payload) {
   const wrappedPayload = {
     daily: normalizedDaily,
     date: payload.date,
+    movements: payload.movements || [],
     readings: payload.readings || [],
     honeyDos: payload.honeyDos || [],
     reflections: payload.reflections || "",
@@ -5220,12 +5180,7 @@ function triggerSaveSoon() {
   if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
   autoSaveTimeout = setTimeout(async () => {
     const payload = buildPayloadFromUI();
-    console.log("💾 Saving movement data:", {
-      morningType: payload.morningMovementType,
-      morningDuration: payload.morningMovementDuration,
-      afternoonType: payload.afternoonMovementType,
-      afternoonDuration: payload.afternoonMovementDuration
-    });
+    console.log("💾 Saving movement data:", payload.movements);
     await saveData(payload);
   }, 1500);
 }
@@ -5286,11 +5241,8 @@ function buildPayloadFromUI() {
     diastolic: document.getElementById("diastolic")?.value || "",
     heartRate: document.getElementById("heartRate")?.value || "",
 
-    // Movement breaks (morning/afternoon)
-    morningMovementType: document.getElementById("morningMovementType")?.value || "",
-    morningMovementDuration: document.getElementById("morningMovementDuration")?.value || "",
-    afternoonMovementType: document.getElementById("afternoonMovementType")?.value || "",
-    afternoonMovementDuration: document.getElementById("afternoonMovementDuration")?.value || "",
+    // Movement breaks (list)
+    movements: currentMovements,
 
     // Lists + text
     readings,
@@ -5628,15 +5580,17 @@ async function populateForm(data) {
     aguaCount = 0;
     updateAguaDisplay();
 
-    // Clear movement fields
-    const morningTypeEl = document.getElementById("morningMovementType");
-    const morningDurationEl = document.getElementById("morningMovementDuration");
-    const afternoonTypeEl = document.getElementById("afternoonMovementType");
-    const afternoonDurationEl = document.getElementById("afternoonMovementDuration");
-    if (morningTypeEl) morningTypeEl.value = "";
-    if (morningDurationEl) morningDurationEl.value = "";
-    if (afternoonTypeEl) afternoonTypeEl.value = "";
-    if (afternoonDurationEl) afternoonDurationEl.value = "";
+    // Load movements from API even if no daily data (Shortcuts may have logged them)
+    const movArr = data?.movements;
+    if (movArr && Array.isArray(movArr) && movArr.length > 0) {
+      currentMovements = movArr.map(m => ({
+        type: m.type || '', duration: m.duration || 0,
+        ...(m.startTime ? { startTime: m.startTime } : {})
+      }));
+    } else {
+      currentMovements = [];
+    }
+    renderMovementList();
 
     // Clear grooming checkboxes
     const haircutEl = document.getElementById("groomingHaircut");
@@ -5759,25 +5713,30 @@ async function populateForm(data) {
     systolicEl.dispatchEvent(new Event("input"));
   }
 
-  // Movement breaks (morning/afternoon) - read from daily data with server field names
-  const morningTypeEl = document.getElementById("morningMovementType");
-  const morningDurationEl = document.getElementById("morningMovementDuration");
-  const afternoonTypeEl = document.getElementById("afternoonMovementType");
-  const afternoonDurationEl = document.getElementById("afternoonMovementDuration");
-
-  // Debug: log what we're loading
-  console.log("Loading movement data:", {
-    morningType: d?.["Morning Movement Type"],
-    morningDuration: d?.["Morning Movement Duration"],
-    afternoonType: d?.["Afternoon Movement Type"],
-    afternoonDuration: d?.["Afternoon Movement Duration"],
-    fullDaily: d
-  });
-
-  if (morningTypeEl) morningTypeEl.value = d?.["Morning Movement Type"] ?? d?.morningMovementType ?? "";
-  if (morningDurationEl) morningDurationEl.value = d?.["Morning Movement Duration"] ?? d?.morningMovementDuration ?? "";
-  if (afternoonTypeEl) afternoonTypeEl.value = d?.["Afternoon Movement Type"] ?? d?.afternoonMovementType ?? "";
-  if (afternoonDurationEl) afternoonDurationEl.value = d?.["Afternoon Movement Duration"] ?? d?.afternoonMovementDuration ?? "";
+  // Movement breaks - load from movements array, fall back to old daily fields
+  const movementsArr = data?.movements;
+  if (movementsArr && Array.isArray(movementsArr) && movementsArr.length > 0) {
+    currentMovements = movementsArr.map(m => ({
+      type: m.type || '',
+      duration: m.duration || 0,
+      ...(m.startTime ? { startTime: m.startTime } : {})
+    }));
+  } else {
+    // Backwards compatible: build from old morning/afternoon daily fields
+    currentMovements = [];
+    const mType = d?.["Morning Movement Type"] ?? d?.morningMovementType;
+    const mDur = d?.["Morning Movement Duration"] ?? d?.morningMovementDuration;
+    if (mType && mType !== "") {
+      currentMovements.push({ type: mType, duration: parseInt(mDur) || 0 });
+    }
+    const aType = d?.["Afternoon Movement Type"] ?? d?.afternoonMovementType;
+    const aDur = d?.["Afternoon Movement Duration"] ?? d?.afternoonMovementDuration;
+    if (aType && aType !== "") {
+      currentMovements.push({ type: aType, duration: parseInt(aDur) || 0 });
+    }
+  }
+  console.log("Loading movement data:", currentMovements);
+  renderMovementList();
 
   // Lists
   readings = (data?.readings || []).map(r => ({
@@ -5897,20 +5856,65 @@ function prefetchAround(dateObj) {
   }
 }
 
-function setupMovementUI() {
-  // Movement inputs are now inline - wire up change handlers
-  ['morningMovementType', 'morningMovementDuration', 'afternoonMovementType', 'afternoonMovementDuration'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('change', () => {
-        triggerSaveSoon();
-        // Check for movement goal achievement when movement type changes
-        if (id === 'morningMovementType' || id === 'afternoonMovementType') {
-          checkMovementGoal();
-        }
-      });
-    }
+function renderMovementList() {
+  const listEl = document.getElementById('movementList');
+  if (!listEl) return;
+
+  if (currentMovements.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:8px;font-size:13px">No movements logged</div>';
+    return;
+  }
+
+  listEl.innerHTML = currentMovements.map((m, i) => {
+    const dur = m.duration ? ` — ${m.duration} min` : '';
+    const time = m.startTime ? ` (${new Date(m.startTime).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})})` : '';
+    return `<div class="movement-item">
+      <span>${m.type}${dur}${time}</span>
+      <button type="button" class="movement-item-remove" data-idx="${i}">&times;</button>
+    </div>`;
+  }).join('');
+
+  // Wire remove buttons
+  listEl.querySelectorAll('.movement-item-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      currentMovements.splice(idx, 1);
+      renderMovementList();
+      triggerSaveSoon();
+      checkMovementGoal();
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+    });
   });
+}
+
+function addMovementFromUI() {
+  const typeEl = document.getElementById('movementAddType');
+  const durEl = document.getElementById('movementAddDuration');
+  if (!typeEl) return;
+
+  const type = typeEl.value;
+  const duration = parseInt(durEl?.value) || 0;
+  if (!type) return;
+
+  currentMovements.push({ type, duration });
+  renderMovementList();
+  triggerSaveSoon();
+  checkMovementGoal();
+  if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+
+  // Reset duration input
+  if (durEl) durEl.value = '';
+}
+
+function setupMovementUI() {
+  const addBtn = document.getElementById('movementAddBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addMovementFromUI();
+    });
+  }
+  renderMovementList();
   console.log("✅ Movement UI wired");
 }
 
