@@ -113,6 +113,15 @@ async function handleGet(request, env, corsHeaders) {
     return await getRehitWeekCount(date, env, corsHeaders);
   }
 
+  // iOS Shortcut may send steps as GET
+  if (action === "steps") {
+    const steps = url.searchParams.get("steps");
+    if (steps === null || steps === undefined) {
+      return jsonResponse({ error: true, message: "Missing steps value" }, 400, corsHeaders);
+    }
+    return await updateSteps(steps, url.searchParams.get("date"), env, corsHeaders);
+  }
+
   return jsonResponse({ error: true, message: `Unknown action: ${action}` }, 400, corsHeaders);
 }
 
