@@ -5077,6 +5077,12 @@ function triggerSaveSoon() {
   if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
   autoSaveTimeout = setTimeout(async () => {
     const payload = buildPayloadFromUI();
+    console.log("💾 Saving movement data:", {
+      morningType: payload.morningMovementType,
+      morningDuration: payload.morningMovementDuration,
+      afternoonType: payload.afternoonMovementType,
+      afternoonDuration: payload.afternoonMovementDuration
+    });
     await saveData(payload);
   }, 1500);
 }
