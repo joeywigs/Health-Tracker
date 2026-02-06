@@ -271,8 +271,14 @@ async function saveDay(data, env, corsHeaders) {
 
   const normalizedDate = normalizeDate(dateStr);
 
-  // Build daily data object
+  // Read existing daily data so we merge rather than replace.
+  // This preserves fields set by iOS Shortcuts (e.g. movement breaks)
+  // that the web UI may not have loaded yet.
+  const existing = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+
+  // Build daily data object from the incoming payload
   const daily = {
+    ...existing,
     "Date": normalizedDate,
     "Hours of Sleep": data.sleepHours || "",
     "Grey's Inhaler Morning": data.inhalerMorning || false,
@@ -314,11 +320,11 @@ async function saveDay(data, env, corsHeaders) {
     // Grooming (Friday)
     "Grooming Haircut": data.groomingHaircut || false,
     "Grooming Beard Trim": data.groomingBeardTrim || false,
-    // Movement breaks (morning/afternoon)
-    "Morning Movement Type": data.morningMovementType || "",
-    "Morning Movement Duration": data.morningMovementDuration || "",
-    "Afternoon Movement Type": data.afternoonMovementType || "",
-    "Afternoon Movement Duration": data.afternoonMovementDuration || "",
+    // Movement breaks: use app values if provided, otherwise keep existing (from Shortcut)
+    "Morning Movement Type": data.morningMovementType || existing["Morning Movement Type"] || "",
+    "Morning Movement Duration": data.morningMovementDuration || existing["Morning Movement Duration"] || "",
+    "Afternoon Movement Type": data.afternoonMovementType || existing["Afternoon Movement Type"] || "",
+    "Afternoon Movement Duration": data.afternoonMovementDuration || existing["Afternoon Movement Duration"] || "",
   };
 
   // Save all data in parallel
