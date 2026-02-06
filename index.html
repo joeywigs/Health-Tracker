@@ -536,6 +536,28 @@
     .date-phase-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent-green); margin-bottom: 2px; }
     .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: white; }
     .date-phase-day { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .freeze-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+    .freeze-btn {
+      font-size: 10px; padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .freeze-btn:hover { border-color: #6dd5ed; color: #6dd5ed; }
+    .freeze-btn.frozen {
+      border-color: #6dd5ed;
+      background: rgba(109,213,237,0.15);
+      color: #6dd5ed;
+    }
+    .frozen-badge {
+      font-size: 10px; color: #6dd5ed;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    body.day-mode .freeze-btn { background: rgba(0,0,0,0.03); }
+    body.day-mode .freeze-btn.frozen { background: rgba(109,213,237,0.1); }
     .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
     /* Day Lock - prevents accidental edits on past days */
@@ -2452,6 +2474,17 @@
       background: rgba(249, 115, 22, 0.2);
       box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
     }
+    .rehit-cal-day.frozen {
+      background: rgba(109, 213, 237, 0.15);
+      border: 1px dashed rgba(109, 213, 237, 0.5);
+      color: #6dd5ed;
+      opacity: 0.6;
+    }
+    body.day-mode .rehit-cal-day.frozen {
+      background: rgba(109, 213, 237, 0.1);
+      color: #0891b2;
+      border-color: rgba(8, 145, 178, 0.3);
+    }
     .rehit-cal-legend {
       display: flex;
       gap: 16px;
@@ -2478,6 +2511,11 @@
     .rehit-cal-legend-dot.dot-3x10 {
       border-color: #f97316;
       background: rgba(249, 115, 22, 0.2);
+    }
+    .rehit-cal-legend-dot.dot-frozen {
+      border-color: #6dd5ed;
+      border-style: dashed;
+      background: rgba(109, 213, 237, 0.15);
     }
     body.day-mode .rehit-cal-day {
       color: #6b7280;
@@ -3743,7 +3781,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.4.0</div>
+          <div class="tagline">v1.5.0</div>
         </div>
       </div>
       <div class="nav-links">
@@ -3760,6 +3798,10 @@
         <div class="date-phase-title" id="phaseTitle">Phase 1</div>
         <div class="date-main" id="dateDisplay"></div>
         <div class="date-phase-day" id="phaseDayCount">Day -- of 21</div>
+        <div class="freeze-row">
+          <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="toggleFreezeToday()">Freeze Day</button>
+          <span class="frozen-badge" id="frozenDaysBadge" style="display:none"></span>
+        </div>
       </div>
       <button class="date-btn" id="nextBtn">→</button>
       <div class="ring-wrap">
@@ -4787,7 +4829,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.4.0" defer></script>
+  <script src="app.js?v=1.5.0" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -5816,43 +5858,49 @@
     }
     setupAguaHook();
     
-    // Fixed phase info that always uses today's date
+    // Phase info using phasesData from app.js (with frozen days support)
     function updatePhaseInfoFixed() {
-      const PHASE_START = new Date("2026-01-19T00:00:00");
-      const PHASE_LENGTH = 21;
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      
-      const diffTime = today - PHASE_START;
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays < 0) {
-        // Before phase start
+      const phase = (typeof getCurrentPhase === 'function') ? getCurrentPhase() : null;
+      if (!phase) {
         const phaseTitleEl = document.getElementById("phaseTitle");
         if (phaseTitleEl) phaseTitleEl.textContent = "Phase 1";
         const phaseDayEl = document.getElementById("phaseDayCount");
-        if (phaseDayEl) phaseDayEl.textContent = "Starting soon";
+        if (phaseDayEl) phaseDayEl.textContent = "Loading...";
         return;
       }
-      
-      const phase = Math.floor(diffDays / PHASE_LENGTH) + 1;
-      const dayInPhase = (diffDays % PHASE_LENGTH) + 1;
-      const daysRemaining = PHASE_LENGTH - dayInPhase + 1;
-      
-      // Update the phase title in date card
-      const phaseTitleEl = document.getElementById("phaseTitle");
-      if (phaseTitleEl) phaseTitleEl.textContent = `Phase ${phase}`;
 
-      // Update the day counter under Phase title
+      const phaseStart = (typeof parseDataDate === 'function') ? parseDataDate(phase.start) : new Date(phase.start);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const calendarDays = Math.floor((today - phaseStart) / msPerDay) + 1;
+      const frozenDays = (typeof getPhaseFrozenDays === 'function') ? getPhaseFrozenDays(phase) : [];
+      // Count frozen days up to today
+      const frozenBeforeToday = frozenDays.filter(fd => {
+        const d = (typeof parseDataDate === 'function') ? parseDataDate(fd) : new Date(fd);
+        return d >= phaseStart && d <= today;
+      }).length;
+      const activeDays = Math.max(1, calendarDays - frozenBeforeToday);
+      const dayInPhase = Math.min(phase.length, activeDays);
+      const totalLength = phase.length;
+
+      const phaseTitleEl = document.getElementById("phaseTitle");
+      if (phaseTitleEl) phaseTitleEl.textContent = phase.name;
+
       const phaseDayEl = document.getElementById("phaseDayCount");
-      if (phaseDayEl) phaseDayEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH}`;
-      
-      // Update progress bar
+      if (phaseDayEl) {
+        const frozenLabel = frozenDays.length > 0 ? ` (${frozenDays.length}d frozen)` : '';
+        phaseDayEl.textContent = `Day ${dayInPhase} of ${totalLength}${frozenLabel}`;
+      }
+
       const progressBar = document.getElementById("phaseProgressBar");
       if (progressBar) {
-        const progress = ((dayInPhase - 1) / PHASE_LENGTH) * 100;
-        progressBar.style.width = `${progress}%`;
+        const progress = ((dayInPhase - 1) / totalLength) * 100;
+        progressBar.style.width = `${Math.round(progress)}%`;
       }
+
+      if (typeof updateFreezeButton === 'function') updateFreezeButton();
     }
     
     // Override app.js phase functions to use our fixed version

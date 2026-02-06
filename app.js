@@ -271,11 +271,20 @@ function updatePhaseInfo() {
   cur.setHours(0, 0, 0, 0);
 
   const msPerDay = 1000 * 60 * 60 * 24;
-  const daysSinceStart = Math.floor((cur - phaseStart) / msPerDay);
-  const dayInPhase = Math.max(1, Math.min(phase.length, daysSinceStart + 1));
+  const calendarDays = Math.floor((cur - phaseStart) / msPerDay) + 1;
+  const frozenDays = getPhaseFrozenDays(phase);
+  const frozenBeforeNow = frozenDays.filter(fd => {
+    const d = parseDataDate(fd);
+    return d >= phaseStart && d <= cur;
+  }).length;
+  const activeDays = Math.max(1, calendarDays - frozenBeforeNow);
+  const dayInPhase = Math.min(phase.length, activeDays);
 
   const phaseInfoEl = document.getElementById("phaseInfo");
-  if (phaseInfoEl) phaseInfoEl.textContent = `Day ${dayInPhase} of ${phase.length}`;
+  if (phaseInfoEl) {
+    const frozenLabel = frozenDays.length > 0 ? ` (${frozenDays.length}d frozen)` : '';
+    phaseInfoEl.textContent = `Day ${dayInPhase} of ${phase.length}${frozenLabel}`;
+  }
 
   // Update subtitle with phase name
   const subtitleEl = document.querySelector(".subtitle");
@@ -1124,12 +1133,11 @@ function getCurrentPhase(forDate = new Date()) {
   const checkDate = new Date(forDate);
   checkDate.setHours(0, 0, 0, 0);
 
-  // Find which phase this date falls into
+  // Find which phase this date falls into (accounting for frozen days extending the end)
   for (let i = phasesData.length - 1; i >= 0; i--) {
     const phase = phasesData[i];
     const phaseStart = parseDataDate(phase.start);
-    const phaseEnd = new Date(phaseStart);
-    phaseEnd.setDate(phaseStart.getDate() + phase.length - 1);
+    const phaseEnd = getPhaseEffectiveEnd(phase);
 
     if (checkDate >= phaseStart && checkDate <= phaseEnd) {
       return phase;
@@ -1152,6 +1160,75 @@ function getPhaseById(id) {
   return phasesData.find(p => p.id === id) || null;
 }
 
+// Frozen days helpers
+function getPhaseFrozenDays(phase) {
+  return (phase && Array.isArray(phase.frozenDays)) ? phase.frozenDays : [];
+}
+
+function getPhaseEffectiveEnd(phase) {
+  const phaseStart = parseDataDate(phase.start);
+  const frozenCount = getPhaseFrozenDays(phase).length;
+  const end = new Date(phaseStart);
+  end.setDate(phaseStart.getDate() + phase.length + frozenCount - 1);
+  return end;
+}
+
+function isDateFrozen(phase, dateStr) {
+  const frozen = getPhaseFrozenDays(phase);
+  return frozen.includes(dateStr);
+}
+
+function formatDateStr(d) {
+  return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+}
+
+async function toggleFreezeToday() {
+  const phase = getCurrentPhase();
+  if (!phase) return;
+
+  if (!phase.frozenDays) phase.frozenDays = [];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = formatDateStr(today);
+
+  const idx = phase.frozenDays.indexOf(todayStr);
+  if (idx >= 0) {
+    phase.frozenDays.splice(idx, 1);
+    if (typeof showToast === 'function') showToast('Day unfrozen', 'success');
+  } else {
+    phase.frozenDays.push(todayStr);
+    if (typeof showToast === 'function') showToast('Day frozen — phase extended', 'info');
+  }
+
+  await savePhases();
+  updatePhaseInfo();
+  updateFreezeButton();
+}
+
+function updateFreezeButton() {
+  const btn = document.getElementById('freezePhaseBtn');
+  if (!btn) return;
+
+  const phase = getCurrentPhase();
+  if (!phase) { btn.style.display = 'none'; return; }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = formatDateStr(today);
+  const isFrozen = isDateFrozen(phase, todayStr);
+  const frozenCount = getPhaseFrozenDays(phase).length;
+
+  btn.textContent = isFrozen ? 'Unfreeze Day' : 'Freeze Day';
+  btn.classList.toggle('frozen', isFrozen);
+
+  const badge = document.getElementById('frozenDaysBadge');
+  if (badge) {
+    badge.textContent = frozenCount > 0 ? `${frozenCount}d frozen` : '';
+    badge.style.display = frozenCount > 0 ? 'inline' : 'none';
+  }
+}
+
 // Get the next phase that needs to be created (if current phase is ending soon)
 function getUpcomingPhaseNeeded() {
   const today = new Date();
@@ -1160,9 +1237,7 @@ function getUpcomingPhaseNeeded() {
   const currentPhase = getCurrentPhase();
   if (!currentPhase) return null;
 
-  const phaseStart = parseDataDate(currentPhase.start);
-  const phaseEnd = new Date(phaseStart);
-  phaseEnd.setDate(phaseStart.getDate() + currentPhase.length - 1);
+  const phaseEnd = getPhaseEffectiveEnd(currentPhase);
 
   const daysRemaining = Math.ceil((phaseEnd - today) / (1000 * 60 * 60 * 24));
 
@@ -1188,9 +1263,9 @@ async function openNewPhaseModal(fromPhaseId = null) {
   if (!currentPhase) return;
 
   const nextPhaseId = currentPhase.id + 1;
-  const phaseStart = parseDataDate(currentPhase.start);
-  const nextStart = new Date(phaseStart);
-  nextStart.setDate(phaseStart.getDate() + currentPhase.length);
+  const effectiveEnd = getPhaseEffectiveEnd(currentPhase);
+  const nextStart = new Date(effectiveEnd);
+  nextStart.setDate(nextStart.getDate() + 1);
   const nextStartStr = `${nextStart.getMonth() + 1}/${nextStart.getDate()}/${String(nextStart.getFullYear()).slice(-2)}`;
 
   // Ensure chart data is loaded before calculating stats
@@ -1535,11 +1610,13 @@ function getFilteredData(data, range, phaseId = null) {
 
     if (phase) {
       const phaseStart = parseDataDate(phase.start);
-      const phaseEnd = new Date(phaseStart);
-      phaseEnd.setDate(phaseStart.getDate() + phase.length - 1);
+      const phaseEnd = getPhaseEffectiveEnd(phase);
+      const frozenSet = new Set(getPhaseFrozenDays(phase));
       return data.filter(d => {
         const date = parseDataDate(d.date);
-        return date >= phaseStart && date <= Math.min(phaseEnd, today);
+        if (date < phaseStart || date > Math.min(phaseEnd, today)) return false;
+        // Exclude frozen days from calculations
+        return !frozenSet.has(d.date);
       });
     }
 
@@ -1585,10 +1662,16 @@ function calculateGoalStats(data, range, phaseId = null) {
 
   if (range === 'phase' && phase) {
     const phaseStart = parseDataDate(phase.start);
-    const phaseEnd = new Date(phaseStart);
-    phaseEnd.setDate(phaseStart.getDate() + phase.length - 1);
+    const phaseEnd = getPhaseEffectiveEnd(phase);
     const effectiveEnd = phaseEnd < today ? phaseEnd : today;
-    elapsedDays = Math.max(1, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
+    const totalCalendarDays = Math.max(1, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
+    // Subtract frozen days that fall within the elapsed range
+    const frozenDays = getPhaseFrozenDays(phase);
+    const frozenInRange = frozenDays.filter(fd => {
+      const d = parseDataDate(fd);
+      return d >= phaseStart && d <= effectiveEnd;
+    }).length;
+    elapsedDays = Math.max(1, totalCalendarDays - frozenInRange);
     elapsedWeeks = Math.max(1, Math.ceil(elapsedDays / 7));
   } else if (range === 'phase') {
     // Fallback to legacy constants
@@ -1910,13 +1993,18 @@ function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
   }
   phaseStart.setHours(0, 0, 0, 0);
 
-  const phaseEnd = new Date(phaseStart);
-  phaseEnd.setDate(phaseStart.getDate() + phaseLength - 1);
+  const phaseEnd = phase ? getPhaseEffectiveEnd(phase) : new Date(phaseStart.getTime() + (phaseLength - 1) * 86400000);
+  const frozenDays = phase ? getPhaseFrozenDays(phase) : [];
 
   // Calculate days for this phase
   const isPhaseComplete = today > phaseEnd;
   const effectiveEnd = isPhaseComplete ? phaseEnd : today;
-  const daysIntoPhase = Math.max(0, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
+  const totalCalendarDays = Math.max(0, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
+  const frozenInRange = frozenDays.filter(fd => {
+    const d = parseDataDate(fd);
+    return d >= phaseStart && d <= effectiveEnd;
+  }).length;
+  const daysIntoPhase = Math.max(1, totalCalendarDays - frozenInRange);
 
   // For "all time" range, use all data
   let totalDaysLogged, elapsedDays;
@@ -2184,8 +2272,8 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
   const phaseStart = parseDataDate(phase.start);
   phaseStart.setHours(0, 0, 0, 0);
   const phaseLength = phase.length || 21;
-  const phaseEnd = new Date(phaseStart);
-  phaseEnd.setDate(phaseStart.getDate() + phaseLength - 1);
+  const phaseEnd = getPhaseEffectiveEnd(phase);
+  const frozenSet = new Set(getPhaseFrozenDays(phase));
 
   // Build rehit map from ALL data (not just filtered)
   const rehitMap = {};
@@ -2221,8 +2309,10 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
   const target2x10 = parseInt(window.appSettings?.rehit2x10Goal ?? 2);
   const target3x10 = parseInt(window.appSettings?.rehit3x10Goal ?? 3);
   const weeklyTarget = target2x10 + target3x10;
-  const numWeeks = Math.ceil(phaseLength / 7);
-  const phaseTarget = weeklyTarget * numWeeks;
+  const totalCalendarDays = Math.floor((phaseEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1;
+  const numWeeks = Math.ceil(totalCalendarDays / 7);
+  const activeWeeks = Math.ceil(phaseLength / 7);
+  const phaseTarget = weeklyTarget * activeWeeks;
 
   // Calendar grid: start from Sunday before phase start
   const today = new Date();
@@ -2251,9 +2341,14 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
     const isFuture = cursor > today;
     const rehitVal = rehitMap[dateStr];
 
+    const isFrozen = frozenSet.has(dateStr);
+
     let classes = "rehit-cal-day";
     if (!isInPhase) {
       classes += " other-month";
+    } else if (isFrozen) {
+      classes += " frozen";
+      if (isToday) classes += " today";
     } else {
       if (isFuture) classes += " future";
       if (isToday) classes += " today";
@@ -2267,12 +2362,13 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
     cursor.setDate(cursor.getDate() + 1);
   }
 
+  const frozenCount = frozenSet.size;
   const pct = phaseTarget > 0 ? Math.min(100, Math.round((totalSessions / phaseTarget) * 100)) : 0;
 
   container.innerHTML = `
     <div class="rehit-cal-header">
       <div class="rehit-cal-title">${title}</div>
-      <div class="rehit-progress-count">${totalSessions}/${phaseTarget}</div>
+      <div class="rehit-progress-count">${totalSessions}/${phaseTarget}${frozenCount > 0 ? ` <span style="opacity:0.5;font-size:0.85em">(${frozenCount}d frozen)</span>` : ''}</div>
     </div>
     <div class="rehit-cal-weekdays">
       <div class="rehit-cal-weekday">S</div>
@@ -2292,6 +2388,7 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
     <div class="rehit-cal-legend" style="margin-top:8px">
       <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>${sessions2x10} × 2×10</span></div>
       <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>${sessions3x10} × 3×10</span></div>
+      ${frozenCount > 0 ? '<div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-frozen"></div><span>Frozen</span></div>' : ''}
     </div>
   `;
 }
