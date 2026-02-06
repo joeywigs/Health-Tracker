@@ -1,7 +1,5 @@
 {
-  "name": "health-tracker",
-  "compatibility_date": "2026-02-06",
-  "assets": {
-    "directory": "./"
-  }
+  "name": "habit-proxy",
+  "main": "worker.js",
+  "compatibility_date": "2026-02-06"
 }
