@@ -572,7 +572,7 @@ function setupPullToRefresh() {
       return;
     }
 
-    if (pullDistance > 80 && isAtTop()) {
+    if (pullDistance > 200 && isAtTop()) {
       pulling = false;
       refreshing = true;
       if (typeof showToast === 'function') showToast('Refreshing...', 'info');
