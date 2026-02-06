@@ -115,9 +115,13 @@ async function handleGet(request, env, corsHeaders) {
 
   // iOS Shortcut may send steps as GET
   if (action === "steps") {
-    const steps = url.searchParams.get("steps");
+    // Accept steps from ?steps=, ?value=, or ?count= query params
+    const steps = url.searchParams.get("steps") ?? url.searchParams.get("value") ?? url.searchParams.get("count");
     if (steps === null || steps === undefined) {
-      return jsonResponse({ error: true, message: "Missing steps value" }, 400, corsHeaders);
+      // Show all params received so user can debug their Shortcut
+      const params = {};
+      for (const [k, v] of url.searchParams.entries()) params[k] = v;
+      return jsonResponse({ error: true, message: "Missing steps value. Send as ?action=steps&steps=12345", received: params }, 400, corsHeaders);
     }
     return await updateSteps(steps, url.searchParams.get("date"), env, corsHeaders);
   }
