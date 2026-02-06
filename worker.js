@@ -292,6 +292,9 @@ async function saveDay(data, env, corsHeaders) {
     "Reflections": data.reflections || "",
     "Stories": data.stories || "",
     "Carly": data.carly || "",
+    // Grooming (Friday)
+    "Grooming Haircut": data.groomingHaircut || false,
+    "Grooming Beard Trim": data.groomingBeardTrim || false,
     // Movement breaks (morning/afternoon)
     "Morning Movement Type": data.morningMovementType || "",
     "Morning Movement Duration": data.morningMovementDuration || "",

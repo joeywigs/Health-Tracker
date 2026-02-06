@@ -222,6 +222,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { setupSwipeNavigation(); console.log("10 ok"); } catch(e) { console.error("setupSwipeNavigation failed:", e); }
   try { setupPullToRefresh(); console.log("11 ok"); } catch(e) { console.error("setupPullToRefresh failed:", e); }
   try { setupWeeklyReminders(); console.log("12 ok"); } catch(e) { console.error("setupWeeklyReminders failed:", e); }
+  try { setupGroomingCard(); console.log("12b ok"); } catch(e) { console.error("setupGroomingCard failed:", e); }
   try { setupWeeklySummaryButton(); console.log("13 ok"); } catch(e) { console.error("setupWeeklySummaryButton failed:", e); }
   try { setupPhaseComparison(); console.log("13b ok"); } catch(e) { console.error("setupPhaseComparison failed:", e); }
   try { setupChartsPage(); console.log("14 ok"); } catch(e) { console.error("setupChartsPage failed:", e); }
@@ -378,6 +379,7 @@ function changeDate(days) {
   // show instantly if cached, else it will fetch
   loadDataForCurrentDate();
   updateWeighReminder();
+  updateGroomingCard();
   updateWeeklySummaryButton();
   updateDayLock();
 }
@@ -698,6 +700,46 @@ function showWeighReminder() {
 function hideWeighReminder() {
   const banner = document.getElementById("weighReminder");
   if (banner) banner.remove();
+}
+
+// =====================================
+// FRIDAY GROOMING
+// =====================================
+function updateGroomingCard() {
+  const card = document.getElementById('groomingCard');
+  if (!card) return;
+
+  const viewingDate = new Date(currentDate);
+  const dayOfWeek = viewingDate.getDay(); // 0=Sun, 5=Fri, 6=Sat
+
+  // Show on Friday (5) only
+  if (dayOfWeek !== 5) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = '';
+
+  // Check if both are done
+  const haircut = document.getElementById('groomingHaircut');
+  const beard = document.getElementById('groomingBeardTrim');
+  const allDone = haircut?.checked && beard?.checked;
+  card.classList.toggle('all-done', allDone);
+}
+
+function setupGroomingCard() {
+  const haircut = document.getElementById('groomingHaircut');
+  const beard = document.getElementById('groomingBeardTrim');
+
+  [haircut, beard].forEach(cb => {
+    if (!cb) return;
+    cb.addEventListener('change', () => {
+      updateGroomingCard();
+      triggerSaveSoon();
+    });
+  });
+
+  console.log("✅ Grooming card wired");
 }
 
 // =====================================
@@ -5208,6 +5250,10 @@ function buildPayloadFromUI() {
 
     meditation: !!document.getElementById("meditation")?.checked,
 
+    // Grooming (Friday)
+    groomingHaircut: !!document.getElementById("groomingHaircut")?.checked,
+    groomingBeardTrim: !!document.getElementById("groomingBeardTrim")?.checked,
+
     // Agua (hydration glasses) - read from DOM to stay in sync with inline handlers
     agua: parseInt(document.getElementById("aguaCount")?.textContent) || 0,
 
@@ -5576,6 +5622,13 @@ async function populateForm(data) {
     if (afternoonTypeEl) afternoonTypeEl.value = "";
     if (afternoonDurationEl) afternoonDurationEl.value = "";
 
+    // Clear grooming checkboxes
+    const haircutEl = document.getElementById("groomingHaircut");
+    const beardEl = document.getElementById("groomingBeardTrim");
+    if (haircutEl) { haircutEl.checked = false; syncCheckboxVisual(haircutEl); }
+    if (beardEl) { beardEl.checked = false; syncCheckboxVisual(beardEl); }
+    updateGroomingCard();
+
     readings = (data?.readings || []).map(r => ({
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],
       book: r.book ?? r["book"] ?? r["Book"]
@@ -5662,6 +5715,11 @@ async function populateForm(data) {
   setCheckbox("noAlcohol", d["No Alcohol"] ?? d["noAlcohol"]);
 
   setCheckbox("meditation", d["Meditation"] ?? d["meditation"]);
+
+  // Grooming
+  setCheckbox("groomingHaircut", d["Grooming Haircut"] ?? d["groomingHaircut"]);
+  setCheckbox("groomingBeardTrim", d["Grooming Beard Trim"] ?? d["groomingBeardTrim"]);
+  updateGroomingCard();
 
   // Agua counter
   aguaCount = parseInt(d["agua"] ?? d["Water"] ?? d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
