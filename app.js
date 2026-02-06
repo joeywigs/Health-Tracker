@@ -2171,52 +2171,121 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
   const container = document.getElementById('summaryRehitCalendar');
   if (!container) return;
 
-  // Count REHIT sessions from filtered data
-  const filteredData = getFilteredData(data, range, phaseId);
+  // Get the current phase for calendar bounds
+  const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
+  if (!phase) { container.innerHTML = ''; return; }
+
+  const phaseStart = parseDataDate(phase.start);
+  phaseStart.setHours(0, 0, 0, 0);
+  const phaseLength = phase.length || 21;
+  const phaseEnd = new Date(phaseStart);
+  phaseEnd.setDate(phaseStart.getDate() + phaseLength - 1);
+
+  // Build rehit map from ALL data (not just filtered)
+  const rehitMap = {};
   let sessions2x10 = 0;
   let sessions3x10 = 0;
 
-  filteredData.forEach(d => {
+  data.forEach(d => {
     const val2 = d.daily?.["REHIT 2x10"];
     const val3 = d.daily?.["REHIT 3x10"];
+    let rehitVal = null;
 
-    // Check for 3x10 first (either in dedicated field or as value in 2x10 field)
     if (val3 && val3 !== "" && val3 !== "false" && val3 !== false) {
-      sessions3x10++;
+      rehitVal = "3x10";
     } else if (val2 === "3x10") {
-      sessions3x10++;
+      rehitVal = "3x10";
     } else if (val2 && val2 !== "" && val2 !== "false" && val2 !== false) {
-      // Any other truthy value in REHIT 2x10 counts as 2x10
-      // This includes: "2x10", true, "TRUE", "true", "True"
-      sessions2x10++;
+      rehitVal = "2x10";
+    }
+
+    if (rehitVal) {
+      rehitMap[d.date] = rehitVal;
+      // Count only sessions within the phase
+      const dDate = parseDataDate(d.date);
+      dDate.setHours(0, 0, 0, 0);
+      if (dDate >= phaseStart && dDate <= phaseEnd) {
+        if (rehitVal === "3x10") sessions3x10++;
+        else sessions2x10++;
+      }
     }
   });
 
   const totalSessions = sessions2x10 + sessions3x10;
-
-  // Get target from settings
-  // Use ?? to allow 0 values
   const target2x10 = parseInt(window.appSettings?.rehit2x10Goal ?? 2);
   const target3x10 = parseInt(window.appSettings?.rehit3x10Goal ?? 3);
-  const totalTarget = target2x10 + target3x10;
+  const weeklyTarget = target2x10 + target3x10;
+  const numWeeks = Math.ceil(phaseLength / 7);
+  const phaseTarget = weeklyTarget * numWeeks;
 
-  // For phase view, multiply weekly target by 3 weeks
-  const phaseTarget = range === 'phase' ? totalTarget * 3 : totalTarget;
+  // Calendar grid: start from Sunday before phase start
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+
+  const calStart = new Date(phaseStart);
+  calStart.setDate(calStart.getDate() - calStart.getDay());
+  const calEnd = new Date(calStart);
+  calEnd.setDate(calStart.getDate() + (numWeeks * 7) - 1);
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const startMonth = monthNames[phaseStart.getMonth()];
+  const endMonth = monthNames[phaseEnd.getMonth()];
+  const title = startMonth === endMonth
+    ? `${phase.name} — ${startMonth} ${phaseStart.getFullYear()}`
+    : `${phase.name} — ${startMonth}–${endMonth} ${phaseEnd.getFullYear()}`;
+
+  let daysHtml = '';
+  const cursor = new Date(calStart);
+  while (cursor <= calEnd) {
+    const dateStr = `${cursor.getMonth() + 1}/${cursor.getDate()}/${String(cursor.getFullYear()).slice(-2)}`;
+    const isInPhase = cursor >= phaseStart && cursor <= phaseEnd;
+    const isToday = dateStr === todayStr;
+    const isFuture = cursor > today;
+    const rehitVal = rehitMap[dateStr];
+
+    let classes = "rehit-cal-day";
+    if (!isInPhase) {
+      classes += " other-month";
+    } else {
+      if (isFuture) classes += " future";
+      if (isToday) classes += " today";
+      if (rehitVal) {
+        classes += " has-rehit";
+        classes += rehitVal === "3x10" ? " rehit-3x10" : " rehit-2x10";
+      }
+    }
+
+    daysHtml += `<div class="${classes}">${cursor.getDate()}</div>`;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
   const pct = phaseTarget > 0 ? Math.min(100, Math.round((totalSessions / phaseTarget) * 100)) : 0;
 
   container.innerHTML = `
-    <div class="rehit-progress-card">
-      <div class="rehit-progress-header">
-        <span class="rehit-progress-title">🚴 REHIT Sessions</span>
-        <span class="rehit-progress-count">${totalSessions}/${phaseTarget}</span>
-      </div>
-      <div class="rehit-progress-bar">
-        <div class="rehit-progress-fill" style="width:${pct}%"></div>
-      </div>
-      <div class="rehit-progress-breakdown">
-        <span class="rehit-type-badge type-2x10">${sessions2x10} × 2x10</span>
-        <span class="rehit-type-badge type-3x10">${sessions3x10} × 3x10</span>
-      </div>
+    <div class="rehit-cal-header">
+      <div class="rehit-cal-title">${title}</div>
+      <div class="rehit-progress-count">${totalSessions}/${phaseTarget}</div>
+    </div>
+    <div class="rehit-cal-weekdays">
+      <div class="rehit-cal-weekday">S</div>
+      <div class="rehit-cal-weekday">M</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">W</div>
+      <div class="rehit-cal-weekday">T</div>
+      <div class="rehit-cal-weekday">F</div>
+      <div class="rehit-cal-weekday">S</div>
+    </div>
+    <div class="rehit-cal-days">
+      ${daysHtml}
+    </div>
+    <div class="rehit-progress-bar" style="margin-top:12px">
+      <div class="rehit-progress-fill" style="width:${pct}%"></div>
+    </div>
+    <div class="rehit-cal-legend" style="margin-top:8px">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>${sessions2x10} × 2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>${sessions3x10} × 3×10</span></div>
     </div>
   `;
 }
