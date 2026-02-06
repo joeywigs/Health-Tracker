@@ -152,6 +152,14 @@ async function handlePost(request, env, corsHeaders) {
     return await syncWorkouts(body.workouts, body.date, env, corsHeaders);
   }
 
+  // iOS Shortcut endpoint - log a movement break from Apple Fitness
+  if (action === "movement") {
+    if (!body.type) {
+      return jsonResponse({ error: true, message: "Missing type", received: body }, 400, corsHeaders);
+    }
+    return await logMovement(body, env, corsHeaders);
+  }
+
   if (action === "biomarkers_save") {
     if (!body.date || !body.values) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
@@ -408,6 +416,97 @@ async function syncWorkouts(workouts, dateStr, env, corsHeaders) {
     workoutCount: existing.length,
     workouts: existing,
     message: `Synced ${workouts.length} workout(s) for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Log Movement Break (from iOS Shortcut) =====
+async function logMovement(body, env, corsHeaders) {
+  // Map Apple Fitness workout types to app movement types
+  const typeMap = {
+    "walking": "Walk",
+    "walk": "Walk",
+    "hiking": "Walk",
+    "cycling": "Carol Bike",
+    "indoor cycling": "Carol Bike",
+    "indoor cycle": "Carol Bike",
+    "carol bike": "Carol Bike",
+    "traditional strength training": "Other",
+    "strength training": "Other",
+    "running": "Other",
+    "yoga": "Other",
+  };
+
+  const rawType = (body.type || "").trim();
+  const mappedType = typeMap[rawType.toLowerCase()] || "Other";
+  const duration = Math.round(parseFloat(body.duration) || 0);
+
+  // Determine date: use provided date, or derive from startTime, or use today
+  let normalizedDate;
+  if (body.date) {
+    normalizedDate = normalizeDate(body.date);
+  } else if (body.startTime) {
+    const d = new Date(body.startTime);
+    normalizedDate = normalizeDate(formatDateForKV(d));
+  } else {
+    normalizedDate = normalizeDate(formatDateForKV(new Date()));
+  }
+
+  // Determine morning vs afternoon from startTime (default: before 12pm = morning)
+  let slot = "morning";
+  if (body.startTime) {
+    const hour = new Date(body.startTime).getHours();
+    if (hour >= 12) slot = "afternoon";
+  } else if (body.slot) {
+    slot = body.slot === "afternoon" ? "afternoon" : "morning";
+  }
+
+  // Get existing daily data and update the right slot
+  let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+  daily["Date"] = normalizedDate;
+
+  const typeField = slot === "morning" ? "Morning Movement Type" : "Afternoon Movement Type";
+  const durationField = slot === "morning" ? "Morning Movement Duration" : "Afternoon Movement Duration";
+
+  // Only fill if the slot is empty (don't overwrite existing data)
+  const slotEmpty = !daily[typeField] && !daily[durationField];
+  if (slotEmpty) {
+    daily[typeField] = mappedType;
+    daily[durationField] = duration > 0 ? String(duration) : "";
+  } else if (slot === "morning") {
+    // Morning taken, try afternoon
+    const altEmpty = !daily["Afternoon Movement Type"] && !daily["Afternoon Movement Duration"];
+    if (altEmpty) {
+      daily["Afternoon Movement Type"] = mappedType;
+      daily["Afternoon Movement Duration"] = duration > 0 ? String(duration) : "";
+      slot = "afternoon";
+    } else {
+      return jsonResponse({
+        success: false,
+        message: "Both movement slots already filled",
+        date: normalizedDate,
+        morning: { type: daily["Morning Movement Type"], duration: daily["Morning Movement Duration"] },
+        afternoon: { type: daily["Afternoon Movement Type"], duration: daily["Afternoon Movement Duration"] }
+      }, 200, corsHeaders);
+    }
+  } else {
+    return jsonResponse({
+      success: false,
+      message: `${slot} slot already filled`,
+      date: normalizedDate,
+      existing: { type: daily[typeField], duration: daily[durationField] }
+    }, 200, corsHeaders);
+  }
+
+  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
+
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    slot,
+    type: mappedType,
+    rawType,
+    duration,
+    message: `Logged ${mappedType} (${duration} min) as ${slot} movement for ${normalizedDate}`
   }, 200, corsHeaders);
 }
 
