@@ -363,6 +363,14 @@ function setupDateNav() {
 }
 
 function changeDate(days) {
+  // Flush any pending autosave for the current date before switching
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = null;
+    const payload = buildPayloadFromUI();
+    saveData(payload);
+  }
+
   currentDate.setDate(currentDate.getDate() + days);
   updateDateDisplay();
   updatePhaseInfo?.(); // if you have it
@@ -4052,7 +4060,7 @@ function calculateCurrentStreak() {
   if (!chartDataCache || chartDataCache.length === 0) return 0;
 
   let streak = 0;
-  const sortedData = [...chartDataCache].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedData = [...chartDataCache].sort((a, b) => parseDataDate(b.date) - parseDataDate(a.date));
 
   for (const d of sortedData) {
     const hasData = d.daily["Hours of Sleep"] || d.daily["Steps"];
@@ -5438,7 +5446,6 @@ async function populateForm(data) {
     if (morningDurationEl) morningDurationEl.value = "";
     if (afternoonTypeEl) afternoonTypeEl.value = "";
     if (afternoonDurationEl) afternoonDurationEl.value = "";
-    if (afternoonDurationEl) afternoonDurationEl.value = data?.afternoonMovementDuration || "";
 
     readings = (data?.readings || []).map(r => ({
       duration: r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"],

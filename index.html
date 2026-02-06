@@ -5652,10 +5652,13 @@
     }
     
     function closeSettingsPage() {
+      // Blur active element to flush any pending change events on goal inputs
+      if (document.activeElement) document.activeElement.blur();
+
       document.getElementById('settingsPage').style.display = 'none';
       document.getElementById('healthForm').style.display = 'block';
       document.getElementById('quickLogFab').style.display = 'block';
-      
+
       // Apply section visibility
       applySectionSettings();
       window.scrollTo(0, 0);
@@ -5877,7 +5880,9 @@
     ];
 
     goalInputConfigs.forEach(config => {
-      document.getElementById(config.id)?.addEventListener('change', (e) => {
+      const el = document.getElementById(config.id);
+      if (!el) return;
+      const handler = (e) => {
         const parsed = parseInt(e.target.value);
         appSettings[config.key] = isNaN(parsed) ? config.default : parsed;
         window.appSettings = appSettings;
@@ -5886,8 +5891,9 @@
         if (config.updateAguaBar && typeof updateAguaBar === 'function') updateAguaBar();
         if (config.updateStepsBar && typeof updateStepsBar === 'function') updateStepsBar();
         if (config.updateRehitDots && typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
-        showToast(`${config.name} goal updated`, 'success');
-      });
+      };
+      el.addEventListener('change', handler);
+      el.addEventListener('input', handler);
     });
 
     // Goal frequency selectors
