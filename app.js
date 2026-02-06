@@ -182,6 +182,9 @@ let dataChanged = false;
 let readings = [];
 let honeyDos = [];
 let currentMovements = [];
+let emailSprintCount = 0;
+let emailSprintTimer = null;
+let emailSprintSecondsLeft = 0;
 let currentAverages = null;
 let lastBookTitle = localStorage.getItem('lastBookTitle') || "";
 let aguaCount = 0;
@@ -192,7 +195,8 @@ let dailyGoalsAchieved = {
   steps: false,
   movement: false,
   meals: false,
-  cleanEating: false
+  cleanEating: false,
+  emailSprint: false
 };
 
 let autoSaveTimeout = null;
@@ -219,6 +223,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { setupCollapsibleSections(); console.log("6 ok"); } catch(e) { console.error("setupCollapsibleSections failed:", e); }
   try { setupMovementUI(); console.log("7 ok"); } catch(e) { console.error("setupMovementUI failed:", e); }
   try { setupReadingUI(); console.log("8 ok"); } catch(e) { console.error("setupReadingUI failed:", e); }
+  try { setupEmailSprintUI(); console.log("8b ok"); } catch(e) { console.error("setupEmailSprintUI failed:", e); }
   try { setupBloodPressureCalculator(); console.log("9 ok"); } catch(e) { console.error("setupBloodPressureCalculator failed:", e); }
   try { setupPullToRefresh(); console.log("11 ok"); } catch(e) { console.error("setupPullToRefresh failed:", e); }
   try { setupWeeklyReminders(); console.log("12 ok"); } catch(e) { console.error("setupWeeklyReminders failed:", e); }
@@ -1486,6 +1491,7 @@ function getGoalTarget(key, phaseId = null) {
     if (key === 'rehit' && appSettings.rehitGoal) return appSettings.rehitGoal;
     if (key === 'reading' && appSettings.readingGoal) return appSettings.readingGoal;
     if (key === 'meditation' && appSettings.meditationGoal) return appSettings.meditationGoal;
+    if (key === 'emailSprint' && appSettings.emailSprintGoal) return appSettings.emailSprintGoal;
   }
   return GOALS[key]?.target;
 }
@@ -5184,6 +5190,7 @@ async function saveData(payload) {
     systolic: "Systolic",
     diastolic: "Diastolic",
     heartRate: "Heart Rate",
+    emailSprints: "Email Sprints",
     // movements handled separately as array, not in daily normalization
   };
   const normalizedDaily = {};
@@ -5312,6 +5319,9 @@ function buildPayloadFromUI() {
 
     // Movement breaks (list)
     movements: currentMovements,
+
+    // Email sprints
+    emailSprints: emailSprintCount,
 
     // Lists + text
     readings,
@@ -5649,6 +5659,9 @@ async function populateForm(data) {
     aguaCount = 0;
     updateAguaDisplay();
 
+    emailSprintCount = 0;
+    updateEmailSprintDisplay();
+
     // Load movements from API even if no daily data (Shortcuts may have logged them)
     const movArr = data?.movements;
     if (movArr && Array.isArray(movArr) && movArr.length > 0) {
@@ -5754,6 +5767,10 @@ async function populateForm(data) {
   setCheckbox("noAlcohol", d["No Alcohol"] ?? d["noAlcohol"]);
 
   setCheckbox("meditation", d["Meditation"] ?? d["meditation"]);
+
+  // Email sprints
+  emailSprintCount = parseInt(d["Email Sprints"] ?? d["emailSprints"] ?? 0, 10) || 0;
+  updateEmailSprintDisplay();
 
   // Grooming
   setCheckbox("groomingHaircut", d["Grooming Haircut"] ?? d["groomingHaircut"]);
@@ -5985,6 +6002,103 @@ function setupMovementUI() {
   }
   renderMovementList();
   console.log("✅ Movement UI wired");
+}
+
+function setupEmailSprintUI() {
+  const btn = document.getElementById('emailSprintBtn');
+  if (!btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (emailSprintTimer) {
+      cancelEmailSprint();
+    } else {
+      startEmailSprint();
+    }
+  });
+
+  updateEmailSprintDisplay();
+  console.log("✅ Email Sprint UI wired");
+}
+
+function startEmailSprint() {
+  const btn = document.getElementById('emailSprintBtn');
+  const timerEl = document.getElementById('emailSprintTimer');
+  if (!btn || !timerEl) return;
+
+  emailSprintSecondsLeft = 120; // 2 minutes
+  btn.textContent = 'Cancel';
+  btn.classList.add('running');
+  timerEl.classList.add('running');
+  timerEl.classList.remove('done');
+
+  updateEmailSprintTimerDisplay();
+
+  emailSprintTimer = setInterval(() => {
+    emailSprintSecondsLeft--;
+    updateEmailSprintTimerDisplay();
+
+    if (emailSprintSecondsLeft <= 0) {
+      completeEmailSprint();
+    }
+  }, 1000);
+}
+
+function cancelEmailSprint() {
+  clearInterval(emailSprintTimer);
+  emailSprintTimer = null;
+  emailSprintSecondsLeft = 0;
+
+  const btn = document.getElementById('emailSprintBtn');
+  const timerEl = document.getElementById('emailSprintTimer');
+  if (btn) { btn.textContent = 'Start Sprint'; btn.classList.remove('running'); }
+  if (timerEl) { timerEl.textContent = '2:00'; timerEl.classList.remove('running', 'done'); }
+}
+
+function completeEmailSprint() {
+  clearInterval(emailSprintTimer);
+  emailSprintTimer = null;
+
+  emailSprintCount++;
+  updateEmailSprintDisplay();
+  triggerSaveSoon();
+
+  const btn = document.getElementById('emailSprintBtn');
+  const timerEl = document.getElementById('emailSprintTimer');
+  if (btn) { btn.textContent = 'Start Sprint'; btn.classList.remove('running'); }
+  if (timerEl) { timerEl.textContent = '0:00'; timerEl.classList.remove('running'); timerEl.classList.add('done'); }
+
+  // Reset timer display after a moment
+  setTimeout(() => {
+    if (!emailSprintTimer && timerEl) {
+      timerEl.textContent = '2:00';
+      timerEl.classList.remove('done');
+    }
+  }, 2000);
+
+  if (typeof showToast === 'function') showToast('Sprint complete!', 'success');
+  checkEmailSprintGoal();
+  if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+}
+
+function updateEmailSprintTimerDisplay() {
+  const timerEl = document.getElementById('emailSprintTimer');
+  if (!timerEl) return;
+  const min = Math.floor(emailSprintSecondsLeft / 60);
+  const sec = emailSprintSecondsLeft % 60;
+  timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+function updateEmailSprintDisplay() {
+  const countEl = document.getElementById('emailSprintCount');
+  if (countEl) countEl.textContent = emailSprintCount;
+}
+
+function checkEmailSprintGoal() {
+  const target = getGoalTarget('emailSprint');
+  if (emailSprintCount >= target && !dailyGoalsAchieved.emailSprint) {
+    celebrateGoalAchievement('emailSprint');
+  }
 }
 
 function setupReadingUI() {

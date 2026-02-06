@@ -327,6 +327,7 @@ async function saveDay(data, env, corsHeaders) {
     "No Alcohol": data.noAlcohol || false,
     // Other
     "Meditation": data.meditation || false,
+    "Email Sprints": parseInt(data.emailSprints) || 0,
     "Reflections": data.reflections || "",
     "Stories": data.stories || "",
     "Carly": data.carly || "",

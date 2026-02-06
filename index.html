@@ -2943,6 +2943,64 @@
     body.day-mode .movement-add-row input[type="number"] { background: rgba(255,255,255,0.8); color: #1f2937; }
     body.day-mode .movement-add-btn { background: rgba(0,0,0,0.05); }
 
+    /* Email Sprint */
+    .email-sprint-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    .email-sprint-count {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .email-sprint-count span:first-child {
+      font-size: 28px;
+      font-weight: 700;
+      color: #4d9de0;
+    }
+    .email-sprint-label {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .email-sprint-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+    .email-sprint-timer.running {
+      color: #4d9de0;
+    }
+    .email-sprint-timer.done {
+      color: #52b788;
+    }
+    .email-sprint-btn {
+      padding: 12px 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #4d9de0;
+      background: rgba(77, 157, 224, 0.15);
+      color: #4d9de0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .email-sprint-btn:hover { background: rgba(77, 157, 224, 0.25); }
+    .email-sprint-btn.running {
+      border-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.15);
+      color: #ff6b6b;
+    }
+    .email-sprint-btn.running:hover { background: rgba(255, 107, 107, 0.25); }
+    body.day-mode .email-sprint-timer { color: #9ca3af; }
+    body.day-mode .email-sprint-timer.running { color: #4d9de0; }
+    body.day-mode .email-sprint-btn { background: rgba(77, 157, 224, 0.1); }
+
     /* FAB - Glowing */
     .fab { 
       position: fixed; bottom: 24px; right: 24px; 
@@ -3685,7 +3743,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.3.1</div>
+          <div class="tagline">v1.4.0</div>
         </div>
       </div>
       <div class="nav-links">
@@ -4040,6 +4098,17 @@
       <div class="sec-content">
         <div class="mini-supps-grid" style="grid-template-columns: 1fr;">
           <div class="mini-supp"><input type="checkbox" id="meditation"><span>Meditated</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="emailSprintSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#4d9de0;--icon-end:#6dd5ed;--icon-glow:var(--glow-teal)">📧</div><span class="sec-name">Email Sprints</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="email-sprint-container">
+          <div class="email-sprint-count"><span id="emailSprintCount">0</span><span class="email-sprint-label"> sprints today</span></div>
+          <div class="email-sprint-timer" id="emailSprintTimer">2:00</div>
+          <button type="button" class="email-sprint-btn" id="emailSprintBtn">Start Sprint</button>
         </div>
       </div>
     </div>
@@ -4426,6 +4495,21 @@
           </div>
         </div>
 
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">📧</span>
+            <span class="goal-setting-name">Email Sprints</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10">
+            <span class="goal-unit">sprints</span>
+            <select class="goal-freq" id="emailSprintFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -4703,7 +4787,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.3.1" defer></script>
+  <script src="app.js?v=1.4.0" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -4805,9 +4889,9 @@
     // Exposed globally so app.js movement list can call it
     window.updateCompletionRingAurora = updateCompletionRingAurora;
     function updateCompletionRingAurora() {
-      // 9 daily goals: sleep, agua, steps, movement, meals, no alcohol,
-      // day snacks, night snacks, supplements
-      const total = 9;
+      // 10 daily goals: sleep, agua, steps, movement, meals, no alcohol,
+      // day snacks, night snacks, supplements, email sprints
+      const total = 10;
       let checked = 0;
 
       // 1. Sleep ≥ goal
@@ -4849,8 +4933,11 @@
       const suppsChecked = ['creatine', 'vitaminD', 'no2', 'psyllium']
         .filter(id => document.getElementById(id)?.checked).length;
       if (suppsChecked === 4) checked++;
-      
-      // Debug removed
+
+      // 10. Email sprints ≥ goal
+      const emailSprintGoalVal = (typeof appSettings !== 'undefined' && appSettings.emailSprintGoal) ? appSettings.emailSprintGoal : 3;
+      const emailSprintsCount = (typeof emailSprintCount !== 'undefined') ? emailSprintCount : 0;
+      if (emailSprintsCount >= emailSprintGoalVal) checked++;
       
       const progress = document.getElementById('completionProgress');
       const number = document.getElementById('completionNumber');
@@ -5846,6 +5933,7 @@
       rehitGoal: 4, // legacy - combined total
       readingGoal: 60,
       meditationGoal: 3,
+      emailSprintGoal: 3,
       // Goal frequencies
       sleepFreq: 'daily',
       aguaFreq: 'daily',
@@ -5858,6 +5946,7 @@
       rehit3x10Freq: 'weekly',
       readingFreq: 'weekly',
       meditationFreq: 'weekly',
+      emailSprintFreq: 'daily',
       sections: [
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
@@ -6042,6 +6131,7 @@
       document.getElementById('rehit3x10Goal').value = appSettings.rehit3x10Goal ?? 3;
       document.getElementById('readingGoal').value = appSettings.readingGoal ?? 60;
       document.getElementById('meditationGoal').value = appSettings.meditationGoal ?? 3;
+      document.getElementById('emailSprintGoal').value = appSettings.emailSprintGoal ?? 3;
 
       // Goal frequencies
       document.getElementById('sleepFreq').value = appSettings.sleepFreq || 'daily';
@@ -6055,6 +6145,7 @@
       document.getElementById('rehit3x10Freq').value = appSettings.rehit3x10Freq || 'weekly';
       document.getElementById('readingFreq').value = appSettings.readingFreq || 'weekly';
       document.getElementById('meditationFreq').value = appSettings.meditationFreq || 'weekly';
+      document.getElementById('emailSprintFreq').value = appSettings.emailSprintFreq || 'daily';
 
       window.scrollTo(0, 0);
       renderSectionList();
@@ -6286,7 +6377,8 @@
       { id: 'rehit2x10Goal', key: 'rehit2x10Goal', default: 2, name: 'REHIT 2x10', updateRehitDots: true },
       { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10', updateRehitDots: true },
       { id: 'readingGoal', key: 'readingGoal', default: 60, name: 'Reading' },
-      { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' }
+      { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' },
+      { id: 'emailSprintGoal', key: 'emailSprintGoal', default: 3, name: 'Email Sprints', updateRing: true }
     ];
 
     goalInputConfigs.forEach(config => {
@@ -6309,7 +6401,7 @@
     // Goal frequency selectors
     const freqConfigs = [
       'sleepFreq', 'aguaFreq', 'stepsFreq', 'movementFreq', 'mealsFreq',
-      'snacksFreq', 'noAlcoholFreq', 'rehit2x10Freq', 'rehit3x10Freq', 'readingFreq', 'meditationFreq'
+      'snacksFreq', 'noAlcoholFreq', 'rehit2x10Freq', 'rehit3x10Freq', 'readingFreq', 'meditationFreq', 'emailSprintFreq'
     ];
 
     freqConfigs.forEach(freqId => {
