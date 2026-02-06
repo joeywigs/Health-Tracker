@@ -81,6 +81,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadBedtimeItems(env, corsHeaders);
   }
 
+  if (action === "morning_items_load") {
+    return await loadMorningItems(env, corsHeaders);
+  }
+
   if (action === "habit_notes_load") {
     return await loadHabitNotes(env, corsHeaders);
   }
@@ -160,6 +164,13 @@ async function handlePost(request, env, corsHeaders) {
       return jsonResponse({ error: true, message: "Missing items array" }, 400, corsHeaders);
     }
     return await saveBedtimeItems(body.items, env, corsHeaders);
+  }
+
+  if (action === "morning_items_save") {
+    if (!body.items || !Array.isArray(body.items)) {
+      return jsonResponse({ error: true, message: "Missing items array" }, 400, corsHeaders);
+    }
+    return await saveMorningItems(body.items, env, corsHeaders);
   }
 
   if (action === "habit_notes_save") {
@@ -625,6 +636,30 @@ async function loadBedtimeItems(env, corsHeaders) {
 
 async function saveBedtimeItems(items, env, corsHeaders) {
   await env.HABIT_DATA.put("bedtime:items", JSON.stringify(items));
+  return jsonResponse({ success: true }, 200, corsHeaders);
+}
+
+// ===== Morning Routine Items =====
+async function loadMorningItems(env, corsHeaders) {
+  const items = await env.HABIT_DATA.get("morning:items", "json");
+
+  const defaultItems = [
+    { id: 1, name: "Pulse", type: "pulse", order: 0 },
+    { id: 2, name: "Blood Pressure", type: "bloodPressure", order: 1 },
+    { id: 3, name: "Supps", type: "supps", order: 2 },
+    { id: 4, name: "Water", type: "water", order: 3 },
+    { id: 5, name: "REHIT Ride", type: "rehit", order: 4 },
+    { id: 6, name: "Fitness Metrics", type: "fitnessMetrics", order: 5 },
+    { id: 7, name: "Meditated", type: "meditated", order: 6 }
+  ];
+
+  return jsonResponse({
+    items: items || defaultItems
+  }, 200, corsHeaders);
+}
+
+async function saveMorningItems(items, env, corsHeaders) {
+  await env.HABIT_DATA.put("morning:items", JSON.stringify(items));
   return jsonResponse({ success: true }, 200, corsHeaders);
 }
 

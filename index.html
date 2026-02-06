@@ -1953,6 +1953,225 @@
       background: var(--accent-teal);
     }
 
+    /* Morning Habit Stack */
+    .morning-routine {
+      background: linear-gradient(135deg, rgba(255,183,77,0.15), rgba(255,138,101,0.1));
+      border: 1px solid rgba(255,183,77,0.3);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .morning-routine.show { display: block; }
+    .morning-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .morning-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .morning-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffb74d, #ff8a65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 15px rgba(255,183,77,0.4);
+    }
+    .morning-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .morning-sublabel {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .morning-done-btn {
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .morning-done-btn:hover {
+      background: rgba(255,183,77,0.2);
+      border-color: #ffb74d;
+      color: #ffb74d;
+    }
+    .morning-prompt-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .morning-yes-btn, .morning-no-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .morning-yes-btn {
+      background: linear-gradient(135deg, #ffb74d, #ff8a65);
+      color: #1a1a2e;
+    }
+    .morning-yes-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 20px rgba(255,183,77,0.4);
+    }
+    .morning-no-btn {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .morning-no-btn:hover {
+      background: rgba(255,255,255,0.12);
+    }
+    .morning-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .morning-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+    }
+    .morning-item.checked {
+      background: rgba(255,183,77,0.1);
+      border-color: #ffb74d;
+    }
+    .morning-item.checked .morning-item-label {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+    .morning-checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .morning-item.checked .morning-checkbox {
+      background: linear-gradient(135deg, #ffb74d, #ff8a65);
+      border-color: #ffb74d;
+      color: white;
+      font-size: 12px;
+    }
+    .morning-item-label {
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      white-space: nowrap;
+      min-width: 50px;
+    }
+    .morning-item-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .morning-inline-input {
+      width: 60px;
+      padding: 4px 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      text-align: center;
+    }
+    .morning-inline-input:focus {
+      border-color: #ffb74d;
+      outline: none;
+      box-shadow: 0 0 8px rgba(255,183,77,0.3);
+    }
+    .morning-inline-input::placeholder {
+      color: var(--text-muted);
+    }
+    .morning-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .morning-chip {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .morning-chip:hover {
+      background: rgba(255,255,255,0.12);
+    }
+    .morning-chip.active {
+      background: rgba(255,183,77,0.2);
+      border-color: #ffb74d;
+      color: #ffb74d;
+    }
+    .morning-bp-inputs {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .morning-bp-inputs .morning-inline-input {
+      width: 55px;
+    }
+    .morning-metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .morning-metric {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .morning-metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      min-width: 35px;
+    }
+    body.day-mode .morning-routine {
+      background: linear-gradient(135deg, rgba(255,183,77,0.12), rgba(255,138,101,0.08));
+      border-color: rgba(255,183,77,0.25);
+    }
+    body.day-mode .morning-item {
+      background: rgba(255,255,255,0.5);
+    }
+    body.day-mode .morning-item.checked {
+      background: rgba(255,183,77,0.15);
+      border-color: #ffb74d;
+    }
+
     /* Biomarkers Page */
     .bio-category { margin-bottom: 14px; }
     .bio-cat-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; }
@@ -3574,6 +3793,51 @@
       </div>
     </div>
 
+    <!-- Morning Habit Stack -->
+    <div id="morningRoutine" class="morning-routine">
+      <div id="morningPrompt">
+        <div class="morning-header">
+          <div class="morning-title">
+            <div class="morning-icon">☀️</div>
+            <div>
+              <div class="morning-label">Morning Habit Stack</div>
+              <div class="morning-sublabel">Ready to start your morning routine?</div>
+            </div>
+          </div>
+        </div>
+        <div class="morning-prompt-btns">
+          <button type="button" class="morning-yes-btn" onclick="acceptMorningRoutine()">Yes, let's go!</button>
+          <button type="button" class="morning-no-btn" onclick="dismissMorningRoutine()">Not today</button>
+        </div>
+      </div>
+      <div id="morningStack" style="display:none">
+        <div class="morning-header">
+          <div class="morning-title">
+            <div class="morning-icon">☀️</div>
+            <div>
+              <div class="morning-label">Morning Habit Stack</div>
+              <div class="morning-sublabel">Start your day right</div>
+            </div>
+          </div>
+          <button type="button" class="morning-done-btn" onclick="dismissMorningRoutine()">Done</button>
+        </div>
+        <div class="morning-items" id="morningItems">
+          <!-- Items populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Morning Celebration Overlay -->
+    <div id="morningCelebration" class="bedtime-celebration">
+      <div class="celebration-stars"></div>
+      <div class="celebration-content">
+        <div class="celebration-emoji">💪</div>
+        <div class="celebration-title">Crushed It!</div>
+        <div class="celebration-subtitle">Morning routine complete - let's have a great day!</div>
+        <button type="button" class="celebration-dismiss" onclick="dismissMorningCelebration()">Let's Go!</button>
+      </div>
+    </div>
+
     <div class="quick-grid">
       <div class="card sleep" id="sleepSection">
         <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
@@ -4198,6 +4462,21 @@
         <div style="display:flex;gap:8px;margin-top:12px">
           <input type="text" class="input" id="newBedtimeItem" placeholder="New item name..." style="flex:1">
           <button type="button" class="btn btn-primary" id="addBedtimeItemBtn" style="padding:8px 16px">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Morning Habit Stack Settings -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffb74d;--icon-end:#ff8a65;--icon-glow:rgba(255,183,77,0.4)">☀️</div><span class="sec-name">Morning Habit Stack</span></div></div>
+      <div class="sec-content">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows when you choose to start your morning routine. Drag to reorder.</p>
+        <div id="morningItemsList" class="section-list">
+          <!-- Populated by JS -->
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <input type="text" class="input" id="newMorningItem" placeholder="New item name..." style="flex:1">
+          <button type="button" class="btn btn-primary" id="addMorningItemBtn" style="padding:8px 16px">Add</button>
         </div>
       </div>
     </div>
@@ -7215,6 +7494,538 @@
 
       // Check every minute if bedtime routine should show
       setInterval(checkBedtimeRoutine, 60000);
+    });
+
+    // ===== Morning Habit Stack =====
+    let morningItems = [];
+    let morningCheckedState = {};
+
+    function getMorningKey() {
+      const now = new Date();
+      return 'morningState-' + now.toISOString().slice(0, 10);
+    }
+
+    function isViewingToday() {
+      if (typeof currentDate === 'undefined') return false;
+      const now = new Date();
+      return currentDate.getFullYear() === now.getFullYear() &&
+             currentDate.getMonth() === now.getMonth() &&
+             currentDate.getDate() === now.getDate();
+    }
+
+    function checkMorningRoutine() {
+      const section = document.getElementById('morningRoutine');
+      if (!section) return;
+
+      if (!isViewingToday()) {
+        section.classList.remove('show');
+        return;
+      }
+
+      const state = localStorage.getItem(getMorningKey());
+
+      if (state === 'dismissed') {
+        section.classList.remove('show');
+        return;
+      }
+
+      section.classList.add('show');
+      const prompt = document.getElementById('morningPrompt');
+      const stack = document.getElementById('morningStack');
+
+      if (state === 'accepted') {
+        prompt.style.display = 'none';
+        stack.style.display = 'block';
+        renderMorningItems();
+      } else {
+        prompt.style.display = 'block';
+        stack.style.display = 'none';
+      }
+    }
+
+    window.acceptMorningRoutine = function() {
+      localStorage.setItem(getMorningKey(), 'accepted');
+      const prompt = document.getElementById('morningPrompt');
+      const stack = document.getElementById('morningStack');
+      prompt.style.display = 'none';
+      stack.style.display = 'block';
+      renderMorningItems();
+    };
+
+    window.dismissMorningRoutine = function() {
+      localStorage.setItem(getMorningKey(), 'dismissed');
+      const section = document.getElementById('morningRoutine');
+      if (section) section.classList.remove('show');
+    };
+
+    function isMorningItemDone(item) {
+      switch (item.type) {
+        case 'pulse':
+          return !!document.getElementById('heartRate')?.value;
+        case 'bloodPressure':
+          return !!document.getElementById('systolic')?.value || !!document.getElementById('diastolic')?.value;
+        case 'supps':
+          return ['creatine', 'vitaminD', 'no2', 'psyllium'].every(id => document.getElementById(id)?.checked);
+        case 'water':
+          return !!morningCheckedState[item.id];
+        case 'rehit':
+          return document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
+        case 'fitnessMetrics':
+          return !!document.getElementById('fitnessScore')?.value;
+        case 'meditated':
+          return document.getElementById('meditation')?.checked;
+        case 'custom':
+          return !!morningCheckedState[item.id];
+        default:
+          return false;
+      }
+    }
+
+    function renderMorningItemContent(item) {
+      switch (item.type) {
+        case 'pulse': {
+          const val = document.getElementById('heartRate')?.value || '';
+          return `<span class="morning-item-label">Pulse</span>
+            <div class="morning-item-controls">
+              <input type="number" class="morning-inline-input" data-sync="heartRate" value="${val}" inputmode="numeric" placeholder="--">
+            </div>`;
+        }
+        case 'bloodPressure': {
+          if (typeof currentDate !== 'undefined' && currentDate.getDay() !== 1) return null;
+          const sys = document.getElementById('systolic')?.value || '';
+          const dia = document.getElementById('diastolic')?.value || '';
+          return `<span class="morning-item-label">Blood Pressure</span>
+            <div class="morning-item-controls">
+              <div class="morning-bp-inputs">
+                <input type="number" class="morning-inline-input" data-sync="systolic" value="${sys}" inputmode="numeric" placeholder="Sys">
+                <input type="number" class="morning-inline-input" data-sync="diastolic" value="${dia}" inputmode="numeric" placeholder="Dia">
+              </div>
+            </div>`;
+        }
+        case 'supps': {
+          const chips = [
+            { id: 'creatine', label: 'Creat' },
+            { id: 'vitaminD', label: 'Vit D' },
+            { id: 'no2', label: 'NO2' },
+            { id: 'psyllium', label: 'Psyllium' }
+          ];
+          const chipsHtml = chips.map(c => {
+            const checked = document.getElementById(c.id)?.checked;
+            return `<button type="button" class="morning-chip ${checked ? 'active' : ''}" data-toggle-checkbox="${c.id}">${c.label}</button>`;
+          }).join('');
+          return `<span class="morning-item-label">Supps</span>
+            <div class="morning-item-controls">
+              <div class="morning-chips">${chipsHtml}</div>
+            </div>`;
+        }
+        case 'water': {
+          const done = morningCheckedState[item.id];
+          return `<span class="morning-item-label">Water</span>
+            <div class="morning-item-controls">
+              <button type="button" class="morning-chip ${done ? 'active' : ''}" data-water-btn="${item.id}">16oz</button>
+            </div>`;
+        }
+        case 'rehit': {
+          const r2 = document.getElementById('rehit2')?.checked;
+          const r3 = document.getElementById('rehit3')?.checked;
+          return `<span class="morning-item-label">REHIT Ride</span>
+            <div class="morning-item-controls">
+              <div class="morning-chips">
+                <button type="button" class="morning-chip ${r2 ? 'active' : ''}" data-toggle-checkbox="rehit2">2x10</button>
+                <button type="button" class="morning-chip ${r3 ? 'active' : ''}" data-toggle-checkbox="rehit3">3x10</button>
+              </div>
+            </div>`;
+        }
+        case 'fitnessMetrics': {
+          const fs = document.getElementById('fitnessScore')?.value || '';
+          const ws = document.getElementById('wattSeconds')?.value || '';
+          const pw = document.getElementById('peakWatts')?.value || '';
+          const cal = document.getElementById('calories')?.value || '';
+          return `<span class="morning-item-label">Fitness</span>
+            <div class="morning-item-controls">
+              <div class="morning-metrics-grid">
+                <div class="morning-metric"><span class="morning-metric-label">Score</span><input type="number" class="morning-inline-input" data-sync="fitnessScore" value="${fs}" inputmode="decimal" step="0.1" placeholder="--"></div>
+                <div class="morning-metric"><span class="morning-metric-label">W-Sec</span><input type="number" class="morning-inline-input" data-sync="wattSeconds" value="${ws}" inputmode="numeric" placeholder="--"></div>
+                <div class="morning-metric"><span class="morning-metric-label">Watts</span><input type="number" class="morning-inline-input" data-sync="peakWatts" value="${pw}" inputmode="numeric" placeholder="--"></div>
+                <div class="morning-metric"><span class="morning-metric-label">Cals</span><input type="number" class="morning-inline-input" data-sync="calories" value="${cal}" inputmode="numeric" placeholder="--"></div>
+              </div>
+            </div>`;
+        }
+        case 'meditated': {
+          const checked = document.getElementById('meditation')?.checked;
+          return `<span class="morning-item-label">Meditated</span>
+            <div class="morning-item-controls">
+              <button type="button" class="morning-chip ${checked ? 'active' : ''}" data-toggle-checkbox="meditation">🧘</button>
+            </div>`;
+        }
+        case 'custom': {
+          const checked = morningCheckedState[item.id];
+          return `<span class="morning-item-label">${item.name}</span>
+            <div class="morning-item-controls">
+              <button type="button" class="morning-chip ${checked ? 'active' : ''}" data-custom-toggle="${item.id}">✓</button>
+            </div>`;
+        }
+        default:
+          return `<span class="morning-item-label">${item.name}</span>`;
+      }
+    }
+
+    function renderMorningItems() {
+      const container = document.getElementById('morningItems');
+      if (!container) return;
+
+      container.innerHTML = morningItems.map(item => {
+        const content = renderMorningItemContent(item);
+        if (content === null) return '';
+        const done = isMorningItemDone(item);
+        return `<div class="morning-item ${done ? 'checked' : ''}" data-morning-id="${item.id}">
+          <div class="morning-checkbox">${done ? '✓' : ''}</div>
+          ${content}
+        </div>`;
+      }).join('');
+
+      setupMorningItemListeners();
+      checkMorningAllDone();
+    }
+
+    function setupMorningItemListeners() {
+      const container = document.getElementById('morningItems');
+      if (!container) return;
+
+      // Input sync: morning input → real form field
+      container.querySelectorAll('[data-sync]').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const targetId = e.target.dataset.sync;
+          const targetEl = document.getElementById(targetId);
+          if (targetEl) {
+            targetEl.value = e.target.value;
+            targetEl.dispatchEvent(new Event('input', { bubbles: true }));
+            targetEl.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          updateMorningItemStates();
+        });
+      });
+
+      // Chip toggles: toggle real checkbox
+      container.querySelectorAll('[data-toggle-checkbox]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cbId = e.currentTarget.dataset.toggleCheckbox;
+          const cb = document.getElementById(cbId);
+          if (cb) {
+            cb.checked = !cb.checked;
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
+            if (typeof syncCheckboxVisual === 'function') syncCheckboxVisual(cb);
+          }
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          updateMorningItemStates();
+        });
+      });
+
+      // Water button: add 2 to water count
+      container.querySelectorAll('[data-water-btn]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const itemId = parseInt(e.currentTarget.dataset.waterBtn);
+          if (!morningCheckedState[itemId]) {
+            morningCheckedState[itemId] = true;
+            if (typeof window.handleAguaPlus === 'function') {
+              window.handleAguaPlus();
+              window.handleAguaPlus();
+            }
+          }
+          updateMorningItemStates();
+        });
+      });
+
+      // Custom toggle
+      container.querySelectorAll('[data-custom-toggle]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const itemId = parseInt(e.currentTarget.dataset.customToggle);
+          morningCheckedState[itemId] = !morningCheckedState[itemId];
+          updateMorningItemStates();
+        });
+      });
+    }
+
+    function updateMorningItemStates() {
+      const container = document.getElementById('morningItems');
+      if (!container) return;
+
+      container.querySelectorAll('.morning-item').forEach(el => {
+        const itemId = parseInt(el.dataset.morningId);
+        const item = morningItems.find(i => i.id === itemId);
+        if (!item) return;
+
+        const done = isMorningItemDone(item);
+        el.classList.toggle('checked', done);
+        const cb = el.querySelector('.morning-checkbox');
+        if (cb) cb.textContent = done ? '✓' : '';
+
+        // Update chip active states
+        el.querySelectorAll('[data-toggle-checkbox]').forEach(chip => {
+          const cbEl = document.getElementById(chip.dataset.toggleCheckbox);
+          chip.classList.toggle('active', cbEl?.checked || false);
+        });
+
+        el.querySelectorAll('[data-water-btn]').forEach(chip => {
+          const wId = parseInt(chip.dataset.waterBtn);
+          chip.classList.toggle('active', !!morningCheckedState[wId]);
+        });
+
+        el.querySelectorAll('[data-custom-toggle]').forEach(chip => {
+          const cId = parseInt(chip.dataset.customToggle);
+          chip.classList.toggle('active', !!morningCheckedState[cId]);
+        });
+      });
+
+      checkMorningAllDone();
+    }
+
+    let morningCelebrationShown = false;
+
+    function checkMorningAllDone() {
+      if (morningCelebrationShown) return;
+      const visibleItems = morningItems.filter(item => {
+        if (item.type === 'bloodPressure' && typeof currentDate !== 'undefined' && currentDate.getDay() !== 1) return false;
+        return true;
+      });
+
+      const allDone = visibleItems.length > 0 && visibleItems.every(item => isMorningItemDone(item));
+      if (allDone) {
+        morningCelebrationShown = true;
+        showMorningCelebration();
+      }
+    }
+
+    function showMorningCelebration() {
+      const celebration = document.getElementById('morningCelebration');
+      if (!celebration) return;
+
+      const starsContainer = celebration.querySelector('.celebration-stars');
+      if (starsContainer) {
+        starsContainer.innerHTML = '';
+        const emojis = ['☀️', '🌟', '💪', '🔥', '⚡', '✨', '🏆'];
+        for (let i = 0; i < 30; i++) {
+          const star = document.createElement('div');
+          star.className = 'celebration-star';
+          star.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          star.style.left = Math.random() * 100 + '%';
+          star.style.animationDelay = Math.random() * 2 + 's';
+          star.style.animationDuration = (1.5 + Math.random()) + 's';
+          starsContainer.appendChild(star);
+        }
+      }
+      celebration.classList.add('show');
+    }
+
+    window.dismissMorningCelebration = function() {
+      const celebration = document.getElementById('morningCelebration');
+      if (celebration) celebration.classList.remove('show');
+    };
+
+    // Load morning items from KV
+    async function loadMorningItems() {
+      try {
+        const result = await apiGet('morning_items_load');
+        morningItems = result.items || [];
+        morningItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+      } catch (err) {
+        console.error('Failed to load morning items:', err);
+        morningItems = getDefaultMorningItems();
+      }
+      renderMorningSettings();
+      checkMorningRoutine();
+    }
+
+    function getDefaultMorningItems() {
+      return [
+        { id: 1, name: "Pulse", type: "pulse", order: 0 },
+        { id: 2, name: "Blood Pressure", type: "bloodPressure", order: 1 },
+        { id: 3, name: "Supps", type: "supps", order: 2 },
+        { id: 4, name: "Water", type: "water", order: 3 },
+        { id: 5, name: "REHIT Ride", type: "rehit", order: 4 },
+        { id: 6, name: "Fitness Metrics", type: "fitnessMetrics", order: 5 },
+        { id: 7, name: "Meditated", type: "meditated", order: 6 }
+      ];
+    }
+
+    // Save morning items to KV
+    async function saveMorningItems() {
+      try {
+        await apiPost('morning_items_save', { items: morningItems });
+      } catch (err) {
+        console.error('Failed to save morning items:', err);
+      }
+    }
+
+    // ===== Morning Settings Management =====
+    function renderMorningSettings() {
+      const list = document.getElementById('morningItemsList');
+      if (!list) return;
+
+      list.innerHTML = morningItems.map((item, idx) => `
+        <div class="section-item" draggable="true" data-idx="${idx}" data-id="${item.id}">
+          <span class="section-item-drag">⋮⋮</span>
+          <input type="text" class="input morning-edit-input" value="${item.name}" data-id="${item.id}" ${item.type && item.type !== 'custom' ? 'readonly' : ''} style="flex:1;padding:6px 10px;font-size:13px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text)${item.type && item.type !== 'custom' ? ';opacity:0.7' : ''}">
+          <button class="section-item-delete" data-id="${item.id}">🗑️</button>
+        </div>
+      `).join('');
+
+      // Change handlers for custom items only
+      list.querySelectorAll('.morning-edit-input:not([readonly])').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const id = parseInt(e.target.dataset.id);
+          const item = morningItems.find(i => i.id === id);
+          if (item) {
+            item.name = e.target.value.trim() || item.name;
+            saveMorningItems();
+          }
+        });
+      });
+
+      // Delete handlers
+      list.querySelectorAll('.section-item-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.dataset.id);
+          deleteMorningItem(id);
+        });
+      });
+
+      setupMorningDragDrop();
+    }
+
+    function setupMorningDragDrop() {
+      const list = document.getElementById('morningItemsList');
+      if (!list) return;
+
+      let draggedItem = null;
+      let touchCurrentItem = null;
+
+      list.querySelectorAll('.section-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          draggedItem = item;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          list.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
+          draggedItem = null;
+        });
+
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (draggedItem && draggedItem !== item) item.classList.add('drag-over');
+        });
+
+        item.addEventListener('dragleave', () => {
+          item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          if (!draggedItem || draggedItem === item) return;
+
+          const fromIdx = parseInt(draggedItem.dataset.idx);
+          const toIdx = parseInt(item.dataset.idx);
+          const [moved] = morningItems.splice(fromIdx, 1);
+          morningItems.splice(toIdx, 0, moved);
+          morningItems.forEach((it, i) => it.order = i);
+          saveMorningItems();
+          renderMorningSettings();
+          renderMorningItems();
+        });
+
+        // Mobile touch events
+        const dragHandle = item.querySelector('.section-item-drag');
+        if (dragHandle) {
+          dragHandle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchCurrentItem = item;
+            item.classList.add('dragging');
+            if (navigator.vibrate) navigator.vibrate(30);
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchmove', (e) => {
+            if (!touchCurrentItem) return;
+            e.preventDefault();
+            const touchY = e.touches[0].clientY;
+            Array.from(list.querySelectorAll('.section-item')).forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              otherItem.classList.toggle('drag-over', touchY > rect.top && touchY < rect.bottom);
+            });
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchend', (e) => {
+            if (!touchCurrentItem) return;
+            const touchY = e.changedTouches[0].clientY;
+            const items = Array.from(list.querySelectorAll('.section-item'));
+            let targetItem = null;
+            items.forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              if (touchY > rect.top && touchY < rect.bottom) targetItem = otherItem;
+            });
+            if (targetItem) {
+              const fromIdx = parseInt(touchCurrentItem.dataset.idx);
+              const toIdx = parseInt(targetItem.dataset.idx);
+              const [moved] = morningItems.splice(fromIdx, 1);
+              morningItems.splice(toIdx, 0, moved);
+              morningItems.forEach((it, i) => it.order = i);
+              saveMorningItems();
+              renderMorningSettings();
+              renderMorningItems();
+              if (navigator.vibrate) navigator.vibrate(50);
+            }
+            touchCurrentItem.classList.remove('dragging');
+            items.forEach(i => i.classList.remove('drag-over'));
+            touchCurrentItem = null;
+          });
+        }
+      });
+    }
+
+    window.addMorningItem = function() {
+      const input = document.getElementById('newMorningItem');
+      const name = input.value.trim();
+      if (!name) return;
+
+      const maxId = morningItems.reduce((max, i) => Math.max(max, i.id), 0);
+      morningItems.push({
+        id: maxId + 1,
+        name: name,
+        type: 'custom',
+        order: morningItems.length
+      });
+
+      saveMorningItems();
+      renderMorningSettings();
+      renderMorningItems();
+      input.value = '';
+    };
+
+    window.deleteMorningItem = function(id) {
+      morningItems = morningItems.filter(i => i.id !== id);
+      morningItems.forEach((item, i) => item.order = i);
+      saveMorningItems();
+      renderMorningSettings();
+      renderMorningItems();
+    };
+
+    // Initialize morning routine on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMorningItems();
+
+      document.getElementById('addMorningItemBtn')?.addEventListener('click', addMorningItem);
+      document.getElementById('newMorningItem')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addMorningItem();
+        }
+      });
     });
 
     // ===== Trash Reminder =====
