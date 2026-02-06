@@ -320,11 +320,6 @@ async function saveDay(data, env, corsHeaders) {
     // Grooming (Friday)
     "Grooming Haircut": data.groomingHaircut || false,
     "Grooming Beard Trim": data.groomingBeardTrim || false,
-    // Movement breaks: use app values if provided, otherwise keep existing (from Shortcut)
-    "Morning Movement Type": data.morningMovementType || existing["Morning Movement Type"] || "",
-    "Morning Movement Duration": data.morningMovementDuration || existing["Morning Movement Duration"] || "",
-    "Afternoon Movement Type": data.afternoonMovementType || existing["Afternoon Movement Type"] || "",
-    "Afternoon Movement Duration": data.afternoonMovementDuration || existing["Afternoon Movement Duration"] || "",
   };
 
   // Save all data in parallel
@@ -425,7 +420,7 @@ async function syncWorkouts(workouts, dateStr, env, corsHeaders) {
   }, 200, corsHeaders);
 }
 
-// ===== Log Movement Break (from iOS Shortcut) =====
+// ===== Log Movement Break (from iOS Shortcut or app) =====
 async function logMovement(body, env, corsHeaders) {
   // Map Apple Fitness workout types to app movement types
   const typeMap = {
@@ -449,10 +444,8 @@ async function logMovement(body, env, corsHeaders) {
   // Parse startTime - Apple Shortcuts may send various formats
   let parsedStart = null;
   if (body.startTime) {
-    // Try direct parse first (ISO, RFC 2822, etc.)
     let d = new Date(body.startTime);
     if (isNaN(d.getTime())) {
-      // Handle "February 6, 2026 at 8:30 AM" style from Shortcuts
       const cleaned = String(body.startTime).replace(/\s+at\s+/i, " ");
       d = new Date(cleaned);
     }
@@ -461,7 +454,7 @@ async function logMovement(body, env, corsHeaders) {
     }
   }
 
-  // Determine date: use provided date, or derive from startTime, or use today
+  // Determine date
   let normalizedDate;
   if (body.date) {
     normalizedDate = normalizeDate(body.date);
@@ -471,63 +464,27 @@ async function logMovement(body, env, corsHeaders) {
     normalizedDate = normalizeDate(formatDateForKV(new Date()));
   }
 
-  // Determine morning vs afternoon from startTime (default: before 12pm = morning)
-  let slot = "morning";
+  // Append to movements array for this date
+  let movements = await env.HABIT_DATA.get(`movements:${normalizedDate}`, "json") || [];
+
+  const entry = {
+    type: mappedType,
+    duration: duration,
+  };
   if (parsedStart) {
-    const hour = parsedStart.getHours();
-    if (hour >= 12) slot = "afternoon";
-  } else if (body.slot) {
-    slot = body.slot === "afternoon" ? "afternoon" : "morning";
+    entry.startTime = parsedStart.toISOString();
   }
 
-  // Get existing daily data and update the right slot
-  let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
-  daily["Date"] = normalizedDate;
-
-  const typeField = slot === "morning" ? "Morning Movement Type" : "Afternoon Movement Type";
-  const durationField = slot === "morning" ? "Morning Movement Duration" : "Afternoon Movement Duration";
-
-  // Only fill if the slot is empty (don't overwrite existing data)
-  const slotEmpty = !daily[typeField] && !daily[durationField];
-  if (slotEmpty) {
-    daily[typeField] = mappedType;
-    daily[durationField] = duration > 0 ? String(duration) : "";
-  } else if (slot === "morning") {
-    // Morning taken, try afternoon
-    const altEmpty = !daily["Afternoon Movement Type"] && !daily["Afternoon Movement Duration"];
-    if (altEmpty) {
-      daily["Afternoon Movement Type"] = mappedType;
-      daily["Afternoon Movement Duration"] = duration > 0 ? String(duration) : "";
-      slot = "afternoon";
-    } else {
-      return jsonResponse({
-        success: false,
-        message: "Both movement slots already filled",
-        date: normalizedDate,
-        morning: { type: daily["Morning Movement Type"], duration: daily["Morning Movement Duration"] },
-        afternoon: { type: daily["Afternoon Movement Type"], duration: daily["Afternoon Movement Duration"] }
-      }, 200, corsHeaders);
-    }
-  } else {
-    return jsonResponse({
-      success: false,
-      message: `${slot} slot already filled`,
-      date: normalizedDate,
-      existing: { type: daily[typeField], duration: daily[durationField] }
-    }, 200, corsHeaders);
-  }
-
-  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
+  movements.push(entry);
+  await env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(movements));
 
   return jsonResponse({
     success: true,
     date: normalizedDate,
-    slot,
-    type: mappedType,
+    entry,
     rawType,
-    duration,
-    rawStartTime: body.startTime || null,
-    message: `Logged ${mappedType} (${duration} min) as ${slot} movement for ${normalizedDate}`
+    count: movements.length,
+    message: `Logged ${mappedType} (${duration} min) for ${normalizedDate} — ${movements.length} total today`
   }, 200, corsHeaders);
 }
 
@@ -563,6 +520,8 @@ async function calculate7DayAverages(dateStr, env) {
   let lastWeekSleep = [];
   let lastWeekSteps = [];
   let lastWeekRehit = 0;
+  let movementValues = [];
+  let lastWeekMovements = [];
 
   // Fetch up to 14 days of data
   const dates = [];
@@ -572,36 +531,45 @@ async function calculate7DayAverages(dateStr, env) {
     dates.push(normalizeDate(formatDateForKV(d)));
   }
 
-  const dailyData = await Promise.all(
-    dates.map(d => env.HABIT_DATA.get(`daily:${d}`, "json"))
-  );
+  const [dailyData, movementsData] = await Promise.all([
+    Promise.all(dates.map(d => env.HABIT_DATA.get(`daily:${d}`, "json"))),
+    Promise.all(dates.map(d => env.HABIT_DATA.get(`movements:${d}`, "json"))),
+  ]);
 
   dailyData.forEach((data, i) => {
-    if (!data) return;
-
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
-    d.setHours(12, 0, 0, 0); // Use noon to avoid any edge cases
+    d.setHours(12, 0, 0, 0);
 
     const isThisWeek = d >= weekStart && d <= weekEnd;
     const isLastWeek = d >= lastWeekStart && d <= lastWeekEnd;
 
-    const sleep = parseFloat(data["Hours of Sleep"]);
-    const steps = parseInt(data["Steps"], 10);
-    const rehit = data["REHIT 2x10"];
+    const sleep = data ? parseFloat(data["Hours of Sleep"]) : NaN;
+    const steps = data ? parseInt(data["Steps"], 10) : NaN;
+    const rehit = data ? data["REHIT 2x10"] : "";
+
+    // Count movements: new array format first, fall back to old daily fields
+    const movArr = movementsData[i];
+    let movCount = 0;
+    if (movArr && Array.isArray(movArr) && movArr.length > 0) {
+      movCount = movArr.length;
+    } else if (data) {
+      if (data["Morning Movement Type"] && data["Morning Movement Type"] !== "") movCount++;
+      if (data["Afternoon Movement Type"] && data["Afternoon Movement Type"] !== "") movCount++;
+    }
 
     if (isThisWeek) {
       if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
       if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
-      // Exclude today (i===0) from rehitCount — the frontend adds today's
-      // REHIT status separately so dots update instantly on checkbox toggle.
       if (i > 0 && rehit && rehit !== "") rehitCount++;
+      movementValues.push(movCount);
     }
 
     if (isLastWeek) {
       if (!isNaN(sleep) && sleep > 0) lastWeekSleep.push(sleep);
       if (!isNaN(steps) && steps > 0) lastWeekSteps.push(steps);
       if (rehit && rehit !== "") lastWeekRehit++;
+      lastWeekMovements.push(movCount);
     }
   });
 
@@ -610,12 +578,12 @@ async function calculate7DayAverages(dateStr, env) {
   return {
     sleep: avg(sleepValues),
     steps: stepsValues.length ? Math.round(avg(stepsValues)) : null,
-    movements: null, // TODO: calculate from movements data
+    movements: avg(movementValues),
     rehitWeek: rehitCount,
     lastWeek: {
       sleep: avg(lastWeekSleep),
       steps: lastWeekSteps.length ? Math.round(avg(lastWeekSteps)) : null,
-      movements: null,
+      movements: avg(lastWeekMovements),
       rehitWeek: lastWeekRehit,
     }
   };
