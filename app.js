@@ -2165,19 +2165,27 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
   let sessions3x10 = 0;
 
   filteredData.forEach(d => {
-    const val = d.daily?.["REHIT 2x10"];
-    if (val === "2x10" || val === true || val === "TRUE") {
-      sessions2x10++;
-    } else if (val === "3x10") {
+    const val2 = d.daily?.["REHIT 2x10"];
+    const val3 = d.daily?.["REHIT 3x10"];
+
+    // Check for 3x10 first (either in dedicated field or as value in 2x10 field)
+    if (val3 && val3 !== "" && val3 !== "false" && val3 !== false) {
       sessions3x10++;
+    } else if (val2 === "3x10") {
+      sessions3x10++;
+    } else if (val2 && val2 !== "" && val2 !== "false" && val2 !== false) {
+      // Any other truthy value in REHIT 2x10 counts as 2x10
+      // This includes: "2x10", true, "TRUE", "true", "True"
+      sessions2x10++;
     }
   });
 
   const totalSessions = sessions2x10 + sessions3x10;
 
   // Get target from settings
-  const target2x10 = parseInt(window.appSettings?.rehit2x10Goal) || 2;
-  const target3x10 = parseInt(window.appSettings?.rehit3x10Goal) || 2;
+  // Use ?? to allow 0 values
+  const target2x10 = parseInt(window.appSettings?.rehit2x10Goal ?? 2);
+  const target3x10 = parseInt(window.appSettings?.rehit3x10Goal ?? 3);
   const totalTarget = target2x10 + target3x10;
 
   // For phase view, multiply weekly target by 3 weeks
@@ -3199,14 +3207,20 @@ function renderRehitChart(dataPoints) {
   // Build a map of date -> rehit value for calendar lookup
   rehitDataMap = {};
   dataPoints.forEach(d => {
-    const val = d.daily["REHIT 2x10"];
-    if (val === "2x10" || val === true || val === "TRUE") {
-      rehitDataMap[d.date] = "2x10";
-    } else if (val === "3x10") {
+    const val2 = d.daily?.["REHIT 2x10"];
+    const val3 = d.daily?.["REHIT 3x10"];
+
+    // Check for 3x10 first (either in dedicated field or as value in 2x10 field)
+    if (val3 && val3 !== "" && val3 !== "false" && val3 !== false) {
       rehitDataMap[d.date] = "3x10";
+    } else if (val2 === "3x10") {
+      rehitDataMap[d.date] = "3x10";
+    } else if (val2 && val2 !== "" && val2 !== "false" && val2 !== false) {
+      // Any other truthy value in REHIT 2x10 counts as 2x10
+      rehitDataMap[d.date] = "2x10";
     }
   });
-  
+
   // Render the calendar
   renderRehitCalendar();
 }

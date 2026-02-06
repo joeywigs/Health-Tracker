@@ -4239,7 +4239,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=9.21" defer></script>
+  <script src="app.js?v=9.22" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -4939,8 +4939,9 @@
       if (!dotsContainer) return;
 
       // Get targets from settings (default 2+3=5)
-      const target2x10 = parseInt(window.appSettings?.rehit2x10Goal) || 2;
-      const target3x10 = parseInt(window.appSettings?.rehit3x10Goal) || 3;
+      // Use ?? to allow 0 values
+      const target2x10 = parseInt(window.appSettings?.rehit2x10Goal ?? 2);
+      const target3x10 = parseInt(window.appSettings?.rehit3x10Goal ?? 3);
       const totalDots = target2x10 + target3x10;
 
       // Rebuild dots
@@ -4994,6 +4995,9 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Setup populateForm hook (must happen before app.js calls loadDataForCurrentDate)
       setupPopulateFormHook();
+
+      // Sync settings from KV (async - will update UI when complete)
+      if (typeof syncSettingsFromKV === 'function') syncSettingsFromKV();
 
       // Update REHIT dots based on target settings
       if (typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
@@ -5343,30 +5347,72 @@
       ]
     };
     
-    // Load settings from localStorage
-    function loadSettings() {
+    // Load settings from localStorage (sync, for initial load)
+    function loadSettingsFromLocal() {
       try {
         const saved = localStorage.getItem('elevateSettings');
         if (saved) {
           return { ...defaultSettings, ...JSON.parse(saved) };
         }
       } catch (e) {
-        console.error('Error loading settings:', e);
+        console.error('Error loading settings from localStorage:', e);
       }
       return { ...defaultSettings };
     }
-    
-    // Save settings to localStorage
+
+    // Load settings from KV (async, called after page load)
+    async function loadSettingsFromKV() {
+      try {
+        const result = await apiGet('settings_load');
+        if (result.settings) {
+          // Merge KV settings with defaults
+          const kvSettings = { ...defaultSettings, ...result.settings };
+          // Update localStorage cache
+          localStorage.setItem('elevateSettings', JSON.stringify(kvSettings));
+          return kvSettings;
+        }
+      } catch (e) {
+        console.error('Error loading settings from KV:', e);
+      }
+      return null;
+    }
+
+    // Sync wrapper for initial load
+    function loadSettings() {
+      return loadSettingsFromLocal();
+    }
+
+    // Save settings to both KV and localStorage
     function saveSettings(settings) {
       try {
         localStorage.setItem('elevateSettings', JSON.stringify(settings));
       } catch (e) {
-        console.error('Error saving settings:', e);
+        console.error('Error saving settings to localStorage:', e);
       }
+      // Also save to KV (async, fire and forget)
+      apiPost('settings_save', { settings }).catch(e => {
+        console.error('Error saving settings to KV:', e);
+      });
     }
-    
+
     let appSettings = loadSettings();
     window.appSettings = appSettings;
+
+    // Load settings from KV after page load and merge
+    async function syncSettingsFromKV() {
+      const kvSettings = await loadSettingsFromKV();
+      if (kvSettings) {
+        // Merge KV settings into appSettings
+        Object.assign(appSettings, kvSettings);
+        window.appSettings = appSettings;
+        // Update UI elements that depend on settings
+        if (typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
+        if (typeof updateAguaBar === 'function') updateAguaBar();
+        if (typeof updateStepsBar === 'function') updateStepsBar();
+        if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+        console.log('✅ Settings synced from KV');
+      }
+    }
 
     // Migrate old waterGoal → aguaGoal
     if (appSettings.waterGoal && !appSettings.aguaGoal) {
@@ -5458,18 +5504,18 @@
       document.getElementById('dayStartTime').value = appSettings.dayStartTime;
       document.getElementById('nightStartTime').value = appSettings.nightStartTime;
 
-      // Goal values
-      document.getElementById('sleepGoal').value = appSettings.sleepGoal || 7;
-      document.getElementById('aguaGoal').value = appSettings.aguaGoal || 6;
-      document.getElementById('stepsGoal').value = appSettings.stepsGoal || 5000;
-      document.getElementById('movementGoal').value = appSettings.movementGoal || 2;
-      document.getElementById('mealsGoal').value = appSettings.mealsGoal || 2;
-      document.getElementById('snacksGoal').value = appSettings.snacksGoal || 2;
-      document.getElementById('noAlcoholGoal').value = appSettings.noAlcoholGoal || 7;
-      document.getElementById('rehit2x10Goal').value = appSettings.rehit2x10Goal || 2;
-      document.getElementById('rehit3x10Goal').value = appSettings.rehit3x10Goal || 3;
-      document.getElementById('readingGoal').value = appSettings.readingGoal || 60;
-      document.getElementById('meditationGoal').value = appSettings.meditationGoal || 3;
+      // Goal values - use ?? instead of || to allow 0 values
+      document.getElementById('sleepGoal').value = appSettings.sleepGoal ?? 7;
+      document.getElementById('aguaGoal').value = appSettings.aguaGoal ?? 6;
+      document.getElementById('stepsGoal').value = appSettings.stepsGoal ?? 5000;
+      document.getElementById('movementGoal').value = appSettings.movementGoal ?? 2;
+      document.getElementById('mealsGoal').value = appSettings.mealsGoal ?? 2;
+      document.getElementById('snacksGoal').value = appSettings.snacksGoal ?? 2;
+      document.getElementById('noAlcoholGoal').value = appSettings.noAlcoholGoal ?? 7;
+      document.getElementById('rehit2x10Goal').value = appSettings.rehit2x10Goal ?? 2;
+      document.getElementById('rehit3x10Goal').value = appSettings.rehit3x10Goal ?? 3;
+      document.getElementById('readingGoal').value = appSettings.readingGoal ?? 60;
+      document.getElementById('meditationGoal').value = appSettings.meditationGoal ?? 3;
 
       // Goal frequencies
       document.getElementById('sleepFreq').value = appSettings.sleepFreq || 'daily';
