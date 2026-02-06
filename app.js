@@ -548,42 +548,43 @@ window.auditData = async function() {
 function setupPullToRefresh() {
   let touchStartY = 0;
   let pulling = false;
-  
+  let refreshing = false;
+
   document.addEventListener('touchstart', e => {
-    if (window.scrollY === 0) {
+    if (window.scrollY === 0 && !refreshing) {
       touchStartY = e.touches[0].clientY;
       pulling = true;
     }
   }, { passive: true });
-  
+
   document.addEventListener('touchmove', e => {
     if (!pulling) return;
-    
-    const touchY = e.touches[0].clientY;
-    const pullDistance = touchY - touchStartY;
-    
-    if (pullDistance > 150 && window.scrollY === 0) {
-      pulling = false;
-      loadDataForCurrentDate({ force: true });
-      
-      // Visual feedback
-      const statusMsg = document.getElementById("statusMessage");
-      if (statusMsg) {
-        statusMsg.textContent = "Refreshing...";
-        statusMsg.className = "status-message loading";
-        statusMsg.style.display = "block";
-        setTimeout(() => {
-          statusMsg.style.display = "none";
-        }, 1500);
-      }
+
+    const pullDistance = e.touches[0].clientY - touchStartY;
+
+    // Prevent native pull-to-refresh while user is pulling down from top
+    if (pullDistance > 0 && window.scrollY === 0) {
+      e.preventDefault();
     }
-  }, { passive: true });
-  
+
+    if (pullDistance > 100 && window.scrollY === 0) {
+      pulling = false;
+      refreshing = true;
+      if (typeof showToast === 'function') showToast('Refreshing...', 'info');
+      loadDataForCurrentDate({ force: true }).then(() => {
+        refreshing = false;
+        if (typeof showToast === 'function') showToast('Refreshed', 'success');
+      }).catch(() => {
+        refreshing = false;
+      });
+    }
+  }, { passive: false });
+
   document.addEventListener('touchend', () => {
     pulling = false;
   }, { passive: true });
-  
-  console.log("✅ Pull-to-refresh wired");
+
+  console.log("Pull-to-refresh wired");
 }
 
 // =====================================
