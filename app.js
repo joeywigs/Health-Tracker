@@ -382,6 +382,7 @@ function changeDate(days) {
   updateGroomingCard();
   updateWeeklySummaryButton();
   updateDayLock();
+  if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
 }
 
 // =====================================
@@ -5801,6 +5802,9 @@ async function populateForm(data) {
 
   // final sweep
   document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
+
+  // Refresh morning stack to reflect loaded form data
+  if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
 
   console.log("✅ populateForm ran");
 }
