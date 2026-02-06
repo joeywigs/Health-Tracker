@@ -677,50 +677,56 @@
       100% { filter: drop-shadow(0 0 6px var(--glow-teal)); }
     }
 
-    /* Awareness Buttons Row */
-    .awareness-buttons {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    /* Cue Detected Button */
-    .cue-detected-btn {
-      flex: 1;
-      padding: 14px 12px;
-      background: linear-gradient(135deg, rgba(196,113,237,0.2), rgba(109,213,237,0.15));
-      border: 2px dashed rgba(196,113,237,0.5);
+    /* Awareness Buttons Section */
+    .awareness-section {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: var(--radius);
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
+      padding: 18px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(20px);
+    }
+    .awareness-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .cue-detected-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      padding: 10px 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      gap: 6px;
     }
     .cue-detected-btn:hover {
-      background: linear-gradient(135deg, rgba(196,113,237,0.3), rgba(109,213,237,0.25));
+      background: rgba(196,113,237,0.15);
       border-color: var(--accent-purple);
-      box-shadow: 0 0 20px var(--glow-purple);
-      transform: scale(1.02);
     }
     .cue-detected-btn:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
     }
     .cue-detected-btn .cue-icon {
-      font-size: 22px;
-    }
-    .habit-spotted-btn {
-      background: linear-gradient(135deg, rgba(109,213,237,0.2), rgba(0,206,209,0.15));
-      border-color: rgba(109,213,237,0.5);
+      display: none;
     }
     .habit-spotted-btn:hover {
-      background: linear-gradient(135deg, rgba(109,213,237,0.3), rgba(0,206,209,0.25));
+      background: rgba(109,213,237,0.15);
       border-color: var(--accent-teal);
-      box-shadow: 0 0 20px var(--glow-teal);
+    }
+    body.day-mode .awareness-section {
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.day-mode .cue-detected-btn {
+      background: rgba(0,0,0,0.05);
     }
     /* Habit Spotted Grid */
     .habit-spotted-grid {
@@ -1893,64 +1899,82 @@
       background: rgba(99, 102, 241, 0.32);
       border-color: rgba(99, 102, 241, 0.55);
     }
-    /* Friday Grooming Card */
+    /* Friday Grooming Section */
     .grooming-card {
-      background: linear-gradient(135deg, rgba(109,213,237,0.15), rgba(196,113,237,0.1));
-      border: 1px solid rgba(109,213,237,0.3);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 18px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s;
     }
+    .grooming-card:hover { border-color: rgba(255,255,255,0.2); }
     .grooming-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-bottom: 14px;
     }
-    .grooming-icon { font-size: 22px; }
-    .grooming-title { font-size: 15px; font-weight: 600; color: var(--text); }
-    .grooming-items { display: flex; gap: 16px; }
+    .grooming-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 13px;
+      background: linear-gradient(135deg, #a78bfa, #818cf8);
+      box-shadow: 0 0 12px rgba(167,139,250,0.4);
+    }
+    .grooming-title { font-size: 14px; font-weight: 600; color: #ffffff; }
+    .grooming-items {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
     .grooming-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      color: var(--text);
+      justify-content: center;
+      padding: 10px 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
       cursor: pointer;
+      transition: all 0.2s;
       -webkit-user-select: none;
       user-select: none;
     }
     .grooming-item input[type="checkbox"] { display: none; }
-    .grooming-check {
-      width: 22px; height: 22px;
-      border-radius: 6px;
-      border: 2px solid var(--border);
-      background: rgba(255,255,255,0.05);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
+    .grooming-check { display: none; }
+    .grooming-item:has(input:checked) {
+      background: var(--success-soft);
+      border-color: var(--success);
+      box-shadow: 0 0 10px var(--glow-teal);
     }
-    .grooming-item input:checked + .grooming-check {
-      background: var(--accent-teal);
-      border-color: var(--accent-teal);
-    }
-    .grooming-item input:checked + .grooming-check::after {
-      content: '\2713';
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
+    .grooming-item:has(input:checked) span {
+      color: white;
     }
     .grooming-card.all-done {
       opacity: 0.5;
       border-style: dashed;
     }
     body.day-mode .grooming-card {
-      background: linear-gradient(135deg, rgba(109,213,237,0.1), rgba(196,113,237,0.08));
+      background: rgba(255,255,255,0.6);
+      border-color: rgba(0,0,0,0.08);
     }
-    body.day-mode .grooming-check {
-      background: rgba(0,0,0,0.03);
+    body.day-mode .grooming-item {
+      background: rgba(0,0,0,0.05);
     }
-    body.day-mode .grooming-item input:checked + .grooming-check {
-      background: var(--accent-teal);
+    body.day-mode .grooming-item:has(input:checked) {
+      background: rgba(167,139,250,0.25);
+      border-color: #8b5cf6;
+      box-shadow: 0 0 8px rgba(139,92,246,0.3);
+    }
+    body.day-mode .grooming-item:has(input:checked) span {
+      color: #1f2937;
+    }
+    body.day-mode .grooming-title {
+      color: var(--text);
     }
 
     /* Morning Habit Stack */
@@ -2163,6 +2187,7 @@
     body.day-mode .morning-routine {
       background: linear-gradient(135deg, rgba(255,183,77,0.12), rgba(255,138,101,0.08));
       border-color: rgba(255,183,77,0.25);
+      box-shadow: 0 4px 16px rgba(255,152,0,0.15), 0 1px 4px rgba(0,0,0,0.08);
     }
     body.day-mode .morning-item {
       background: rgba(255,255,255,0.5);
@@ -3762,34 +3787,14 @@
     </div>
 
     <!-- Cue & Habit Buttons -->
-    <div class="awareness-buttons">
-      <button type="button" class="cue-detected-btn" onclick="openCueModal()">
-        <span class="cue-icon">🧠</span>
-        <span>Cue Detected</span>
-      </button>
-      <button type="button" class="cue-detected-btn habit-spotted-btn" onclick="openHabitSpottedModal()">
-        <span class="cue-icon">👀</span>
-        <span>Habit Spotted</span>
-      </button>
-    </div>
-
-    <!-- Friday Grooming Card -->
-    <div id="groomingCard" class="grooming-card" style="display:none">
-      <div class="grooming-header">
-        <span class="grooming-icon">💈</span>
-        <span class="grooming-title">Friday Grooming</span>
-      </div>
-      <div class="grooming-items">
-        <label class="grooming-item">
-          <input type="checkbox" id="groomingHaircut">
-          <span class="grooming-check"></span>
-          <span>Haircut</span>
-        </label>
-        <label class="grooming-item">
-          <input type="checkbox" id="groomingBeardTrim">
-          <span class="grooming-check"></span>
-          <span>Beard Trim</span>
-        </label>
+    <div class="awareness-section">
+      <div class="awareness-buttons">
+        <button type="button" class="cue-detected-btn" onclick="openCueModal()">
+          <span>Cue Detected</span>
+        </button>
+        <button type="button" class="cue-detected-btn habit-spotted-btn" onclick="openHabitSpottedModal()">
+          <span>Habit Spotted</span>
+        </button>
       </div>
     </div>
 
@@ -3824,6 +3829,26 @@
         <div class="morning-items" id="morningItems">
           <!-- Items populated by JS -->
         </div>
+      </div>
+    </div>
+
+    <!-- Friday Grooming Section -->
+    <div id="groomingCard" class="grooming-card" style="display:none">
+      <div class="grooming-header">
+        <div class="grooming-icon"></div>
+        <span class="grooming-title">Friday Grooming</span>
+      </div>
+      <div class="grooming-items">
+        <label class="grooming-item">
+          <input type="checkbox" id="groomingHaircut">
+          <span class="grooming-check"></span>
+          <span>Haircut</span>
+        </label>
+        <label class="grooming-item">
+          <input type="checkbox" id="groomingBeardTrim">
+          <span class="grooming-check"></span>
+          <span>Beard Trim</span>
+        </label>
       </div>
     </div>
 
