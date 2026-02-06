@@ -856,7 +856,7 @@ function renderPhaseComparison() {
     { key: 'reading', name: 'Reading', icon: '📖' },
     { key: 'meals', name: 'Meals', icon: '🍽️' },
     { key: 'supps', name: 'Supplements', icon: '💊' },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺' }
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺' }
   ];
 
   let html = `
@@ -934,7 +934,7 @@ function renderPhaseGoals(phaseId = null) {
     { key: 'reading', name: 'Reading', icon: '📖', format: (t) => `${t}+ min/week` },
     { key: 'meals', name: 'Meals', icon: '🍽️', format: (t) => `${t}+ healthy/day` },
     { key: 'supps', name: 'Supplements', icon: '💊', format: (t) => `All ${t} daily` },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺', format: (t) => t ? 'Daily' : 'Not tracked' },
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', format: (t) => t ? 'Daily' : 'Not tracked' },
     { key: 'meditation', name: 'Meditation', icon: '🧘', format: (t) => t ? 'Daily' : 'Not tracked' },
     { key: 'snacks', name: 'Healthy Snacks', icon: '🥗', format: (t) => `${t}x/day` }
   ];
@@ -1892,19 +1892,31 @@ function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
   const isPhaseComplete = today > phaseEnd;
   const effectiveEnd = isPhaseComplete ? phaseEnd : today;
   const daysIntoPhase = Math.max(0, Math.floor((effectiveEnd - phaseStart) / (1000 * 60 * 60 * 24)) + 1);
-  const daysRemaining = Math.max(0, phaseLength - daysIntoPhase);
-  const elapsedDays = range === 'phase' ? Math.min(daysIntoPhase, phaseLength) : daysIntoPhase;
-  const totalDaysLogged = data.length;
-  const currentStreak = calculateCurrentStreak();
-  const pctLogged = elapsedDays > 0 ? Math.round((totalDaysLogged / elapsedDays) * 100) : 0;
 
-  // Show different content based on whether viewing current or past phase
-  const statusText = isPhaseComplete ? 'Complete!' : (daysRemaining > 0 ? daysRemaining + ' remaining' : 'Complete!');
+  // For "all time" range, use all data
+  let totalDaysLogged, elapsedDays;
+  if (range === 'all') {
+    totalDaysLogged = allData?.length || 0;
+    // Calculate total days from earliest data to today
+    if (allData && allData.length > 0) {
+      const dates = allData.map(d => parseDataDate(d.date)).filter(d => d);
+      const earliest = new Date(Math.min(...dates));
+      elapsedDays = Math.max(1, Math.floor((today - earliest) / (1000 * 60 * 60 * 24)) + 1);
+    } else {
+      elapsedDays = 1;
+    }
+  } else {
+    totalDaysLogged = data?.length || 0;
+    elapsedDays = Math.min(daysIntoPhase, phaseLength);
+  }
+
+  const currentStreak = calculateCurrentStreak();
+  const pctLogged = elapsedDays > 0 ? Math.min(100, Math.round((totalDaysLogged / elapsedDays) * 100)) : 0;
 
   container.innerHTML = `
     <div class="summary-stat full-width">
       <div class="summary-stat-value">🔥 ${currentStreak}-day streak</div>
-      <div class="summary-stat-label">${pctLogged}% of days logged</div>
+      <div class="summary-stat-label">${totalDaysLogged} days logged${range === 'phase' ? ` (${pctLogged}%)` : ''}</div>
     </div>
   `;
 }
@@ -2155,31 +2167,54 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
   const container = document.getElementById('summaryRehitCalendar');
   if (!container) return;
 
-  // Build rehit data map from filtered data for the selected range
+  // Count REHIT sessions from filtered data
   const filteredData = getFilteredData(data, range, phaseId);
-  const rehitMap = {};
+  let sessions2x10 = 0;
+  let sessions3x10 = 0;
+
   filteredData.forEach(d => {
-    const val = d.daily["REHIT 2x10"];
-    if (val === "2x10" || val === true || val === "TRUE") {
-      rehitMap[d.date] = "2x10";
-    } else if (val === "3x10") {
-      rehitMap[d.date] = "3x10";
+    const val2 = d.daily?.["REHIT 2x10"];
+    const val3 = d.daily?.["REHIT 3x10"];
+
+    // Check for 3x10 first (either in dedicated field or as value in 2x10 field)
+    if (val3 && val3 !== "" && val3 !== "false" && val3 !== false) {
+      sessions3x10++;
+    } else if (val2 === "3x10") {
+      sessions3x10++;
+    } else if (val2 && val2 !== "" && val2 !== "false" && val2 !== false) {
+      // Any other truthy value in REHIT 2x10 counts as 2x10
+      // This includes: "2x10", true, "TRUE", "true", "True"
+      sessions2x10++;
     }
   });
 
-  if (range === 7) {
-    // Show last 7 days (matching the data filter)
-    renderLast7DaysCalendar(container, rehitMap);
-  } else if (range === 'phase') {
-    // Show phase weeks only - starting from the first week of the phase
-    const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
-    const phaseStart = phase ? parseDataDate(phase.start) : new Date(PHASE_START);
-    const phaseLength = phase ? phase.length : PHASE_LENGTH;
-    renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength);
-  } else {
-    // Show 30 days
-    renderMonthCalendar(container, rehitMap, new Date());
-  }
+  const totalSessions = sessions2x10 + sessions3x10;
+
+  // Get target from settings
+  // Use ?? to allow 0 values
+  const target2x10 = parseInt(window.appSettings?.rehit2x10Goal ?? 2);
+  const target3x10 = parseInt(window.appSettings?.rehit3x10Goal ?? 3);
+  const totalTarget = target2x10 + target3x10;
+
+  // For phase view, multiply weekly target by 3 weeks
+  const phaseTarget = range === 'phase' ? totalTarget * 3 : totalTarget;
+  const pct = phaseTarget > 0 ? Math.min(100, Math.round((totalSessions / phaseTarget) * 100)) : 0;
+
+  container.innerHTML = `
+    <div class="rehit-progress-card">
+      <div class="rehit-progress-header">
+        <span class="rehit-progress-title">🚴 REHIT Sessions</span>
+        <span class="rehit-progress-count">${totalSessions}/${phaseTarget}</span>
+      </div>
+      <div class="rehit-progress-bar">
+        <div class="rehit-progress-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="rehit-progress-breakdown">
+        <span class="rehit-type-badge type-2x10">${sessions2x10} × 2x10</span>
+        <span class="rehit-type-badge type-3x10">${sessions3x10} × 3x10</span>
+      </div>
+    </div>
+  `;
 }
 
 function renderLast7DaysCalendar(container, rehitMap) {
@@ -2223,6 +2258,78 @@ function renderLast7DaysCalendar(container, rehitMap) {
       <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
     </div>
   `;
+}
+
+function renderPhaseCalendar(container, rehitMap, phaseStart, phaseLength) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
+
+  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const startDayOfWeek = phaseStart.getDay();
+
+  // Calculate number of weeks needed
+  const totalDays = phaseLength;
+  const weeksNeeded = Math.ceil((startDayOfWeek + totalDays) / 7);
+
+  let html = `
+    <div class="rehit-cal-header">
+      <div class="rehit-cal-title">Phase REHIT Calendar</div>
+    </div>
+    <div class="rehit-cal-weekdays">
+      ${dayNames.map(d => `<div class="rehit-cal-weekday">${d}</div>`).join('')}
+    </div>
+    <div class="rehit-cal-days">
+  `;
+
+  let dayCounter = 0;
+
+  for (let week = 0; week < weeksNeeded; week++) {
+    for (let dow = 0; dow < 7; dow++) {
+      // Before phase starts (empty cells for first week)
+      if (week === 0 && dow < startDayOfWeek) {
+        html += `<div class="rehit-cal-day other-month"></div>`;
+        continue;
+      }
+
+      // After phase ends
+      if (dayCounter >= totalDays) {
+        html += `<div class="rehit-cal-day other-month"></div>`;
+        continue;
+      }
+
+      // Calculate the actual date
+      const currentDate = new Date(phaseStart);
+      currentDate.setDate(phaseStart.getDate() + dayCounter);
+      const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}/${String(currentDate.getFullYear()).slice(-2)}`;
+
+      const rehitVal = rehitMap[dateStr];
+      const isToday = dateStr === todayStr;
+      const isFuture = currentDate > today;
+
+      let classes = "rehit-cal-day";
+      if (isToday) classes += " today";
+      if (isFuture) classes += " future";
+      if (rehitVal) {
+        classes += " has-rehit";
+        if (rehitVal === "2x10") classes += " rehit-2x10";
+        if (rehitVal === "3x10") classes += " rehit-3x10";
+      }
+
+      html += `<div class="${classes}">${currentDate.getDate()}</div>`;
+      dayCounter++;
+    }
+  }
+
+  html += `
+    </div>
+    <div class="rehit-cal-legend">
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-2x10"></div><span>2×10</span></div>
+      <div class="rehit-cal-legend-item"><div class="rehit-cal-legend-dot dot-3x10"></div><span>3×10</span></div>
+    </div>
+  `;
+
+  container.innerHTML = html;
 }
 
 function renderWeekCalendar(container, rehitMap) {
@@ -2439,7 +2546,7 @@ function renderGoalPerformance(stats) {
     { key: 'reading', ...GOALS.reading, ...stats.reading },
     { key: 'meals', name: 'Meals', icon: '🍽️', ...stats.meals },
     { key: 'snacks', name: 'Snacks', icon: '🥗', ...stats.snacks },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🚫🍺', ...stats.noAlcohol }
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', ...stats.noAlcohol }
   ];
 
   const sorted = goals.sort((a, b) => b.pct - a.pct);
@@ -2483,64 +2590,74 @@ function renderGoalStatCard(name, icon, pct, detail, color = null) {
 
 function renderHealthGoals(stats) {
   const container = document.getElementById('healthGoalsStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
+
   container.innerHTML = `
-    ${renderGoalStatCard('Sleep', '🌙', stats.sleep.pct, stats.sleep.detail)}
-    ${renderGoalStatCard('Water', '💧', stats.agua.pct, stats.agua.detail)}
-    ${renderGoalStatCard('Supps', '💊', stats.supps.pct, stats.supps.detail)}
-    ${renderGoalStatCard('REHIT', '🚴', stats.rehit.pct, stats.rehit.detail)}
-    ${renderGoalStatCard('Steps', '👟', stats.steps.pct, stats.steps.detail)}
-    ${renderGoalStatCard('Movement', '🚶', stats.movement.pct, stats.movement.detail)}
-    ${renderGoalStatCard('Reading', '📖', stats.reading.pct, stats.reading.detail)}
+    ${renderGoalStatCard('Sleep', '🌙', safe(stats.sleep).pct, safe(stats.sleep).detail)}
+    ${renderGoalStatCard('Water', '💧', safe(stats.agua).pct, safe(stats.agua).detail)}
+    ${renderGoalStatCard('Supps', '💊', safe(stats.supps).pct, safe(stats.supps).detail)}
+    ${renderGoalStatCard('REHIT', '🚴', safe(stats.rehit).pct, safe(stats.rehit).detail)}
+    ${renderGoalStatCard('Steps', '👟', safe(stats.steps).pct, safe(stats.steps).detail)}
+    ${renderGoalStatCard('Movement', '🚶', safe(stats.movement).pct, safe(stats.movement).detail)}
+    ${renderGoalStatCard('Reading', '📖', safe(stats.reading).pct, safe(stats.reading).detail)}
   `;
 }
 
 function renderNutritionStats(stats) {
   const container = document.getElementById('nutritionStats');
-  if (!container) return;
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
 
   container.innerHTML = `
-    ${renderGoalStatCard('Meals', '🍽️', stats.meals.pct, stats.meals.detail)}
-    ${renderGoalStatCard('Snacks', '🥗', stats.snacks.pct, stats.snacks.detail)}
-    ${renderGoalStatCard('No Alcohol', '🚫🍺', stats.noAlcohol.pct, stats.noAlcohol.detail)}
+    ${renderGoalStatCard('Meals', '🍽️', safe(stats.meals).pct, safe(stats.meals).detail)}
+    ${renderGoalStatCard('Snacks', '🥗', safe(stats.snacks).pct, safe(stats.snacks).detail)}
+    ${renderGoalStatCard('No Alcohol', '🍺', safe(stats.noAlcohol).pct, safe(stats.noAlcohol).detail)}
   `;
 }
 
 function renderMindfulnessStats(stats) {
   const container = document.getElementById('mindfulnessStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const detail = stats.meditation?.detail || 'No data';
+
   container.innerHTML = `
     <div class="goal-stat-card" style="grid-column: 1 / -1;">
       <div class="goal-stat-header">
         <span class="goal-stat-name">🧘 Meditation</span>
         <span style="font-size: 12px; color: var(--text-muted);">No goal - tracking only</span>
       </div>
-      <div class="goal-stat-detail">${stats.meditation.detail}</div>
+      <div class="goal-stat-detail">${detail}</div>
     </div>
   `;
 }
 
 function renderKidsHabitsStats(stats) {
   const container = document.getElementById('kidsHabitsStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
+
   container.innerHTML = `
-    ${renderGoalStatCard('Inhaler AM', '💨', stats.inhalerAM.pct, stats.inhalerAM.detail)}
-    ${renderGoalStatCard('Inhaler PM', '💨', stats.inhalerPM.pct, stats.inhalerPM.detail)}
-    ${renderGoalStatCard('Math', '🔢', stats.math.pct, stats.math.detail)}
+    ${renderGoalStatCard('Inhaler AM', '💨', safe(stats.inhalerAM).pct, safe(stats.inhalerAM).detail)}
+    ${renderGoalStatCard('Inhaler PM', '💨', safe(stats.inhalerPM).pct, safe(stats.inhalerPM).detail)}
+    ${renderGoalStatCard('Math', '🔢', safe(stats.math).pct, safe(stats.math).detail)}
   `;
 }
 
 function renderWritingStats(stats) {
   const container = document.getElementById('writingStats');
-  if (!container) return;
-  
+  if (!container || !stats) return;
+
+  const safe = (s) => s || { pct: 0, detail: 'No data' };
+
   container.innerHTML = `
-    ${renderGoalStatCard('Reflections', '✍️', stats.reflections.pct, stats.reflections.detail)}
-    ${renderGoalStatCard('Stories', '📝', stats.stories.pct, stats.stories.detail)}
-    ${renderGoalStatCard('Carly', '💛', stats.carly.pct, stats.carly.detail)}
+    ${renderGoalStatCard('Reflections', '✍️', safe(stats.reflections).pct, safe(stats.reflections).detail)}
+    ${renderGoalStatCard('Stories', '📝', safe(stats.stories).pct, safe(stats.stories).detail)}
+    ${renderGoalStatCard('Carly', '💛', safe(stats.carly).pct, safe(stats.carly).detail)}
   `;
 }
 
@@ -3175,14 +3292,20 @@ function renderRehitChart(dataPoints) {
   // Build a map of date -> rehit value for calendar lookup
   rehitDataMap = {};
   dataPoints.forEach(d => {
-    const val = d.daily["REHIT 2x10"];
-    if (val === "2x10" || val === true || val === "TRUE") {
-      rehitDataMap[d.date] = "2x10";
-    } else if (val === "3x10") {
+    const val2 = d.daily?.["REHIT 2x10"];
+    const val3 = d.daily?.["REHIT 3x10"];
+
+    // Check for 3x10 first (either in dedicated field or as value in 2x10 field)
+    if (val3 && val3 !== "" && val3 !== "false" && val3 !== false) {
       rehitDataMap[d.date] = "3x10";
+    } else if (val2 === "3x10") {
+      rehitDataMap[d.date] = "3x10";
+    } else if (val2 && val2 !== "" && val2 !== "false" && val2 !== false) {
+      // Any other truthy value in REHIT 2x10 counts as 2x10
+      rehitDataMap[d.date] = "2x10";
     }
   });
-  
+
   // Render the calendar
   renderRehitCalendar();
 }
@@ -5039,6 +5162,12 @@ function triggerSaveSoon() {
   if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
   autoSaveTimeout = setTimeout(async () => {
     const payload = buildPayloadFromUI();
+    console.log("💾 Saving movement data:", {
+      morningType: payload.morningMovementType,
+      morningDuration: payload.morningMovementDuration,
+      afternoonType: payload.afternoonMovementType,
+      afternoonDuration: payload.afternoonMovementDuration
+    });
     await saveData(payload);
   }, 1500);
 }

@@ -1499,7 +1499,13 @@
       gap: 8px;
       margin-top: 16px;
       flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .summary-controls .btn {
+      min-height: 40px;
+      display: flex;
       align-items: center;
+      justify-content: center;
     }
     .phase-selector {
       padding: 8px 12px;
@@ -2171,7 +2177,63 @@
     body.day-mode .rehit-cal-day.today {
       color: white;
     }
-    
+
+    /* REHIT Progress Card */
+    .rehit-progress-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+    }
+    .rehit-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .rehit-progress-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .rehit-progress-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent-orange);
+    }
+    .rehit-progress-bar {
+      height: 8px;
+      background: var(--bg-input);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .rehit-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-orange), var(--accent-pink));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .rehit-progress-breakdown {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .rehit-type-badge {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .rehit-type-badge.type-2x10 {
+      background: rgba(255, 107, 157, 0.2);
+      color: #ff6b9d;
+    }
+    .rehit-type-badge.type-3x10 {
+      background: rgba(255, 159, 67, 0.2);
+      color: #ff9f43;
+    }
+
     /* Summary Page Styles */
     .summary-overview {
       display: grid;
@@ -3296,6 +3358,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
+          <div class="tagline">v9.25</div>
         </div>
       </div>
       <div class="nav-links">
@@ -3368,6 +3431,22 @@
       </div>
       <div class="cue-timestamp" id="cueTimestamp"></div>
       <textarea class="cue-note-input" id="cueNoteInput" placeholder="What cue did you notice? (e.g., feeling stressed, saw a snack, phone notification...)"></textarea>
+      <div class="habit-stack-section">
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px 0;">🔗 Habit Stack (optional)</p>
+        <select id="habitStackSelect" class="habit-stack-select" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:14px;">
+          <option value="">— Link a habit to practice —</option>
+          <option value="sleep">🌙 Better Sleep Routine</option>
+          <option value="water">💧 Drink Water</option>
+          <option value="steps">👟 Go for a Walk</option>
+          <option value="rehit">🚴 REHIT Workout</option>
+          <option value="movement">🚶 Movement Break</option>
+          <option value="reading">📖 Read</option>
+          <option value="meditation">🧘 Meditate</option>
+          <option value="meals">🍽️ Healthy Meal</option>
+          <option value="noAlcohol">🍺 Skip the Drink</option>
+          <option value="supps">💊 Take Supplements</option>
+        </select>
+      </div>
       <div class="cue-modal-buttons">
         <button type="button" class="cue-cancel-btn" onclick="closeCueModal()">Cancel</button>
         <button type="button" class="cue-save-btn" onclick="saveCueAndCelebrate()">Log It! 🎉</button>
@@ -3811,17 +3890,6 @@
       </div>
     </header>
 
-    <!-- Phase Management -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📅</div><span class="sec-name">Phase Management</span></div></div>
-      <div class="sec-content">
-        <div id="phaseManagementInfo" style="margin-bottom:12px">
-          <!-- Populated by JS -->
-        </div>
-        <button type="button" class="btn btn-primary" id="planNextPhaseBtn" style="width:100%">Plan Next Phase</button>
-      </div>
-    </div>
-
     <!-- Goals Settings -->
     <div class="section">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Goal Settings</span></div></div>
@@ -3920,7 +3988,7 @@
 
         <div class="goal-setting-row">
           <div class="goal-setting-info">
-            <span class="goal-setting-icon">🚫🍺</span>
+            <span class="goal-setting-icon">🍺</span>
             <span class="goal-setting-name">No Alcohol</span>
           </div>
           <div class="goal-setting-controls">
@@ -4255,7 +4323,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=6.19" defer></script>
+  <script src="app.js?v=9.25" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -5023,10 +5091,9 @@
       if (!dotsContainer) return;
 
       // Get targets from settings (default 2+3=5)
-      const raw2 = parseInt(window.appSettings?.rehit2x10Goal);
-      const raw3 = parseInt(window.appSettings?.rehit3x10Goal);
-      const target2x10 = isNaN(raw2) ? 2 : raw2;
-      const target3x10 = isNaN(raw3) ? 3 : raw3;
+      // Use ?? to allow 0 values
+      const target2x10 = parseInt(window.appSettings?.rehit2x10Goal ?? 2);
+      const target3x10 = parseInt(window.appSettings?.rehit3x10Goal ?? 3);
       const totalDots = target2x10 + target3x10;
 
       // Rebuild dots
@@ -5080,6 +5147,9 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Setup populateForm hook (must happen before app.js calls loadDataForCurrentDate)
       setupPopulateFormHook();
+
+      // Sync settings from KV (async - will update UI when complete)
+      if (typeof syncSettingsFromKV === 'function') syncSettingsFromKV();
 
       // Update REHIT dots based on target settings
       if (typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
@@ -5384,7 +5454,27 @@
     // =============================================
     // SETTINGS & THEME SYSTEM
     // =============================================
-    
+
+    // API URL for settings (same as app.js)
+    const SETTINGS_API_URL = "https://habit-tracker-api.joeypaulos.workers.dev";
+
+    // Simple fetch helpers for settings
+    async function settingsApiGet(action) {
+      const url = new URL(SETTINGS_API_URL);
+      url.searchParams.set("action", action);
+      const res = await fetch(url.toString(), { method: "GET" });
+      return await res.json();
+    }
+
+    async function settingsApiPost(action, payload = {}) {
+      const res = await fetch(SETTINGS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ...payload })
+      });
+      return await res.json();
+    }
+
     // Default settings
     const defaultSettings = {
       dayStartTime: '05:00',
@@ -5429,30 +5519,72 @@
       ]
     };
     
-    // Load settings from localStorage
-    function loadSettings() {
+    // Load settings from localStorage (sync, for initial load)
+    function loadSettingsFromLocal() {
       try {
         const saved = localStorage.getItem('elevateSettings');
         if (saved) {
           return { ...defaultSettings, ...JSON.parse(saved) };
         }
       } catch (e) {
-        console.error('Error loading settings:', e);
+        console.error('Error loading settings from localStorage:', e);
       }
       return { ...defaultSettings };
     }
-    
-    // Save settings to localStorage
+
+    // Load settings from KV (async, called after page load)
+    async function loadSettingsFromKV() {
+      try {
+        const result = await settingsApiGet('settings_load');
+        if (result.settings) {
+          // Merge KV settings with defaults
+          const kvSettings = { ...defaultSettings, ...result.settings };
+          // Update localStorage cache
+          localStorage.setItem('elevateSettings', JSON.stringify(kvSettings));
+          return kvSettings;
+        }
+      } catch (e) {
+        console.error('Error loading settings from KV:', e);
+      }
+      return null;
+    }
+
+    // Sync wrapper for initial load
+    function loadSettings() {
+      return loadSettingsFromLocal();
+    }
+
+    // Save settings to both KV and localStorage
     function saveSettings(settings) {
       try {
         localStorage.setItem('elevateSettings', JSON.stringify(settings));
       } catch (e) {
-        console.error('Error saving settings:', e);
+        console.error('Error saving settings to localStorage:', e);
       }
+      // Also save to KV (async, fire and forget)
+      settingsApiPost('settings_save', { settings }).catch(e => {
+        console.error('Error saving settings to KV:', e);
+      });
     }
-    
+
     let appSettings = loadSettings();
     window.appSettings = appSettings;
+
+    // Load settings from KV after page load and merge
+    async function syncSettingsFromKV() {
+      const kvSettings = await loadSettingsFromKV();
+      if (kvSettings) {
+        // Merge KV settings into appSettings
+        Object.assign(appSettings, kvSettings);
+        window.appSettings = appSettings;
+        // Update UI elements that depend on settings
+        if (typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
+        if (typeof updateAguaBar === 'function') updateAguaBar();
+        if (typeof updateStepsBar === 'function') updateStepsBar();
+        if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+        console.log('✅ Settings synced from KV');
+      }
+    }
 
     // Migrate old waterGoal → aguaGoal
     if (appSettings.waterGoal && !appSettings.aguaGoal) {
@@ -5544,7 +5676,7 @@
       document.getElementById('dayStartTime').value = appSettings.dayStartTime;
       document.getElementById('nightStartTime').value = appSettings.nightStartTime;
 
-      // Goal values
+      // Goal values - use ?? instead of || to allow 0 values
       document.getElementById('sleepGoal').value = appSettings.sleepGoal ?? 7;
       document.getElementById('aguaGoal').value = appSettings.aguaGoal ?? 6;
       document.getElementById('stepsGoal').value = appSettings.stepsGoal ?? 5000;
@@ -5572,85 +5704,9 @@
 
       window.scrollTo(0, 0);
       renderSectionList();
-      updatePhaseManagementInfo();
       loadHabitNotes(); // Reload habit notes when settings page opens
     }
 
-    function updatePhaseManagementInfo() {
-      const infoEl = document.getElementById('phaseManagementInfo');
-      const btn = document.getElementById('planNextPhaseBtn');
-      if (!infoEl || !btn) return;
-
-      // Get current phase info from app.js
-      const currentPhase = typeof getCurrentPhase === 'function' ? getCurrentPhase() : null;
-      const phases = typeof phasesData !== 'undefined' ? phasesData : [];
-
-      if (!currentPhase) {
-        infoEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin:0">No phase data available.</p>';
-        btn.textContent = 'Create Phase 1';
-        btn.onclick = () => {
-          if (typeof openNewPhaseModal === 'function') openNewPhaseModal();
-        };
-        return;
-      }
-
-      // Calculate days remaining in current phase
-      const phaseStart = typeof parseDataDate === 'function' ? parseDataDate(currentPhase.start) : new Date(currentPhase.start);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dayInPhase = Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) + 1;
-      const daysRemaining = currentPhase.length - dayInPhase;
-
-      const nextPhaseId = currentPhase.id + 1;
-      const nextPhaseExists = phases.some(p => p.id === nextPhaseId);
-
-      let statusHtml = `
-        <p style="color:var(--text);font-size:14px;margin:0 0 8px 0"><strong>${currentPhase.name}</strong></p>
-        <p style="color:var(--text-muted);font-size:13px;margin:0">Day ${dayInPhase} of ${currentPhase.length} (${daysRemaining > 0 ? daysRemaining + ' days remaining' : 'Phase complete!'})</p>
-      `;
-
-      if (nextPhaseExists) {
-        const nextPhase = phases.find(p => p.id === nextPhaseId);
-        statusHtml += `<p style="color:var(--accent-teal);font-size:13px;margin:8px 0 0 0">✓ ${nextPhase.name} is planned</p>`;
-
-        // Show next phase goals
-        if (nextPhase.goals) {
-          statusHtml += `<div style="margin-top:12px;padding:12px;background:var(--bg-input);border-radius:8px;">`;
-          statusHtml += `<p style="color:var(--text);font-size:12px;font-weight:600;margin:0 0 8px 0">${nextPhase.name} Goals:</p>`;
-          const goalIcons = { sleep: '🌙', agua: '💧', steps: '👟', rehit: '🚴', movement: '🚶', reading: '📖', meals: '🍽️', meditation: '🧘' };
-          Object.entries(nextPhase.goals).forEach(([key, goal]) => {
-            if (goal && goal.target) {
-              const icon = goalIcons[key] || '🎯';
-              statusHtml += `<p style="color:var(--text-muted);font-size:11px;margin:4px 0">${icon} ${key}: ${goal.target}</p>`;
-            }
-          });
-          statusHtml += `</div>`;
-        }
-
-        // Only show "Plan Phase 3" button if within 3 days of current phase ending
-        const phaseAfterNextId = nextPhaseId + 1;
-        const phaseAfterNextExists = phases.some(p => p.id === phaseAfterNextId);
-        if (daysRemaining <= 3 && !phaseAfterNextExists) {
-          btn.style.display = 'block';
-          btn.textContent = `Plan Phase ${phaseAfterNextId}`;
-          btn.onclick = () => {
-            if (typeof openNewPhaseModal === 'function') openNewPhaseModal(nextPhaseId);
-          };
-        } else {
-          btn.style.display = 'none';
-        }
-      } else {
-        statusHtml += `<p style="color:var(--accent-orange);font-size:13px;margin:8px 0 0 0">⚠️ Phase ${nextPhaseId} not yet planned</p>`;
-        btn.style.display = 'block';
-        btn.textContent = `Plan Phase ${nextPhaseId}`;
-        btn.onclick = () => {
-          if (typeof openNewPhaseModal === 'function') openNewPhaseModal();
-        };
-      }
-
-      infoEl.innerHTML = statusHtml;
-    }
-    
     function closeSettingsPage() {
       // Blur active element to flush any pending change events on goal inputs
       if (document.activeElement) document.activeElement.blur();
