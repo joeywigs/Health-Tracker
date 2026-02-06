@@ -97,6 +97,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadHabitStacks(env, corsHeaders);
   }
 
+  if (action === "settings_load") {
+    return await loadSettings(env, corsHeaders);
+  }
+
   if (action === "rehit_week") {
     const date = url.searchParams.get("date");
     if (!date) {
@@ -192,6 +196,13 @@ async function handlePost(request, env, corsHeaders) {
       return jsonResponse({ error: true, message: "Missing stacks array" }, 400, corsHeaders);
     }
     return await saveHabitStacks(body.stacks, env, corsHeaders);
+  }
+
+  if (action === "settings_save") {
+    if (!body.settings || typeof body.settings !== 'object') {
+      return jsonResponse({ error: true, message: "Missing settings object" }, 400, corsHeaders);
+    }
+    return await saveSettings(body.settings, env, corsHeaders);
   }
 
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
@@ -636,6 +647,19 @@ async function loadHabitStacks(env, corsHeaders) {
 
 async function saveHabitStacks(stacks, env, corsHeaders) {
   await env.HABIT_DATA.put("habit:stacks", JSON.stringify(stacks));
+  return jsonResponse({ success: true }, 200, corsHeaders);
+}
+
+// ===== App Settings =====
+async function loadSettings(env, corsHeaders) {
+  const settings = await env.HABIT_DATA.get("app:settings", "json");
+  return jsonResponse({
+    settings: settings || null
+  }, 200, corsHeaders);
+}
+
+async function saveSettings(settings, env, corsHeaders) {
+  await env.HABIT_DATA.put("app:settings", JSON.stringify(settings));
   return jsonResponse({ success: true }, 200, corsHeaders);
 }
 
