@@ -1,5 +1,11 @@
 {
   "name": "habit-proxy",
   "main": "worker.js",
-  "compatibility_date": "2026-02-06"
+  "compatibility_date": "2026-02-06",
+  "kv_namespaces": [
+    {
+      "binding": "HABIT_DATA",
+      "id": "51e7f988875f48b890fa1b1eea8e33d4"
+    }
+  ]
 }
