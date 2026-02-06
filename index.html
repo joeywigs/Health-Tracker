@@ -5014,23 +5014,18 @@
           const todayStr = date;
 
           data.details?.forEach(detail => {
+            // Determine session type from detail fields
+            const is3x10 = (detail.rehit3 && detail.rehit3 !== "" && detail.rehit3 !== "false")
+                        || detail.rehit2 === "3x10";
+            const is2x10 = !is3x10 && detail.hasRehit;
+
             if (detail.date === todayStr) {
               // Track today separately
               window._rehitTodaySaved = detail.hasRehit || false;
-              if (detail.rehit3 && detail.rehit3 !== "" && detail.rehit3 !== "false") {
-                window._rehitTodayType = '3x10';
-              } else if (detail.rehit2 && detail.rehit2 !== "" && detail.rehit2 !== "false") {
-                window._rehitTodayType = '2x10';
-              } else {
-                window._rehitTodayType = null;
-              }
+              window._rehitTodayType = is3x10 ? '3x10' : is2x10 ? '2x10' : null;
             } else if (detail.hasRehit) {
               // Past days - add to session types array
-              if (detail.rehit3 && detail.rehit3 !== "" && detail.rehit3 !== "false") {
-                window._rehitSessionTypes.push('3x10');
-              } else if (detail.rehit2 && detail.rehit2 !== "" && detail.rehit2 !== "false") {
-                window._rehitSessionTypes.push('2x10');
-              }
+              window._rehitSessionTypes.push(is3x10 ? '3x10' : '2x10');
             }
           });
 
