@@ -3790,6 +3790,16 @@
       margin-bottom: 6px;
     }
     body.day-mode .field-row { background: rgba(0,0,0,0.02); }
+    .day-picker { display: flex; gap: 4px; flex-wrap: wrap; }
+    .day-chip {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--bg-deep); color: var(--text-muted); font-size: 11px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .day-chip.selected { background: var(--accent-teal); color: #fff; border-color: var(--accent-teal); }
+    body.day-mode .day-chip { background: rgba(0,0,0,0.04); }
+    body.day-mode .day-chip.selected { background: var(--accent-teal); color: #fff; }
   </style>
 </head>
 <body>
@@ -3854,7 +3864,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.6</div>
+      <div class="tagline">v1.7.7</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3916,7 +3926,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.6</div>
+          <div class="tagline">v1.7.7</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4622,6 +4632,7 @@
           <div class="field"><label class="field-label">Section Name</label><input type="text" class="input" id="newSectionName" placeholder="e.g., Gratitude, Goals, etc."></div>
           <div class="field"><label class="field-label">Section Type</label><select class="input" id="newSectionType"><option value="text">Text/Notes</option><option value="checkbox">Checkboxes (multiple)</option><option value="number">Number Input</option><option value="counter">Counter (+/- with goal)</option><option value="log">Log (list of entries)</option><option value="time">Time Input</option><option value="rating">Rating (1-5 stars)</option><option value="toggle">Yes/No Toggle</option></select></div>
           <div class="field"><label class="field-label">Icon (emoji)</label><input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px"></div>
+          <div class="field"><label class="field-label">Show on Days</label><div class="day-picker" id="newSectionDays"><span class="day-chip selected" data-day="0">S</span><span class="day-chip selected" data-day="1">M</span><span class="day-chip selected" data-day="2">T</span><span class="day-chip selected" data-day="3">W</span><span class="day-chip selected" data-day="4">T</span><span class="day-chip selected" data-day="5">F</span><span class="day-chip selected" data-day="6">S</span></div></div>
           <div id="checkboxOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Checkbox Names (comma-separated)</label><input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening"></div></div>
           <div id="counterOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Goal Type</label><select class="input" id="counterGoalType"><option value="daily">Daily (progress bar)</option><option value="weekly">Weekly (dots)</option><option value="alltime">All-time (running total)</option></select></div><div class="field"><label class="field-label">Goal Number</label><input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20"></div><div class="field"><label class="field-label">Unit Label</label><input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times"></div></div>
           <div id="logOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Fields per Entry</label><div id="logFieldsList"><div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px"><input type="text" class="input" placeholder="Field name" style="flex:2"><select class="input" style="flex:1"><option value="text">Text</option><option value="number">Number</option><option value="select">Dropdown</option></select><button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button></div></div><button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button></div></div>
@@ -4787,7 +4798,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.7.6" defer></script>
+  <script src="app.js?v=1.7.7" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -6197,17 +6208,22 @@
       const list = document.getElementById('sectionList');
       if (!list) return;
 
-      list.innerHTML = appSettings.sections.map((sec, idx) => `
+      const dayAbbr = ['S','M','T','W','T','F','S'];
+      list.innerHTML = appSettings.sections.map((sec, idx) => {
+        const daysLabel = (sec.days && sec.days.length < 7)
+          ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">${sec.days.map(d => dayAbbr[d]).join('')}</span>`
+          : '';
+        return `
         <div class="section-item" draggable="true" data-idx="${idx}" data-id="${sec.id}">
           <span class="section-item-drag">⋮⋮</span>
           <span class="section-item-icon">${sec.icon}</span>
-          <span class="section-item-name">${sec.name}</span>
+          <span class="section-item-name">${sec.name}${daysLabel}</span>
           <button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>
           <div class="section-item-toggle ${sec.visible ? 'on' : ''}" data-idx="${idx}"></div>
           ${sec.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
         </div>
         <div class="section-field-editor" id="fieldEditor_${idx}" style="display:none"></div>
-      `).join('');
+      `}).join('');
       
       // Add event listeners
       list.querySelectorAll('.section-item-toggle').forEach(toggle => {
@@ -6272,6 +6288,16 @@
       const typeOptions = FIELD_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('');
       const isCustom = sec.custom;
 
+      const dayNames = ['S','M','T','W','T','F','S'];
+      const secDays = sec.days || [0,1,2,3,4,5,6];
+      const dayPickerHtml = isCustom ? `
+          <div class="field" style="margin-bottom:8px">
+            <label class="field-label">Show on Days</label>
+            <div class="day-picker" id="editSecDays_${sectionIdx}">
+              ${dayNames.map((d,i) => `<span class="day-chip${secDays.includes(i) ? ' selected' : ''}" data-day="${i}">${d}</span>`).join('')}
+            </div>
+          </div>` : '';
+
       const headerHtml = isCustom ? `
           <div class="field-editor-header">
             <div class="field" style="margin-bottom:8px">
@@ -6282,7 +6308,8 @@
               <label class="field-label">Icon</label>
               <input type="text" class="input" id="editSecIcon_${sectionIdx}" value="${sec.icon}" maxlength="2" style="width:60px">
             </div>
-          </div>` : '';
+          </div>
+          ${dayPickerHtml}` : '';
 
       const fieldsLabel = isCustom ? 'Fields' : 'Additional Fields';
       const noFieldsHint = !isCustom && fields.length === 0
@@ -6377,12 +6404,18 @@
       const sec = appSettings.sections[si];
       if (!sec) return;
 
-      // Update name and icon for custom sections
+      // Update name, icon, and days for custom sections
       if (sec.custom) {
         const nameInput = document.getElementById(`editSecName_${si}`);
         const iconInput = document.getElementById(`editSecIcon_${si}`);
         if (nameInput?.value.trim()) sec.name = nameInput.value.trim();
         if (iconInput?.value) sec.icon = iconInput.value;
+        // Collect day-of-week selection
+        const dayPicker = document.getElementById(`editSecDays_${si}`);
+        if (dayPicker) {
+          const selectedDays = Array.from(dayPicker.querySelectorAll('.day-chip.selected')).map(c => parseInt(c.dataset.day));
+          sec.days = selectedDays.length > 0 && selectedDays.length < 7 ? selectedDays : undefined;
+        }
       }
 
       // Update fields
@@ -6587,16 +6620,30 @@
     function applySectionSettings() {
       const form = document.getElementById('healthForm');
       if (!form) return;
-      
-      // Apply visibility and order
+
+      // Get the day-of-week for the currently viewed date
+      let viewingDay;
+      try {
+        viewingDay = (typeof currentDate !== 'undefined' && currentDate instanceof Date)
+          ? currentDate.getDay()
+          : new Date().getDay();
+      } catch(e) { viewingDay = new Date().getDay(); }
+
+      // Apply visibility, day-of-week filtering, and order
       appSettings.sections.forEach((sec, idx) => {
         const el = document.getElementById(sec.id);
         if (el) {
-          el.style.display = sec.visible ? '' : 'none';
+          let show = sec.visible;
+          // If this section has day-of-week restrictions, check them
+          if (show && sec.days && Array.isArray(sec.days)) {
+            show = sec.days.includes(viewingDay);
+          }
+          el.style.display = show ? '' : 'none';
           el.style.order = idx;
         }
       });
     }
+    window.applySectionSettings = applySectionSettings;
     
     // =============================================
     // NAVIGATION DRAWER
@@ -6919,6 +6966,13 @@
       }
     });
     
+    // Day-picker chip toggle (works for both the "add" form and field editor)
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('day-chip')) {
+        e.target.classList.toggle('selected');
+      }
+    });
+
     // Add log field button
     document.getElementById('addLogFieldBtn')?.addEventListener('click', () => {
       const list = document.getElementById('logFieldsList');
@@ -6949,7 +7003,11 @@
       }
       
       const id = 'custom_' + Date.now();
-      
+
+      // Read selected days (default to all days if none selected)
+      const dayChips = document.querySelectorAll('#newSectionDays .day-chip.selected');
+      const days = Array.from(dayChips).map(c => parseInt(c.dataset.day));
+
       // Gather type-specific config
       let config = {};
       
@@ -6990,6 +7048,7 @@
         icon,
         visible: true,
         custom: true,
+        days: days.length > 0 && days.length < 7 ? days : undefined,
         fields: [{ id: fieldId, name: name, type, config }]
       });
 
@@ -7017,8 +7076,14 @@
       `;
       document.querySelectorAll('.type-options').forEach(opt => opt.style.display = 'none');
       document.getElementById('newSectionType').value = 'text';
-      
+      // Reset day chips to all selected
+      document.querySelectorAll('#newSectionDays .day-chip').forEach(c => c.classList.add('selected'));
+
       renderSectionList();
+      applySectionSettings();
+
+      // Trigger a save so the new section's data frame gets persisted to KV
+      if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
     });
     
     // Store custom section data (for logs, counters, etc.)
