@@ -5844,6 +5844,31 @@ async function populateForm(data) {
     }
     renderMovementList();
 
+    // Check if returning from a workout shortcut (after movements are loaded)
+    const pendingWorkout = localStorage.getItem('pendingWorkout');
+    if (pendingWorkout) {
+      try {
+        const workout = JSON.parse(pendingWorkout);
+        localStorage.removeItem('pendingWorkout');
+        const elapsed = Date.now() - (workout.startTime || 0);
+        const duration = Math.round(elapsed / 60000);
+        if (duration > 0 && duration < 180) {
+          currentMovements.push({
+            type: workout.type,
+            duration: duration,
+            startTime: workout.startTime
+          });
+          renderMovementList();
+          triggerSaveSoon();
+          checkMovementGoal();
+          if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+          if (typeof showToast === 'function') showToast(`${workout.type} logged — ${duration} min`, 'success');
+        }
+      } catch (e) {
+        localStorage.removeItem('pendingWorkout');
+      }
+    }
+
     // Clear grooming checkboxes
     const haircutEl = document.getElementById("groomingHaircut");
     const beardEl = document.getElementById("groomingBeardTrim");
@@ -6178,33 +6203,6 @@ function setupMovementUI() {
     });
   }
   renderMovementList();
-
-  // Check if returning from a workout shortcut
-  const pending = localStorage.getItem('pendingWorkout');
-  if (pending) {
-    try {
-      const workout = JSON.parse(pending);
-      localStorage.removeItem('pendingWorkout');
-      const elapsed = Date.now() - (workout.startTime || 0);
-      const duration = Math.round(elapsed / 60000); // ms to minutes
-      // Only auto-add if returned within a reasonable window (< 3 hours)
-      if (duration > 0 && duration < 180) {
-        currentMovements.push({
-          type: workout.type,
-          duration: duration,
-          startTime: workout.startTime
-        });
-        renderMovementList();
-        triggerSaveSoon();
-        checkMovementGoal();
-        if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-        if (typeof showToast === 'function') showToast(`${workout.type} logged — ${duration} min`, 'success');
-      }
-    } catch (e) {
-      localStorage.removeItem('pendingWorkout');
-    }
-  }
-
   console.log("✅ Movement UI wired");
 }
 
