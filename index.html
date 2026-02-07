@@ -3831,6 +3831,23 @@
     }
     .section-group-unlink:hover { color: var(--accent-pink); border-color: var(--accent-pink); }
     .section-item.drag-group-target { border-color: var(--accent-teal); box-shadow: 0 0 8px var(--glow-teal); }
+
+    /* Homepage section drag-to-reorder */
+    .section-drag-handle {
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: grab;
+      opacity: 0.3;
+      user-select: none;
+      touch-action: none;
+      padding: 2px;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .section-drag-handle:active { cursor: grabbing; opacity: 0.8; }
+    .section-dragging { opacity: 0.35 !important; transform: scale(0.97); transition: opacity 0.15s, transform 0.15s; }
+    .section-drop-above { box-shadow: 0 -3px 0 0 var(--accent-teal), 0 0 12px -2px var(--glow-teal) !important; }
+    .section-drop-below { box-shadow: 0 3px 0 0 var(--accent-teal), 0 0 12px -2px var(--glow-teal) !important; }
   </style>
 </head>
 <body>
@@ -3895,7 +3912,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.8.0</div>
+      <div class="tagline">v1.8.1</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3957,7 +3974,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.8.0</div>
+          <div class="tagline">v1.8.1</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4652,7 +4669,7 @@
       <div class="section">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
         <div class="sec-content">
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Drag to reorder • Toggle to show/hide</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Toggle to show/hide • Reorder sections on the home page</p>
           <div id="sectionList" class="section-list"></div>
         </div>
       </div>
@@ -4828,7 +4845,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.8.0" defer></script>
+  <script src="app.js?v=1.8.1" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -6274,64 +6291,36 @@
       if (!list) return;
 
       const dayAbbr = ['S','M','T','W','T','F','S'];
-      const html = [];
+      list.innerHTML = appSettings.sections.map((sec, idx) => {
+        const daysLabel = (sec.days && sec.days.length < 7)
+          ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">${sec.days.map(d => dayAbbr[d]).join('')}</span>`
+          : '';
+        const groupLabel = (sec.group != null)
+          ? `<span style="font-size:9px;color:var(--accent-teal);margin-left:4px">paired</span>`
+          : '';
+        return `
+        <div class="section-item" data-idx="${idx}" data-id="${sec.id}">
+          <span class="section-item-icon">${sec.icon}</span>
+          <span class="section-item-name">${sec.name}${daysLabel}${groupLabel}</span>
+          <button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>
+          <div class="section-item-toggle ${sec.visible ? 'on' : ''}" data-idx="${idx}"></div>
+          ${sec.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
+        </div>
+        <div class="section-field-editor" id="fieldEditor_${idx}" style="display:none"></div>
+      `}).join('');
 
-      // Walk sections and group consecutive items with the same group id
-      let i = 0;
-      while (i < appSettings.sections.length) {
-        const sec = appSettings.sections[i];
-        const groupId = sec.group;
-
-        // Collect consecutive sections with the same group
-        const groupMembers = [i];
-        if (groupId != null) {
-          let j = i + 1;
-          while (j < appSettings.sections.length && appSettings.sections[j].group === groupId) {
-            groupMembers.push(j);
-            j++;
-          }
-        }
-
-        const isGrouped = groupMembers.length > 1;
-        if (isGrouped) {
-          html.push(`<div class="section-group" data-group="${groupId}">`);
-          html.push(`<div class="section-group-label"><span>Side-by-side</span><button class="section-group-unlink" data-group="${groupId}" title="Ungroup">Unlink</button></div>`);
-        }
-
-        groupMembers.forEach(idx => {
-          const s = appSettings.sections[idx];
-          const daysLabel = (s.days && s.days.length < 7)
-            ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">${s.days.map(d => dayAbbr[d]).join('')}</span>`
-            : '';
-          html.push(`
-            <div class="section-item${isGrouped ? ' grouped' : ''}" draggable="true" data-idx="${idx}" data-id="${s.id}">
-              <span class="section-item-drag">⋮⋮</span>
-              <span class="section-item-icon">${s.icon}</span>
-              <span class="section-item-name">${s.name}${daysLabel}</span>
-              <button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>
-              <div class="section-item-toggle ${s.visible ? 'on' : ''}" data-idx="${idx}"></div>
-              ${s.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
-            </div>
-            <div class="section-field-editor" id="fieldEditor_${idx}" style="display:none"></div>
-          `);
-        });
-
-        if (isGrouped) html.push('</div>');
-        i += groupMembers.length;
-      }
-
-      list.innerHTML = html.join('');
-
-      // Add event listeners
+      // Toggle visibility
       list.querySelectorAll('.section-item-toggle').forEach(toggle => {
         toggle.addEventListener('click', () => {
           const idx = parseInt(toggle.dataset.idx);
           appSettings.sections[idx].visible = !appSettings.sections[idx].visible;
           toggle.classList.toggle('on');
           saveSettings(appSettings);
+          applySectionSettings();
         });
       });
 
+      // Delete custom sections
       list.querySelectorAll('.section-item-delete').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = parseInt(btn.dataset.idx);
@@ -6347,6 +6336,7 @@
         });
       });
 
+      // Edit fields
       list.querySelectorAll('.section-item-edit').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = parseInt(btn.dataset.idx);
@@ -6360,20 +6350,6 @@
           }
         });
       });
-
-      // Ungroup buttons
-      list.querySelectorAll('.section-group-unlink').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const gid = parseInt(btn.dataset.group);
-          appSettings.sections.forEach(s => { if (s.group === gid) delete s.group; });
-          saveSettings(appSettings);
-          renderSectionList();
-          applySectionSettings();
-        });
-      });
-
-      // Drag and drop
-      setupDragAndDrop();
     }
 
     const FIELD_TYPES = [
@@ -6614,153 +6590,6 @@
       if (!window.customSectionData[sec.id]) window.customSectionData[sec.id] = {};
     }
     
-    // Resolve the drop action: center of target = group, top/bottom edges = reorder
-    function handleDrop(fromIdx, toIdx, dropY, targetRect) {
-      if (fromIdx === toIdx) return;
-      const ratio = (dropY - targetRect.top) / targetRect.height;
-      const isGroupDrop = ratio > 0.25 && ratio < 0.75;
-
-      if (isGroupDrop) {
-        // Group: assign both the same group id, move dragged next to target
-        const target = appSettings.sections[toIdx];
-        const gid = target.group ?? (Math.max(0, ...appSettings.sections.map(s => s.group || 0)) + 1);
-        const [moved] = appSettings.sections.splice(fromIdx, 1);
-        const newToIdx = appSettings.sections.indexOf(target);
-        appSettings.sections.splice(newToIdx + 1, 0, moved);
-        moved.group = gid;
-        target.group = gid;
-      } else {
-        // Reorder: move before/after target
-        const targetSec = appSettings.sections[toIdx];
-        const [moved] = appSettings.sections.splice(fromIdx, 1);
-        const insertAt = appSettings.sections.indexOf(targetSec);
-        appSettings.sections.splice(ratio <= 0.5 ? insertAt : insertAt + 1, 0, moved);
-      }
-
-      saveSettings(appSettings);
-      renderSectionList();
-      applySectionSettings();
-    }
-
-    function setupDragAndDrop() {
-      const list = document.getElementById('sectionList');
-      const items = list.querySelectorAll('.section-item');
-      let draggedItem = null;
-      let touchCurrentItem = null;
-
-      items.forEach(item => {
-        // Desktop drag events
-        item.addEventListener('dragstart', (e) => {
-          draggedItem = item;
-          item.classList.add('dragging');
-          e.dataTransfer.effectAllowed = 'move';
-        });
-
-        item.addEventListener('dragend', () => {
-          item.classList.remove('dragging');
-          list.querySelectorAll('.section-item').forEach(i => {
-            i.classList.remove('drag-over');
-            i.classList.remove('drag-group-target');
-          });
-          draggedItem = null;
-        });
-
-        item.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          if (item === draggedItem) return;
-          const rect = item.getBoundingClientRect();
-          const ratio = (e.clientY - rect.top) / rect.height;
-          list.querySelectorAll('.section-item').forEach(i => {
-            i.classList.remove('drag-over');
-            i.classList.remove('drag-group-target');
-          });
-          if (ratio > 0.25 && ratio < 0.75) {
-            item.classList.add('drag-group-target');
-          } else {
-            item.classList.add('drag-over');
-          }
-        });
-
-        item.addEventListener('dragleave', () => {
-          item.classList.remove('drag-over');
-          item.classList.remove('drag-group-target');
-        });
-
-        item.addEventListener('drop', (e) => {
-          e.preventDefault();
-          if (item !== draggedItem && draggedItem) {
-            const fromIdx = parseInt(draggedItem.dataset.idx);
-            const toIdx = parseInt(item.dataset.idx);
-            handleDrop(fromIdx, toIdx, e.clientY, item.getBoundingClientRect());
-          }
-        });
-
-        // Mobile touch events - only on the drag handle
-        const dragHandle = item.querySelector('.section-item-drag');
-        if (dragHandle) {
-          dragHandle.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            touchCurrentItem = item;
-            item.classList.add('dragging');
-            if (navigator.vibrate) navigator.vibrate(30);
-          }, { passive: false });
-
-          dragHandle.addEventListener('touchmove', (e) => {
-            if (!touchCurrentItem) return;
-            e.preventDefault();
-
-            const touchY = e.touches[0].clientY;
-            const allItems = Array.from(list.querySelectorAll('.section-item'));
-
-            allItems.forEach(otherItem => {
-              if (otherItem === touchCurrentItem) return;
-              otherItem.classList.remove('drag-over');
-              otherItem.classList.remove('drag-group-target');
-              const rect = otherItem.getBoundingClientRect();
-              if (touchY > rect.top && touchY < rect.bottom) {
-                const ratio = (touchY - rect.top) / rect.height;
-                if (ratio > 0.25 && ratio < 0.75) {
-                  otherItem.classList.add('drag-group-target');
-                } else {
-                  otherItem.classList.add('drag-over');
-                }
-              }
-            });
-          }, { passive: false });
-
-          dragHandle.addEventListener('touchend', (e) => {
-            if (!touchCurrentItem) return;
-
-            const touchY = e.changedTouches[0].clientY;
-            const allItems = Array.from(list.querySelectorAll('.section-item'));
-
-            let targetItem = null;
-            allItems.forEach(otherItem => {
-              if (otherItem === touchCurrentItem) return;
-              const rect = otherItem.getBoundingClientRect();
-              if (touchY > rect.top && touchY < rect.bottom) {
-                targetItem = otherItem;
-              }
-            });
-
-            if (targetItem) {
-              const fromIdx = parseInt(touchCurrentItem.dataset.idx);
-              const toIdx = parseInt(targetItem.dataset.idx);
-              handleDrop(fromIdx, toIdx, touchY, targetItem.getBoundingClientRect());
-              if (navigator.vibrate) navigator.vibrate(50);
-            }
-
-            touchCurrentItem.classList.remove('dragging');
-            allItems.forEach(i => {
-              i.classList.remove('drag-over');
-              i.classList.remove('drag-group-target');
-            });
-            touchCurrentItem = null;
-          });
-        }
-      });
-    }
-    
     function applySectionSettings() {
       const form = document.getElementById('healthForm');
       if (!form) return;
@@ -6820,9 +6649,166 @@
           g.secs[0].el.style.order = orderIdx++;
         }
       });
+
+      // Refresh drag handles after layout changes
+      if (typeof setupHomepageDrag === 'function') setupHomepageDrag();
     }
     window.applySectionSettings = applySectionSettings;
-    
+
+    // =============================================
+    // HOMEPAGE SECTION DRAG-TO-REORDER
+    // =============================================
+    function setupHomepageDrag() {
+      const form = document.getElementById('healthForm');
+      if (!form) return;
+
+      // Clean up existing handles
+      form.querySelectorAll('.section-drag-handle').forEach(h => h.remove());
+
+      let dragSrcId = null;
+
+      appSettings.sections.forEach(sec => {
+        const el = document.getElementById(sec.id);
+        if (!el || el.style.display === 'none') return;
+
+        // Find header — .sec-head for sections, .card-head for cards
+        const secHead = el.querySelector('.sec-head');
+        const cardHead = el.querySelector('.card-head');
+        if (!secHead && !cardHead) return;
+
+        // Create drag handle
+        const handle = document.createElement('span');
+        handle.className = 'section-drag-handle';
+        handle.textContent = '⋮⋮';
+        handle.setAttribute('title', 'Drag to reorder');
+        handle.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
+
+        // Insert handle: inside .sec-title for sections, at start of .card-head for cards
+        if (secHead) {
+          const secTitle = secHead.querySelector('.sec-title');
+          if (secTitle) secTitle.insertBefore(handle, secTitle.firstChild);
+          else secHead.insertBefore(handle, secHead.firstChild);
+        } else {
+          cardHead.insertBefore(handle, cardHead.firstChild);
+        }
+
+        // === Desktop HTML5 Drag ===
+        handle.draggable = true;
+
+        handle.addEventListener('dragstart', e => {
+          e.stopPropagation();
+          dragSrcId = sec.id;
+          if (e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(el, 20, 20);
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', sec.id);
+          requestAnimationFrame(() => el.classList.add('section-dragging'));
+        });
+
+        handle.addEventListener('dragend', () => {
+          el.classList.remove('section-dragging');
+          form.querySelectorAll('.section-drop-above, .section-drop-below').forEach(x =>
+            x.classList.remove('section-drop-above', 'section-drop-below'));
+          dragSrcId = null;
+        });
+
+        el.addEventListener('dragover', e => {
+          if (!dragSrcId || dragSrcId === sec.id) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          const rect = el.getBoundingClientRect();
+          const above = e.clientY < rect.top + rect.height / 2;
+          form.querySelectorAll('.section-drop-above, .section-drop-below').forEach(x => {
+            if (x !== el) x.classList.remove('section-drop-above', 'section-drop-below');
+          });
+          el.classList.toggle('section-drop-above', above);
+          el.classList.toggle('section-drop-below', !above);
+        });
+
+        el.addEventListener('dragleave', e => {
+          if (!el.contains(e.relatedTarget)) {
+            el.classList.remove('section-drop-above', 'section-drop-below');
+          }
+        });
+
+        el.addEventListener('drop', e => {
+          e.preventDefault();
+          el.classList.remove('section-drop-above', 'section-drop-below');
+          if (!dragSrcId || dragSrcId === sec.id) return;
+          const rect = el.getBoundingClientRect();
+          const above = e.clientY < rect.top + rect.height / 2;
+          reorderSection(dragSrcId, sec.id, above);
+          dragSrcId = null;
+        });
+
+        // === Mobile Touch Drag ===
+        let touchActive = false;
+
+        handle.addEventListener('touchstart', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          touchActive = true;
+          dragSrcId = sec.id;
+          el.classList.add('section-dragging');
+          if (navigator.vibrate) navigator.vibrate(30);
+        }, { passive: false });
+
+        handle.addEventListener('touchmove', e => {
+          if (!touchActive) return;
+          e.preventDefault();
+          const touchY = e.touches[0].clientY;
+          appSettings.sections.forEach(other => {
+            if (other.id === sec.id) return;
+            const otherEl = document.getElementById(other.id);
+            if (!otherEl || otherEl.style.display === 'none') return;
+            const rect = otherEl.getBoundingClientRect();
+            if (touchY >= rect.top && touchY <= rect.bottom) {
+              const above = touchY < rect.top + rect.height / 2;
+              otherEl.classList.toggle('section-drop-above', above);
+              otherEl.classList.toggle('section-drop-below', !above);
+            } else {
+              otherEl.classList.remove('section-drop-above', 'section-drop-below');
+            }
+          });
+        }, { passive: false });
+
+        handle.addEventListener('touchend', e => {
+          if (!touchActive) return;
+          touchActive = false;
+          el.classList.remove('section-dragging');
+          const touchY = e.changedTouches[0].clientY;
+          let targetId = null, above = false;
+          appSettings.sections.forEach(other => {
+            if (other.id === sec.id) return;
+            const otherEl = document.getElementById(other.id);
+            if (!otherEl || otherEl.style.display === 'none') return;
+            const rect = otherEl.getBoundingClientRect();
+            if (touchY >= rect.top && touchY <= rect.bottom) {
+              targetId = other.id;
+              above = touchY < rect.top + rect.height / 2;
+            }
+            otherEl.classList.remove('section-drop-above', 'section-drop-below');
+          });
+          if (targetId) reorderSection(sec.id, targetId, above);
+          dragSrcId = null;
+        });
+      });
+    }
+
+    function reorderSection(fromId, toId, insertBefore) {
+      const fromIdx = appSettings.sections.findIndex(s => s.id === fromId);
+      if (fromIdx === -1) return;
+      const [moved] = appSettings.sections.splice(fromIdx, 1);
+      let toIdx = appSettings.sections.findIndex(s => s.id === toId);
+      if (toIdx === -1) { appSettings.sections.push(moved); }
+      else {
+        if (!insertBefore) toIdx++;
+        appSettings.sections.splice(toIdx, 0, moved);
+      }
+      saveSettings(appSettings);
+      applySectionSettings();
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+
     // =============================================
     // NAVIGATION DRAWER
     // =============================================
