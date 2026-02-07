@@ -3823,6 +3823,7 @@
     .section-row > .section { margin-bottom: 0; }
     .section-row > .card { margin-bottom: 0; }
     .section-size-2 { grid-row: span 2; }
+    @media (min-width: 1024px) { .section-wide { grid-column: span 2; } }
     .section-group {
       border: 1px dashed var(--accent-teal); border-radius: 12px;
       padding: 6px; margin-bottom: 8px; background: rgba(109,213,237,0.04);
@@ -6411,12 +6412,23 @@
         ? '<p style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">Add custom inputs to this section</p>' : '';
 
       const curSize = sec.size || 1;
+      const curWidth = sec.width || 1;
+      const chipStyle = 'style="width:auto;border-radius:8px;padding:4px 12px;font-size:11px"';
       const sizePickerHtml = `
-          <div class="field" style="margin-bottom:8px">
-            <label class="field-label">Height when paired</label>
-            <div class="day-picker" id="editSecSize_${sectionIdx}">
-              <span class="day-chip${curSize === 1 ? ' selected' : ''}" data-size="1" style="width:auto;border-radius:8px;padding:4px 12px;font-size:11px">1 row</span>
-              <span class="day-chip${curSize === 2 ? ' selected' : ''}" data-size="2" style="width:auto;border-radius:8px;padding:4px 12px;font-size:11px">2 rows (tall)</span>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+            <div class="field" style="margin-bottom:0;flex:1;min-width:120px">
+              <label class="field-label">Width</label>
+              <div class="day-picker" id="editSecWidth_${sectionIdx}">
+                <span class="day-chip${curWidth === 1 ? ' selected' : ''}" data-size="1" ${chipStyle}>Half</span>
+                <span class="day-chip${curWidth === 2 ? ' selected' : ''}" data-size="2" ${chipStyle}>Full</span>
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:0;flex:1;min-width:120px">
+              <label class="field-label">Height when paired</label>
+              <div class="day-picker" id="editSecSize_${sectionIdx}">
+                <span class="day-chip${curSize === 1 ? ' selected' : ''}" data-size="1" ${chipStyle}>1 row</span>
+                <span class="day-chip${curSize === 2 ? ' selected' : ''}" data-size="2" ${chipStyle}>2 rows</span>
+              </div>
             </div>
           </div>`;
 
@@ -6524,7 +6536,13 @@
         }
       }
 
-      // Update section height (1u or 2u) — applies to all sections
+      // Update section width and height — applies to all sections
+      const widthPicker = document.getElementById(`editSecWidth_${si}`);
+      if (widthPicker) {
+        const sel = widthPicker.querySelector('.day-chip.selected');
+        const w = sel ? parseInt(sel.dataset.size) : 1;
+        if (w === 2) sec.width = 2; else delete sec.width;
+      }
       const sizePicker = document.getElementById(`editSecSize_${si}`);
       if (sizePicker) {
         const sel = sizePicker.querySelector('.day-chip.selected');
@@ -6673,10 +6691,12 @@
           g.secs.forEach(({ sec, el }) => {
             el.style.order = '';
             el.classList.toggle('section-size-2', sec.size === 2);
+            el.classList.remove('section-wide');
             wrapper.appendChild(el);
           });
         } else {
           g.secs[0].el.classList.remove('section-size-2');
+          g.secs[0].el.classList.toggle('section-wide', g.secs[0].sec.width === 2);
           g.secs[0].el.style.order = orderIdx++;
         }
       });
