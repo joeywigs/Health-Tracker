@@ -3940,10 +3940,6 @@
       <div class="phase" style="grid-column: 1 / -1;">
         <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
       </div>
-      <div class="sync-btns" style="grid-column: 1 / -1;">
-        <button type="button" class="sync-shortcut-btn" id="syncStepsBtn">👟 Sync Steps</button>
-        <button type="button" class="sync-shortcut-btn" id="syncWorkoutsBtn">🚴 Get Workouts</button>
-      </div>
     </div>
   </header>
 
@@ -6674,39 +6670,8 @@
     document.getElementById('stickyMenuBtn')?.addEventListener('click', openNavDrawer);
     navBackdrop?.addEventListener('click', closeNavDrawer);
 
-    // Sync shortcut buttons
-    // App URL for x-callback-url return
+    // Start workout shortcut buttons (x-callback-url returns to app)
     const appReturnUrl = encodeURIComponent(window.location.href.split('?')[0]);
-
-    function runShortcutAndReload(shortcutName, btn, label, doneLabel) {
-      btn.classList.add('syncing');
-      btn.textContent = label.replace(/^(.+?\s)/, '$1') + '...';
-      // x-callback-url: runs shortcut then redirects back to this app
-      window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent(shortcutName)}&x-success=${appReturnUrl}`;
-      // When user returns, reload data
-      const onFocus = () => {
-        setTimeout(async () => {
-          btn.classList.remove('syncing');
-          btn.classList.add('done');
-          btn.textContent = doneLabel;
-          if (typeof loadDay === 'function') await loadDay();
-          setTimeout(() => { btn.classList.remove('done'); btn.textContent = label; }, 3000);
-        }, 1000);
-        window.removeEventListener('focus', onFocus);
-      };
-      window.addEventListener('focus', onFocus);
-      setTimeout(() => { btn.classList.remove('syncing'); btn.textContent = label; }, 15000);
-    }
-
-    document.getElementById('syncStepsBtn')?.addEventListener('click', function() {
-      runShortcutAndReload('Sync Steps', this, '👟 Sync Steps', '👟 Steps Synced');
-    });
-
-    document.getElementById('syncWorkoutsBtn')?.addEventListener('click', function() {
-      runShortcutAndReload('Get Workouts', this, '🚴 Get Workouts', '🚴 Workouts Synced');
-    });
-
-    // Start workout shortcut buttons
     document.getElementById('startWalkBtn')?.addEventListener('click', function() {
       window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('Start Outdoor Walk')}&x-success=${appReturnUrl}`;
     });
