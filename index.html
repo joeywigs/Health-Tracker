@@ -536,15 +536,19 @@
     .date-phase-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent-green); margin-bottom: 2px; }
     .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: white; }
     .date-phase-day { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .freeze-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+    .freeze-indicator {
+      font-size: 10px; color: #6dd5ed; margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
     .freeze-btn {
-      font-size: 10px; padding: 3px 10px;
+      font-size: 12px; padding: 6px 16px;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: rgba(255,255,255,0.05);
       color: var(--text-muted);
       font-family: 'Space Grotesk', sans-serif;
       cursor: pointer; transition: all 0.2s;
+      white-space: nowrap;
     }
     .freeze-btn:hover { border-color: #6dd5ed; color: #6dd5ed; }
     .freeze-btn.frozen {
@@ -553,7 +557,7 @@
       color: #6dd5ed;
     }
     .frozen-badge {
-      font-size: 10px; color: #6dd5ed;
+      font-size: 11px; color: #6dd5ed;
       font-family: 'JetBrains Mono', monospace;
     }
     body.day-mode .freeze-btn { background: rgba(0,0,0,0.03); }
@@ -3825,7 +3829,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.5.1</div>
+          <div class="tagline">v1.5.2</div>
         </div>
       </div>
       <div class="nav-links">
@@ -3842,10 +3846,7 @@
         <div class="date-phase-title" id="phaseTitle">Phase 1</div>
         <div class="date-main" id="dateDisplay"></div>
         <div class="date-phase-day" id="phaseDayCount">Day -- of 21</div>
-        <div class="freeze-row">
-          <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="togglePhaseFreeze()">Freeze Phase</button>
-          <span class="frozen-badge" id="frozenDaysBadge" style="display:none"></span>
-        </div>
+        <div class="freeze-indicator" id="freezeIndicator" style="display:none">❄️ Phase Frozen</div>
       </div>
       <button class="date-btn" id="nextBtn">→</button>
       <div class="ring-wrap">
@@ -4662,6 +4663,27 @@
       </div>
     </div>
 
+    <!-- Phase Freeze -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#2193b0;--icon-glow:rgba(109,213,237,0.4)">❄️</div><span class="sec-name">Phase Freeze</span></div></div>
+      <div class="sec-content">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Freeze your phase during vacations. Frozen days extend the phase end date and REHIT is paused — other goals still track normally.</p>
+        <div class="setting-row" style="flex-direction:column;gap:8px;align-items:stretch">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="setting-label">
+              <span class="setting-title" id="freezeStatusTitle">Phase Active</span>
+              <span class="setting-desc" id="freezeStatusDesc">Tap to freeze your current phase</span>
+            </div>
+            <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="togglePhaseFreeze()">Freeze Phase</button>
+          </div>
+          <div id="freezeInfoRow" style="display:none;display:flex;align-items:center;justify-content:space-between">
+            <span class="frozen-badge" id="frozenDaysBadge" style="display:none"></span>
+            <button type="button" class="freeze-btn" id="clearFrozenBtn" onclick="clearFrozenDays()" style="font-size:10px;padding:3px 10px;color:var(--accent-pink);border-color:var(--accent-pink)">Clear Frozen Days</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Bedtime Routine Settings -->
     <div class="section">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-teal);--icon-glow:var(--glow-purple)">🌙</div><span class="sec-name">Bedtime Habit Stack</span></div></div>
@@ -4878,7 +4900,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.5.1" defer></script>
+  <script src="app.js?v=1.5.2" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS

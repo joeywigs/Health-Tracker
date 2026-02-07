@@ -1262,6 +1262,25 @@ function updateFreezeButton() {
     badge.textContent = frozenCount > 0 ? `${frozenCount}d frozen` : '';
     badge.style.display = frozenCount > 0 ? 'inline' : 'none';
   }
+
+  const indicator = document.getElementById('freezeIndicator');
+  if (indicator) indicator.style.display = frozen ? 'block' : 'none';
+
+  const infoRow = document.getElementById('freezeInfoRow');
+  if (infoRow) infoRow.style.display = frozenCount > 0 ? 'block' : 'none';
+
+  const statusTitle = document.getElementById('freezeStatusTitle');
+  const statusDesc = document.getElementById('freezeStatusDesc');
+  if (statusTitle) statusTitle.textContent = frozen ? 'Phase Frozen' : 'Phase Active';
+  if (statusDesc) {
+    if (frozen) {
+      statusDesc.textContent = `Frozen since ${phase.frozenSince} — REHIT paused`;
+    } else if (frozenCount > 0) {
+      statusDesc.textContent = `${frozenCount} days were frozen this phase`;
+    } else {
+      statusDesc.textContent = 'Tap to freeze your current phase';
+    }
+  }
 }
 
 function updateFreezeOverlay() {
@@ -1269,6 +1288,26 @@ function updateFreezeOverlay() {
   if (!overlay) return;
   const frozen = isTodayFrozen();
   overlay.style.display = frozen ? 'flex' : 'none';
+}
+
+async function clearFrozenDays() {
+  const phase = getCurrentPhase();
+  if (!phase) return;
+
+  const count = getPhaseFrozenDays(phase).length;
+  if (count === 0) return;
+
+  if (!confirm(`Clear all ${count} frozen day(s) from ${phase.name}? The phase end date will revert.`)) return;
+
+  phase.frozenDays = [];
+  delete phase.frozenSince;
+
+  await savePhases();
+  updatePhaseInfo();
+  updateFreezeButton();
+  updateFreezeOverlay();
+  if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+  if (typeof showToast === 'function') showToast('Frozen days cleared', 'success');
 }
 
 // Get the next phase that needs to be created (if current phase is ending soon)
