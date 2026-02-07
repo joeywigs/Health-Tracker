@@ -3812,7 +3812,9 @@
       border-radius: 12px; padding: 12px;
     }
     body.day-mode .custom-layout-cell { background: rgba(0,0,0,0.02); }
-    .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; align-items: start; }
+    .section-row > .section { margin-bottom: 0; }
+    .section-row > .card { margin-bottom: 0; }
     .section-group {
       border: 1px dashed var(--accent-teal); border-radius: 12px;
       padding: 6px; margin-bottom: 8px; background: rgba(109,213,237,0.04);
