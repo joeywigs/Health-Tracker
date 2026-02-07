@@ -7903,14 +7903,6 @@
       return 'morningState-' + now.toISOString().slice(0, 10);
     }
 
-    function isViewingToday() {
-      if (typeof currentDate === 'undefined') return false;
-      const now = new Date();
-      return currentDate.getFullYear() === now.getFullYear() &&
-             currentDate.getMonth() === now.getMonth() &&
-             currentDate.getDate() === now.getDate();
-    }
-
     function checkMorningRoutine() {
       const section = document.getElementById('morningRoutine');
       if (!section) return;
