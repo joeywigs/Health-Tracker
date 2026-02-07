@@ -3855,7 +3855,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.6.1</div>
+          <div class="tagline">v1.6.2</div>
         </div>
       </div>
       <div class="nav-links">
@@ -4791,6 +4791,7 @@
             <select class="input" id="counterGoalType">
               <option value="daily">Daily (progress bar)</option>
               <option value="weekly">Weekly (dots)</option>
+              <option value="alltime">All-time (running total)</option>
             </select>
           </div>
           <div class="field">
@@ -6476,8 +6477,9 @@
       } else if (t === 'counter') {
         return `<div style="display:flex;gap:6px">
           <select class="input" id="fieldCfg_${si}_${fi}_goalType" style="font-size:11px;padding:4px;flex:1">
-            <option value="daily" ${c.goalType !== 'weekly' ? 'selected' : ''}>Daily</option>
+            <option value="daily" ${c.goalType === 'daily' || (!c.goalType) ? 'selected' : ''}>Daily</option>
             <option value="weekly" ${c.goalType === 'weekly' ? 'selected' : ''}>Weekly</option>
+            <option value="alltime" ${c.goalType === 'alltime' ? 'selected' : ''}>All-time</option>
           </select>
           <input type="number" class="input" id="fieldCfg_${si}_${fi}_goalNum" placeholder="Goal #" value="${c.goalNumber || 6}" min="1" style="font-size:11px;padding:4px;width:60px">
           <input type="text" class="input" id="fieldCfg_${si}_${fi}_unit" placeholder="Unit" value="${c.unitLabel || 'times'}" style="font-size:11px;padding:4px;flex:1">
@@ -7090,8 +7092,17 @@
       } else if (t === 'counter') {
         const goalNum = c.goalNumber || 6;
         const unit = c.unitLabel || 'times';
-        const isWeekly = c.goalType === 'weekly';
-        if (isWeekly) {
+        const gType = c.goalType || 'daily';
+        if (gType === 'alltime') {
+          return fLabel + `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${fieldId}">−</button>
+              <div class="water-num counter-value" id="${fieldId}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${fieldId}">+</button>
+              <div class="water-bar-wrap"><div class="water-bar-track"><div class="water-bar-fill counter-fill" id="${fieldId}_fill" style="height:0%"></div></div><div class="water-bar-goal">${goalNum}</div></div>
+            </div>
+            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit} (all-time)</div>`;
+        } else if (gType === 'weekly') {
           let dots = '';
           for (let i = 0; i < goalNum; i++) dots += `<div class="counter-dot" data-idx="${i}"></div>`;
           return fLabel + `
@@ -7201,25 +7212,54 @@
 
       } else if (t === 'counter') {
         const goalNum = c.goalNumber || 6;
-        const isWeekly = c.goalType === 'weekly';
+        const gType = c.goalType || 'daily';
+        const isAlltime = gType === 'alltime';
+        const isWeekly = gType === 'weekly';
         const plus = document.querySelector(`[data-id="${fieldId}"].counter-plus`) || section.querySelector(`.counter-plus[data-id="${fieldId}"]`);
         const minus = document.querySelector(`[data-id="${fieldId}"].counter-minus`) || section.querySelector(`.counter-minus[data-id="${fieldId}"]`);
+
+        // For alltime counters, store in settings so it persists across days
+        const getAlltimeKey = () => `alltime_${sectionId}_${fid}`;
+        const updateAlltimeBar = (val) => {
+          const fill = document.getElementById(`${fieldId}_fill`);
+          if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+        };
+        if (isAlltime) {
+          const valEl = document.getElementById(`${fieldId}_value`);
+          const stored = appSettings[getAlltimeKey()] || 0;
+          if (valEl) valEl.textContent = stored;
+          updateAlltimeBar(stored);
+        }
 
         plus?.addEventListener('click', () => {
           const valEl = document.getElementById(`${fieldId}_value`);
           let val = parseInt(valEl.textContent) || 0; val++;
-          valEl.textContent = val; sd()[fid] = { value: val };
-          if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
-          else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
-          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          valEl.textContent = val;
+          if (isAlltime) {
+            appSettings[getAlltimeKey()] = val;
+            updateAlltimeBar(val);
+            saveSettings(appSettings);
+          } else {
+            sd()[fid] = { value: val };
+            if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
+            else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          }
         });
         minus?.addEventListener('click', () => {
           const valEl = document.getElementById(`${fieldId}_value`);
           let val = parseInt(valEl.textContent) || 0; if (val > 0) val--;
-          valEl.textContent = val; sd()[fid] = { value: val };
-          if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
-          else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
-          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          valEl.textContent = val;
+          if (isAlltime) {
+            appSettings[getAlltimeKey()] = val;
+            updateAlltimeBar(val);
+            saveSettings(appSettings);
+          } else {
+            sd()[fid] = { value: val };
+            if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
+            else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
+            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+          }
         });
 
       } else if (t === 'log') {
@@ -7371,6 +7411,7 @@
           const c = f.config || {};
 
           if (t === 'counter') {
+            if (c.goalType === 'alltime') return; // alltime counters load from appSettings in wireUpField
             const val = fd.value || 0;
             const valEl = document.getElementById(`${fieldId}_value`);
             if (valEl) valEl.textContent = val;
