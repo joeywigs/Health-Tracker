@@ -3453,9 +3453,11 @@
         align-items: start;
       }
 
-      /* Quick grid spans full width */
-      .quick-grid {
+      /* Quick grid and section rows span full width */
+      .quick-grid, .section-row {
         grid-column: 1 / -1;
+      }
+      .quick-grid {
         grid-template-columns: repeat(4, 1fr);
         gap: 16px;
       }
@@ -3810,6 +3812,25 @@
       border-radius: 12px; padding: 12px;
     }
     body.day-mode .custom-layout-cell { background: rgba(0,0,0,0.02); }
+    .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .section-group {
+      border: 1px dashed var(--accent-teal); border-radius: 12px;
+      padding: 6px; margin-bottom: 8px; background: rgba(109,213,237,0.04);
+    }
+    .section-group .section-item { margin-bottom: 4px; }
+    .section-group .section-item:last-of-type { margin-bottom: 0; }
+    .section-group-label {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 2px 8px 4px; font-size: 10px; color: var(--accent-teal);
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .section-group-unlink {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-muted); font-size: 10px; padding: 2px 8px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .section-group-unlink:hover { color: var(--accent-pink); border-color: var(--accent-pink); }
+    .section-item.drag-group-target { border-color: var(--accent-teal); box-shadow: 0 0 8px var(--glow-teal); }
   </style>
 </head>
 <body>
@@ -3874,7 +3895,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.10</div>
+      <div class="tagline">v1.8.0</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3936,7 +3957,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.10</div>
+          <div class="tagline">v1.8.0</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4155,59 +4176,58 @@
       </div>
     </div>
 
-    <div class="quick-grid">
-      <div class="card sleep" id="sleepSection">
-        <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
-        <div class="input-row"><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
-        <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
+    <script>
+      window.handleAguaPlus = function() {
+        var el = document.getElementById('aguaCount');
+        if (!el) return;
+        var n = (parseInt(el.textContent) || 0) + 1;
+        el.textContent = n;
+        if (typeof aguaCount !== 'undefined') aguaCount = n;
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        if (typeof checkWaterGoal === 'function') checkWaterGoal();
+      };
+      window.handleAguaMinus = function() {
+        var el = document.getElementById('aguaCount');
+        if (!el) return;
+        var n = Math.max(0, (parseInt(el.textContent) || 0) - 1);
+        el.textContent = n;
+        if (typeof aguaCount !== 'undefined') aguaCount = n;
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      };
+    </script>
+
+    <div class="card sleep" id="sleepSection">
+      <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
+      <div class="input-row"><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
+      <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
+    </div>
+    <div class="card water" id="waterSection">
+      <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
+      <div class="water-row">
+        <button type="button" class="water-btn" onclick="window.handleAguaMinus()">−</button>
+        <div class="water-num" id="aguaCount">0</div>
+        <button type="button" class="water-btn" onclick="window.handleAguaPlus()">+</button>
       </div>
-      <script>
-        window.handleAguaPlus = function() {
-          var el = document.getElementById('aguaCount');
-          if (!el) return;
-          var n = (parseInt(el.textContent) || 0) + 1;
-          el.textContent = n;
-          if (typeof aguaCount !== 'undefined') aguaCount = n;
-          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          if (typeof checkWaterGoal === 'function') checkWaterGoal();
-        };
-        window.handleAguaMinus = function() {
-          var el = document.getElementById('aguaCount');
-          if (!el) return;
-          var n = Math.max(0, (parseInt(el.textContent) || 0) - 1);
-          el.textContent = n;
-          if (typeof aguaCount !== 'undefined') aguaCount = n;
-          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-        };
-      </script>
-      <div class="card water" id="waterSection">
-        <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
-        <div class="water-row">
-          <button type="button" class="water-btn" onclick="window.handleAguaMinus()">−</button>
-          <div class="water-num" id="aguaCount">0</div>
-          <button type="button" class="water-btn" onclick="window.handleAguaPlus()">+</button>
-        </div>
-        <div class="progress-bar-h">
-          <div class="progress-bar-h-fill" id="aguaBarFill"></div>
-        </div>
+      <div class="progress-bar-h">
+        <div class="progress-bar-h-fill" id="aguaBarFill"></div>
       </div>
-      <div class="card supplements">
-        <div class="card-head"><div class="card-icon">💊</div><div class="card-title">Supps</div></div>
-        <div class="mini-supps-grid">
-          <div class="mini-supp" title="Creatine"><input type="checkbox" id="creatine"><span>Creatine</span></div>
-          <div class="mini-supp" title="Vitamin D"><input type="checkbox" id="vitaminD"><span>Vit D</span></div>
-          <div class="mini-supp" title="NO2"><input type="checkbox" id="no2"><span>NO2</span></div>
-          <div class="mini-supp" title="Psyllium"><input type="checkbox" id="psyllium"><span>Psyllium</span></div>
-        </div>
+    </div>
+    <div class="card supplements" id="supplementsCard">
+      <div class="card-head"><div class="card-icon">💊</div><div class="card-title">Supps</div></div>
+      <div class="mini-supps-grid">
+        <div class="mini-supp" title="Creatine"><input type="checkbox" id="creatine"><span>Creatine</span></div>
+        <div class="mini-supp" title="Vitamin D"><input type="checkbox" id="vitaminD"><span>Vit D</span></div>
+        <div class="mini-supp" title="NO2"><input type="checkbox" id="no2"><span>NO2</span></div>
+        <div class="mini-supp" title="Psyllium"><input type="checkbox" id="psyllium"><span>Psyllium</span></div>
       </div>
-      <div class="card movement">
-        <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
-        <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
-        <div class="progress-bar-h">
-          <div class="progress-bar-h-fill" id="stepsBarFill"></div>
-        </div>
-        <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
+    </div>
+    <div class="card movement" id="stepsCard">
+      <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
+      <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
+      <div class="progress-bar-h">
+        <div class="progress-bar-h-fill" id="stepsBarFill"></div>
       </div>
+      <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
     </div>
     
     <div class="card movement rehit-full" id="rehitCard" style="position:relative">
@@ -4808,7 +4828,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.7.10" defer></script>
+  <script src="app.js?v=1.8.0" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -5976,13 +5996,16 @@
       meditationFreq: 'weekly',
       emailSprintFreq: 'daily',
       sections: [
+        { id: 'sleepSection', name: 'Sleep', icon: '🌙', visible: true, custom: false, group: 1 },
+        { id: 'waterSection', name: 'Water', icon: '💧', visible: true, custom: false, group: 1 },
+        { id: 'supplementsCard', name: 'Supplements', icon: '💊', visible: true, custom: false, group: 2 },
+        { id: 'stepsCard', name: 'Steps', icon: '👟', visible: true, custom: false, group: 2 },
+        { id: 'rehitCard', name: 'REHIT', icon: '🚴', visible: true, custom: false },
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
-        { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
         { id: 'mealsSection', name: 'Meals', icon: '🍽️', visible: true, custom: false },
         { id: 'movementSection', name: 'Movement Breaks', icon: '🚶', visible: true, custom: false },
         { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
         { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: true, custom: false },
-        // Reflections, Grey & Sloane, Carly moved to Writing page
         { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
         { id: 'bloodPressureSection', name: 'Blood Pressure', icon: '❤️', visible: true, custom: false },
         { id: 'emailSprintSection', name: 'Email Sprints', icon: '📧', visible: true, custom: false },
@@ -6203,13 +6226,24 @@
 
     function ensureMigrated() {
       let changed = false;
+
+      // Migrate old custom section format
       appSettings.sections.forEach(sec => {
         if (sec.custom && sec.type && !sec.fields) {
           migrateSection(sec);
           changed = true;
         }
       });
-      // Add any missing built-in sections (e.g. emailSprintSection added in v1.7.10)
+
+      // Rename old nutritionSection → supplementsCard
+      appSettings.sections.forEach(sec => {
+        if (sec.id === 'nutritionSection') {
+          sec.id = 'supplementsCard';
+          changed = true;
+        }
+      });
+
+      // Add any missing built-in sections
       const builtinIds = defaultSettings.sections.filter(s => !s.custom).map(s => s.id);
       const existingIds = new Set(appSettings.sections.map(s => s.id));
       builtinIds.forEach(id => {
@@ -6221,6 +6255,14 @@
           }
         }
       });
+
+      // Remove entries that reference non-existent HTML elements (stale custom sections excluded)
+      const validBuiltinIds = new Set(builtinIds);
+      appSettings.sections = appSettings.sections.filter(sec => {
+        if (sec.custom) return true; // keep all custom sections
+        return validBuiltinIds.has(sec.id);
+      });
+
       if (changed) saveSettings(appSettings);
     }
 
@@ -6232,22 +6274,54 @@
       if (!list) return;
 
       const dayAbbr = ['S','M','T','W','T','F','S'];
-      list.innerHTML = appSettings.sections.map((sec, idx) => {
-        const daysLabel = (sec.days && sec.days.length < 7)
-          ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">${sec.days.map(d => dayAbbr[d]).join('')}</span>`
-          : '';
-        return `
-        <div class="section-item" draggable="true" data-idx="${idx}" data-id="${sec.id}">
-          <span class="section-item-drag">⋮⋮</span>
-          <span class="section-item-icon">${sec.icon}</span>
-          <span class="section-item-name">${sec.name}${daysLabel}</span>
-          <button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>
-          <div class="section-item-toggle ${sec.visible ? 'on' : ''}" data-idx="${idx}"></div>
-          ${sec.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
-        </div>
-        <div class="section-field-editor" id="fieldEditor_${idx}" style="display:none"></div>
-      `}).join('');
-      
+      const html = [];
+
+      // Walk sections and group consecutive items with the same group id
+      let i = 0;
+      while (i < appSettings.sections.length) {
+        const sec = appSettings.sections[i];
+        const groupId = sec.group;
+
+        // Collect consecutive sections with the same group
+        const groupMembers = [i];
+        if (groupId != null) {
+          let j = i + 1;
+          while (j < appSettings.sections.length && appSettings.sections[j].group === groupId) {
+            groupMembers.push(j);
+            j++;
+          }
+        }
+
+        const isGrouped = groupMembers.length > 1;
+        if (isGrouped) {
+          html.push(`<div class="section-group" data-group="${groupId}">`);
+          html.push(`<div class="section-group-label"><span>Side-by-side</span><button class="section-group-unlink" data-group="${groupId}" title="Ungroup">Unlink</button></div>`);
+        }
+
+        groupMembers.forEach(idx => {
+          const s = appSettings.sections[idx];
+          const daysLabel = (s.days && s.days.length < 7)
+            ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">${s.days.map(d => dayAbbr[d]).join('')}</span>`
+            : '';
+          html.push(`
+            <div class="section-item${isGrouped ? ' grouped' : ''}" draggable="true" data-idx="${idx}" data-id="${s.id}">
+              <span class="section-item-drag">⋮⋮</span>
+              <span class="section-item-icon">${s.icon}</span>
+              <span class="section-item-name">${s.name}${daysLabel}</span>
+              <button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>
+              <div class="section-item-toggle ${s.visible ? 'on' : ''}" data-idx="${idx}"></div>
+              ${s.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
+            </div>
+            <div class="section-field-editor" id="fieldEditor_${idx}" style="display:none"></div>
+          `);
+        });
+
+        if (isGrouped) html.push('</div>');
+        i += groupMembers.length;
+      }
+
+      list.innerHTML = html.join('');
+
       // Add event listeners
       list.querySelectorAll('.section-item-toggle').forEach(toggle => {
         toggle.addEventListener('click', () => {
@@ -6257,7 +6331,7 @@
           saveSettings(appSettings);
         });
       });
-      
+
       list.querySelectorAll('.section-item-delete').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = parseInt(btn.dataset.idx);
@@ -6268,6 +6342,7 @@
             appSettings.sections.splice(idx, 1);
             saveSettings(appSettings);
             renderSectionList();
+            applySectionSettings();
           }
         });
       });
@@ -6278,12 +6353,22 @@
           const editor = document.getElementById(`fieldEditor_${idx}`);
           if (!editor) return;
           const isOpen = editor.style.display !== 'none';
-          // Close all editors
           list.querySelectorAll('.section-field-editor').forEach(e => e.style.display = 'none');
           if (!isOpen) {
             renderFieldEditor(idx);
             editor.style.display = 'block';
           }
+        });
+      });
+
+      // Ungroup buttons
+      list.querySelectorAll('.section-group-unlink').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const gid = parseInt(btn.dataset.group);
+          appSettings.sections.forEach(s => { if (s.group === gid) delete s.group; });
+          saveSettings(appSettings);
+          renderSectionList();
+          applySectionSettings();
         });
       });
 
@@ -6529,6 +6614,34 @@
       if (!window.customSectionData[sec.id]) window.customSectionData[sec.id] = {};
     }
     
+    // Resolve the drop action: center of target = group, top/bottom edges = reorder
+    function handleDrop(fromIdx, toIdx, dropY, targetRect) {
+      if (fromIdx === toIdx) return;
+      const ratio = (dropY - targetRect.top) / targetRect.height;
+      const isGroupDrop = ratio > 0.25 && ratio < 0.75;
+
+      if (isGroupDrop) {
+        // Group: assign both the same group id, move dragged next to target
+        const target = appSettings.sections[toIdx];
+        const gid = target.group ?? (Math.max(0, ...appSettings.sections.map(s => s.group || 0)) + 1);
+        const [moved] = appSettings.sections.splice(fromIdx, 1);
+        const newToIdx = appSettings.sections.indexOf(target);
+        appSettings.sections.splice(newToIdx + 1, 0, moved);
+        moved.group = gid;
+        target.group = gid;
+      } else {
+        // Reorder: move before/after target
+        const targetSec = appSettings.sections[toIdx];
+        const [moved] = appSettings.sections.splice(fromIdx, 1);
+        const insertAt = appSettings.sections.indexOf(targetSec);
+        appSettings.sections.splice(ratio <= 0.5 ? insertAt : insertAt + 1, 0, moved);
+      }
+
+      saveSettings(appSettings);
+      renderSectionList();
+      applySectionSettings();
+    }
+
     function setupDragAndDrop() {
       const list = document.getElementById('sectionList');
       const items = list.querySelectorAll('.section-item');
@@ -6545,19 +6658,32 @@
 
         item.addEventListener('dragend', () => {
           item.classList.remove('dragging');
-          document.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
+          list.querySelectorAll('.section-item').forEach(i => {
+            i.classList.remove('drag-over');
+            i.classList.remove('drag-group-target');
+          });
           draggedItem = null;
         });
 
         item.addEventListener('dragover', (e) => {
           e.preventDefault();
-          if (item !== draggedItem) {
+          if (item === draggedItem) return;
+          const rect = item.getBoundingClientRect();
+          const ratio = (e.clientY - rect.top) / rect.height;
+          list.querySelectorAll('.section-item').forEach(i => {
+            i.classList.remove('drag-over');
+            i.classList.remove('drag-group-target');
+          });
+          if (ratio > 0.25 && ratio < 0.75) {
+            item.classList.add('drag-group-target');
+          } else {
             item.classList.add('drag-over');
           }
         });
 
         item.addEventListener('dragleave', () => {
           item.classList.remove('drag-over');
+          item.classList.remove('drag-group-target');
         });
 
         item.addEventListener('drop', (e) => {
@@ -6565,13 +6691,7 @@
           if (item !== draggedItem && draggedItem) {
             const fromIdx = parseInt(draggedItem.dataset.idx);
             const toIdx = parseInt(item.dataset.idx);
-
-            const [moved] = appSettings.sections.splice(fromIdx, 1);
-            appSettings.sections.splice(toIdx, 0, moved);
-
-            saveSettings(appSettings);
-            renderSectionList();
-            applySectionSettings();
+            handleDrop(fromIdx, toIdx, e.clientY, item.getBoundingClientRect());
           }
         });
 
@@ -6594,11 +6714,16 @@
 
             allItems.forEach(otherItem => {
               if (otherItem === touchCurrentItem) return;
+              otherItem.classList.remove('drag-over');
+              otherItem.classList.remove('drag-group-target');
               const rect = otherItem.getBoundingClientRect();
               if (touchY > rect.top && touchY < rect.bottom) {
-                otherItem.classList.add('drag-over');
-              } else {
-                otherItem.classList.remove('drag-over');
+                const ratio = (touchY - rect.top) / rect.height;
+                if (ratio > 0.25 && ratio < 0.75) {
+                  otherItem.classList.add('drag-group-target');
+                } else {
+                  otherItem.classList.add('drag-over');
+                }
               }
             });
           }, { passive: false });
@@ -6621,19 +6746,15 @@
             if (targetItem) {
               const fromIdx = parseInt(touchCurrentItem.dataset.idx);
               const toIdx = parseInt(targetItem.dataset.idx);
-
-              const [moved] = appSettings.sections.splice(fromIdx, 1);
-              appSettings.sections.splice(toIdx, 0, moved);
-
-              saveSettings(appSettings);
-              renderSectionList();
-              applySectionSettings();
-
+              handleDrop(fromIdx, toIdx, touchY, targetItem.getBoundingClientRect());
               if (navigator.vibrate) navigator.vibrate(50);
             }
 
             touchCurrentItem.classList.remove('dragging');
-            allItems.forEach(i => i.classList.remove('drag-over'));
+            allItems.forEach(i => {
+              i.classList.remove('drag-over');
+              i.classList.remove('drag-group-target');
+            });
             touchCurrentItem = null;
           });
         }
@@ -6644,7 +6765,7 @@
       const form = document.getElementById('healthForm');
       if (!form) return;
 
-      // Get the day-of-week for the currently viewed date
+      // Day-of-week for the currently viewed date
       let viewingDay;
       try {
         viewingDay = (typeof currentDate !== 'undefined' && currentDate instanceof Date)
@@ -6652,17 +6773,51 @@
           : new Date().getDay();
       } catch(e) { viewingDay = new Date().getDay(); }
 
-      // Apply visibility, day-of-week filtering, and order
-      appSettings.sections.forEach((sec, idx) => {
+      // 1. Pull any sections currently inside .section-row wrappers back into the form
+      form.querySelectorAll('.section-row').forEach(row => {
+        while (row.firstChild) form.insertBefore(row.firstChild, row);
+        row.remove();
+      });
+
+      // 2. Build ordered list of visible items, grouping consecutive same-group sections
+      let orderIdx = 0;
+      const groups = []; // array of { group, secs: [{sec, el}] }
+      appSettings.sections.forEach(sec => {
         const el = document.getElementById(sec.id);
-        if (el) {
-          let show = sec.visible;
-          // If this section has day-of-week restrictions, check them
-          if (show && sec.days && Array.isArray(sec.days)) {
-            show = sec.days.includes(viewingDay);
+        if (!el) return;
+
+        let show = sec.visible;
+        if (show && sec.days && Array.isArray(sec.days)) {
+          show = sec.days.includes(viewingDay);
+        }
+        if (!show) { el.style.display = 'none'; el.style.order = ''; return; }
+        el.style.display = '';
+
+        // Group consecutive sections with the same group number
+        if (sec.group != null) {
+          const last = groups[groups.length - 1];
+          if (last && last.group === sec.group) {
+            last.secs.push({ sec, el });
+            return;
           }
-          el.style.display = show ? '' : 'none';
-          el.style.order = idx;
+        }
+        groups.push({ group: sec.group, secs: [{ sec, el }] });
+      });
+
+      // 3. Apply CSS order + wrap groups with 2+ items in a .section-row
+      groups.forEach(g => {
+        if (g.secs.length >= 2) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'section-row';
+          wrapper.style.order = orderIdx++;
+          // Insert wrapper before first element, then move all group members into it
+          form.insertBefore(wrapper, g.secs[0].el);
+          g.secs.forEach(({ el }) => {
+            el.style.order = '';
+            wrapper.appendChild(el);
+          });
+        } else {
+          g.secs[0].el.style.order = orderIdx++;
         }
       });
     }
