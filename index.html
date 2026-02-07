@@ -7777,9 +7777,7 @@
     
     // Initialize section settings on load
     document.addEventListener('DOMContentLoaded', () => {
-      applySectionSettings();
-      
-      // Recreate any custom sections (migrate if needed)
+      // Recreate any custom sections first (migrate if needed)
       ensureMigrated();
       appSettings.sections.forEach(sec => {
         if (sec.custom) {
@@ -7787,10 +7785,11 @@
             createCustomSection(sec.id, sec.name, sec.icon, sec.fields || []);
           }
         } else if (sec.fields && sec.fields.length > 0) {
-          // Append custom fields to built-in sections
           appendFieldsToBuiltinSection(sec);
         }
       });
+      // Apply order + drag handles after all sections exist in the DOM
+      applySectionSettings();
     });
     
     // Weekly Goals Review (Sunday)
