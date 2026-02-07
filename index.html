@@ -3874,7 +3874,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.9</div>
+      <div class="tagline">v1.7.10</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3936,7 +3936,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.9</div>
+          <div class="tagline">v1.7.10</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4808,7 +4808,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.7.9" defer></script>
+  <script src="app.js?v=1.7.10" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -5985,6 +5985,7 @@
         // Reflections, Grey & Sloane, Carly moved to Writing page
         { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
         { id: 'bloodPressureSection', name: 'Blood Pressure', icon: '❤️', visible: true, custom: false },
+        { id: 'emailSprintSection', name: 'Email Sprints', icon: '📧', visible: true, custom: false },
       ]
     };
     
@@ -6206,6 +6207,18 @@
         if (sec.custom && sec.type && !sec.fields) {
           migrateSection(sec);
           changed = true;
+        }
+      });
+      // Add any missing built-in sections (e.g. emailSprintSection added in v1.7.10)
+      const builtinIds = defaultSettings.sections.filter(s => !s.custom).map(s => s.id);
+      const existingIds = new Set(appSettings.sections.map(s => s.id));
+      builtinIds.forEach(id => {
+        if (!existingIds.has(id)) {
+          const def = defaultSettings.sections.find(s => s.id === id);
+          if (def) {
+            appSettings.sections.push({ ...def });
+            changed = true;
+          }
         }
       });
       if (changed) saveSettings(appSettings);
