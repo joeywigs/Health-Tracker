@@ -3855,7 +3855,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.6.0</div>
+          <div class="tagline">v1.6.1</div>
         </div>
       </div>
       <div class="nav-links">
@@ -4926,7 +4926,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.6.0" defer></script>
+  <script src="app.js?v=1.6.1" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -6349,7 +6349,7 @@
           <span class="section-item-drag">⋮⋮</span>
           <span class="section-item-icon">${sec.icon}</span>
           <span class="section-item-name">${sec.name}</span>
-          ${sec.custom ? `<button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>` : ''}
+          <button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>
           <div class="section-item-toggle ${sec.visible ? 'on' : ''}" data-idx="${idx}"></div>
           ${sec.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
         </div>
@@ -6411,15 +6411,15 @@
 
     function renderFieldEditor(sectionIdx) {
       const sec = appSettings.sections[sectionIdx];
-      if (!sec || !sec.custom) return;
+      if (!sec) return;
       const editor = document.getElementById(`fieldEditor_${sectionIdx}`);
       if (!editor) return;
 
       const fields = sec.fields || [];
       const typeOptions = FIELD_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('');
+      const isCustom = sec.custom;
 
-      editor.innerHTML = `
-        <div class="field-editor-panel">
+      const headerHtml = isCustom ? `
           <div class="field-editor-header">
             <div class="field" style="margin-bottom:8px">
               <label class="field-label">Section Name</label>
@@ -6429,8 +6429,17 @@
               <label class="field-label">Icon</label>
               <input type="text" class="input" id="editSecIcon_${sectionIdx}" value="${sec.icon}" maxlength="2" style="width:60px">
             </div>
-          </div>
-          <div class="field-label" style="margin-bottom:6px;font-weight:600">Fields</div>
+          </div>` : '';
+
+      const fieldsLabel = isCustom ? 'Fields' : 'Additional Fields';
+      const noFieldsHint = !isCustom && fields.length === 0
+        ? '<p style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">Add custom inputs to this section</p>' : '';
+
+      editor.innerHTML = `
+        <div class="field-editor-panel">
+          ${headerHtml}
+          <div class="field-label" style="margin-bottom:6px;font-weight:600">${fieldsLabel}</div>
+          ${noFieldsHint}
           <div id="fieldList_${sectionIdx}">
             ${fields.map((f, fi) => renderFieldRow(sectionIdx, fi, f, typeOptions)).join('')}
           </div>
@@ -6501,23 +6510,26 @@
 
     window.removeField = function(si, fi) {
       const sec = appSettings.sections[si];
-      if (!sec.fields || sec.fields.length <= 1) {
-        alert('Section must have at least one field');
+      if (!sec.fields) return;
+      if (sec.custom && sec.fields.length <= 1) {
+        alert('Custom section must have at least one field');
         return;
       }
       sec.fields.splice(fi, 1);
       renderFieldEditor(si);
     };
 
-    window.saveFieldEditor = function(si) {
+    function collectFieldEditorData(si) {
       const sec = appSettings.sections[si];
       if (!sec) return;
 
-      // Update name and icon
-      const nameInput = document.getElementById(`editSecName_${si}`);
-      const iconInput = document.getElementById(`editSecIcon_${si}`);
-      if (nameInput?.value.trim()) sec.name = nameInput.value.trim();
-      if (iconInput?.value) sec.icon = iconInput.value;
+      // Update name and icon for custom sections
+      if (sec.custom) {
+        const nameInput = document.getElementById(`editSecName_${si}`);
+        const iconInput = document.getElementById(`editSecIcon_${si}`);
+        if (nameInput?.value.trim()) sec.name = nameInput.value.trim();
+        if (iconInput?.value) sec.icon = iconInput.value;
+      }
 
       // Update fields
       const fields = sec.fields || [];
@@ -6527,7 +6539,6 @@
         if (nameEl) f.name = nameEl.value.trim() || f.name;
         if (typeEl) f.type = typeEl.value;
 
-        // Collect config
         f.config = {};
         if (f.type === 'checkbox') {
           const val = document.getElementById(`fieldCfg_${si}_${fi}_cb`)?.value || '';
@@ -6543,18 +6554,70 @@
           f.config.label = document.getElementById(`fieldCfg_${si}_${fi}_label`)?.value || 'Rate';
         }
       });
+    }
 
+    window.saveFieldEditor = function(si) {
+      const sec = appSettings.sections[si];
+      if (!sec) return;
+
+      collectFieldEditorData(si);
       saveSettings(appSettings);
 
-      // Remove old section DOM and recreate
-      const oldEl = document.getElementById(sec.id);
-      if (oldEl) oldEl.remove();
-      createCustomSection(sec.id, sec.name, sec.icon, sec.fields);
+      if (sec.custom) {
+        // Custom sections: destroy and recreate fully
+        const oldEl = document.getElementById(sec.id);
+        if (oldEl) oldEl.remove();
+        createCustomSection(sec.id, sec.name, sec.icon, sec.fields);
+      } else {
+        // Built-in sections: append/rebuild custom fields container
+        appendFieldsToBuiltinSection(sec);
+      }
       applySectionSettings();
 
       renderSectionList();
       if (typeof showToast === 'function') showToast('Section updated', 'success');
     };
+
+    function appendFieldsToBuiltinSection(sec) {
+      const sectionEl = document.getElementById(sec.id);
+      if (!sectionEl) return;
+      const content = sectionEl.querySelector('.sec-content');
+      if (!content) return;
+
+      // Remove old custom fields container if present
+      const oldContainer = content.querySelector('.builtin-extra-fields');
+      if (oldContainer) oldContainer.remove();
+
+      const fields = sec.fields || [];
+      if (fields.length === 0) return;
+
+      // Build and append
+      const container = document.createElement('div');
+      container.className = 'builtin-extra-fields';
+      container.style.borderTop = '1px solid var(--border)';
+      container.style.marginTop = '12px';
+      container.style.paddingTop = '12px';
+
+      fields.forEach(f => {
+        const fieldId = `${sec.id}__${f.id}`;
+        const wrap = document.createElement('div');
+        wrap.className = 'custom-field-wrap';
+        wrap.dataset.fieldId = f.id;
+        wrap.innerHTML = buildFieldHtml(fieldId, f);
+        container.appendChild(wrap);
+      });
+
+      content.appendChild(container);
+
+      // Wire up each field
+      fields.forEach(f => {
+        const fieldId = `${sec.id}__${f.id}`;
+        wireUpField(sectionEl, sec.id, fieldId, f);
+      });
+
+      // Init data storage
+      if (!window.customSectionData[sec.id]) window.customSectionData[sec.id] = {};
+    }
     
     function setupDragAndDrop() {
       const list = document.getElementById('sectionList');
@@ -7285,7 +7348,7 @@
         window.customSectionData = data;
       }
 
-      appSettings.sections.filter(s => s.custom).forEach(sec => {
+      appSettings.sections.filter(s => s.custom || (s.fields && s.fields.length > 0)).forEach(sec => {
         const sectionData = window.customSectionData[sec.id] || {};
         if (!window.customSectionData[sec.id]) window.customSectionData[sec.id] = {};
 
@@ -7353,7 +7416,7 @@
     
     // Collect custom sections data from UI for saving
     window.collectCustomSectionsData = function() {
-      appSettings.sections.filter(s => s.custom).forEach(sec => {
+      appSettings.sections.filter(s => s.custom || (s.fields && s.fields.length > 0)).forEach(sec => {
         if (!window.customSectionData[sec.id]) window.customSectionData[sec.id] = {};
 
         const fields = sec.fields || [];
@@ -7426,9 +7489,14 @@
       
       // Recreate any custom sections (migrate if needed)
       ensureMigrated();
-      appSettings.sections.filter(s => s.custom).forEach(sec => {
-        if (!document.getElementById(sec.id)) {
-          createCustomSection(sec.id, sec.name, sec.icon, sec.fields || []);
+      appSettings.sections.forEach(sec => {
+        if (sec.custom) {
+          if (!document.getElementById(sec.id)) {
+            createCustomSection(sec.id, sec.name, sec.icon, sec.fields || []);
+          }
+        } else if (sec.fields && sec.fields.length > 0) {
+          // Append custom fields to built-in sections
+          appendFieldsToBuiltinSection(sec);
         }
       });
     });
