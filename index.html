@@ -3854,7 +3854,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.1</div>
+      <div class="tagline">v1.7.2</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3916,7 +3916,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.1</div>
+          <div class="tagline">v1.7.2</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -7905,9 +7905,21 @@
 
     function checkMorningRoutine() {
       const section = document.getElementById('morningRoutine');
-      if (!section) return;
+      if (!section) { console.log('morning: no section element'); return; }
 
-      if (!isViewingToday()) {
+      // Use global isViewingToday if available, otherwise check directly
+      let viewingToday = false;
+      if (typeof isViewingToday === 'function') {
+        try { viewingToday = isViewingToday(); } catch(e) { console.log('morning: isViewingToday error', e); }
+      } else if (typeof currentDate !== 'undefined') {
+        viewingToday = currentDate.toDateString() === new Date().toDateString();
+      } else {
+        // Fallback: assume today if we can't check
+        viewingToday = true;
+      }
+      console.log('morning: viewingToday=', viewingToday);
+
+      if (!viewingToday) {
         section.classList.remove('show');
         return;
       }
