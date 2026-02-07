@@ -1950,14 +1950,24 @@
     .water-num { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: white; }
     
     /* Sections */
-    .section { 
-      background: rgba(255,255,255,0.06); 
-      border: 1px solid rgba(255,255,255,0.15); 
-      border-radius: var(--radius); 
-      padding: 18px; 
-      margin-bottom: 12px; 
-      backdrop-filter: blur(20px); 
+    .section {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(20px);
       transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--icon-start, var(--accent-purple)), var(--icon-end, var(--accent-pink)));
+      opacity: 0.8;
     }
     .section:hover { border-color: rgba(255,255,255,0.2); }
 
@@ -5714,6 +5724,17 @@
         });
       });
       
+      // Propagate icon color variables to parent .section for accent bar
+      document.querySelectorAll('.section .sec-icon[style]').forEach(icon => {
+        const section = icon.closest('.section');
+        if (!section) return;
+        const raw = icon.getAttribute('style') || '';
+        const m = raw.match(/--icon-start\s*:\s*([^;]+)/);
+        const m2 = raw.match(/--icon-end\s*:\s*([^;]+)/);
+        if (m) section.style.setProperty('--icon-start', m[1].trim());
+        if (m2) section.style.setProperty('--icon-end', m2[1].trim());
+      });
+
       // Section collapse toggles
       document.querySelectorAll('.sec-head').forEach(h => {
         h.addEventListener('click', () => {
@@ -7502,6 +7523,8 @@
       const section = document.createElement('div');
       section.className = 'section';
       section.id = id;
+      section.style.setProperty('--icon-start', 'var(--accent-purple)');
+      section.style.setProperty('--icon-end', 'var(--accent-pink)');
 
       // Build content with smart layout
       const contentParts = layoutFields(id, fields);
@@ -7509,7 +7532,7 @@
       section.innerHTML = `
         <div class="sec-head collapsed">
           <div class="sec-title">
-            <div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink)">${icon}</div>
+            <div class="sec-icon">${icon}</div>
             <span class="sec-name">${name}</span>
           </div>
           <span class="sec-toggle">▼</span>
