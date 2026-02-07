@@ -403,6 +403,7 @@ function changeDate(days) {
   updateGroomingCard();
   updateWeeklySummaryButton();
   updateDayLock();
+  if (typeof applySectionSettings === 'function') applySectionSettings();
   if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
 }
 
