@@ -3855,7 +3855,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.6.2</div>
+          <div class="tagline">v1.6.3</div>
         </div>
       </div>
       <div class="nav-links">
@@ -7082,10 +7082,12 @@
       if (t === 'text') {
         return fLabel + `<textarea class="input" id="${fieldId}_input" placeholder="Enter notes..."></textarea>`;
       } else if (t === 'checkbox') {
-        const cbs = (c.checkboxes || ['Done']).map((cb, i) =>
-          `<div class="chip"><input type="checkbox" id="${fieldId}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>`
+        const names = c.checkboxes || ['Done'];
+        const colClass = names.length >= 3 ? ' three-col' : '';
+        const cbs = names.map((cb, i) =>
+          `<div class="mini-supp" title="${cb}"><input type="checkbox" id="${fieldId}_check_${i}"><span>${cb}</span></div>`
         ).join('');
-        return fLabel + `<div class="chips">${cbs}</div>`;
+        return fLabel + `<div class="mini-supps-grid${colClass}">${cbs}</div>`;
       } else if (t === 'number') {
         const unit = c.unit ? `<span class="card-unit">${c.unit}</span>` : '';
         return fLabel + `<div style="display:flex;align-items:center;gap:8px"><input type="number" class="big-input" id="${fieldId}_input" placeholder="${c.placeholder || '0'}" style="max-width:120px">${unit}</div>`;
@@ -7099,9 +7101,9 @@
               <button type="button" class="water-btn counter-minus" data-id="${fieldId}">−</button>
               <div class="water-num counter-value" id="${fieldId}_value">0</div>
               <button type="button" class="water-btn counter-plus" data-id="${fieldId}">+</button>
-              <div class="water-bar-wrap"><div class="water-bar-track"><div class="water-bar-fill counter-fill" id="${fieldId}_fill" style="height:0%"></div></div><div class="water-bar-goal">${goalNum}</div></div>
             </div>
-            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit} (all-time)</div>`;
+            <div class="progress-bar-h" style="margin-top:10px"><div class="progress-bar-h-fill" id="${fieldId}_fill" style="width:0%"></div></div>
+            <div class="card-avg" id="${fieldId}_label" style="margin-top:6px">0 of ${goalNum} ${unit}</div>`;
         } else if (gType === 'weekly') {
           let dots = '';
           for (let i = 0; i < goalNum; i++) dots += `<div class="counter-dot" data-idx="${i}"></div>`;
@@ -7204,10 +7206,13 @@
 
       if (t === 'checkbox') {
         const wrap = document.getElementById(`${fieldId}_check_0`)?.closest('.custom-field-wrap') || section;
-        wrap.querySelectorAll('.chip').forEach(chip => {
-          const cb = chip.querySelector('input');
-          chip.addEventListener('click', (e) => { if (e.target.type !== 'checkbox') { cb.checked = !cb.checked; chip.classList.toggle('on', cb.checked); updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); }});
-          cb.addEventListener('change', () => { chip.classList.toggle('on', cb.checked); updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        wrap.querySelectorAll('.mini-supp').forEach(supp => {
+          supp.addEventListener('click', () => {
+            const cb = supp.querySelector('input[type="checkbox"]');
+            if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+          });
+          const cb = supp.querySelector('input[type="checkbox"]');
+          cb?.addEventListener('change', () => { updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
         });
 
       } else if (t === 'counter') {
@@ -7220,9 +7225,12 @@
 
         // For alltime counters, store in settings so it persists across days
         const getAlltimeKey = () => `alltime_${sectionId}_${fid}`;
+        const unit = c.unitLabel || 'times';
         const updateAlltimeBar = (val) => {
           const fill = document.getElementById(`${fieldId}_fill`);
-          if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          if (fill) fill.style.width = Math.min(100, (val / goalNum) * 100) + '%';
+          const label = document.getElementById(`${fieldId}_label`);
+          if (label) label.textContent = `${val} of ${goalNum} ${unit}`;
         };
         if (isAlltime) {
           const valEl = document.getElementById(`${fieldId}_value`);
@@ -7424,9 +7432,8 @@
           } else if (t === 'checkbox') {
             (c.checkboxes || ['Done']).forEach((cb, i) => {
               const input = document.getElementById(`${fieldId}_check_${i}`);
-              const chip = input?.closest('.chip');
               const isChecked = fd.checkboxes?.[i] || false;
-              if (input) { input.checked = isChecked; chip?.classList.toggle('on', isChecked); }
+              if (input) input.checked = isChecked;
             });
           } else if (t === 'text' || t === 'number' || t === 'time') {
             const input = document.getElementById(`${fieldId}_input`);
