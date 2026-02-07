@@ -1161,8 +1161,32 @@ function getPhaseById(id) {
 }
 
 // Frozen days helpers
+function formatDateStr(d) {
+  return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+}
+
+function isPhaseCurrentlyFrozen(phase) {
+  return !!(phase && phase.frozenSince);
+}
+
 function getPhaseFrozenDays(phase) {
-  return (phase && Array.isArray(phase.frozenDays)) ? phase.frozenDays : [];
+  if (!phase) return [];
+  const explicit = Array.isArray(phase.frozenDays) ? [...phase.frozenDays] : [];
+
+  // If actively frozen, add all days from frozenSince to today
+  if (phase.frozenSince) {
+    const start = parseDataDate(phase.frozenSince);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const cursor = new Date(start);
+    cursor.setHours(0, 0, 0, 0);
+    while (cursor <= today) {
+      const ds = formatDateStr(cursor);
+      if (!explicit.includes(ds)) explicit.push(ds);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  }
+  return explicit;
 }
 
 function getPhaseEffectiveEnd(phase) {
@@ -1174,36 +1198,50 @@ function getPhaseEffectiveEnd(phase) {
 }
 
 function isDateFrozen(phase, dateStr) {
-  const frozen = getPhaseFrozenDays(phase);
-  return frozen.includes(dateStr);
+  return getPhaseFrozenDays(phase).includes(dateStr);
 }
 
-function formatDateStr(d) {
-  return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+function isTodayFrozen() {
+  const phase = getCurrentPhase();
+  if (!phase) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return isDateFrozen(phase, formatDateStr(today));
 }
 
-async function toggleFreezeToday() {
+async function togglePhaseFreeze() {
   const phase = getCurrentPhase();
   if (!phase) return;
 
   if (!phase.frozenDays) phase.frozenDays = [];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = formatDateStr(today);
-
-  const idx = phase.frozenDays.indexOf(todayStr);
-  if (idx >= 0) {
-    phase.frozenDays.splice(idx, 1);
-    if (typeof showToast === 'function') showToast('Day unfrozen', 'success');
+  if (isPhaseCurrentlyFrozen(phase)) {
+    // Unfreeze: convert the frozenSince range into explicit frozenDays
+    const start = parseDataDate(phase.frozenSince);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const cursor = new Date(start);
+    cursor.setHours(0, 0, 0, 0);
+    while (cursor <= today) {
+      const ds = formatDateStr(cursor);
+      if (!phase.frozenDays.includes(ds)) phase.frozenDays.push(ds);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    delete phase.frozenSince;
+    if (typeof showToast === 'function') showToast('Phase unfrozen — welcome back!', 'success');
   } else {
-    phase.frozenDays.push(todayStr);
-    if (typeof showToast === 'function') showToast('Day frozen — phase extended', 'info');
+    // Freeze: start freeze mode from today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    phase.frozenSince = formatDateStr(today);
+    if (typeof showToast === 'function') showToast('Phase frozen — REHIT paused', 'info');
   }
 
   await savePhases();
   updatePhaseInfo();
   updateFreezeButton();
+  updateFreezeOverlay();
+  if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
 }
 
 function updateFreezeButton() {
@@ -1213,20 +1251,24 @@ function updateFreezeButton() {
   const phase = getCurrentPhase();
   if (!phase) { btn.style.display = 'none'; return; }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = formatDateStr(today);
-  const isFrozen = isDateFrozen(phase, todayStr);
+  const frozen = isPhaseCurrentlyFrozen(phase);
   const frozenCount = getPhaseFrozenDays(phase).length;
 
-  btn.textContent = isFrozen ? 'Unfreeze Day' : 'Freeze Day';
-  btn.classList.toggle('frozen', isFrozen);
+  btn.textContent = frozen ? 'Unfreeze Phase' : 'Freeze Phase';
+  btn.classList.toggle('frozen', frozen);
 
   const badge = document.getElementById('frozenDaysBadge');
   if (badge) {
     badge.textContent = frozenCount > 0 ? `${frozenCount}d frozen` : '';
     badge.style.display = frozenCount > 0 ? 'inline' : 'none';
   }
+}
+
+function updateFreezeOverlay() {
+  const overlay = document.getElementById('rehitFreezeOverlay');
+  if (!overlay) return;
+  const frozen = isTodayFrozen();
+  overlay.style.display = frozen ? 'flex' : 'none';
 }
 
 // Get the next phase that needs to be created (if current phase is ending soon)
@@ -1328,8 +1370,8 @@ async function openNewPhaseModal(fromPhaseId = null) {
       </div>`;
   }
 
-  // REHIT stats
-  if (stats.rehit) {
+  // REHIT stats (skip if phase is currently frozen)
+  if (stats.rehit && !isPhaseCurrentlyFrozen(phase)) {
     performanceHtml += `
       <div class="phase-stat-row">
         <div class="phase-stat-label">REHIT</div>
@@ -2026,7 +2068,15 @@ function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
   const currentStreak = calculateCurrentStreak();
   const pctLogged = elapsedDays > 0 ? Math.min(100, Math.round((totalDaysLogged / elapsedDays) * 100)) : 0;
 
+  const frozen = phase ? isPhaseCurrentlyFrozen(phase) : false;
+  const frozenBanner = frozen ? `
+    <div class="summary-freeze-banner">
+      <span>❄️</span> Phase frozen — REHIT paused, other goals still tracking
+      <span style="opacity:0.5;font-size:11px">(${frozenDays.length}d frozen)</span>
+    </div>` : '';
+
   container.innerHTML = `
+    ${frozenBanner}
     <div class="summary-stat full-width">
       <div class="summary-stat-value">🔥 ${currentStreak}-day streak</div>
       <div class="summary-stat-label">${totalDaysLogged} days logged${range === 'phase' ? ` (${pctLogged}%)` : ''}</div>
@@ -2269,6 +2319,7 @@ function renderSummaryRehitCalendar(data, range, phaseId = null) {
   const phase = phaseId ? getPhaseById(phaseId) : getCurrentPhase();
   if (!phase) { container.innerHTML = ''; return; }
 
+  const frozen = isPhaseCurrentlyFrozen(phase);
   const phaseStart = parseDataDate(phase.start);
   phaseStart.setHours(0, 0, 0, 0);
   const phaseLength = phase.length || 21;
@@ -2712,11 +2763,12 @@ function renderGoalPerformance(stats) {
   const needsWork = document.getElementById('goalsNeedWork');
   if (!doingWell || !needsWork) return;
 
+  const frozen = isPhaseCurrentlyFrozen(getCurrentPhase());
   const goals = [
     { key: 'sleep', ...GOALS.sleep, ...stats.sleep },
     { key: 'agua', ...GOALS.agua, ...stats.agua },
     { key: 'supps', name: 'Supplements', icon: '💊', ...stats.supps },
-    { key: 'rehit', ...GOALS.rehit, ...stats.rehit },
+    ...(!frozen ? [{ key: 'rehit', ...GOALS.rehit, ...stats.rehit }] : []),
     { key: 'steps', ...GOALS.steps, ...stats.steps },
     { key: 'movement', ...GOALS.movement, ...stats.movement },
     { key: 'reading', ...GOALS.reading, ...stats.reading },
@@ -2770,11 +2822,12 @@ function renderHealthGoals(stats) {
 
   const safe = (s) => s || { pct: 0, detail: 'No data' };
 
+  const frozen = isPhaseCurrentlyFrozen(getCurrentPhase());
   container.innerHTML = `
     ${renderGoalStatCard('Sleep', '🌙', safe(stats.sleep).pct, safe(stats.sleep).detail)}
     ${renderGoalStatCard('Water', '💧', safe(stats.agua).pct, safe(stats.agua).detail)}
     ${renderGoalStatCard('Supps', '💊', safe(stats.supps).pct, safe(stats.supps).detail)}
-    ${renderGoalStatCard('REHIT', '🚴', safe(stats.rehit).pct, safe(stats.rehit).detail)}
+    ${frozen ? '<div class="goal-stat-card" style="opacity:0.4;text-align:center;padding:12px"><span>🚴</span> REHIT paused</div>' : renderGoalStatCard('REHIT', '🚴', safe(stats.rehit).pct, safe(stats.rehit).detail)}
     ${renderGoalStatCard('Steps', '👟', safe(stats.steps).pct, safe(stats.steps).detail)}
     ${renderGoalStatCard('Movement', '🚶', safe(stats.movement).pct, safe(stats.movement).detail)}
     ${renderGoalStatCard('Reading', '📖', safe(stats.reading).pct, safe(stats.reading).detail)}

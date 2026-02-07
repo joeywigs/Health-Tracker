@@ -1000,6 +1000,50 @@
       margin-bottom: 16px;
       min-height: auto;
     }
+    .rehit-freeze-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 15, 30, 0.85);
+      backdrop-filter: blur(4px);
+      border-radius: inherit;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .rehit-freeze-icon { font-size: 28px; }
+    .rehit-freeze-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: #6dd5ed;
+    }
+    .rehit-freeze-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    body.day-mode .rehit-freeze-overlay {
+      background: rgba(245, 248, 255, 0.88);
+    }
+    .summary-freeze-banner {
+      background: rgba(109, 213, 237, 0.1);
+      border: 1px solid rgba(109, 213, 237, 0.3);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #6dd5ed;
+      text-align: center;
+      font-family: 'Space Grotesk', sans-serif;
+      margin-bottom: 12px;
+    }
+    body.day-mode .summary-freeze-banner {
+      background: rgba(109, 213, 237, 0.08);
+      color: #0891b2;
+      border-color: rgba(8, 145, 178, 0.2);
+    }
     .rehit-dots-row {
       display: flex;
       gap: 8px;
@@ -3781,7 +3825,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.5.0</div>
+          <div class="tagline">v1.5.1</div>
         </div>
       </div>
       <div class="nav-links">
@@ -3799,7 +3843,7 @@
         <div class="date-main" id="dateDisplay"></div>
         <div class="date-phase-day" id="phaseDayCount">Day -- of 21</div>
         <div class="freeze-row">
-          <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="toggleFreezeToday()">Freeze Day</button>
+          <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="togglePhaseFreeze()">Freeze Phase</button>
           <span class="frozen-badge" id="frozenDaysBadge" style="display:none"></span>
         </div>
       </div>
@@ -4041,7 +4085,12 @@
       </div>
     </div>
     
-    <div class="card movement rehit-full" id="rehitCard">
+    <div class="card movement rehit-full" id="rehitCard" style="position:relative">
+      <div id="rehitFreezeOverlay" class="rehit-freeze-overlay" style="display:none">
+        <div class="rehit-freeze-icon">❄️</div>
+        <div class="rehit-freeze-text">REHIT Paused</div>
+        <div class="rehit-freeze-sub">Phase is frozen — enjoy your vacation!</div>
+      </div>
       <div class="card-head" style="margin-bottom:0">
         <div class="card-icon">🚴</div>
         <div class="card-title">REHIT</div>
@@ -4829,7 +4878,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.5.0" defer></script>
+  <script src="app.js?v=1.5.1" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -5901,6 +5950,7 @@
       }
 
       if (typeof updateFreezeButton === 'function') updateFreezeButton();
+      if (typeof updateFreezeOverlay === 'function') updateFreezeOverlay();
     }
     
     // Override app.js phase functions to use our fixed version
