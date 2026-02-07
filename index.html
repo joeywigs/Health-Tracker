@@ -3854,7 +3854,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.4</div>
+      <div class="tagline">v1.7.5</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3916,7 +3916,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.4</div>
+          <div class="tagline">v1.7.5</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -3971,6 +3971,51 @@
       <div class="celebration-title">Goodnight!</div>
       <div class="celebration-subtitle">Have a great workout in the morning!</div>
       <button type="button" class="celebration-dismiss" onclick="dismissCelebration()">Sweet Dreams</button>
+    </div>
+  </div>
+
+  <!-- Morning Habit Stack (outside form, matching bedtime pattern) -->
+  <div id="morningRoutine" class="morning-routine">
+    <div id="morningPrompt">
+      <div class="morning-header">
+        <div class="morning-title">
+          <div class="morning-icon">☀️</div>
+          <div>
+            <div class="morning-label">Morning Habit Stack</div>
+            <div class="morning-sublabel">Ready to start your morning routine?</div>
+          </div>
+        </div>
+      </div>
+      <div class="morning-prompt-btns">
+        <button type="button" class="morning-yes-btn" onclick="acceptMorningRoutine()">Yes, let's go!</button>
+        <button type="button" class="morning-no-btn" onclick="dismissMorningRoutine()">Not today</button>
+      </div>
+    </div>
+    <div id="morningStack" style="display:none">
+      <div class="morning-header">
+        <div class="morning-title">
+          <div class="morning-icon">☀️</div>
+          <div>
+            <div class="morning-label">Morning Habit Stack</div>
+            <div class="morning-sublabel">Start your day right</div>
+          </div>
+        </div>
+        <button type="button" class="morning-done-btn" onclick="dismissMorningRoutine()">Done</button>
+      </div>
+      <div class="morning-items" id="morningItems">
+        <!-- Items populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Morning Celebration Overlay -->
+  <div id="morningCelebration" class="bedtime-celebration">
+    <div class="celebration-stars"></div>
+    <div class="celebration-content">
+      <div class="celebration-emoji">💪</div>
+      <div class="celebration-title">Crushed It!</div>
+      <div class="celebration-subtitle">Morning routine complete - let's have a great day!</div>
+      <button type="button" class="celebration-dismiss" onclick="dismissMorningCelebration()">Let's Go!</button>
     </div>
   </div>
 
@@ -4047,40 +4092,6 @@
       </div>
     </div>
 
-    <!-- Morning Habit Stack -->
-    <div id="morningRoutine" class="morning-routine">
-      <div id="morningPrompt">
-        <div class="morning-header">
-          <div class="morning-title">
-            <div class="morning-icon">☀️</div>
-            <div>
-              <div class="morning-label">Morning Habit Stack</div>
-              <div class="morning-sublabel">Ready to start your morning routine?</div>
-            </div>
-          </div>
-        </div>
-        <div class="morning-prompt-btns">
-          <button type="button" class="morning-yes-btn" onclick="acceptMorningRoutine()">Yes, let's go!</button>
-          <button type="button" class="morning-no-btn" onclick="dismissMorningRoutine()">Not today</button>
-        </div>
-      </div>
-      <div id="morningStack" style="display:none">
-        <div class="morning-header">
-          <div class="morning-title">
-            <div class="morning-icon">☀️</div>
-            <div>
-              <div class="morning-label">Morning Habit Stack</div>
-              <div class="morning-sublabel">Start your day right</div>
-            </div>
-          </div>
-          <button type="button" class="morning-done-btn" onclick="dismissMorningRoutine()">Done</button>
-        </div>
-        <div class="morning-items" id="morningItems">
-          <!-- Items populated by JS -->
-        </div>
-      </div>
-    </div>
-
     <!-- Friday Grooming Section -->
     <div id="groomingCard" class="grooming-card" style="display:none">
       <div class="grooming-header">
@@ -4098,17 +4109,6 @@
           <span class="grooming-check"></span>
           <span>Beard Trim</span>
         </label>
-      </div>
-    </div>
-
-    <!-- Morning Celebration Overlay -->
-    <div id="morningCelebration" class="bedtime-celebration">
-      <div class="celebration-stars"></div>
-      <div class="celebration-content">
-        <div class="celebration-emoji">💪</div>
-        <div class="celebration-title">Crushed It!</div>
-        <div class="celebration-subtitle">Morning routine complete - let's have a great day!</div>
-        <button type="button" class="celebration-dismiss" onclick="dismissMorningCelebration()">Let's Go!</button>
       </div>
     </div>
 
@@ -4763,7 +4763,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.7.3" defer></script>
+  <script src="app.js?v=1.7.5" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
