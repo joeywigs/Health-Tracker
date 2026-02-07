@@ -3812,9 +3812,17 @@
       border-radius: 12px; padding: 12px;
     }
     body.day-mode .custom-layout-cell { background: rgba(0,0,0,0.02); }
-    .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; align-items: start; }
+    .section-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 1fr;
+      grid-auto-flow: dense;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
     .section-row > .section { margin-bottom: 0; }
     .section-row > .card { margin-bottom: 0; }
+    .section-size-2 { grid-row: span 2; }
     .section-group {
       border: 1px dashed var(--accent-teal); border-radius: 12px;
       padding: 6px; margin-bottom: 8px; background: rgba(109,213,237,0.04);
@@ -6299,7 +6307,7 @@
           ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">${sec.days.map(d => dayAbbr[d]).join('')}</span>`
           : '';
         const groupLabel = (sec.group != null)
-          ? `<span style="font-size:9px;color:var(--accent-teal);margin-left:4px">paired</span>`
+          ? `<span style="font-size:9px;color:var(--accent-teal);margin-left:4px">paired${sec.size === 2 ? ' · tall' : ''}</span>`
           : '';
         return `
         <div class="section-item" data-idx="${idx}" data-id="${sec.id}">
@@ -6402,9 +6410,20 @@
       const noFieldsHint = !isCustom && fields.length === 0
         ? '<p style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">Add custom inputs to this section</p>' : '';
 
+      const curSize = sec.size || 1;
+      const sizePickerHtml = `
+          <div class="field" style="margin-bottom:8px">
+            <label class="field-label">Height when paired</label>
+            <div class="day-picker" id="editSecSize_${sectionIdx}">
+              <span class="day-chip${curSize === 1 ? ' selected' : ''}" data-size="1" style="width:auto;border-radius:8px;padding:4px 12px;font-size:11px">1 row</span>
+              <span class="day-chip${curSize === 2 ? ' selected' : ''}" data-size="2" style="width:auto;border-radius:8px;padding:4px 12px;font-size:11px">2 rows (tall)</span>
+            </div>
+          </div>`;
+
       editor.innerHTML = `
         <div class="field-editor-panel">
           ${headerHtml}
+          ${sizePickerHtml}
           <div class="field-label" style="margin-bottom:6px;font-weight:600">${fieldsLabel}</div>
           ${noFieldsHint}
           <div id="fieldList_${sectionIdx}">
@@ -6503,6 +6522,14 @@
           const selectedDays = Array.from(dayPicker.querySelectorAll('.day-chip.selected')).map(c => parseInt(c.dataset.day));
           sec.days = selectedDays.length > 0 && selectedDays.length < 7 ? selectedDays : undefined;
         }
+      }
+
+      // Update section height (1u or 2u) — applies to all sections
+      const sizePicker = document.getElementById(`editSecSize_${si}`);
+      if (sizePicker) {
+        const sel = sizePicker.querySelector('.day-chip.selected');
+        const sz = sel ? parseInt(sel.dataset.size) : 1;
+        if (sz === 2) sec.size = 2; else delete sec.size;
       }
 
       // Update fields
@@ -6642,13 +6669,14 @@
           const wrapper = document.createElement('div');
           wrapper.className = 'section-row';
           wrapper.style.order = orderIdx++;
-          // Insert wrapper before first element, then move all group members into it
           form.insertBefore(wrapper, g.secs[0].el);
-          g.secs.forEach(({ el }) => {
+          g.secs.forEach(({ sec, el }) => {
             el.style.order = '';
+            el.classList.toggle('section-size-2', sec.size === 2);
             wrapper.appendChild(el);
           });
         } else {
+          g.secs[0].el.classList.remove('section-size-2');
           g.secs[0].el.style.order = orderIdx++;
         }
       });
@@ -7170,7 +7198,13 @@
     // Day-picker chip toggle (works for both the "add" form and field editor)
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('day-chip')) {
-        e.target.classList.toggle('selected');
+        // Size chips: radio behavior (only one selected)
+        if (e.target.dataset.size) {
+          e.target.parentElement.querySelectorAll('.day-chip').forEach(c => c.classList.remove('selected'));
+          e.target.classList.add('selected');
+        } else {
+          e.target.classList.toggle('selected');
+        }
       }
     });
 
