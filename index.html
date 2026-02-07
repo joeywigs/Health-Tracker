@@ -536,6 +536,28 @@
     .date-phase-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent-green); margin-bottom: 2px; }
     .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: white; }
     .date-phase-day { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .freeze-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+    .freeze-btn {
+      font-size: 10px; padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .freeze-btn:hover { border-color: #6dd5ed; color: #6dd5ed; }
+    .freeze-btn.frozen {
+      border-color: #6dd5ed;
+      background: rgba(109,213,237,0.15);
+      color: #6dd5ed;
+    }
+    .frozen-badge {
+      font-size: 10px; color: #6dd5ed;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    body.day-mode .freeze-btn { background: rgba(0,0,0,0.03); }
+    body.day-mode .freeze-btn.frozen { background: rgba(109,213,237,0.1); }
     .date-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
     /* Day Lock - prevents accidental edits on past days */
@@ -2452,6 +2474,17 @@
       background: rgba(249, 115, 22, 0.2);
       box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
     }
+    .rehit-cal-day.frozen {
+      background: rgba(109, 213, 237, 0.15);
+      border: 1px dashed rgba(109, 213, 237, 0.5);
+      color: #6dd5ed;
+      opacity: 0.6;
+    }
+    body.day-mode .rehit-cal-day.frozen {
+      background: rgba(109, 213, 237, 0.1);
+      color: #0891b2;
+      border-color: rgba(8, 145, 178, 0.3);
+    }
     .rehit-cal-legend {
       display: flex;
       gap: 16px;
@@ -2478,6 +2511,11 @@
     .rehit-cal-legend-dot.dot-3x10 {
       border-color: #f97316;
       background: rgba(249, 115, 22, 0.2);
+    }
+    .rehit-cal-legend-dot.dot-frozen {
+      border-color: #6dd5ed;
+      border-style: dashed;
+      background: rgba(109, 213, 237, 0.15);
     }
     body.day-mode .rehit-cal-day {
       color: #6b7280;
@@ -2942,6 +2980,64 @@
     body.day-mode .movement-add-row select,
     body.day-mode .movement-add-row input[type="number"] { background: rgba(255,255,255,0.8); color: #1f2937; }
     body.day-mode .movement-add-btn { background: rgba(0,0,0,0.05); }
+
+    /* Email Sprint */
+    .email-sprint-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    .email-sprint-count {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .email-sprint-count span:first-child {
+      font-size: 28px;
+      font-weight: 700;
+      color: #4d9de0;
+    }
+    .email-sprint-label {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .email-sprint-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+    .email-sprint-timer.running {
+      color: #4d9de0;
+    }
+    .email-sprint-timer.done {
+      color: #52b788;
+    }
+    .email-sprint-btn {
+      padding: 12px 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #4d9de0;
+      background: rgba(77, 157, 224, 0.15);
+      color: #4d9de0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .email-sprint-btn:hover { background: rgba(77, 157, 224, 0.25); }
+    .email-sprint-btn.running {
+      border-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.15);
+      color: #ff6b6b;
+    }
+    .email-sprint-btn.running:hover { background: rgba(255, 107, 107, 0.25); }
+    body.day-mode .email-sprint-timer { color: #9ca3af; }
+    body.day-mode .email-sprint-timer.running { color: #4d9de0; }
+    body.day-mode .email-sprint-btn { background: rgba(77, 157, 224, 0.1); }
 
     /* FAB - Glowing */
     .fab { 
@@ -3685,7 +3781,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.3.1</div>
+          <div class="tagline">v1.5.0</div>
         </div>
       </div>
       <div class="nav-links">
@@ -3702,6 +3798,10 @@
         <div class="date-phase-title" id="phaseTitle">Phase 1</div>
         <div class="date-main" id="dateDisplay"></div>
         <div class="date-phase-day" id="phaseDayCount">Day -- of 21</div>
+        <div class="freeze-row">
+          <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="toggleFreezeToday()">Freeze Day</button>
+          <span class="frozen-badge" id="frozenDaysBadge" style="display:none"></span>
+        </div>
       </div>
       <button class="date-btn" id="nextBtn">→</button>
       <div class="ring-wrap">
@@ -4040,6 +4140,17 @@
       <div class="sec-content">
         <div class="mini-supps-grid" style="grid-template-columns: 1fr;">
           <div class="mini-supp"><input type="checkbox" id="meditation"><span>Meditated</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="emailSprintSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#4d9de0;--icon-end:#6dd5ed;--icon-glow:var(--glow-teal)">📧</div><span class="sec-name">Email Sprints</span></div><span class="sec-toggle">▼</span></div>
+      <div class="sec-content">
+        <div class="email-sprint-container">
+          <div class="email-sprint-count"><span id="emailSprintCount">0</span><span class="email-sprint-label"> sprints today</span></div>
+          <div class="email-sprint-timer" id="emailSprintTimer">2:00</div>
+          <button type="button" class="email-sprint-btn" id="emailSprintBtn">Start Sprint</button>
         </div>
       </div>
     </div>
@@ -4426,6 +4537,21 @@
           </div>
         </div>
 
+        <div class="goal-setting-row">
+          <div class="goal-setting-info">
+            <span class="goal-setting-icon">📧</span>
+            <span class="goal-setting-name">Email Sprints</span>
+          </div>
+          <div class="goal-setting-controls">
+            <input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10">
+            <span class="goal-unit">sprints</span>
+            <select class="goal-freq" id="emailSprintFreq">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -4703,7 +4829,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.3.1" defer></script>
+  <script src="app.js?v=1.5.0" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -4805,9 +4931,9 @@
     // Exposed globally so app.js movement list can call it
     window.updateCompletionRingAurora = updateCompletionRingAurora;
     function updateCompletionRingAurora() {
-      // 9 daily goals: sleep, agua, steps, movement, meals, no alcohol,
-      // day snacks, night snacks, supplements
-      const total = 9;
+      // 10 daily goals: sleep, agua, steps, movement, meals, no alcohol,
+      // day snacks, night snacks, supplements, email sprints
+      const total = 10;
       let checked = 0;
 
       // 1. Sleep ≥ goal
@@ -4849,8 +4975,11 @@
       const suppsChecked = ['creatine', 'vitaminD', 'no2', 'psyllium']
         .filter(id => document.getElementById(id)?.checked).length;
       if (suppsChecked === 4) checked++;
-      
-      // Debug removed
+
+      // 10. Email sprints ≥ goal
+      const emailSprintGoalVal = (typeof appSettings !== 'undefined' && appSettings.emailSprintGoal) ? appSettings.emailSprintGoal : 3;
+      const emailSprintsCount = (typeof emailSprintCount !== 'undefined') ? emailSprintCount : 0;
+      if (emailSprintsCount >= emailSprintGoalVal) checked++;
       
       const progress = document.getElementById('completionProgress');
       const number = document.getElementById('completionNumber');
@@ -5729,43 +5858,49 @@
     }
     setupAguaHook();
     
-    // Fixed phase info that always uses today's date
+    // Phase info using phasesData from app.js (with frozen days support)
     function updatePhaseInfoFixed() {
-      const PHASE_START = new Date("2026-01-19T00:00:00");
-      const PHASE_LENGTH = 21;
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      
-      const diffTime = today - PHASE_START;
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays < 0) {
-        // Before phase start
+      const phase = (typeof getCurrentPhase === 'function') ? getCurrentPhase() : null;
+      if (!phase) {
         const phaseTitleEl = document.getElementById("phaseTitle");
         if (phaseTitleEl) phaseTitleEl.textContent = "Phase 1";
         const phaseDayEl = document.getElementById("phaseDayCount");
-        if (phaseDayEl) phaseDayEl.textContent = "Starting soon";
+        if (phaseDayEl) phaseDayEl.textContent = "Loading...";
         return;
       }
-      
-      const phase = Math.floor(diffDays / PHASE_LENGTH) + 1;
-      const dayInPhase = (diffDays % PHASE_LENGTH) + 1;
-      const daysRemaining = PHASE_LENGTH - dayInPhase + 1;
-      
-      // Update the phase title in date card
-      const phaseTitleEl = document.getElementById("phaseTitle");
-      if (phaseTitleEl) phaseTitleEl.textContent = `Phase ${phase}`;
 
-      // Update the day counter under Phase title
+      const phaseStart = (typeof parseDataDate === 'function') ? parseDataDate(phase.start) : new Date(phase.start);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const calendarDays = Math.floor((today - phaseStart) / msPerDay) + 1;
+      const frozenDays = (typeof getPhaseFrozenDays === 'function') ? getPhaseFrozenDays(phase) : [];
+      // Count frozen days up to today
+      const frozenBeforeToday = frozenDays.filter(fd => {
+        const d = (typeof parseDataDate === 'function') ? parseDataDate(fd) : new Date(fd);
+        return d >= phaseStart && d <= today;
+      }).length;
+      const activeDays = Math.max(1, calendarDays - frozenBeforeToday);
+      const dayInPhase = Math.min(phase.length, activeDays);
+      const totalLength = phase.length;
+
+      const phaseTitleEl = document.getElementById("phaseTitle");
+      if (phaseTitleEl) phaseTitleEl.textContent = phase.name;
+
       const phaseDayEl = document.getElementById("phaseDayCount");
-      if (phaseDayEl) phaseDayEl.textContent = `Day ${dayInPhase} of ${PHASE_LENGTH}`;
-      
-      // Update progress bar
+      if (phaseDayEl) {
+        const frozenLabel = frozenDays.length > 0 ? ` (${frozenDays.length}d frozen)` : '';
+        phaseDayEl.textContent = `Day ${dayInPhase} of ${totalLength}${frozenLabel}`;
+      }
+
       const progressBar = document.getElementById("phaseProgressBar");
       if (progressBar) {
-        const progress = ((dayInPhase - 1) / PHASE_LENGTH) * 100;
-        progressBar.style.width = `${progress}%`;
+        const progress = ((dayInPhase - 1) / totalLength) * 100;
+        progressBar.style.width = `${Math.round(progress)}%`;
       }
+
+      if (typeof updateFreezeButton === 'function') updateFreezeButton();
     }
     
     // Override app.js phase functions to use our fixed version
@@ -5846,6 +5981,7 @@
       rehitGoal: 4, // legacy - combined total
       readingGoal: 60,
       meditationGoal: 3,
+      emailSprintGoal: 3,
       // Goal frequencies
       sleepFreq: 'daily',
       aguaFreq: 'daily',
@@ -5858,6 +5994,7 @@
       rehit3x10Freq: 'weekly',
       readingFreq: 'weekly',
       meditationFreq: 'weekly',
+      emailSprintFreq: 'daily',
       sections: [
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'nutritionSection', name: 'Supplements', icon: '💊', visible: true, custom: false },
@@ -6042,6 +6179,7 @@
       document.getElementById('rehit3x10Goal').value = appSettings.rehit3x10Goal ?? 3;
       document.getElementById('readingGoal').value = appSettings.readingGoal ?? 60;
       document.getElementById('meditationGoal').value = appSettings.meditationGoal ?? 3;
+      document.getElementById('emailSprintGoal').value = appSettings.emailSprintGoal ?? 3;
 
       // Goal frequencies
       document.getElementById('sleepFreq').value = appSettings.sleepFreq || 'daily';
@@ -6055,6 +6193,7 @@
       document.getElementById('rehit3x10Freq').value = appSettings.rehit3x10Freq || 'weekly';
       document.getElementById('readingFreq').value = appSettings.readingFreq || 'weekly';
       document.getElementById('meditationFreq').value = appSettings.meditationFreq || 'weekly';
+      document.getElementById('emailSprintFreq').value = appSettings.emailSprintFreq || 'daily';
 
       window.scrollTo(0, 0);
       renderSectionList();
@@ -6286,7 +6425,8 @@
       { id: 'rehit2x10Goal', key: 'rehit2x10Goal', default: 2, name: 'REHIT 2x10', updateRehitDots: true },
       { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10', updateRehitDots: true },
       { id: 'readingGoal', key: 'readingGoal', default: 60, name: 'Reading' },
-      { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' }
+      { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' },
+      { id: 'emailSprintGoal', key: 'emailSprintGoal', default: 3, name: 'Email Sprints', updateRing: true }
     ];
 
     goalInputConfigs.forEach(config => {
@@ -6309,7 +6449,7 @@
     // Goal frequency selectors
     const freqConfigs = [
       'sleepFreq', 'aguaFreq', 'stepsFreq', 'movementFreq', 'mealsFreq',
-      'snacksFreq', 'noAlcoholFreq', 'rehit2x10Freq', 'rehit3x10Freq', 'readingFreq', 'meditationFreq'
+      'snacksFreq', 'noAlcoholFreq', 'rehit2x10Freq', 'rehit3x10Freq', 'readingFreq', 'meditationFreq', 'emailSprintFreq'
     ];
 
     freqConfigs.forEach(freqId => {
