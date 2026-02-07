@@ -3848,6 +3848,7 @@
     .section-dragging { opacity: 0.35 !important; transform: scale(0.97); transition: opacity 0.15s, transform 0.15s; }
     .section-drop-above { box-shadow: 0 -3px 0 0 var(--accent-teal), 0 0 12px -2px var(--glow-teal) !important; }
     .section-drop-below { box-shadow: 0 3px 0 0 var(--accent-teal), 0 0 12px -2px var(--glow-teal) !important; }
+    .section-drop-group { outline: 2px dashed var(--accent-teal); outline-offset: -2px; box-shadow: 0 0 16px var(--glow-teal) !important; }
   </style>
 </head>
 <body>
@@ -6658,6 +6659,25 @@
     // =============================================
     // HOMEPAGE SECTION DRAG-TO-REORDER
     // =============================================
+    // Determine drop zone: top 30% = 'above', bottom 30% = 'below', middle 40% = 'group'
+    function dropZone(rect, y) {
+      const pct = (y - rect.top) / rect.height;
+      if (pct < 0.3) return 'above';
+      if (pct > 0.7) return 'below';
+      return 'group';
+    }
+
+    const DROP_CLASSES = ['section-drop-above', 'section-drop-below', 'section-drop-group'];
+    function clearDropClasses(container, except) {
+      container.querySelectorAll('.' + DROP_CLASSES.join(', .')).forEach(x => {
+        if (x !== except) DROP_CLASSES.forEach(c => x.classList.remove(c));
+      });
+    }
+    function setDropClass(el, zone) {
+      DROP_CLASSES.forEach(c => el.classList.remove(c));
+      el.classList.add('section-drop-' + zone);
+    }
+
     function setupHomepageDrag() {
       const form = document.getElementById('healthForm');
       if (!form) return;
@@ -6680,7 +6700,7 @@
         const handle = document.createElement('span');
         handle.className = 'section-drag-handle';
         handle.textContent = '⋮⋮';
-        handle.setAttribute('title', 'Drag to reorder');
+        handle.setAttribute('title', 'Drag to reorder or drop on center to pair side-by-side');
         handle.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
 
         // Insert handle: inside .sec-title for sections, at start of .card-head for cards
@@ -6706,8 +6726,7 @@
 
         handle.addEventListener('dragend', () => {
           el.classList.remove('section-dragging');
-          form.querySelectorAll('.section-drop-above, .section-drop-below').forEach(x =>
-            x.classList.remove('section-drop-above', 'section-drop-below'));
+          clearDropClasses(form);
           dragSrcId = null;
         });
 
@@ -6715,28 +6734,23 @@
           if (!dragSrcId || dragSrcId === sec.id) return;
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
-          const rect = el.getBoundingClientRect();
-          const above = e.clientY < rect.top + rect.height / 2;
-          form.querySelectorAll('.section-drop-above, .section-drop-below').forEach(x => {
-            if (x !== el) x.classList.remove('section-drop-above', 'section-drop-below');
-          });
-          el.classList.toggle('section-drop-above', above);
-          el.classList.toggle('section-drop-below', !above);
+          const zone = dropZone(el.getBoundingClientRect(), e.clientY);
+          clearDropClasses(form, el);
+          setDropClass(el, zone);
         });
 
         el.addEventListener('dragleave', e => {
           if (!el.contains(e.relatedTarget)) {
-            el.classList.remove('section-drop-above', 'section-drop-below');
+            DROP_CLASSES.forEach(c => el.classList.remove(c));
           }
         });
 
         el.addEventListener('drop', e => {
           e.preventDefault();
-          el.classList.remove('section-drop-above', 'section-drop-below');
+          DROP_CLASSES.forEach(c => el.classList.remove(c));
           if (!dragSrcId || dragSrcId === sec.id) return;
-          const rect = el.getBoundingClientRect();
-          const above = e.clientY < rect.top + rect.height / 2;
-          reorderSection(dragSrcId, sec.id, above);
+          const zone = dropZone(el.getBoundingClientRect(), e.clientY);
+          handleSectionDrop(dragSrcId, sec.id, zone);
           dragSrcId = null;
         });
 
@@ -6762,11 +6776,10 @@
             if (!otherEl || otherEl.style.display === 'none') return;
             const rect = otherEl.getBoundingClientRect();
             if (touchY >= rect.top && touchY <= rect.bottom) {
-              const above = touchY < rect.top + rect.height / 2;
-              otherEl.classList.toggle('section-drop-above', above);
-              otherEl.classList.toggle('section-drop-below', !above);
+              const zone = dropZone(rect, touchY);
+              setDropClass(otherEl, zone);
             } else {
-              otherEl.classList.remove('section-drop-above', 'section-drop-below');
+              DROP_CLASSES.forEach(c => otherEl.classList.remove(c));
             }
           });
         }, { passive: false });
@@ -6776,7 +6789,7 @@
           touchActive = false;
           el.classList.remove('section-dragging');
           const touchY = e.changedTouches[0].clientY;
-          let targetId = null, above = false;
+          let targetId = null, zone = 'above';
           appSettings.sections.forEach(other => {
             if (other.id === sec.id) return;
             const otherEl = document.getElementById(other.id);
@@ -6784,25 +6797,47 @@
             const rect = otherEl.getBoundingClientRect();
             if (touchY >= rect.top && touchY <= rect.bottom) {
               targetId = other.id;
-              above = touchY < rect.top + rect.height / 2;
+              zone = dropZone(rect, touchY);
             }
-            otherEl.classList.remove('section-drop-above', 'section-drop-below');
+            DROP_CLASSES.forEach(c => otherEl.classList.remove(c));
           });
-          if (targetId) reorderSection(sec.id, targetId, above);
+          if (targetId) handleSectionDrop(sec.id, targetId, zone);
           dragSrcId = null;
         });
       });
     }
 
-    function reorderSection(fromId, toId, insertBefore) {
-      const fromIdx = appSettings.sections.findIndex(s => s.id === fromId);
-      if (fromIdx === -1) return;
-      const [moved] = appSettings.sections.splice(fromIdx, 1);
-      let toIdx = appSettings.sections.findIndex(s => s.id === toId);
-      if (toIdx === -1) { appSettings.sections.push(moved); }
-      else {
-        if (!insertBefore) toIdx++;
-        appSettings.sections.splice(toIdx, 0, moved);
+    function handleSectionDrop(fromId, toId, zone) {
+      if (zone === 'group') {
+        // Pair side-by-side: assign matching group numbers, place them adjacent
+        const toSec = appSettings.sections.find(s => s.id === toId);
+        const fromSec = appSettings.sections.find(s => s.id === fromId);
+        if (!toSec || !fromSec) return;
+
+        // Pick a group number: reuse target's group, or generate a new one
+        const groupNum = toSec.group != null
+          ? toSec.group
+          : Math.max(0, ...appSettings.sections.map(s => s.group || 0)) + 1;
+        toSec.group = groupNum;
+        fromSec.group = groupNum;
+
+        // Move dragged section to be right next to the target (consecutive = same row)
+        const fromIdx = appSettings.sections.indexOf(fromSec);
+        appSettings.sections.splice(fromIdx, 1);
+        const toIdx = appSettings.sections.indexOf(toSec);
+        appSettings.sections.splice(toIdx + 1, 0, fromSec);
+      } else {
+        // Reorder: move + ungroup the dragged section
+        const fromIdx = appSettings.sections.findIndex(s => s.id === fromId);
+        if (fromIdx === -1) return;
+        const [moved] = appSettings.sections.splice(fromIdx, 1);
+        delete moved.group; // ungroup when dragged to an edge
+        let toIdx = appSettings.sections.findIndex(s => s.id === toId);
+        if (toIdx === -1) { appSettings.sections.push(moved); }
+        else {
+          if (zone === 'below') toIdx++;
+          appSettings.sections.splice(toIdx, 0, moved);
+        }
       }
       saveSettings(appSettings);
       applySectionSettings();
