@@ -451,7 +451,7 @@ async function logMovement(body, env, corsHeaders) {
     "yoga": "Other",
   };
 
-  const rawType = (body.type || "").trim();
+  const rawType = (body.type || "").split(/[\n\r,]+/)[0].trim();
   const mappedType = typeMap[rawType.toLowerCase()] || "Other";
   const duration = Math.round(parseFloat(body.duration) || 0);
 
