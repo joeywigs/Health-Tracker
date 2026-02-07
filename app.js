@@ -1000,19 +1000,10 @@ function updateWeeklySummaryButton() {
 }
 
 async function showWeeklySummaryPage() {
-  const mainPage = document.getElementById("healthForm");
-  const chartsPage = document.getElementById("chartsPage");
-  const bioPage = document.getElementById("biomarkersPage");
+  if (typeof hideAllPages === 'function') hideAllPages();
   const summaryPage = document.getElementById("weeklySummaryPage");
-  const settingsPage = document.getElementById("settingsPage");
-  const fab = document.getElementById("quickLogFab");
-
-  if (mainPage) mainPage.style.display = "none";
-  if (chartsPage) chartsPage.style.display = "none";
-  if (bioPage) bioPage.style.display = "none";
-  if (settingsPage) settingsPage.style.display = "none";
   if (summaryPage) summaryPage.style.display = "block";
-  if (fab) fab.style.display = "none";
+  if (typeof setActiveNav === 'function') setActiveNav('summary');
 
   window.scrollTo(0, 0);
 
@@ -1023,10 +1014,10 @@ async function showWeeklySummaryPage() {
 }
 
 function hideWeeklySummaryPage() {
-  const mainPage = document.getElementById("healthForm");
   const summaryPage = document.getElementById("weeklySummaryPage");
+  const mainPage = document.getElementById("healthForm");
   const fab = document.getElementById("quickLogFab");
-  
+
   if (summaryPage) summaryPage.style.display = "none";
   if (mainPage) mainPage.style.display = "block";
   if (fab) fab.style.display = "block";
@@ -2967,19 +2958,10 @@ function setupChartsPage() {
 }
 
 async function showChartsPage() {
-  const mainPage = document.getElementById("healthForm");
+  if (typeof hideAllPages === 'function') hideAllPages();
   const chartsPage = document.getElementById("chartsPage");
-  const bioPage = document.getElementById("biomarkersPage");
-  const summaryPage = document.getElementById("weeklySummaryPage");
-  const settingsPage = document.getElementById("settingsPage");
-  const fab = document.getElementById("quickLogFab");
-  
-  if (mainPage) mainPage.style.display = "none";
-  if (bioPage) bioPage.style.display = "none";
-  if (summaryPage) summaryPage.style.display = "none";
-  if (settingsPage) settingsPage.style.display = "none";
   if (chartsPage) chartsPage.style.display = "block";
-  if (fab) fab.style.display = "none";
+  if (typeof setActiveNav === 'function') setActiveNav('charts');
   
   // Scroll to top
   window.scrollTo(0, 0);
@@ -4013,19 +3995,10 @@ function setupQuickLog() {
 }
 
 function showBiomarkersPage() {
-  const mainPage = document.getElementById("healthForm");
-  const chartsPage = document.getElementById("chartsPage");
+  if (typeof hideAllPages === 'function') hideAllPages();
   const bioPage = document.getElementById("biomarkersPage");
-  const summaryPage = document.getElementById("weeklySummaryPage");
-  const settingsPage = document.getElementById("settingsPage");
-  const fab = document.getElementById("quickLogFab");
-  
-  if (mainPage) mainPage.style.display = "none";
-  if (chartsPage) chartsPage.style.display = "none";
-  if (summaryPage) summaryPage.style.display = "none";
-  if (settingsPage) settingsPage.style.display = "none";
   if (bioPage) bioPage.style.display = "block";
-  if (fab) fab.style.display = "none";
+  if (typeof setActiveNav === 'function') setActiveNav('biomarkers');
   
   window.scrollTo(0, 0);
   loadBiomarkers();

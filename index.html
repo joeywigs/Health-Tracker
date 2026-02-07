@@ -3122,8 +3122,44 @@
     body.day-mode .sticky-date { color: #6b7280; }
     .sticky.visible { transform: translateY(0); }
     .sticky-date { font-size: 14px; font-weight: 600; }
-    .sticky-btns { display: flex; gap: 8px; }
+    .sticky-btns { display: flex; gap: 8px; align-items: center; }
     .sticky-btns button { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-dim); font-size: 13px; cursor: pointer; }
+
+    /* Hamburger Menu */
+    .hamburger-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-dim); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+    .hamburger-btn:hover { background: var(--bg-card-hover); color: var(--accent-teal); border-color: var(--accent-teal); }
+    body.day-mode .hamburger-btn { background: rgba(255,255,255,0.6); border-color: rgba(0,0,0,0.1); color: var(--text-dim); }
+    .nav-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 280px; background: var(--bg-main); border-left: 1px solid var(--border); z-index: 2001; transform: translateX(100%); transition: transform 0.3s ease; box-shadow: -4px 0 30px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+    .nav-drawer.open { transform: translateX(0); }
+    .nav-drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .nav-drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+    .nav-drawer-header { padding: 20px; padding-top: max(60px, calc(20px + env(safe-area-inset-top, 44px))); border-bottom: 1px solid var(--border); }
+    .nav-drawer-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; margin: 0; }
+    .nav-drawer-header .tagline { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+    .nav-drawer-items { flex: 1; padding: 12px; overflow-y: auto; }
+    .nav-drawer-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; color: var(--text); text-decoration: none; }
+    .nav-drawer-item:hover, .nav-drawer-item.active { background: rgba(255,255,255,0.05); }
+    .nav-drawer-item.active { color: var(--accent-teal); }
+    .nav-drawer-item .nav-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .nav-drawer-item.active .nav-icon { background: rgba(109,213,237,0.15); }
+    .nav-drawer-item span { font-size: 15px; font-weight: 600; }
+    body.day-mode .nav-drawer { background: #fff; border-left-color: #e5e7eb; }
+    body.day-mode .nav-drawer-item:hover, body.day-mode .nav-drawer-item.active { background: rgba(0,0,0,0.04); }
+    body.day-mode .nav-drawer-item.active .nav-icon { background: rgba(249,115,22,0.1); }
+    body.day-mode .nav-drawer-item.active { color: var(--accent-orange); }
+
+    /* Settings Card Grid */
+    .settings-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 16px; }
+    .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 16px; cursor: pointer; transition: all 0.3s; text-align: center; }
+    .settings-card:hover { background: var(--bg-card-hover); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .settings-card-icon { font-size: 28px; margin-bottom: 8px; }
+    .settings-card-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .settings-card-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    body.day-mode .settings-card { background: rgba(255,255,255,0.8); }
+    .settings-subpage { display: none; }
+    .settings-subpage.active { display: block; }
+    .settings-back-btn { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-teal); background: none; border: none; }
+    body.day-mode .settings-back-btn { color: var(--accent-orange); }
     
     /* Milestone - Aurora themed */
     .milestone { position: fixed; inset: 0; background: rgba(26,26,46,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(10px); }
@@ -3802,7 +3838,24 @@
 
   <div id="stickyDateBar" class="sticky">
     <div class="sticky-date" id="stickyDateDisplay">Today</div>
-    <div class="sticky-btns"><button id="stickyPrevBtn">←</button><button id="stickyNextBtn">→</button></div>
+    <div class="sticky-btns"><button id="stickyPrevBtn">←</button><button id="stickyNextBtn">→</button><button class="hamburger-btn" id="stickyMenuBtn">☰</button></div>
+  </div>
+
+  <!-- Navigation Drawer -->
+  <div class="nav-drawer-backdrop" id="navDrawerBackdrop"></div>
+  <div class="nav-drawer" id="navDrawer">
+    <div class="nav-drawer-header">
+      <h2>Habits</h2>
+      <div class="tagline">v1.7.0</div>
+    </div>
+    <div class="nav-drawer-items">
+      <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
+      <a class="nav-drawer-item" data-page="writing"><div class="nav-icon">✍️</div><span>Writing</span></a>
+      <a class="nav-drawer-item" data-page="summary"><div class="nav-icon">📈</div><span>Phase Summary</span></a>
+      <a class="nav-drawer-item" data-page="charts"><div class="nav-icon">📊</div><span>Charts</span></a>
+      <a class="nav-drawer-item" data-page="biomarkers"><div class="nav-icon">🧬</div><span>Biomarkers</span></a>
+      <a class="nav-drawer-item" data-page="settings"><div class="nav-icon">⚙️</div><span>Settings</span></a>
+    </div>
   </div>
 
   <div id="milestoneOverlay" class="milestone">
@@ -3855,16 +3908,10 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.6.2</div>
+          <div class="tagline">v1.7.0</div>
         </div>
       </div>
-      <div class="nav-links">
-        <a href="#" id="homeBtn" class="nav-link" title="Home"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 4L21 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10V19C5 19.5523 5.44772 20 6 20H9V15C9 14.4477 9.44772 14 10 14H14C14.5523 14 15 14.4477 15 15V20H18C18.5523 20 19 19.5523 19 19V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-        <a href="#" id="weeklySummaryLink" class="nav-link" title="Summary"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="1" fill="currentColor"/><path d="M10.5 9H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="12" r="1" fill="currentColor"/><path d="M10.5 12H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1" fill="currentColor"/><path d="M10.5 15H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
-        <a href="#" id="chartsBtn" class="nav-link" title="Charts"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.5 17.5V7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.5 17.5H17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 14.5L11.2 11.8L13.6 13.4L17.3 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="14.5" r="0.9" fill="currentColor"/><circle cx="11.2" cy="11.8" r="0.9" fill="currentColor"/><circle cx="13.6" cy="13.4" r="0.9" fill="currentColor"/><circle cx="17.3" cy="9.7" r="0.9" fill="currentColor"/></svg></a>
-        <a href="#" id="biomarkersBtn" class="nav-link" title="Biomarkers"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 7H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10 7V15.2C10 16.9 11.3 18.2 13 18.2C14.7 18.2 16 16.9 16 15.2V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.8 13.2H15.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
-        <a href="#" id="settingsBtn" class="nav-link" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="2.4" stroke="currentColor" stroke-width="1.8"/><path d="M12 6.8V8.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 15.4V17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.8 12H8.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.4 12H17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.4 8.4L9.7 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14.3 14.3L15.6 15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.6 8.4L14.3 9.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.7 14.3L8.4 15.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></a>
-      </div>
+      <button class="hamburger-btn" id="headerMenuBtn">☰</button>
     </div>
     <div class="date-nav">
       <button class="date-btn" id="prevBtn">←</button>
@@ -4231,20 +4278,7 @@
       </div>
     </div>
 
-    <div class="section" id="reflectionsSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#ff6b9d;--icon-glow:var(--glow-purple)">✍️</div><span class="sec-name">Reflections</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed"><textarea class="input" id="reflections" placeholder="What's on your mind?"></textarea></div>
-    </div>
-
-    <div class="section" id="storiesSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">📝</div><span class="sec-name">Grey & Sloane</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed"><textarea class="input" id="stories" placeholder="Capture their moments..."></textarea></div>
-    </div>
-
-    <div class="section" id="carlySection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">💛</div><span class="sec-name">Carly</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed"><textarea class="input" id="carly" placeholder="Notes..."></textarea></div>
-    </div>
+    <!-- Reflections, Grey & Sloane, Carly moved to Writing page -->
 
     <div class="section" id="bodyDataSection">
       <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#c471ed;--icon-glow:var(--glow-teal)">⚖️</div><span class="sec-name">Body</span></div><span class="sec-toggle">▼</span></div>
@@ -4331,6 +4365,31 @@
         <canvas id="bioHistoryChart" style="max-height:200px"></canvas>
         <div id="bioHistoryTable" style="margin-top:12px"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Writing Page -->
+  <div id="writingPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">✍️</div><div><h1>Writing</h1><div class="tagline" id="writingDateDisplay"></div></div></div>
+        <button type="button" id="writingCloseBtn" class="nav-link">✕</button>
+      </div>
+    </header>
+
+    <div class="section" id="writingReflectionsSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#ff6b9d;--icon-glow:var(--glow-purple)">✍️</div><span class="sec-name">Reflections</span></div></div>
+      <div class="sec-content"><textarea class="input" id="reflections" placeholder="What's on your mind?" style="min-height:120px"></textarea></div>
+    </div>
+
+    <div class="section" id="writingStoriesSection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">📝</div><span class="sec-name">Grey & Sloane</span></div></div>
+      <div class="sec-content"><textarea class="input" id="stories" placeholder="Capture their moments..." style="min-height:120px"></textarea></div>
+    </div>
+
+    <div class="section" id="writingCarlySection">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffd93d;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">💛</div><span class="sec-name">Carly</span></div></div>
+      <div class="sec-content"><textarea class="input" id="carly" placeholder="Notes..." style="min-height:120px"></textarea></div>
     </div>
   </div>
 
@@ -4437,420 +4496,185 @@
   <div id="settingsPage" style="display:none">
     <header class="header">
       <div class="header-top">
-        <div class="brand"><div class="logo">⚙️</div><div><h1>Settings</h1><div class="tagline">Customize your experience</div></div></div>
+        <div class="brand"><div class="logo">⚙️</div><div><h1 id="settingsTitle">Settings</h1><div class="tagline" id="settingsSubtitle">Customize your experience</div></div></div>
         <button type="button" id="settingsCloseBtn" class="nav-link">✕</button>
       </div>
     </header>
 
-    <!-- Goals Settings -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Goal Settings</span></div></div>
-      <div class="sec-content">
-        <p style="color:var(--text-muted);font-size:12px;margin:0 0 16px 0">Set your target for each goal and choose daily or weekly frequency.</p>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🌙</span>
-            <span class="goal-setting-name">Sleep</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12">
-            <span class="goal-unit">hrs</span>
-            <select class="goal-freq" id="sleepFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
+    <!-- Settings Main View (Card Grid) -->
+    <div id="settingsMainView">
+      <div class="settings-card-grid">
+        <div class="settings-card" data-settings-page="goals">
+          <div class="settings-card-icon">🎯</div>
+          <div class="settings-card-label">Goals</div>
+          <div class="settings-card-desc">Targets & frequency</div>
         </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">💧</span>
-            <span class="goal-setting-name">Water</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20">
-            <span class="goal-unit">glasses</span>
-            <select class="goal-freq" id="aguaFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
+        <div class="settings-card" data-settings-page="sections">
+          <div class="settings-card-icon">📑</div>
+          <div class="settings-card-label">Manage Sections</div>
+          <div class="settings-card-desc">Reorder, add & edit</div>
         </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">👟</span>
-            <span class="goal-setting-name">Steps</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="stepsGoal" value="5000" min="1000" max="50000" step="500">
-            <span class="goal-unit">steps</span>
-            <select class="goal-freq" id="stepsFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
+        <div class="settings-card" data-settings-page="habitStacks">
+          <div class="settings-card-icon">📋</div>
+          <div class="settings-card-label">Habit Stacks</div>
+          <div class="settings-card-desc">Bedtime & morning</div>
         </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🚶</span>
-            <span class="goal-setting-name">Movement</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10">
-            <span class="goal-unit">sessions</span>
-            <select class="goal-freq" id="movementFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
+        <div class="settings-card" data-settings-page="theme">
+          <div class="settings-card-icon">🌗</div>
+          <div class="settings-card-label">Appearance</div>
+          <div class="settings-card-desc">Theme & schedule</div>
         </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🍽️</span>
-            <span class="goal-setting-name">Meals</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3">
-            <span class="goal-unit">meals</span>
-            <select class="goal-freq" id="mealsFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
+        <div class="settings-card" data-settings-page="phase">
+          <div class="settings-card-icon">❄️</div>
+          <div class="settings-card-label">Phase Freeze</div>
+          <div class="settings-card-desc">Pause tracking</div>
         </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🥗</span>
-            <span class="goal-setting-name">Healthy Snacks</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2">
-            <span class="goal-unit">checks</span>
-            <select class="goal-freq" id="snacksFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
+        <div class="settings-card" data-settings-page="notes">
+          <div class="settings-card-icon">📝</div>
+          <div class="settings-card-label">Habit Notes</div>
+          <div class="settings-card-desc">Insights & triggers</div>
         </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🍺</span>
-            <span class="goal-setting-name">No Alcohol</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7">
-            <span class="goal-unit">days</span>
-            <select class="goal-freq" id="noAlcoholFreq">
-              <option value="weekly" selected>Weekly</option>
-              <option value="daily">Daily</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🚴</span>
-            <span class="goal-setting-name">REHIT 2x10</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7">
-            <span class="goal-unit">sessions</span>
-            <select class="goal-freq" id="rehit2x10Freq">
-              <option value="daily">Daily</option>
-              <option value="weekly" selected>Weekly</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🚴</span>
-            <span class="goal-setting-name">REHIT 3x10</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7">
-            <span class="goal-unit">sessions</span>
-            <select class="goal-freq" id="rehit3x10Freq">
-              <option value="daily">Daily</option>
-              <option value="weekly" selected>Weekly</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">📖</span>
-            <span class="goal-setting-name">Reading</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5">
-            <span class="goal-unit">min</span>
-            <select class="goal-freq" id="readingFreq">
-              <option value="daily">Daily</option>
-              <option value="weekly" selected>Weekly</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">🧘</span>
-            <span class="goal-setting-name">Meditation</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="meditationGoal" value="3" min="1" max="7">
-            <span class="goal-unit">sessions</span>
-            <select class="goal-freq" id="meditationFreq">
-              <option value="daily">Daily</option>
-              <option value="weekly" selected>Weekly</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="goal-setting-row">
-          <div class="goal-setting-info">
-            <span class="goal-setting-icon">📧</span>
-            <span class="goal-setting-name">Email Sprints</span>
-          </div>
-          <div class="goal-setting-controls">
-            <input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10">
-            <span class="goal-unit">sprints</span>
-            <select class="goal-freq" id="emailSprintFreq">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">ℹ️</div><span class="sec-name">About Goals</span></div></div>
-      <div class="sec-content">
-        <p style="color:var(--text-muted);font-size:13px;margin:0;line-height:1.5">
-          These are your default goals. When you create a new Phase, these values are used as starting points.
-          Each Phase can have its own targets that you set during the Phase planning process.
-          <br><br>
-          <strong>Supplements</strong> (all 4 daily) is tracked separately as a fixed goal.
-        </p>
-      </div>
-    </div>
-
-    <!-- Habit Notes -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-yellow);--icon-end:var(--accent-orange);--icon-glow:var(--glow-orange)">📝</div><span class="sec-name">Habit Notes</span></div></div>
-      <div class="sec-content">
-        <p style="color:var(--text-muted);font-size:12px;margin:0 0 12px 0">Quick notes about your habits, triggers, or insights.</p>
-        <div class="habit-notes-input-row">
-          <textarea class="habit-note-input" id="newHabitNote" placeholder="Write a note about your habits..."></textarea>
-          <button type="button" class="btn btn-primary habit-note-add-btn" id="addHabitNoteBtn">Add Note</button>
-        </div>
-        <div id="habitNotesList" class="habit-notes-list">
-          <!-- Notes populated by JS -->
+        <div class="settings-card" data-settings-page="data">
+          <div class="settings-card-icon">💾</div>
+          <div class="settings-card-label">Data</div>
+          <div class="settings-card-desc">Export & import</div>
         </div>
       </div>
     </div>
 
-    <!-- Theme Settings -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-orange);--icon-end:var(--accent-yellow);--icon-glow:var(--glow-orange)">🌗</div><span class="sec-name">Theme Schedule</span></div></div>
-      <div class="sec-content">
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">☀️ Day Mode Starts</span>
-            <span class="setting-desc">When to switch to bright theme</span>
-          </div>
-          <input type="time" class="time-input" id="dayStartTime" value="06:00">
+    <!-- Subpage: Goals -->
+    <div class="settings-subpage" id="settingsSub_goals">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Goal Settings</span></div></div>
+        <div class="sec-content">
+          <p style="color:var(--text-muted);font-size:12px;margin:0 0 16px 0">Set your target for each goal and choose daily or weekly frequency.</p>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🌙</span><span class="goal-setting-name">Sleep</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12"><span class="goal-unit">hrs</span><select class="goal-freq" id="sleepFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">💧</span><span class="goal-setting-name">Water</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20"><span class="goal-unit">glasses</span><select class="goal-freq" id="aguaFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">👟</span><span class="goal-setting-name">Steps</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="stepsGoal" value="5000" min="1000" max="50000" step="500"><span class="goal-unit">steps</span><select class="goal-freq" id="stepsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🚶</span><span class="goal-setting-name">Movement</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10"><span class="goal-unit">sessions</span><select class="goal-freq" id="movementFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🍽️</span><span class="goal-setting-name">Meals</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3"><span class="goal-unit">meals</span><select class="goal-freq" id="mealsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🥗</span><span class="goal-setting-name">Healthy Snacks</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2"><span class="goal-unit">checks</span><select class="goal-freq" id="snacksFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🍺</span><span class="goal-setting-name">No Alcohol</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7"><span class="goal-unit">days</span><select class="goal-freq" id="noAlcoholFreq"><option value="weekly" selected>Weekly</option><option value="daily">Daily</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 2x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit2x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 3x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit3x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">📖</span><span class="goal-setting-name">Reading</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5"><span class="goal-unit">min</span><select class="goal-freq" id="readingFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🧘</span><span class="goal-setting-name">Meditation</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="meditationGoal" value="3" min="1" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="meditationFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">📧</span><span class="goal-setting-name">Email Sprints</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10"><span class="goal-unit">sprints</span><select class="goal-freq" id="emailSprintFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
         </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">🌙 Night Mode Starts</span>
-            <span class="setting-desc">When to switch to dark theme</span>
-          </div>
-          <input type="time" class="time-input" id="nightStartTime" value="18:00">
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">
-            <span class="setting-title">Current Theme</span>
-            <span class="setting-desc" id="currentThemeDisplay">Auto</span>
-          </div>
-          <div class="theme-preview">
-            <button type="button" class="theme-btn" data-theme="day" title="Day">☀️</button>
-            <button type="button" class="theme-btn" data-theme="night" title="Night">🌙</button>
-          </div>
+      </div>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">ℹ️</div><span class="sec-name">About Goals</span></div></div>
+        <div class="sec-content">
+          <p style="color:var(--text-muted);font-size:13px;margin:0;line-height:1.5">These are your default goals. When you create a new Phase, these values are used as starting points. Each Phase can have its own targets that you set during the Phase planning process.<br><br><strong>Supplements</strong> (all 4 daily) is tracked separately as a fixed goal.</p>
         </div>
       </div>
     </div>
 
-    <!-- Phase Freeze -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#2193b0;--icon-glow:rgba(109,213,237,0.4)">❄️</div><span class="sec-name">Phase Freeze</span></div></div>
-      <div class="sec-content">
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Freeze your phase during vacations. Frozen days extend the phase end date and REHIT is paused — other goals still track normally.</p>
-        <div class="setting-row" style="flex-direction:column;gap:8px;align-items:stretch">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div class="setting-label">
-              <span class="setting-title" id="freezeStatusTitle">Phase Active</span>
-              <span class="setting-desc" id="freezeStatusDesc">Tap to freeze your current phase</span>
+    <!-- Subpage: Manage Sections -->
+    <div class="settings-subpage" id="settingsSub_sections">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
+        <div class="sec-content">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Drag to reorder • Toggle to show/hide</p>
+          <div id="sectionList" class="section-list"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">➕</div><span class="sec-name">Add Custom Section</span></div></div>
+        <div class="sec-content">
+          <div class="field"><label class="field-label">Section Name</label><input type="text" class="input" id="newSectionName" placeholder="e.g., Gratitude, Goals, etc."></div>
+          <div class="field"><label class="field-label">Section Type</label><select class="input" id="newSectionType"><option value="text">Text/Notes</option><option value="checkbox">Checkboxes (multiple)</option><option value="number">Number Input</option><option value="counter">Counter (+/- with goal)</option><option value="log">Log (list of entries)</option><option value="time">Time Input</option><option value="rating">Rating (1-5 stars)</option><option value="toggle">Yes/No Toggle</option></select></div>
+          <div class="field"><label class="field-label">Icon (emoji)</label><input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px"></div>
+          <div id="checkboxOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Checkbox Names (comma-separated)</label><input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening"></div></div>
+          <div id="counterOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Goal Type</label><select class="input" id="counterGoalType"><option value="daily">Daily (progress bar)</option><option value="weekly">Weekly (dots)</option><option value="alltime">All-time (running total)</option></select></div><div class="field"><label class="field-label">Goal Number</label><input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20"></div><div class="field"><label class="field-label">Unit Label</label><input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times"></div></div>
+          <div id="logOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Fields per Entry</label><div id="logFieldsList"><div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px"><input type="text" class="input" placeholder="Field name" style="flex:2"><select class="input" style="flex:1"><option value="text">Text</option><option value="number">Number</option><option value="select">Dropdown</option></select><button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button></div></div><button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button></div></div>
+          <div id="numberOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Unit (optional)</label><input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc."></div><div class="field"><label class="field-label">Placeholder</label><input type="text" class="input" id="numberPlaceholder" placeholder="0"></div></div>
+          <div id="ratingOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Rating Label</label><input type="text" class="input" id="ratingLabel" placeholder="How was your day?"></div></div>
+          <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subpage: Habit Stacks -->
+    <div class="settings-subpage" id="settingsSub_habitStacks">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-teal);--icon-glow:var(--glow-purple)">🌙</div><span class="sec-name">Bedtime Habit Stack</span></div></div>
+        <div class="sec-content">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows weekdays 9:45pm-midnight. Drag to reorder.</p>
+          <div id="bedtimeItemsList" class="section-list"></div>
+          <div style="display:flex;gap:8px;margin-top:12px"><input type="text" class="input" id="newBedtimeItem" placeholder="New item name..." style="flex:1"><button type="button" class="btn btn-primary" id="addBedtimeItemBtn" style="padding:8px 16px">Add</button></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffb74d;--icon-end:#ff8a65;--icon-glow:rgba(255,183,77,0.4)">☀️</div><span class="sec-name">Morning Habit Stack</span></div></div>
+        <div class="sec-content">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows when you choose to start your morning routine. Drag to reorder.</p>
+          <div id="morningItemsList" class="section-list"></div>
+          <div style="display:flex;gap:8px;margin-top:12px"><input type="text" class="input" id="newMorningItem" placeholder="New item name..." style="flex:1"><button type="button" class="btn btn-primary" id="addMorningItemBtn" style="padding:8px 16px">Add</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subpage: Appearance -->
+    <div class="settings-subpage" id="settingsSub_theme">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-orange);--icon-end:var(--accent-yellow);--icon-glow:var(--glow-orange)">🌗</div><span class="sec-name">Theme Schedule</span></div></div>
+        <div class="sec-content">
+          <div class="setting-row"><div class="setting-label"><span class="setting-title">☀️ Day Mode Starts</span><span class="setting-desc">When to switch to bright theme</span></div><input type="time" class="time-input" id="dayStartTime" value="06:00"></div>
+          <div class="setting-row"><div class="setting-label"><span class="setting-title">🌙 Night Mode Starts</span><span class="setting-desc">When to switch to dark theme</span></div><input type="time" class="time-input" id="nightStartTime" value="18:00"></div>
+          <div class="setting-row"><div class="setting-label"><span class="setting-title">Current Theme</span><span class="setting-desc" id="currentThemeDisplay">Auto</span></div><div class="theme-preview"><button type="button" class="theme-btn" data-theme="day" title="Day">☀️</button><button type="button" class="theme-btn" data-theme="night" title="Night">🌙</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subpage: Phase Freeze -->
+    <div class="settings-subpage" id="settingsSub_phase">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#2193b0;--icon-glow:rgba(109,213,237,0.4)">❄️</div><span class="sec-name">Phase Freeze</span></div></div>
+        <div class="sec-content">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Freeze your phase during vacations. Frozen days extend the phase end date and REHIT is paused — other goals still track normally.</p>
+          <div class="setting-row" style="flex-direction:column;gap:8px;align-items:stretch">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div class="setting-label"><span class="setting-title" id="freezeStatusTitle">Phase Active</span><span class="setting-desc" id="freezeStatusDesc">Tap to freeze your current phase</span></div>
+              <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="togglePhaseFreeze()">Freeze Phase</button>
             </div>
-            <button type="button" class="freeze-btn" id="freezePhaseBtn" onclick="togglePhaseFreeze()">Freeze Phase</button>
-          </div>
-          <div id="freezeInfoRow" style="display:none;display:flex;align-items:center;justify-content:space-between">
-            <span class="frozen-badge" id="frozenDaysBadge" style="display:none"></span>
-            <button type="button" class="freeze-btn" id="clearFrozenBtn" onclick="clearFrozenDays()" style="font-size:10px;padding:3px 10px;color:var(--accent-pink);border-color:var(--accent-pink)">Clear Frozen Days</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bedtime Routine Settings -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-teal);--icon-glow:var(--glow-purple)">🌙</div><span class="sec-name">Bedtime Habit Stack</span></div></div>
-      <div class="sec-content">
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows weekdays 9:45pm-midnight. Drag to reorder.</p>
-        <div id="bedtimeItemsList" class="section-list">
-          <!-- Populated by JS -->
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <input type="text" class="input" id="newBedtimeItem" placeholder="New item name..." style="flex:1">
-          <button type="button" class="btn btn-primary" id="addBedtimeItemBtn" style="padding:8px 16px">Add</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Morning Habit Stack Settings -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffb74d;--icon-end:#ff8a65;--icon-glow:rgba(255,183,77,0.4)">☀️</div><span class="sec-name">Morning Habit Stack</span></div></div>
-      <div class="sec-content">
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows when you choose to start your morning routine. Drag to reorder.</p>
-        <div id="morningItemsList" class="section-list">
-          <!-- Populated by JS -->
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <input type="text" class="input" id="newMorningItem" placeholder="New item name..." style="flex:1">
-          <button type="button" class="btn btn-primary" id="addMorningItemBtn" style="padding:8px 16px">Add</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section Management -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
-      <div class="sec-content">
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Drag to reorder • Toggle to show/hide</p>
-        <div id="sectionList" class="section-list">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </div>
-    
-    <!-- Add Custom Section -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">➕</div><span class="sec-name">Add Custom Section</span></div></div>
-      <div class="sec-content">
-        <div class="field">
-          <label class="field-label">Section Name</label>
-          <input type="text" class="input" id="newSectionName" placeholder="e.g., Gratitude, Goals, etc.">
-        </div>
-        <div class="field">
-          <label class="field-label">Section Type</label>
-          <select class="input" id="newSectionType">
-            <option value="text">Text/Notes</option>
-            <option value="checkbox">Checkboxes (multiple)</option>
-            <option value="number">Number Input</option>
-            <option value="counter">Counter (+/- with goal)</option>
-            <option value="log">Log (list of entries)</option>
-            <option value="time">Time Input</option>
-            <option value="rating">Rating (1-5 stars)</option>
-            <option value="toggle">Yes/No Toggle</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="field-label">Icon (emoji)</label>
-          <input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px">
-        </div>
-        
-        <!-- Dynamic options based on type -->
-        <div id="checkboxOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Checkbox Names (comma-separated)</label>
-            <input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening">
-          </div>
-        </div>
-        
-        <div id="counterOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Goal Type</label>
-            <select class="input" id="counterGoalType">
-              <option value="daily">Daily (progress bar)</option>
-              <option value="weekly">Weekly (dots)</option>
-              <option value="alltime">All-time (running total)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-label">Goal Number</label>
-            <input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20">
-          </div>
-          <div class="field">
-            <label class="field-label">Unit Label</label>
-            <input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times">
-          </div>
-        </div>
-        
-        <div id="logOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Fields per Entry</label>
-            <div id="logFieldsList">
-              <div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px">
-                <input type="text" class="input" placeholder="Field name" style="flex:2">
-                <select class="input" style="flex:1">
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="select">Dropdown</option>
-                </select>
-                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button>
-              </div>
+            <div id="freezeInfoRow" style="display:none;display:flex;align-items:center;justify-content:space-between">
+              <span class="frozen-badge" id="frozenDaysBadge" style="display:none"></span>
+              <button type="button" class="freeze-btn" id="clearFrozenBtn" onclick="clearFrozenDays()" style="font-size:10px;padding:3px 10px;color:var(--accent-pink);border-color:var(--accent-pink)">Clear Frozen Days</button>
             </div>
-            <button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button>
           </div>
         </div>
-        
-        <div id="numberOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Unit (optional)</label>
-            <input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc.">
-          </div>
-          <div class="field">
-            <label class="field-label">Placeholder</label>
-            <input type="text" class="input" id="numberPlaceholder" placeholder="0">
-          </div>
-        </div>
-        
-        <div id="ratingOptions" class="type-options" style="display:none">
-          <div class="field">
-            <label class="field-label">Rating Label</label>
-            <input type="text" class="input" id="ratingLabel" placeholder="How was your day?">
-          </div>
-        </div>
-        
-        <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
       </div>
     </div>
-    
-    <!-- Data Management -->
-    <div class="section">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-pink);--icon-end:var(--accent-orange);--icon-glow:var(--glow-pink)">💾</div><span class="sec-name">Data</span></div></div>
-      <div class="sec-content">
-        <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
-        <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
-        <input type="file" id="importSettingsFile" accept=".json" style="display:none">
+
+    <!-- Subpage: Habit Notes -->
+    <div class="settings-subpage" id="settingsSub_notes">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-yellow);--icon-end:var(--accent-orange);--icon-glow:var(--glow-orange)">📝</div><span class="sec-name">Habit Notes</span></div></div>
+        <div class="sec-content">
+          <p style="color:var(--text-muted);font-size:12px;margin:0 0 12px 0">Quick notes about your habits, triggers, or insights.</p>
+          <div class="habit-notes-input-row"><textarea class="habit-note-input" id="newHabitNote" placeholder="Write a note about your habits..."></textarea><button type="button" class="btn btn-primary habit-note-add-btn" id="addHabitNoteBtn">Add Note</button></div>
+          <div id="habitNotesList" class="habit-notes-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subpage: Data -->
+    <div class="settings-subpage" id="settingsSub_data">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-pink);--icon-end:var(--accent-orange);--icon-glow:var(--glow-pink)">💾</div><span class="sec-name">Data</span></div></div>
+        <div class="sec-content">
+          <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
+          <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
+          <input type="file" id="importSettingsFile" accept=".json" style="display:none">
+        </div>
       </div>
     </div>
   </div>
@@ -6101,9 +5925,7 @@
         { id: 'movementSection', name: 'Movement Breaks', icon: '🚶', visible: true, custom: false },
         { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
         { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: true, custom: false },
-        { id: 'reflectionsSection', name: 'Reflections', icon: '✍️', visible: true, custom: false },
-        { id: 'storiesSection', name: 'Grey & Sloane', icon: '📝', visible: true, custom: false },
-        { id: 'carlySection', name: 'Carly', icon: '💛', visible: true, custom: false },
+        // Reflections, Grey & Sloane, Carly moved to Writing page
         { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
         { id: 'bloodPressureSection', name: 'Blood Pressure', icon: '❤️', visible: true, custom: false },
       ]
@@ -6247,20 +6069,13 @@
     // =============================================
     
     function openSettingsPage() {
-      // Hide all other pages
-      const mainPage = document.getElementById('healthForm');
-      const chartsPage = document.getElementById('chartsPage');
-      const bioPage = document.getElementById('biomarkersPage');
-      const summaryPage = document.getElementById('weeklySummaryPage');
+      hideAllPages();
       const settingsPage = document.getElementById('settingsPage');
-      const fab = document.getElementById('quickLogFab');
-      
-      if (mainPage) mainPage.style.display = 'none';
-      if (chartsPage) chartsPage.style.display = 'none';
-      if (bioPage) bioPage.style.display = 'none';
-      if (summaryPage) summaryPage.style.display = 'none';
       if (settingsPage) settingsPage.style.display = 'block';
-      if (fab) fab.style.display = 'none';
+
+      // Reset to main view
+      showSettingsMain();
+      setActiveNav('settings');
       
       // Populate settings
       document.getElementById('dayStartTime').value = appSettings.dayStartTime;
@@ -6309,6 +6124,7 @@
 
       // Apply section visibility
       applySectionSettings();
+      setActiveNav('home');
       window.scrollTo(0, 0);
     }
     
@@ -6746,26 +6562,115 @@
       });
     }
     
-    // Wire up home button
-    document.getElementById('homeBtn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Hide all pages, show main form
-      document.getElementById('settingsPage').style.display = 'none';
-      document.getElementById('chartsPage').style.display = 'none';
-      document.getElementById('biomarkersPage').style.display = 'none';
-      document.getElementById('weeklySummaryPage').style.display = 'none';
-      document.getElementById('healthForm').style.display = 'block';
-      document.getElementById('quickLogFab').style.display = 'block';
+    // =============================================
+    // NAVIGATION DRAWER
+    // =============================================
+    const navDrawer = document.getElementById('navDrawer');
+    const navBackdrop = document.getElementById('navDrawerBackdrop');
+
+    function openNavDrawer() {
+      navDrawer?.classList.add('open');
+      navBackdrop?.classList.add('open');
+    }
+    function closeNavDrawer() {
+      navDrawer?.classList.remove('open');
+      navBackdrop?.classList.remove('open');
+    }
+
+    window.hideAllPages = function() {
+      ['healthForm', 'settingsPage', 'chartsPage', 'biomarkersPage', 'weeklySummaryPage', 'writingPage'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const fab = document.getElementById('quickLogFab');
+      if (fab) fab.style.display = 'none';
+    };
+
+    window.setActiveNav = function(page) {
+      document.querySelectorAll('.nav-drawer-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+      });
+    };
+
+    function navigateTo(page) {
+      closeNavDrawer();
+      if (page === 'home') {
+        hideAllPages();
+        document.getElementById('healthForm').style.display = 'block';
+        document.getElementById('quickLogFab').style.display = 'block';
+        window.scrollTo(0, 0);
+      } else if (page === 'writing') {
+        hideAllPages();
+        showWritingPage();
+      } else if (page === 'summary') {
+        showWeeklySummaryPage();
+      } else if (page === 'charts') {
+        showChartsPage();
+      } else if (page === 'biomarkers') {
+        showBiomarkersPage();
+      } else if (page === 'settings') {
+        openSettingsPage();
+      }
+      setActiveNav(page);
+    }
+
+    // Writing page
+    function showWritingPage() {
+      hideAllPages();
+      const wp = document.getElementById('writingPage');
+      if (wp) wp.style.display = 'block';
+      // Show current date
+      const dateDisp = document.getElementById('writingDateDisplay');
+      if (dateDisp) dateDisp.textContent = document.getElementById('dateDisplay')?.textContent || '';
+      setActiveNav('writing');
       window.scrollTo(0, 0);
+    }
+    document.getElementById('writingCloseBtn')?.addEventListener('click', () => navigateTo('home'));
+
+    // Settings subpage navigation
+    window.showSettingsMain = function() {
+      document.querySelectorAll('.settings-subpage').forEach(sp => sp.classList.remove('active'));
+      document.getElementById('settingsMainView').style.display = '';
+      document.getElementById('settingsTitle').textContent = 'Settings';
+      document.getElementById('settingsSubtitle').textContent = 'Customize your experience';
+      window.scrollTo(0, 0);
+    };
+
+    function openSettingsSubpage(pageName) {
+      document.getElementById('settingsMainView').style.display = 'none';
+      document.querySelectorAll('.settings-subpage').forEach(sp => sp.classList.remove('active'));
+      const sub = document.getElementById('settingsSub_' + pageName);
+      if (sub) sub.classList.add('active');
+      if (pageName === 'sections') renderSectionList();
+      if (pageName === 'notes') loadHabitNotes();
+      window.scrollTo(0, 0);
+    }
+
+    document.querySelectorAll('.settings-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const page = card.dataset.settingsPage;
+        if (page) openSettingsSubpage(page);
+      });
     });
-    
-    // Wire up settings page
-    document.getElementById('settingsBtn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      openSettingsPage();
+
+    // Hamburger menu buttons
+    document.getElementById('headerMenuBtn')?.addEventListener('click', openNavDrawer);
+    document.getElementById('stickyMenuBtn')?.addEventListener('click', openNavDrawer);
+    navBackdrop?.addEventListener('click', closeNavDrawer);
+
+    // Drawer navigation items
+    document.querySelectorAll('.nav-drawer-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo(item.dataset.page);
+      });
     });
-    
-    document.getElementById('settingsCloseBtn')?.addEventListener('click', closeSettingsPage);
+
+    // Close buttons on subpages
+    document.getElementById('settingsCloseBtn')?.addEventListener('click', () => {
+      closeSettingsPage();
+      setActiveNav('home');
+    });
     
     // Time inputs
     document.getElementById('dayStartTime')?.addEventListener('change', (e) => {
@@ -7082,10 +6987,12 @@
       if (t === 'text') {
         return fLabel + `<textarea class="input" id="${fieldId}_input" placeholder="Enter notes..."></textarea>`;
       } else if (t === 'checkbox') {
-        const cbs = (c.checkboxes || ['Done']).map((cb, i) =>
-          `<div class="chip"><input type="checkbox" id="${fieldId}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>`
+        const names = c.checkboxes || ['Done'];
+        const colClass = names.length >= 3 ? ' three-col' : '';
+        const cbs = names.map((cb, i) =>
+          `<div class="mini-supp" title="${cb}"><input type="checkbox" id="${fieldId}_check_${i}"><span>${cb}</span></div>`
         ).join('');
-        return fLabel + `<div class="chips">${cbs}</div>`;
+        return fLabel + `<div class="mini-supps-grid${colClass}">${cbs}</div>`;
       } else if (t === 'number') {
         const unit = c.unit ? `<span class="card-unit">${c.unit}</span>` : '';
         return fLabel + `<div style="display:flex;align-items:center;gap:8px"><input type="number" class="big-input" id="${fieldId}_input" placeholder="${c.placeholder || '0'}" style="max-width:120px">${unit}</div>`;
@@ -7099,9 +7006,9 @@
               <button type="button" class="water-btn counter-minus" data-id="${fieldId}">−</button>
               <div class="water-num counter-value" id="${fieldId}_value">0</div>
               <button type="button" class="water-btn counter-plus" data-id="${fieldId}">+</button>
-              <div class="water-bar-wrap"><div class="water-bar-track"><div class="water-bar-fill counter-fill" id="${fieldId}_fill" style="height:0%"></div></div><div class="water-bar-goal">${goalNum}</div></div>
             </div>
-            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit} (all-time)</div>`;
+            <div class="progress-bar-h" style="margin-top:10px"><div class="progress-bar-h-fill" id="${fieldId}_fill" style="width:0%"></div></div>
+            <div class="card-avg" id="${fieldId}_label" style="margin-top:6px">0 of ${goalNum} ${unit}</div>`;
         } else if (gType === 'weekly') {
           let dots = '';
           for (let i = 0; i < goalNum; i++) dots += `<div class="counter-dot" data-idx="${i}"></div>`;
@@ -7204,10 +7111,13 @@
 
       if (t === 'checkbox') {
         const wrap = document.getElementById(`${fieldId}_check_0`)?.closest('.custom-field-wrap') || section;
-        wrap.querySelectorAll('.chip').forEach(chip => {
-          const cb = chip.querySelector('input');
-          chip.addEventListener('click', (e) => { if (e.target.type !== 'checkbox') { cb.checked = !cb.checked; chip.classList.toggle('on', cb.checked); updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); }});
-          cb.addEventListener('change', () => { chip.classList.toggle('on', cb.checked); updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        wrap.querySelectorAll('.mini-supp').forEach(supp => {
+          supp.addEventListener('click', () => {
+            const cb = supp.querySelector('input[type="checkbox"]');
+            if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+          });
+          const cb = supp.querySelector('input[type="checkbox"]');
+          cb?.addEventListener('change', () => { updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
         });
 
       } else if (t === 'counter') {
@@ -7220,9 +7130,12 @@
 
         // For alltime counters, store in settings so it persists across days
         const getAlltimeKey = () => `alltime_${sectionId}_${fid}`;
+        const unit = c.unitLabel || 'times';
         const updateAlltimeBar = (val) => {
           const fill = document.getElementById(`${fieldId}_fill`);
-          if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
+          if (fill) fill.style.width = Math.min(100, (val / goalNum) * 100) + '%';
+          const label = document.getElementById(`${fieldId}_label`);
+          if (label) label.textContent = `${val} of ${goalNum} ${unit}`;
         };
         if (isAlltime) {
           const valEl = document.getElementById(`${fieldId}_value`);
@@ -7424,9 +7337,8 @@
           } else if (t === 'checkbox') {
             (c.checkboxes || ['Done']).forEach((cb, i) => {
               const input = document.getElementById(`${fieldId}_check_${i}`);
-              const chip = input?.closest('.chip');
               const isChecked = fd.checkboxes?.[i] || false;
-              if (input) { input.checked = isChecked; chip?.classList.toggle('on', isChecked); }
+              if (input) input.checked = isChecked;
             });
           } else if (t === 'text' || t === 'number' || t === 'time') {
             const input = document.getElementById(`${fieldId}_input`);
