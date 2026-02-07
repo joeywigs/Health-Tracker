@@ -3800,6 +3800,13 @@
     .day-chip.selected { background: var(--accent-teal); color: #fff; border-color: var(--accent-teal); }
     body.day-mode .day-chip { background: rgba(0,0,0,0.04); }
     body.day-mode .day-chip.selected { background: var(--accent-teal); color: #fff; }
+    .custom-layout-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .custom-layout-row.full { grid-template-columns: 1fr; }
+    .custom-layout-cell {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px;
+    }
+    body.day-mode .custom-layout-cell { background: rgba(0,0,0,0.02); }
   </style>
 </head>
 <body>
@@ -3864,7 +3871,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.7</div>
+      <div class="tagline">v1.7.8</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3926,7 +3933,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.7</div>
+          <div class="tagline">v1.7.8</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4798,7 +4805,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.7.7" defer></script>
+  <script src="app.js?v=1.7.8" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -7156,6 +7163,75 @@
       return '';
     }
 
+    // Classify how much space a field needs so we can pair small ones
+    function getFieldSize(field) {
+      const t = field.type;
+      const c = field.config || {};
+      if (t === 'toggle' || t === 'time' || t === 'rating') return 'compact';
+      if (t === 'number') return 'compact';
+      if (t === 'checkbox') {
+        const count = (c.checkboxes || []).length;
+        return count <= 4 ? 'compact' : 'wide';
+      }
+      if (t === 'counter') return 'medium';
+      // text, log → always full width
+      return 'wide';
+    }
+
+    // Arrange fields into rows: pair compact fields side-by-side, give others a full row
+    function layoutFields(id, fields) {
+      if (fields.length <= 1) {
+        // Single field: no grid, just render directly
+        return fields.map(f => {
+          const fieldId = `${id}__${f.id}`;
+          return `<div class="custom-field-wrap" data-field-id="${f.id}">${buildFieldHtml(fieldId, f)}</div>`;
+        }).join('');
+      }
+
+      const rows = [];
+      let compactQueue = [];
+
+      const flushCompact = () => {
+        while (compactQueue.length >= 2) {
+          rows.push({ type: 'pair', fields: compactQueue.splice(0, 2) });
+        }
+        if (compactQueue.length === 1) {
+          rows.push({ type: 'single', fields: compactQueue.splice(0, 1) });
+        }
+      };
+
+      fields.forEach(f => {
+        const size = getFieldSize(f);
+        if (size === 'compact') {
+          compactQueue.push(f);
+        } else {
+          // flush any pending compacts before placing a medium/wide
+          flushCompact();
+          rows.push({ type: size === 'medium' ? 'single' : 'full', fields: [f] });
+        }
+      });
+      flushCompact();
+
+      return rows.map(row => {
+        if (row.type === 'pair') {
+          const cells = row.fields.map(f => {
+            const fieldId = `${id}__${f.id}`;
+            return `<div class="custom-layout-cell custom-field-wrap" data-field-id="${f.id}">${buildFieldHtml(fieldId, f)}</div>`;
+          }).join('');
+          return `<div class="custom-layout-row">${cells}</div>`;
+        } else if (row.type === 'single') {
+          const f = row.fields[0];
+          const fieldId = `${id}__${f.id}`;
+          return `<div class="custom-layout-row"><div class="custom-layout-cell custom-field-wrap" data-field-id="${f.id}">${buildFieldHtml(fieldId, f)}</div></div>`;
+        } else {
+          // full-width — no cell wrapper (text/log like to breathe)
+          const f = row.fields[0];
+          const fieldId = `${id}__${f.id}`;
+          return `<div class="custom-field-wrap" data-field-id="${f.id}" style="margin-bottom:10px">${buildFieldHtml(fieldId, f)}</div>`;
+        }
+      }).join('');
+    }
+
     // createCustomSection accepts either old format (id, name, icon, type, config)
     // or new format (id, name, icon, fieldsArray)
     function createCustomSection(id, name, icon, typeOrFields, config) {
@@ -7179,12 +7255,8 @@
       section.className = 'section';
       section.id = id;
 
-      // Build content from all fields
-      const contentParts = fields.map((f, i) => {
-        const fieldId = `${id}__${f.id}`;
-        const divider = (i > 0 && fields.length > 1) ? '<div style="border-top:1px solid var(--border);margin:10px 0"></div>' : '';
-        return divider + `<div class="custom-field-wrap" data-field-id="${f.id}">${buildFieldHtml(fieldId, f)}</div>`;
-      }).join('');
+      // Build content with smart layout
+      const contentParts = layoutFields(id, fields);
 
       section.innerHTML = `
         <div class="sec-head collapsed">
