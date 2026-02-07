@@ -6026,7 +6026,14 @@ async function populateForm(data) {
   document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 
   // Refresh morning stack to reflect loaded form data
-  if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
+  if (typeof checkMorningRoutine === 'function') {
+    try {
+      const viewingToday = currentDate.toDateString() === new Date().toDateString();
+      checkMorningRoutine(viewingToday);
+    } catch(e) {
+      checkMorningRoutine();
+    }
+  }
 
   console.log("✅ populateForm ran");
 }

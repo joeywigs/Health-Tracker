@@ -7895,7 +7895,15 @@
     });
 
     // ===== Morning Habit Stack =====
-    let morningItems = [];
+    let morningItems = [
+      { id: 1, name: "Pulse", type: "pulse", order: 0 },
+      { id: 2, name: "Blood Pressure", type: "bloodPressure", order: 1 },
+      { id: 3, name: "Supps", type: "supps", order: 2 },
+      { id: 4, name: "Water", type: "water", order: 3 },
+      { id: 5, name: "REHIT Ride", type: "rehit", order: 4 },
+      { id: 6, name: "Fitness Metrics", type: "fitnessMetrics", order: 5 },
+      { id: 7, name: "Meditated", type: "meditated", order: 6 }
+    ];
     let morningCheckedState = {};
 
     function getMorningKey() {
@@ -8228,12 +8236,20 @@
     // Expose on window so app.js can always call it
     window.checkMorningRoutine = checkMorningRoutine;
 
+    // Show morning routine immediately during parse (element exists above this script)
+    // This ensures visibility even if DOMContentLoaded or API calls are delayed
+    checkMorningRoutine(true);
+
     // Load morning items from KV
     async function loadMorningItems() {
       try {
         const result = await apiGet('morning_items_load');
-        morningItems = result.items || [];
-        morningItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+        if (result.items && result.items.length > 0) {
+          morningItems = result.items;
+          morningItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+        } else {
+          morningItems = getDefaultMorningItems();
+        }
       } catch (err) {
         console.error('Failed to load morning items:', err);
         morningItems = getDefaultMorningItems();
@@ -8424,17 +8440,29 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadMorningItems();
 
-      // Safety net: if morning routine still not visible after 3s, force-show it
-      setTimeout(() => {
-        const section = document.getElementById('morningRoutine');
-        if (section && !section.classList.contains('show')) {
-          const state = localStorage.getItem(getMorningKey());
-          if (state !== 'dismissed') {
-            console.log('morning: safety net triggered, forcing show');
-            checkMorningRoutine(true);
+      // Safety nets at 1s and 5s in case the API call or initial check failed
+      [1000, 5000].forEach(delay => {
+        setTimeout(() => {
+          const section = document.getElementById('morningRoutine');
+          if (section && !section.classList.contains('show')) {
+            const state = localStorage.getItem(getMorningKey());
+            if (state !== 'dismissed') {
+              console.log('morning: safety net triggered at ' + delay + 'ms');
+              section.classList.add('show');
+              const prompt = document.getElementById('morningPrompt');
+              const stack = document.getElementById('morningStack');
+              if (state === 'accepted') {
+                if (prompt) prompt.style.display = 'none';
+                if (stack) stack.style.display = 'block';
+                renderMorningItems();
+              } else {
+                if (prompt) prompt.style.display = 'block';
+                if (stack) stack.style.display = 'none';
+              }
+            }
           }
-        }
-      }, 3000);
+        }, delay);
+      });
 
       document.getElementById('addMorningItemBtn')?.addEventListener('click', addMorningItem);
       document.getElementById('newMorningItem')?.addEventListener('keypress', (e) => {
