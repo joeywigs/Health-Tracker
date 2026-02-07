@@ -3854,7 +3854,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.1</div>
+      <div class="tagline">v1.7.3</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3916,7 +3916,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.1</div>
+          <div class="tagline">v1.7.3</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4763,7 +4763,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.7.1" defer></script>
+  <script src="app.js?v=1.7.3" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -7903,11 +7903,23 @@
       return 'morningState-' + now.toISOString().slice(0, 10);
     }
 
-    function checkMorningRoutine() {
+    function checkMorningRoutine(forceToday) {
       const section = document.getElementById('morningRoutine');
-      if (!section) return;
+      if (!section) { console.log('morning: no section element'); return; }
 
-      if (!isViewingToday()) {
+      // Determine if viewing today
+      let viewingToday;
+      if (forceToday !== undefined) {
+        // Called from initial load — always today on fresh page load
+        viewingToday = forceToday;
+      } else if (typeof isViewingToday === 'function') {
+        try { viewingToday = isViewingToday(); } catch(e) { viewingToday = true; }
+      } else {
+        viewingToday = true;
+      }
+      console.log('morning: viewingToday=', viewingToday);
+
+      if (!viewingToday) {
         section.classList.remove('show');
         return;
       }
@@ -8213,6 +8225,9 @@
       if (celebration) celebration.classList.remove('show');
     };
 
+    // Expose on window so app.js can always call it
+    window.checkMorningRoutine = checkMorningRoutine;
+
     // Load morning items from KV
     async function loadMorningItems() {
       try {
@@ -8223,8 +8238,8 @@
         console.error('Failed to load morning items:', err);
         morningItems = getDefaultMorningItems();
       }
-      renderMorningSettings();
-      checkMorningRoutine();
+      try { renderMorningSettings(); } catch(e) { console.error('renderMorningSettings error:', e); }
+      checkMorningRoutine(true); // forceToday=true on initial load
     }
 
     function getDefaultMorningItems() {
@@ -8408,6 +8423,18 @@
     // Initialize morning routine on page load
     document.addEventListener('DOMContentLoaded', () => {
       loadMorningItems();
+
+      // Safety net: if morning routine still not visible after 3s, force-show it
+      setTimeout(() => {
+        const section = document.getElementById('morningRoutine');
+        if (section && !section.classList.contains('show')) {
+          const state = localStorage.getItem(getMorningKey());
+          if (state !== 'dismissed') {
+            console.log('morning: safety net triggered, forcing show');
+            checkMorningRoutine(true);
+          }
+        }
+      }, 3000);
 
       document.getElementById('addMorningItemBtn')?.addEventListener('click', addMorningItem);
       document.getElementById('newMorningItem')?.addEventListener('keypress', (e) => {
