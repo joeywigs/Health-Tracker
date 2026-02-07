@@ -3720,6 +3720,32 @@
       transition: all 0.2s;
     }
     .section-item-delete:hover { color: var(--accent-pink); opacity: 1; }
+    .section-item-edit {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 14px; cursor: pointer; padding: 4px; opacity: 0.5; transition: all 0.2s;
+    }
+    .section-item-edit:hover { color: var(--accent-teal); opacity: 1; }
+    .section-field-editor {
+      margin: 0 0 8px 0;
+    }
+    .field-editor-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .field-editor-header {
+      display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px;
+    }
+    .field-editor-header .field { margin-bottom: 0; flex: 1; }
+    .field-row {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 6px;
+    }
+    body.day-mode .field-row { background: rgba(0,0,0,0.02); }
   </style>
 </head>
 <body>
@@ -3829,7 +3855,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.5.2</div>
+          <div class="tagline">v1.6.0</div>
         </div>
       </div>
       <div class="nav-links">
@@ -4900,7 +4926,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.5.2" defer></script>
+  <script src="app.js?v=1.6.0" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -6285,18 +6311,49 @@
       window.scrollTo(0, 0);
     }
     
+    function migrateSection(sec) {
+      // Convert old single-type format to multi-field format
+      if (sec.custom && sec.type && !sec.fields) {
+        sec.fields = [{
+          id: 'f_' + Date.now() + '_0',
+          name: sec.name,
+          type: sec.type,
+          config: sec.config || {}
+        }];
+        delete sec.type;
+        delete sec.config;
+      }
+      return sec;
+    }
+
+    function ensureMigrated() {
+      let changed = false;
+      appSettings.sections.forEach(sec => {
+        if (sec.custom && sec.type && !sec.fields) {
+          migrateSection(sec);
+          changed = true;
+        }
+      });
+      if (changed) saveSettings(appSettings);
+    }
+
+    // Run migration on load
+    ensureMigrated();
+
     function renderSectionList() {
       const list = document.getElementById('sectionList');
       if (!list) return;
-      
+
       list.innerHTML = appSettings.sections.map((sec, idx) => `
         <div class="section-item" draggable="true" data-idx="${idx}" data-id="${sec.id}">
           <span class="section-item-drag">⋮⋮</span>
           <span class="section-item-icon">${sec.icon}</span>
           <span class="section-item-name">${sec.name}</span>
+          ${sec.custom ? `<button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>` : ''}
           <div class="section-item-toggle ${sec.visible ? 'on' : ''}" data-idx="${idx}"></div>
           ${sec.custom ? `<button class="section-item-delete" data-idx="${idx}">🗑️</button>` : ''}
         </div>
+        <div class="section-field-editor" id="fieldEditor_${idx}" style="display:none"></div>
       `).join('');
       
       // Add event listeners
@@ -6313,16 +6370,191 @@
         btn.addEventListener('click', () => {
           const idx = parseInt(btn.dataset.idx);
           if (confirm('Delete this section?')) {
+            const sec = appSettings.sections[idx];
+            const el = document.getElementById(sec.id);
+            if (el) el.remove();
             appSettings.sections.splice(idx, 1);
             saveSettings(appSettings);
             renderSectionList();
           }
         });
       });
-      
+
+      list.querySelectorAll('.section-item-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.idx);
+          const editor = document.getElementById(`fieldEditor_${idx}`);
+          if (!editor) return;
+          const isOpen = editor.style.display !== 'none';
+          // Close all editors
+          list.querySelectorAll('.section-field-editor').forEach(e => e.style.display = 'none');
+          if (!isOpen) {
+            renderFieldEditor(idx);
+            editor.style.display = 'block';
+          }
+        });
+      });
+
       // Drag and drop
       setupDragAndDrop();
     }
+
+    const FIELD_TYPES = [
+      { value: 'text', label: 'Text/Notes' },
+      { value: 'checkbox', label: 'Checkboxes' },
+      { value: 'number', label: 'Number' },
+      { value: 'counter', label: 'Counter (+/-)' },
+      { value: 'time', label: 'Time' },
+      { value: 'rating', label: 'Rating (1-5)' },
+      { value: 'toggle', label: 'Yes/No Toggle' }
+    ];
+
+    function renderFieldEditor(sectionIdx) {
+      const sec = appSettings.sections[sectionIdx];
+      if (!sec || !sec.custom) return;
+      const editor = document.getElementById(`fieldEditor_${sectionIdx}`);
+      if (!editor) return;
+
+      const fields = sec.fields || [];
+      const typeOptions = FIELD_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('');
+
+      editor.innerHTML = `
+        <div class="field-editor-panel">
+          <div class="field-editor-header">
+            <div class="field" style="margin-bottom:8px">
+              <label class="field-label">Section Name</label>
+              <input type="text" class="input" id="editSecName_${sectionIdx}" value="${sec.name}">
+            </div>
+            <div class="field" style="margin-bottom:8px">
+              <label class="field-label">Icon</label>
+              <input type="text" class="input" id="editSecIcon_${sectionIdx}" value="${sec.icon}" maxlength="2" style="width:60px">
+            </div>
+          </div>
+          <div class="field-label" style="margin-bottom:6px;font-weight:600">Fields</div>
+          <div id="fieldList_${sectionIdx}">
+            ${fields.map((f, fi) => renderFieldRow(sectionIdx, fi, f, typeOptions)).join('')}
+          </div>
+          <button type="button" class="btn btn-secondary" style="width:100%;margin-top:8px;font-size:12px" onclick="addFieldToSection(${sectionIdx})">+ Add Field</button>
+          <button type="button" class="btn btn-primary" style="width:100%;margin-top:8px;font-size:12px" onclick="saveFieldEditor(${sectionIdx})">Save Changes</button>
+        </div>
+      `;
+    }
+
+    function renderFieldRow(sectionIdx, fieldIdx, field, typeOptions) {
+      const configHtml = getFieldConfigHtml(sectionIdx, fieldIdx, field);
+      return `
+        <div class="field-row" data-fi="${fieldIdx}">
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+            <input type="text" class="input" value="${field.name}" placeholder="Field name"
+              id="fieldName_${sectionIdx}_${fieldIdx}" style="flex:2;font-size:12px;padding:6px 8px">
+            <select class="input" id="fieldType_${sectionIdx}_${fieldIdx}"
+              onchange="onFieldTypeChange(${sectionIdx},${fieldIdx})"
+              style="flex:1;font-size:12px;padding:6px 8px">
+              ${typeOptions.replace(`value="${field.type}"`, `value="${field.type}" selected`)}
+            </select>
+            <button type="button" class="btn btn-danger" onclick="removeField(${sectionIdx},${fieldIdx})" style="padding:4px 8px;font-size:14px">×</button>
+          </div>
+          <div id="fieldConfig_${sectionIdx}_${fieldIdx}" style="padding-left:8px;margin-bottom:8px">${configHtml}</div>
+        </div>
+      `;
+    }
+
+    function getFieldConfigHtml(si, fi, field) {
+      const t = field.type;
+      const c = field.config || {};
+      if (t === 'checkbox') {
+        return `<input type="text" class="input" placeholder="Names (comma-separated)" id="fieldCfg_${si}_${fi}_cb" value="${(c.checkboxes || []).join(', ')}" style="font-size:11px;padding:4px 8px">`;
+      } else if (t === 'counter') {
+        return `<div style="display:flex;gap:6px">
+          <select class="input" id="fieldCfg_${si}_${fi}_goalType" style="font-size:11px;padding:4px;flex:1">
+            <option value="daily" ${c.goalType !== 'weekly' ? 'selected' : ''}>Daily</option>
+            <option value="weekly" ${c.goalType === 'weekly' ? 'selected' : ''}>Weekly</option>
+          </select>
+          <input type="number" class="input" id="fieldCfg_${si}_${fi}_goalNum" placeholder="Goal #" value="${c.goalNumber || 6}" min="1" style="font-size:11px;padding:4px;width:60px">
+          <input type="text" class="input" id="fieldCfg_${si}_${fi}_unit" placeholder="Unit" value="${c.unitLabel || 'times'}" style="font-size:11px;padding:4px;flex:1">
+        </div>`;
+      } else if (t === 'number') {
+        return `<div style="display:flex;gap:6px">
+          <input type="text" class="input" id="fieldCfg_${si}_${fi}_unit" placeholder="Unit (optional)" value="${c.unit || ''}" style="font-size:11px;padding:4px;flex:1">
+          <input type="text" class="input" id="fieldCfg_${si}_${fi}_ph" placeholder="Placeholder" value="${c.placeholder || '0'}" style="font-size:11px;padding:4px;flex:1">
+        </div>`;
+      } else if (t === 'rating') {
+        return `<input type="text" class="input" id="fieldCfg_${si}_${fi}_label" placeholder="Rating label" value="${c.label || 'Rate'}" style="font-size:11px;padding:4px">`;
+      }
+      return '';
+    }
+
+    window.onFieldTypeChange = function(si, fi) {
+      const sel = document.getElementById(`fieldType_${si}_${fi}`);
+      const container = document.getElementById(`fieldConfig_${si}_${fi}`);
+      if (!sel || !container) return;
+      const field = { type: sel.value, config: {} };
+      container.innerHTML = getFieldConfigHtml(si, fi, field);
+    };
+
+    window.addFieldToSection = function(si) {
+      const sec = appSettings.sections[si];
+      if (!sec.fields) sec.fields = [];
+      sec.fields.push({ id: 'f_' + Date.now(), name: '', type: 'text', config: {} });
+      renderFieldEditor(si);
+    };
+
+    window.removeField = function(si, fi) {
+      const sec = appSettings.sections[si];
+      if (!sec.fields || sec.fields.length <= 1) {
+        alert('Section must have at least one field');
+        return;
+      }
+      sec.fields.splice(fi, 1);
+      renderFieldEditor(si);
+    };
+
+    window.saveFieldEditor = function(si) {
+      const sec = appSettings.sections[si];
+      if (!sec) return;
+
+      // Update name and icon
+      const nameInput = document.getElementById(`editSecName_${si}`);
+      const iconInput = document.getElementById(`editSecIcon_${si}`);
+      if (nameInput?.value.trim()) sec.name = nameInput.value.trim();
+      if (iconInput?.value) sec.icon = iconInput.value;
+
+      // Update fields
+      const fields = sec.fields || [];
+      fields.forEach((f, fi) => {
+        const nameEl = document.getElementById(`fieldName_${si}_${fi}`);
+        const typeEl = document.getElementById(`fieldType_${si}_${fi}`);
+        if (nameEl) f.name = nameEl.value.trim() || f.name;
+        if (typeEl) f.type = typeEl.value;
+
+        // Collect config
+        f.config = {};
+        if (f.type === 'checkbox') {
+          const val = document.getElementById(`fieldCfg_${si}_${fi}_cb`)?.value || '';
+          f.config.checkboxes = val.split(',').map(s => s.trim()).filter(s => s);
+        } else if (f.type === 'counter') {
+          f.config.goalType = document.getElementById(`fieldCfg_${si}_${fi}_goalType`)?.value || 'daily';
+          f.config.goalNumber = parseInt(document.getElementById(`fieldCfg_${si}_${fi}_goalNum`)?.value) || 6;
+          f.config.unitLabel = document.getElementById(`fieldCfg_${si}_${fi}_unit`)?.value || 'times';
+        } else if (f.type === 'number') {
+          f.config.unit = document.getElementById(`fieldCfg_${si}_${fi}_unit`)?.value || '';
+          f.config.placeholder = document.getElementById(`fieldCfg_${si}_${fi}_ph`)?.value || '0';
+        } else if (f.type === 'rating') {
+          f.config.label = document.getElementById(`fieldCfg_${si}_${fi}_label`)?.value || 'Rate';
+        }
+      });
+
+      saveSettings(appSettings);
+
+      // Remove old section DOM and recreate
+      const oldEl = document.getElementById(sec.id);
+      if (oldEl) oldEl.remove();
+      createCustomSection(sec.id, sec.name, sec.icon, sec.fields);
+      applySectionSettings();
+
+      renderSectionList();
+      if (typeof showToast === 'function') showToast('Section updated', 'success');
+    };
     
     function setupDragAndDrop() {
       const list = document.getElementById('sectionList');
@@ -6736,20 +6968,20 @@
         config.label = document.getElementById('ratingLabel').value || 'Rate';
       }
       
+      const fieldId = 'f_' + Date.now();
       appSettings.sections.push({
         id,
         name,
         icon,
         visible: true,
         custom: true,
-        type,
-        config
+        fields: [{ id: fieldId, name: name, type, config }]
       });
-      
+
       saveSettings(appSettings);
-      
+
       // Create the section element
-      createCustomSection(id, name, icon, type, config);
+      createCustomSection(id, name, icon, [{ id: fieldId, name: name, type, config }]);
       
       // Clear inputs
       document.getElementById('newSectionName').value = '';
@@ -6777,111 +7009,92 @@
     // Store custom section data (for logs, counters, etc.)
     window.customSectionData = window.customSectionData || {};
     
-    function createCustomSection(id, name, icon, type, config = {}) {
+    function buildFieldHtml(fieldId, field) {
+      const t = field.type;
+      const c = field.config || {};
+      const fLabel = field.name ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-family:'Space Grotesk',sans-serif">${field.name}</div>` : '';
+
+      if (t === 'text') {
+        return fLabel + `<textarea class="input" id="${fieldId}_input" placeholder="Enter notes..."></textarea>`;
+      } else if (t === 'checkbox') {
+        const cbs = (c.checkboxes || ['Done']).map((cb, i) =>
+          `<div class="chip"><input type="checkbox" id="${fieldId}_check_${i}"><div class="chip-dot">✓</div><span class="chip-text">${cb}</span></div>`
+        ).join('');
+        return fLabel + `<div class="chips">${cbs}</div>`;
+      } else if (t === 'number') {
+        const unit = c.unit ? `<span class="card-unit">${c.unit}</span>` : '';
+        return fLabel + `<div style="display:flex;align-items:center;gap:8px"><input type="number" class="big-input" id="${fieldId}_input" placeholder="${c.placeholder || '0'}" style="max-width:120px">${unit}</div>`;
+      } else if (t === 'counter') {
+        const goalNum = c.goalNumber || 6;
+        const unit = c.unitLabel || 'times';
+        const isWeekly = c.goalType === 'weekly';
+        if (isWeekly) {
+          let dots = '';
+          for (let i = 0; i < goalNum; i++) dots += `<div class="counter-dot" data-idx="${i}"></div>`;
+          return fLabel + `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${fieldId}">−</button>
+              <div class="water-num counter-value" id="${fieldId}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${fieldId}">+</button>
+              <div class="counter-dots" id="${fieldId}_dots" style="display:flex;gap:6px;margin-left:auto">${dots}</div>
+            </div>
+            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/week</div>`;
+        } else {
+          return fLabel + `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${fieldId}">−</button>
+              <div class="water-num counter-value" id="${fieldId}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${fieldId}">+</button>
+              <div class="water-bar-wrap"><div class="water-bar-track"><div class="water-bar-fill counter-fill" id="${fieldId}_fill" style="height:0%"></div></div><div class="water-bar-goal">${goalNum}</div></div>
+            </div>
+            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/day</div>`;
+        }
+      } else if (t === 'log') {
+        return fLabel + `<div class="items" id="${fieldId}_list"></div><button type="button" class="btn btn-secondary" id="${fieldId}_addBtn">+ Add Entry</button>`;
+      } else if (t === 'time') {
+        return fLabel + `<input type="time" class="input" id="${fieldId}_input">`;
+      } else if (t === 'rating') {
+        const label = c.label || 'Rate';
+        return `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${label}</div>
+          <div class="rating-stars" id="${fieldId}_stars">
+            <span class="star" data-val="1">☆</span><span class="star" data-val="2">☆</span><span class="star" data-val="3">☆</span><span class="star" data-val="4">☆</span><span class="star" data-val="5">☆</span>
+          </div><input type="hidden" id="${fieldId}_input" value="">`;
+      } else if (t === 'toggle') {
+        return fLabel + `<div class="chips"><div class="chip toggle-chip" id="${fieldId}_toggle"><input type="checkbox" id="${fieldId}_input"><div class="chip-dot">✓</div><span class="chip-text">Yes</span></div></div>`;
+      }
+      return '';
+    }
+
+    // createCustomSection accepts either old format (id, name, icon, type, config)
+    // or new format (id, name, icon, fieldsArray)
+    function createCustomSection(id, name, icon, typeOrFields, config) {
       const form = document.getElementById('healthForm');
       if (!form) return;
-      
-      // Initialize data storage for this section
-      if (!window.customSectionData[id]) {
-        window.customSectionData[id] = { value: type === 'counter' ? 0 : null, entries: [] };
+
+      let fields;
+      if (Array.isArray(typeOrFields)) {
+        fields = typeOrFields;
+      } else {
+        // Old format: single type + config
+        fields = [{ id: 'f_default', name: name, type: typeOrFields, config: config || {} }];
       }
-      
+
+      // Initialize data storage
+      if (!window.customSectionData[id]) {
+        window.customSectionData[id] = {};
+      }
+
       const section = document.createElement('div');
       section.className = 'section';
       section.id = id;
-      
-      let content = '';
-      
-      if (type === 'text') {
-        content = '<textarea class="input" id="' + id + '_input" placeholder="Enter notes..."></textarea>';
-      
-      } else if (type === 'checkbox') {
-        const checkboxes = config.checkboxes || ['Done'];
-        let cbHtml = '';
-        checkboxes.forEach((cb, i) => {
-          cbHtml += '<div class="chip"><input type="checkbox" id="' + id + '_check_' + i + '"><div class="chip-dot">✓</div><span class="chip-text">' + cb + '</span></div>';
-        });
-        content = '<div class="chips">' + cbHtml + '</div>';
-      
-      } else if (type === 'number') {
-        const unit = config.unit ? '<span class="card-unit">' + config.unit + '</span>' : '';
-        content = '<div style="display:flex;align-items:center;gap:8px"><input type="number" class="big-input" id="' + id + '_input" placeholder="' + (config.placeholder || '0') + '" style="max-width:120px">' + unit + '</div>';
-      
-      } else if (type === 'counter') {
-        const goalNum = config.goalNumber || 6;
-        const unit = config.unitLabel || 'times';
-        const isWeekly = config.goalType === 'weekly';
-        
-        if (isWeekly) {
-          // Weekly goal with dots
-          let dots = '';
-          for (let i = 0; i < goalNum; i++) {
-            dots += `<div class="counter-dot" data-idx="${i}"></div>`;
-          }
-          content = `
-            <div style="display:flex;align-items:center;gap:12px">
-              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
-              <div class="water-num counter-value" id="${id}_value">0</div>
-              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
-              <div class="counter-dots" id="${id}_dots" style="display:flex;gap:6px;margin-left:auto">
-                ${dots}
-              </div>
-            </div>
-            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/week</div>
-          `;
-        } else {
-          // Daily goal with progress bar
-          content = `
-            <div style="display:flex;align-items:center;gap:12px">
-              <button type="button" class="water-btn counter-minus" data-id="${id}">−</button>
-              <div class="water-num counter-value" id="${id}_value">0</div>
-              <button type="button" class="water-btn counter-plus" data-id="${id}">+</button>
-              <div class="water-bar-wrap">
-                <div class="water-bar-track">
-                  <div class="water-bar-fill counter-fill" id="${id}_fill" style="height:0%"></div>
-                </div>
-                <div class="water-bar-goal">${goalNum}</div>
-              </div>
-            </div>
-            <div class="card-avg" style="margin-top:8px">Goal: ${goalNum} ${unit}/day</div>
-          `;
-        }
-      
-      } else if (type === 'log') {
-        content = `
-          <div class="items" id="${id}_list"></div>
-          <button type="button" class="btn btn-secondary" id="${id}_addBtn">+ Add Entry</button>
-        `;
-      
-      } else if (type === 'time') {
-        content = `<input type="time" class="input" id="${id}_input">`;
-      
-      } else if (type === 'rating') {
-        const label = config.label || 'Rate';
-        content = `
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${label}</div>
-          <div class="rating-stars" id="${id}_stars">
-            <span class="star" data-val="1">☆</span>
-            <span class="star" data-val="2">☆</span>
-            <span class="star" data-val="3">☆</span>
-            <span class="star" data-val="4">☆</span>
-            <span class="star" data-val="5">☆</span>
-          </div>
-          <input type="hidden" id="${id}_input" value="">
-        `;
-      
-      } else if (type === 'toggle') {
-        content = `
-          <div class="chips">
-            <div class="chip toggle-chip" id="${id}_toggle">
-              <input type="checkbox" id="${id}_input">
-              <div class="chip-dot">✓</div>
-              <span class="chip-text">Yes</span>
-            </div>
-          </div>
-        `;
-      }
-      
+
+      // Build content from all fields
+      const contentParts = fields.map((f, i) => {
+        const fieldId = `${id}__${f.id}`;
+        const divider = (i > 0 && fields.length > 1) ? '<div style="border-top:1px solid var(--border);margin:10px 0"></div>' : '';
+        return divider + `<div class="custom-field-wrap" data-field-id="${f.id}">${buildFieldHtml(fieldId, f)}</div>`;
+      }).join('');
+
       section.innerHTML = `
         <div class="sec-head collapsed">
           <div class="sec-title">
@@ -6890,156 +7103,100 @@
           </div>
           <span class="sec-toggle">▼</span>
         </div>
-        <div class="sec-content collapsed">${content}</div>
+        <div class="sec-content collapsed">${contentParts}</div>
       `;
-      
+
       form.appendChild(section);
-      
+
       // Wire up collapse
       const head = section.querySelector('.sec-head');
       head.addEventListener('click', () => {
         head.classList.toggle('collapsed');
         section.querySelector('.sec-content').classList.toggle('collapsed');
       });
-      
-      // Wire up type-specific interactions
-      wireUpCustomSection(section, id, type, config);
+
+      // Wire up each field
+      fields.forEach(f => {
+        const fieldId = `${id}__${f.id}`;
+        wireUpField(section, id, fieldId, f);
+      });
     }
     
-    function wireUpCustomSection(section, id, type, config) {
-      if (type === 'checkbox') {
-        section.querySelectorAll('.chip').forEach(chip => {
+    function wireUpField(section, sectionId, fieldId, field) {
+      const t = field.type;
+      const c = field.config || {};
+      const fid = field.id;
+      const sd = () => { window.customSectionData[sectionId] = window.customSectionData[sectionId] || {}; return window.customSectionData[sectionId]; };
+
+      if (t === 'checkbox') {
+        const wrap = document.getElementById(`${fieldId}_check_0`)?.closest('.custom-field-wrap') || section;
+        wrap.querySelectorAll('.chip').forEach(chip => {
           const cb = chip.querySelector('input');
-          chip.addEventListener('click', (e) => {
-            if (e.target.type !== 'checkbox') {
-              cb.checked = !cb.checked;
-              chip.classList.toggle('on', cb.checked);
-              updateCompletionRingAurora();
-              if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-            }
-          });
-          cb.addEventListener('change', () => {
-            chip.classList.toggle('on', cb.checked);
-            updateCompletionRingAurora();
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
+          chip.addEventListener('click', (e) => { if (e.target.type !== 'checkbox') { cb.checked = !cb.checked; chip.classList.toggle('on', cb.checked); updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); }});
+          cb.addEventListener('change', () => { chip.classList.toggle('on', cb.checked); updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
         });
-      
-      } else if (type === 'counter') {
-        const goalNum = config.goalNumber || 6;
-        const isWeekly = config.goalType === 'weekly';
-        
-        section.querySelector('.counter-plus')?.addEventListener('click', () => {
-          const valEl = document.getElementById(`${id}_value`);
-          let val = parseInt(valEl.textContent) || 0;
-          val++;
-          valEl.textContent = val;
-          window.customSectionData[id].value = val;
-          
-          if (isWeekly) {
-            // Update dots
-            const dots = section.querySelectorAll('.counter-dot');
-            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
-          } else {
-            // Update progress bar
-            const fill = document.getElementById(`${id}_fill`);
-            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
-          }
+
+      } else if (t === 'counter') {
+        const goalNum = c.goalNumber || 6;
+        const isWeekly = c.goalType === 'weekly';
+        const plus = document.querySelector(`[data-id="${fieldId}"].counter-plus`) || section.querySelector(`.counter-plus[data-id="${fieldId}"]`);
+        const minus = document.querySelector(`[data-id="${fieldId}"].counter-minus`) || section.querySelector(`.counter-minus[data-id="${fieldId}"]`);
+
+        plus?.addEventListener('click', () => {
+          const valEl = document.getElementById(`${fieldId}_value`);
+          let val = parseInt(valEl.textContent) || 0; val++;
+          valEl.textContent = val; sd()[fid] = { value: val };
+          if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
+          else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
           if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
         });
-        
-        section.querySelector('.counter-minus')?.addEventListener('click', () => {
-          const valEl = document.getElementById(`${id}_value`);
-          let val = parseInt(valEl.textContent) || 0;
-          if (val > 0) val--;
-          valEl.textContent = val;
-          window.customSectionData[id].value = val;
-          
-          if (isWeekly) {
-            const dots = section.querySelectorAll('.counter-dot');
-            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
-          } else {
-            const fill = document.getElementById(`${id}_fill`);
-            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
-          }
+        minus?.addEventListener('click', () => {
+          const valEl = document.getElementById(`${fieldId}_value`);
+          let val = parseInt(valEl.textContent) || 0; if (val > 0) val--;
+          valEl.textContent = val; sd()[fid] = { value: val };
+          if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
+          else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
           if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
         });
-      
-      } else if (type === 'log') {
-        const addBtn = document.getElementById(`${id}_addBtn`);
-        addBtn?.addEventListener('click', () => openLogModal(id, config.fields || []));
-      
-      } else if (type === 'rating') {
-        const stars = section.querySelectorAll('.star');
-        const input = document.getElementById(`${id}_input`);
+
+      } else if (t === 'log') {
+        const addBtn = document.getElementById(`${fieldId}_addBtn`);
+        addBtn?.addEventListener('click', () => openLogModal(sectionId, fid, fieldId, c.fields || []));
+
+      } else if (t === 'rating') {
+        const stars = document.querySelectorAll(`#${CSS.escape(fieldId)}_stars .star`);
+        const input = document.getElementById(`${fieldId}_input`);
         stars.forEach(star => {
           star.addEventListener('click', () => {
-            const val = parseInt(star.dataset.val);
-            input.value = val;
-            window.customSectionData[id].value = val;
-            stars.forEach((s, i) => {
-              s.textContent = i < val ? '★' : '☆';
-              s.classList.toggle('filled', i < val);
-            });
+            const val = parseInt(star.dataset.val); input.value = val; sd()[fid] = { value: val };
+            stars.forEach((s,i) => { s.textContent = i < val ? '★' : '☆'; s.classList.toggle('filled', i < val); });
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
           });
         });
-      
-      } else if (type === 'toggle') {
-        const chip = section.querySelector('.toggle-chip');
+
+      } else if (t === 'toggle') {
+        const chip = document.getElementById(`${fieldId}_toggle`);
+        if (!chip) return;
         const cb = chip.querySelector('input');
-        chip.addEventListener('click', (e) => {
-          if (e.target.type !== 'checkbox') {
-            cb.checked = !cb.checked;
-            chip.classList.toggle('on', cb.checked);
-            chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
-            updateCompletionRingAurora();
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          }
-        });
-        cb.addEventListener('change', () => {
-          chip.classList.toggle('on', cb.checked);
-          chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No';
-          updateCompletionRingAurora();
-          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-        });
-      
-      } else if (type === 'text') {
-        const input = document.getElementById(`${id}_input`);
-        if (input) {
-          // Save on blur (when user clicks away) to avoid interrupting typing
-          input.addEventListener('blur', () => {
-            window.customSectionData[id] = window.customSectionData[id] || {};
-            window.customSectionData[id].value = input.value;
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        }
-      
-      } else if (type === 'number') {
-        const input = document.getElementById(`${id}_input`);
-        if (input) {
-          input.addEventListener('change', () => {
-            window.customSectionData[id] = window.customSectionData[id] || {};
-            window.customSectionData[id].value = input.value;
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        }
-      
-      } else if (type === 'time') {
-        const input = document.getElementById(`${id}_input`);
-        if (input) {
-          input.addEventListener('change', () => {
-            window.customSectionData[id] = window.customSectionData[id] || {};
-            window.customSectionData[id].value = input.value;
-            if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
-          });
-        }
+        chip.addEventListener('click', (e) => { if (e.target.type !== 'checkbox') { cb.checked = !cb.checked; chip.classList.toggle('on', cb.checked); chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No'; updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); }});
+        cb.addEventListener('change', () => { chip.classList.toggle('on', cb.checked); chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No'; updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+
+      } else if (t === 'text') {
+        const input = document.getElementById(`${fieldId}_input`);
+        if (input) input.addEventListener('blur', () => { sd()[fid] = { value: input.value }; if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+
+      } else if (t === 'number') {
+        const input = document.getElementById(`${fieldId}_input`);
+        if (input) input.addEventListener('change', () => { sd()[fid] = { value: input.value }; if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+
+      } else if (t === 'time') {
+        const input = document.getElementById(`${fieldId}_input`);
+        if (input) input.addEventListener('change', () => { sd()[fid] = { value: input.value }; if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
       }
     }
     
     // Log modal for custom log sections
-    function openLogModal(sectionId, fields) {
-      // Create modal if doesn't exist
+    function openLogModal(sectionId, fieldKey, fieldDomId, logFields) {
       let modal = document.getElementById('customLogModal');
       if (!modal) {
         modal = document.createElement('div');
@@ -7058,37 +7215,34 @@
         `;
         document.body.appendChild(modal);
       }
-      
-      // Populate fields
+
       const fieldsContainer = document.getElementById('logModalFields');
-      fieldsContainer.innerHTML = fields.map(f => `
+      fieldsContainer.innerHTML = logFields.map(f => `
         <div class="field">
           <label class="field-label">${f.name}</label>
-          ${f.type === 'number' 
+          ${f.type === 'number'
             ? `<input type="number" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="0">`
             : `<input type="text" class="input" id="logField_${f.name.replace(/\s/g, '_')}" placeholder="">`
           }
         </div>
       `).join('');
-      
-      // Wire up save
+
       document.getElementById('logModalSaveBtn').onclick = () => {
         const entry = {};
-        fields.forEach(f => {
+        logFields.forEach(f => {
           const input = document.getElementById(`logField_${f.name.replace(/\s/g, '_')}`);
           entry[f.name] = f.type === 'number' ? (parseFloat(input.value) || 0) : input.value;
         });
-        
-        if (!window.customSectionData[sectionId]) {
-          window.customSectionData[sectionId] = { entries: [] };
-        }
-        window.customSectionData[sectionId].entries.push(entry);
-        
-        renderLogEntries(sectionId, fields);
+
+        if (!window.customSectionData[sectionId]) window.customSectionData[sectionId] = {};
+        if (!window.customSectionData[sectionId][fieldKey]) window.customSectionData[sectionId][fieldKey] = { entries: [] };
+        window.customSectionData[sectionId][fieldKey].entries.push(entry);
+
+        renderLogEntries(fieldDomId, sectionId, fieldKey, logFields);
         closeLogModal();
         if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
       };
-      
+
       modal.classList.add('show');
     }
     
@@ -7096,29 +7250,29 @@
       document.getElementById('customLogModal')?.classList.remove('show');
     }
     
-    function renderLogEntries(sectionId, fields) {
-      const list = document.getElementById(`${sectionId}_list`);
+    function renderLogEntries(fieldDomId, sectionId, fieldKey, logFields) {
+      const list = document.getElementById(`${fieldDomId}_list`);
       if (!list) return;
-      
-      const entries = window.customSectionData[sectionId]?.entries || [];
+
+      const entries = window.customSectionData[sectionId]?.[fieldKey]?.entries || [];
       list.innerHTML = entries.map((entry, idx) => {
-        const summary = fields.map(f => entry[f.name]).filter(v => v).join(' · ');
+        const summary = logFields.map(f => entry[f.name]).filter(v => v).join(' · ');
         return `
           <div class="item">
             <span class="item-text">${summary || 'Entry ' + (idx + 1)}</span>
-            <button type="button" class="btn btn-danger" onclick="removeLogEntry('${sectionId}', ${idx})">×</button>
+            <button type="button" class="btn btn-danger" onclick="removeLogEntry('${sectionId}', '${fieldKey}', '${fieldDomId}', ${idx})">×</button>
           </div>
         `;
       }).join('');
     }
-    
-    window.removeLogEntry = function(sectionId, idx) {
-      if (window.customSectionData[sectionId]?.entries) {
-        window.customSectionData[sectionId].entries.splice(idx, 1);
-        // Re-render - need to get fields from config
+
+    window.removeLogEntry = function(sectionId, fieldKey, fieldDomId, idx) {
+      if (window.customSectionData[sectionId]?.[fieldKey]?.entries) {
+        window.customSectionData[sectionId][fieldKey].entries.splice(idx, 1);
         const sec = appSettings.sections.find(s => s.id === sectionId);
-        if (sec?.config?.fields) {
-          renderLogEntries(sectionId, sec.config.fields);
+        const field = sec?.fields?.find(f => f.id === fieldKey);
+        if (field?.config?.fields) {
+          renderLogEntries(fieldDomId, sectionId, fieldKey, field.config.fields);
         }
         if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
       }
@@ -7126,131 +7280,105 @@
     
     // Load custom sections data from server and update UI
     window.loadCustomSectionsData = function(data) {
-      // Reset all custom section data first
       window.customSectionData = {};
-      
-      // Then load new data if provided
       if (data && typeof data === 'object') {
         window.customSectionData = data;
       }
-      
-      // Update UI for each custom section
+
       appSettings.sections.filter(s => s.custom).forEach(sec => {
         const sectionData = window.customSectionData[sec.id] || {};
-        
-        // Ensure data structure exists
-        if (!window.customSectionData[sec.id]) {
-          window.customSectionData[sec.id] = { value: null, entries: [] };
+        if (!window.customSectionData[sec.id]) window.customSectionData[sec.id] = {};
+
+        const fields = sec.fields || [];
+
+        // Legacy compat: if sectionData has old flat format (value, entries, checkboxes), map to first field
+        if (fields.length > 0 && (sectionData.value !== undefined || sectionData.entries || sectionData.checkboxes) && !sectionData[fields[0].id]) {
+          sectionData[fields[0].id] = {
+            value: sectionData.value,
+            entries: sectionData.entries || [],
+            checkboxes: sectionData.checkboxes
+          };
+          window.customSectionData[sec.id] = sectionData;
         }
-        
-        const type = sec.type;
-        const config = sec.config || {};
-        
-        if (type === 'counter') {
-          const val = sectionData.value || 0;
-          const valEl = document.getElementById(`${sec.id}_value`);
-          if (valEl) valEl.textContent = val;
-          
-          if (config.goalType === 'weekly') {
-            // Update dots
-            const dots = document.querySelectorAll(`#${sec.id} .counter-dot`);
-            dots.forEach((dot, i) => dot.classList.toggle('on', i < val));
-          } else {
-            // Update progress bar
-            const fill = document.getElementById(`${sec.id}_fill`);
-            const goalNum = config.goalNumber || 6;
-            if (fill) fill.style.height = Math.min(100, (val / goalNum) * 100) + '%';
-          }
-        
-        } else if (type === 'checkbox') {
-          const checkboxes = config.checkboxes || ['Done'];
-          checkboxes.forEach((cb, i) => {
-            const input = document.getElementById(`${sec.id}_check_${i}`);
-            const chip = input?.closest('.chip');
-            const isChecked = sectionData.checkboxes?.[i] || false;
-            if (input) {
-              input.checked = isChecked;
-              chip?.classList.toggle('on', isChecked);
+
+        fields.forEach(f => {
+          const fieldId = `${sec.id}__${f.id}`;
+          const fd = sectionData[f.id] || {};
+          const t = f.type;
+          const c = f.config || {};
+
+          if (t === 'counter') {
+            const val = fd.value || 0;
+            const valEl = document.getElementById(`${fieldId}_value`);
+            if (valEl) valEl.textContent = val;
+            if (c.goalType === 'weekly') {
+              document.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val));
+            } else {
+              const fill = document.getElementById(`${fieldId}_fill`);
+              if (fill) fill.style.height = Math.min(100, (val/(c.goalNumber||6))*100)+'%';
             }
-          });
-        
-        } else if (type === 'text') {
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) {
-            input.value = sectionData.value || '';
+          } else if (t === 'checkbox') {
+            (c.checkboxes || ['Done']).forEach((cb, i) => {
+              const input = document.getElementById(`${fieldId}_check_${i}`);
+              const chip = input?.closest('.chip');
+              const isChecked = fd.checkboxes?.[i] || false;
+              if (input) { input.checked = isChecked; chip?.classList.toggle('on', isChecked); }
+            });
+          } else if (t === 'text' || t === 'number' || t === 'time') {
+            const input = document.getElementById(`${fieldId}_input`);
+            if (input) input.value = fd.value || '';
+          } else if (t === 'rating') {
+            const val = fd.value || 0;
+            const input = document.getElementById(`${fieldId}_input`);
+            if (input) input.value = val;
+            document.querySelectorAll(`#${CSS.escape(fieldId)}_stars .star`).forEach((s,i) => {
+              s.textContent = i < val ? '★' : '☆'; s.classList.toggle('filled', i < val);
+            });
+          } else if (t === 'toggle') {
+            const input = document.getElementById(`${fieldId}_input`);
+            const chip = document.getElementById(`${fieldId}_toggle`);
+            const isChecked = fd.value || false;
+            if (input) {
+              input.checked = isChecked; chip?.classList.toggle('on', isChecked);
+              const te = chip?.querySelector('.chip-text'); if (te) te.textContent = isChecked ? 'Yes' : 'No';
+            }
+          } else if (t === 'log') {
+            if (c.fields) renderLogEntries(fieldId, sec.id, f.id, c.fields);
           }
-        
-        } else if (type === 'number') {
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) input.value = sectionData.value || '';
-        
-        } else if (type === 'time') {
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) input.value = sectionData.value || '';
-        
-        } else if (type === 'rating') {
-          const val = sectionData.value || 0;
-          const input = document.getElementById(`${sec.id}_input`);
-          if (input) input.value = val;
-          const stars = document.querySelectorAll(`#${sec.id}_stars .star`);
-          stars.forEach((s, i) => {
-            s.textContent = i < val ? '★' : '☆';
-            s.classList.toggle('filled', i < val);
-          });
-        
-        } else if (type === 'toggle') {
-          const input = document.getElementById(`${sec.id}_input`);
-          const chip = document.getElementById(`${sec.id}_toggle`);
-          const isChecked = sectionData.value || false;
-          if (input) {
-            input.checked = isChecked;
-            chip?.classList.toggle('on', isChecked);
-            const textEl = chip?.querySelector('.chip-text');
-            if (textEl) textEl.textContent = isChecked ? 'Yes' : 'No';
-          }
-        
-        } else if (type === 'log') {
-          if (config.fields) {
-            renderLogEntries(sec.id, config.fields);
-          }
-        }
+        });
       });
-      
-      // Update completion ring
-      if (typeof updateCompletionRingAurora === 'function') {
-        updateCompletionRingAurora();
-      }
-      
+
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
     };
     
     // Collect custom sections data from UI for saving
     window.collectCustomSectionsData = function() {
       appSettings.sections.filter(s => s.custom).forEach(sec => {
-        if (!window.customSectionData[sec.id]) {
-          window.customSectionData[sec.id] = { value: null, entries: [] };
-        }
-        
-        const type = sec.type;
-        const config = sec.config || {};
-        
-        if (type === 'checkbox') {
-          const checkboxes = config.checkboxes || ['Done'];
-          window.customSectionData[sec.id].checkboxes = checkboxes.map((cb, i) => {
-            const input = document.getElementById(`${sec.id}_check_${i}`);
-            return input?.checked || false;
-          });
-        
-        } else if (type === 'text' || type === 'number' || type === 'time') {
-          const input = document.getElementById(`${sec.id}_input`);
-          window.customSectionData[sec.id].value = input?.value || '';
-        
-        } else if (type === 'toggle') {
-          const input = document.getElementById(`${sec.id}_input`);
-          window.customSectionData[sec.id].value = input?.checked || false;
-        }
-        // counter, rating, and log already update customSectionData directly
+        if (!window.customSectionData[sec.id]) window.customSectionData[sec.id] = {};
+
+        const fields = sec.fields || [];
+        fields.forEach(f => {
+          const fieldId = `${sec.id}__${f.id}`;
+          const t = f.type;
+          const c = f.config || {};
+
+          if (t === 'checkbox') {
+            const cbs = (c.checkboxes || ['Done']).map((cb, i) => {
+              const input = document.getElementById(`${fieldId}_check_${i}`);
+              return input?.checked || false;
+            });
+            window.customSectionData[sec.id][f.id] = { checkboxes: cbs };
+          } else if (t === 'text' || t === 'number' || t === 'time') {
+            const input = document.getElementById(`${fieldId}_input`);
+            window.customSectionData[sec.id][f.id] = { value: input?.value || '' };
+          } else if (t === 'toggle') {
+            const input = document.getElementById(`${fieldId}_input`);
+            window.customSectionData[sec.id][f.id] = { value: input?.checked || false };
+          }
+          // counter, rating, and log already update customSectionData directly via wireUpField
+        });
       });
-      
+
       return window.customSectionData;
     };
     
@@ -7296,10 +7424,11 @@
     document.addEventListener('DOMContentLoaded', () => {
       applySectionSettings();
       
-      // Recreate any custom sections
+      // Recreate any custom sections (migrate if needed)
+      ensureMigrated();
       appSettings.sections.filter(s => s.custom).forEach(sec => {
         if (!document.getElementById(sec.id)) {
-          createCustomSection(sec.id, sec.name, sec.icon, sec.type, sec.config || {});
+          createCustomSection(sec.id, sec.name, sec.icon, sec.fields || []);
         }
       });
     });
