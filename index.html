@@ -7014,9 +7014,11 @@
     // Start workout shortcut buttons (x-callback-url returns to app)
     const appReturnUrl = encodeURIComponent(window.location.href.split('?')[0]);
     document.getElementById('startWalkBtn')?.addEventListener('click', function() {
+      localStorage.setItem('pendingWorkout', JSON.stringify({ type: 'Walk', startTime: Date.now() }));
       window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('Start Outdoor Walk')}&x-success=${appReturnUrl}`;
     });
     document.getElementById('startCyclingBtn')?.addEventListener('click', function() {
+      localStorage.setItem('pendingWorkout', JSON.stringify({ type: 'Carol Bike', startTime: Date.now() }));
       window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('Start Cycling')}&x-success=${appReturnUrl}`;
     });
 
