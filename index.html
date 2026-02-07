@@ -988,13 +988,21 @@
     .phase { margin-top: 0; }
     .phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
     .phase-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: var(--radius-pill); overflow: hidden; }
-    .phase-fill { 
-      height: 100%; 
-      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange)); 
-      border-radius: var(--radius-pill); 
+    .phase-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange));
+      border-radius: var(--radius-pill);
       box-shadow: 0 0 20px var(--glow-pink);
       transition: width 0.6s;
     }
+    .sync-btns { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+    .sync-shortcut-btn { padding: 5px 14px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: var(--radius-pill); background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+    .sync-shortcut-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); border-color: var(--accent-teal); }
+    .sync-shortcut-btn.syncing { opacity: 0.5; pointer-events: none; }
+    .sync-shortcut-btn.done { border-color: var(--accent-teal); color: var(--accent-teal); }
+    body.day-mode .sync-shortcut-btn { background: rgba(0,0,0,0.03); }
+    body.day-mode .sync-shortcut-btn:hover { background: rgba(0,0,0,0.06); border-color: var(--accent-orange); color: var(--accent-orange); }
+    body.day-mode .sync-shortcut-btn.done { border-color: var(--accent-orange); color: var(--accent-orange); }
     
     /* Cards - Glowing borders on hover */
     .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
@@ -3932,6 +3940,10 @@
       <div class="phase" style="grid-column: 1 / -1;">
         <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
       </div>
+      <div class="sync-btns" style="grid-column: 1 / -1;">
+        <button type="button" class="sync-shortcut-btn" id="syncStepsBtn">👟 Sync Steps</button>
+        <button type="button" class="sync-shortcut-btn" id="syncWorkoutsBtn">🚴 Get Workouts</button>
+      </div>
     </div>
   </header>
 
@@ -4245,6 +4257,10 @@
           </select>
           <input type="number" id="movementAddDuration" placeholder="min" min="1" max="120" inputmode="numeric">
           <button type="button" class="movement-add-btn" id="movementAddBtn">+</button>
+        </div>
+        <div class="sync-btns" style="margin-top:10px">
+          <button type="button" class="sync-shortcut-btn" id="startWalkBtn">🚶 Start Walk</button>
+          <button type="button" class="sync-shortcut-btn" id="startCyclingBtn">🚴 Start Cycling</button>
         </div>
         <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span></div>
       </div>
@@ -6657,6 +6673,55 @@
     document.getElementById('headerMenuBtn')?.addEventListener('click', openNavDrawer);
     document.getElementById('stickyMenuBtn')?.addEventListener('click', openNavDrawer);
     navBackdrop?.addEventListener('click', closeNavDrawer);
+
+    // Sync shortcut buttons
+    document.getElementById('syncStepsBtn')?.addEventListener('click', function() {
+      this.classList.add('syncing');
+      this.textContent = '👟 Syncing...';
+      window.location.href = 'shortcuts://run-shortcut?name=Sync%20Steps';
+      // When user returns, reload data
+      const btn = this;
+      const onFocus = () => {
+        setTimeout(async () => {
+          btn.classList.remove('syncing');
+          btn.classList.add('done');
+          btn.textContent = '👟 Steps Synced';
+          if (typeof loadDay === 'function') await loadDay();
+          setTimeout(() => { btn.classList.remove('done'); btn.textContent = '👟 Sync Steps'; }, 3000);
+        }, 1500);
+        window.removeEventListener('focus', onFocus);
+      };
+      window.addEventListener('focus', onFocus);
+      // Fallback reset if shortcut doesn't open
+      setTimeout(() => { btn.classList.remove('syncing'); btn.textContent = '👟 Sync Steps'; }, 10000);
+    });
+
+    document.getElementById('syncWorkoutsBtn')?.addEventListener('click', function() {
+      this.classList.add('syncing');
+      this.textContent = '🚴 Syncing...';
+      window.location.href = 'shortcuts://run-shortcut?name=Get%20Workouts';
+      const btn = this;
+      const onFocus = () => {
+        setTimeout(async () => {
+          btn.classList.remove('syncing');
+          btn.classList.add('done');
+          btn.textContent = '🚴 Workouts Synced';
+          if (typeof loadDay === 'function') await loadDay();
+          setTimeout(() => { btn.classList.remove('done'); btn.textContent = '🚴 Get Workouts'; }, 3000);
+        }, 1500);
+        window.removeEventListener('focus', onFocus);
+      };
+      window.addEventListener('focus', onFocus);
+      setTimeout(() => { btn.classList.remove('syncing'); btn.textContent = '🚴 Get Workouts'; }, 10000);
+    });
+
+    // Start workout shortcut buttons
+    document.getElementById('startWalkBtn')?.addEventListener('click', function() {
+      window.location.href = 'shortcuts://run-shortcut?name=Start%20Outdoor%20Walk';
+    });
+    document.getElementById('startCyclingBtn')?.addEventListener('click', function() {
+      window.location.href = 'shortcuts://run-shortcut?name=Start%20Cycling';
+    });
 
     // Drawer navigation items
     document.querySelectorAll('.nav-drawer-item').forEach(item => {
