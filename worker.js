@@ -173,6 +173,11 @@ async function handlePost(request, env, corsHeaders) {
     return await logMovement(body, env, corsHeaders);
   }
 
+  // iOS Shortcut endpoint - sync body composition data
+  if (action === "body") {
+    return await logBody(body, env, corsHeaders);
+  }
+
   if (action === "biomarkers_save") {
     if (!body.date || !body.values) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
@@ -451,7 +456,7 @@ async function logMovement(body, env, corsHeaders) {
     "yoga": "Other",
   };
 
-  const rawType = (body.type || "").trim();
+  const rawType = (body.type || "").split(/[\n\r,]+/)[0].trim();
   const mappedType = typeMap[rawType.toLowerCase()] || "Other";
   const duration = Math.round(parseFloat(body.duration) || 0);
 
@@ -499,6 +504,47 @@ async function logMovement(body, env, corsHeaders) {
     rawType,
     count: movements.length,
     message: `Logged ${mappedType} (${duration} min) for ${normalizedDate} — ${movements.length} total today`
+  }, 200, corsHeaders);
+}
+
+// ===== Log Body Composition (from iOS Shortcut) =====
+async function logBody(body, env, corsHeaders) {
+  let normalizedDate;
+  if (body.date) {
+    normalizedDate = normalizeDate(body.date);
+  } else {
+    normalizedDate = normalizeDate(formatDateForKV(new Date()));
+  }
+
+  // Read existing daily data and merge body fields
+  const existing = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+
+  const weight = parseFloat(body.Weight || body.weight) || 0;
+  const leanMass = parseFloat(body.LeanMass || body.leanMass) || 0;
+  const fatMass = parseFloat(body.FatMass || body.fatMass || body.bodyFat) || 0;
+  const boneMass = parseFloat(body.BoneMass || body.boneMass) || 0;
+  const bodyWater = parseFloat(body.BodyWater || body.bodyWater || body.waterLbs) || 0;
+  const bodyFatPct = parseFloat(body.BodyFatPercentage || body.bodyFatPercentage) || 0;
+  const waist = parseFloat(body.Waist || body.waist) || 0;
+
+  // Only update fields that have non-zero values
+  const updates = {};
+  if (weight) updates["Weight (lbs)"] = weight;
+  if (leanMass) updates["Lean Mass (lbs)"] = leanMass;
+  if (fatMass) updates["Body Fat (lbs)"] = fatMass;
+  if (boneMass) updates["Bone Mass (lbs)"] = boneMass;
+  if (bodyWater) updates["Water (lbs)"] = bodyWater;
+  if (waist) updates["Waist"] = waist;
+
+  const merged = { ...existing, "Date": normalizedDate, ...updates };
+  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(merged));
+
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    updated: Object.keys(updates),
+    values: updates,
+    message: `Body data saved for ${normalizedDate}`
   }, 200, corsHeaders);
 }
 
