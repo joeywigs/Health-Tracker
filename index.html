@@ -6675,52 +6675,43 @@
     navBackdrop?.addEventListener('click', closeNavDrawer);
 
     // Sync shortcut buttons
-    document.getElementById('syncStepsBtn')?.addEventListener('click', function() {
-      this.classList.add('syncing');
-      this.textContent = '👟 Syncing...';
-      window.location.href = 'shortcuts://run-shortcut?name=Sync%20Steps';
+    // App URL for x-callback-url return
+    const appReturnUrl = encodeURIComponent(window.location.href.split('?')[0]);
+
+    function runShortcutAndReload(shortcutName, btn, label, doneLabel) {
+      btn.classList.add('syncing');
+      btn.textContent = label.replace(/^(.+?\s)/, '$1') + '...';
+      // x-callback-url: runs shortcut then redirects back to this app
+      window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent(shortcutName)}&x-success=${appReturnUrl}`;
       // When user returns, reload data
-      const btn = this;
       const onFocus = () => {
         setTimeout(async () => {
           btn.classList.remove('syncing');
           btn.classList.add('done');
-          btn.textContent = '👟 Steps Synced';
+          btn.textContent = doneLabel;
           if (typeof loadDay === 'function') await loadDay();
-          setTimeout(() => { btn.classList.remove('done'); btn.textContent = '👟 Sync Steps'; }, 3000);
-        }, 1500);
+          setTimeout(() => { btn.classList.remove('done'); btn.textContent = label; }, 3000);
+        }, 1000);
         window.removeEventListener('focus', onFocus);
       };
       window.addEventListener('focus', onFocus);
-      // Fallback reset if shortcut doesn't open
-      setTimeout(() => { btn.classList.remove('syncing'); btn.textContent = '👟 Sync Steps'; }, 10000);
+      setTimeout(() => { btn.classList.remove('syncing'); btn.textContent = label; }, 15000);
+    }
+
+    document.getElementById('syncStepsBtn')?.addEventListener('click', function() {
+      runShortcutAndReload('Sync Steps', this, '👟 Sync Steps', '👟 Steps Synced');
     });
 
     document.getElementById('syncWorkoutsBtn')?.addEventListener('click', function() {
-      this.classList.add('syncing');
-      this.textContent = '🚴 Syncing...';
-      window.location.href = 'shortcuts://run-shortcut?name=Get%20Workouts';
-      const btn = this;
-      const onFocus = () => {
-        setTimeout(async () => {
-          btn.classList.remove('syncing');
-          btn.classList.add('done');
-          btn.textContent = '🚴 Workouts Synced';
-          if (typeof loadDay === 'function') await loadDay();
-          setTimeout(() => { btn.classList.remove('done'); btn.textContent = '🚴 Get Workouts'; }, 3000);
-        }, 1500);
-        window.removeEventListener('focus', onFocus);
-      };
-      window.addEventListener('focus', onFocus);
-      setTimeout(() => { btn.classList.remove('syncing'); btn.textContent = '🚴 Get Workouts'; }, 10000);
+      runShortcutAndReload('Get Workouts', this, '🚴 Get Workouts', '🚴 Workouts Synced');
     });
 
     // Start workout shortcut buttons
     document.getElementById('startWalkBtn')?.addEventListener('click', function() {
-      window.location.href = 'shortcuts://run-shortcut?name=Start%20Outdoor%20Walk';
+      window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('Start Outdoor Walk')}&x-success=${appReturnUrl}`;
     });
     document.getElementById('startCyclingBtn')?.addEventListener('click', function() {
-      window.location.href = 'shortcuts://run-shortcut?name=Start%20Cycling';
+      window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('Start Cycling')}&x-success=${appReturnUrl}`;
     });
 
     // Drawer navigation items
