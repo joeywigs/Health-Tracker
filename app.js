@@ -248,6 +248,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Lock past days to prevent accidental edits
   try { updateDayLock(); } catch(e) { console.error("updateDayLock failed:", e); }
 
+  // Show morning routine — call here in bootstrap so it runs even if populateForm threw
+  try {
+    if (typeof checkMorningRoutine === 'function') {
+      checkMorningRoutine(currentDate.toDateString() === new Date().toDateString());
+    }
+  } catch(e) { console.error("checkMorningRoutine failed:", e); }
+
   // Re-check weigh-in reminder now that weight field is populated with loaded data
   try { updateWeighReminder(); } catch(e) { console.error("updateWeighReminder post-load failed:", e); }
 

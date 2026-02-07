@@ -3854,7 +3854,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v1.7.5</div>
+      <div class="tagline">v1.7.6</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3916,7 +3916,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v1.7.5</div>
+          <div class="tagline">v1.7.6</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4018,6 +4018,29 @@
       <button type="button" class="celebration-dismiss" onclick="dismissMorningCelebration()">Let's Go!</button>
     </div>
   </div>
+
+  <!-- Standalone morning routine init: separate script so errors in the main script can't block it -->
+  <script>
+  (function() {
+    try {
+      var key = 'morningState-' + new Date().toISOString().slice(0, 10);
+      var state = localStorage.getItem(key);
+      if (state === 'dismissed') return;
+      var section = document.getElementById('morningRoutine');
+      if (!section) return;
+      section.classList.add('show');
+      var prompt = document.getElementById('morningPrompt');
+      var stack = document.getElementById('morningStack');
+      if (state === 'accepted') {
+        if (prompt) prompt.style.display = 'none';
+        if (stack) stack.style.display = 'block';
+      } else {
+        if (prompt) prompt.style.display = 'block';
+        if (stack) stack.style.display = 'none';
+      }
+    } catch(e) { console.error('morning init error:', e); }
+  })();
+  </script>
 
   <!-- Cue Detection Modal -->
   <div id="cueModal" class="cue-modal">
@@ -4626,6 +4649,7 @@
           <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows when you choose to start your morning routine. Drag to reorder.</p>
           <div id="morningItemsList" class="section-list"></div>
           <div style="display:flex;gap:8px;margin-top:12px"><input type="text" class="input" id="newMorningItem" placeholder="New item name..." style="flex:1"><button type="button" class="btn btn-primary" id="addMorningItemBtn" style="padding:8px 16px">Add</button></div>
+          <button type="button" id="showMorningRoutineBtn" class="btn" onclick="resetMorningRoutine()" style="margin-top:16px;width:100%;padding:10px;background:rgba(255,183,77,0.15);border:1px solid rgba(255,183,77,0.3);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer">☀️ Show Morning Routine Again</button>
         </div>
       </div>
     </div>
@@ -4763,7 +4787,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="app.js?v=1.7.5" defer></script>
+  <script src="app.js?v=1.7.6" defer></script>
   <script>
     // =============================================
     // TOAST NOTIFICATIONS
@@ -7966,6 +7990,14 @@
       localStorage.setItem(getMorningKey(), 'dismissed');
       const section = document.getElementById('morningRoutine');
       if (section) section.classList.remove('show');
+    };
+
+    window.resetMorningRoutine = function() {
+      localStorage.removeItem(getMorningKey());
+      checkMorningRoutine(true);
+      // Navigate back to main page so user can see it
+      if (typeof showPage === 'function') showPage('today');
+      else if (typeof showSettingsMain === 'function') showSettingsMain();
     };
 
     function isMorningItemDone(item) {
