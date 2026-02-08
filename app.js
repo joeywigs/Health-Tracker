@@ -5733,12 +5733,14 @@ async function getMostRecentBodyDaily(beforeDate, lookbackDays = 45) {
 function applyBodyFieldsFromDaily(daily) {
   const source = daily || {};
 
-  const weightVal = source["Weight (lbs)"] ?? source["Weight"] ?? source["weight"];
-  const waistVal = source["Waist (in)"] ?? source["Waist"] ?? source["waist"];
-  const leanVal = source["Lean Mass (lbs)"] ?? source["Lean Mass"] ?? source["leanMass"];
-  const fatVal = source["Body Fat (lbs)"] ?? source["Body Fat"] ?? source["bodyFat"];
-  const boneVal = source["Bone Mass (lbs)"] ?? source["Bone Mass"] ?? source["boneMass"];
-  const bodywaterVal = source["Water (lbs)"] ?? source["bodywater"];
+  // Helper: treat 0 / "0" as empty (0 is never a valid body measurement)
+  const nonZero = v => (v !== 0 && v !== "0" && v !== "" && v != null) ? v : null;
+  const weightVal = nonZero(source["Weight (lbs)"] ?? source["Weight"] ?? source["weight"]);
+  const waistVal = nonZero(source["Waist (in)"] ?? source["Waist"] ?? source["waist"]);
+  const leanVal = nonZero(source["Lean Mass (lbs)"] ?? source["Lean Mass"] ?? source["leanMass"]);
+  const fatVal = nonZero(source["Body Fat (lbs)"] ?? source["Body Fat"] ?? source["bodyFat"]);
+  const boneVal = nonZero(source["Bone Mass (lbs)"] ?? source["Bone Mass"] ?? source["boneMass"]);
+  const bodywaterVal = nonZero(source["Water (lbs)"] ?? source["bodywater"]);
 
   const weightEl = document.getElementById("weight");
   const waistEl = document.getElementById("waist");
