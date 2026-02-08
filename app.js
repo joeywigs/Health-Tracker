@@ -984,6 +984,19 @@ function renderPhaseGoals(phaseId = null) {
     { key: 'snacks', name: 'Healthy Snacks', icon: '🥗', format: (t) => `${t}x/day` }
   ];
 
+  // Add custom section goals from phase
+  Object.keys(phase.goals).forEach(key => {
+    const goal = phase.goals[key];
+    if (goal.customField) {
+      goalConfig.push({
+        key,
+        name: goal.description || key,
+        icon: '',
+        format: (t) => typeof t === 'boolean' ? 'Daily' : `${t}+ ${goal.unit || ''}/${goal.type || 'daily'}`
+      });
+    }
+  });
+
   let html = '';
   goalConfig.forEach(g => {
     const goal = phase.goals[g.key];
@@ -1095,7 +1108,7 @@ const DEFAULT_PHASE_1 = {
     reading: { target: 60, unit: "min", type: "weekly", description: "Reading minutes per week" },
     movement: { target: 2, unit: "breaks", type: "daily", description: "Movement breaks" },
     meals: { target: 2, unit: "meals", type: "daily", description: "Healthy meals" },
-    supps: { target: 4, unit: "supps", type: "daily", description: "All 4 supplements" },
+    supps: { target: 6, unit: "supps", type: "daily", description: "All 6 supplements" },
     noAlcohol: { target: true, unit: "bool", type: "daily", description: "No alcohol" },
     meditation: { target: true, unit: "bool", type: "daily", description: "Daily meditation" },
     snacks: { target: 2, unit: "checks", type: "daily", description: "Healthy snacks (day + night)" }
@@ -1495,6 +1508,21 @@ async function openNewPhaseModal(fromPhaseId = null) {
       </div>`;
   }
 
+  // Custom section stats in performance review
+  Object.keys(stats).forEach(key => {
+    const s = stats[key];
+    if (s?.customField) {
+      performanceHtml += `
+        <div class="phase-stat-row">
+          <div class="phase-stat-label">${s.icon || ''} ${s.fieldName}</div>
+          <div class="phase-stat-details">
+            <span class="stat-highlight">${s.detail}</span>
+            <span class="stat-pct">(${s.pct}%)</span>
+          </div>
+        </div>`;
+    }
+  });
+
   performanceHtml += '</div>';
 
   // Build goals input HTML
@@ -1544,6 +1572,64 @@ async function openNewPhaseModal(fromPhaseId = null) {
     `;
   });
 
+  // Add custom section goal inputs for fields that have goal configs
+  let customGoalsHtml = '';
+  if (typeof appSettings !== 'undefined' && appSettings.sections) {
+    const customSections = appSettings.sections.filter(s => s.custom && s.fields);
+    customSections.forEach(sec => {
+      sec.fields.forEach(f => {
+        const goalKey = `custom_${sec.id}_${f.id}`;
+        // Skip if already in phase goals (handled above)
+        if (goalKeys.includes(goalKey)) return;
+
+        // Only show goal inputs for goalable field types
+        if (f.type === 'counter' && f.config?.goalNumber) {
+          const stat = stats[goalKey];
+          const pct = stat?.pct || 0;
+          const currentTarget = f.config.goalNumber;
+          let suggestion = currentTarget;
+          let suggestionText = '';
+          if (pct >= 90) {
+            suggestion = currentTarget + 1;
+            suggestionText = `<span class="suggestion-good">Great job at ${pct}%! Consider increasing.</span>`;
+          } else if (pct >= 70) {
+            suggestionText = `<span class="suggestion-ok">Good progress at ${pct}%. Keep building.</span>`;
+          } else if (pct > 0) {
+            suggestionText = `<span class="suggestion-work">At ${pct}%. Stay here or adjust down.</span>`;
+          }
+
+          customGoalsHtml += `
+            <div class="phase-goal-row">
+              <div class="phase-goal-info">
+                <span class="phase-goal-name">${sec.icon || ''} ${f.name}</span>
+                <span class="phase-goal-current">Current: ${currentTarget} ${f.config.unitLabel || ''} (${f.config.goalType || 'daily'})</span>
+                ${suggestionText}
+              </div>
+              <div class="phase-goal-input">
+                <input type="number" id="newPhaseGoal_${goalKey}" value="${suggestion}" min="0" step="1">
+                <span class="phase-goal-unit">${f.config.unitLabel || ''}</span>
+              </div>
+            </div>
+          `;
+        } else if (f.type === 'toggle') {
+          const stat = stats[goalKey];
+          const pct = stat?.pct || 0;
+          customGoalsHtml += `
+            <div class="phase-goal-row">
+              <div class="phase-goal-info">
+                <span class="phase-goal-name">${sec.icon || ''} ${f.name}</span>
+                <span class="phase-goal-current">Daily toggle${pct > 0 ? ` (${pct}% last phase)` : ''}</span>
+              </div>
+              <div class="phase-goal-input">
+                <input type="checkbox" id="newPhaseGoal_${goalKey}" checked>
+              </div>
+            </div>
+          `;
+        }
+      });
+    });
+  }
+
   // Create modal
   let modal = document.getElementById('newPhaseModal');
   if (!modal) {
@@ -1568,6 +1654,7 @@ async function openNewPhaseModal(fromPhaseId = null) {
         <h3 style="margin:20px 0 12px;font-size:15px;color:var(--text);">Set Phase ${nextPhaseId} Goals</h3>
         <div class="phase-goals-list">
           ${goalsHtml}
+          ${customGoalsHtml ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Custom Section Goals</div>' + customGoalsHtml + '</div>' : ''}
         </div>
       </div>
       <div class="modal-footer">
@@ -1613,6 +1700,46 @@ async function saveNewPhase(phaseId, startDate, length) {
       newGoals[key] = { ...currentGoal };
     }
   });
+
+  // Collect custom section goals from modal inputs
+  if (typeof appSettings !== 'undefined' && appSettings.sections) {
+    const customSections = appSettings.sections.filter(s => s.custom && s.fields);
+    customSections.forEach(sec => {
+      sec.fields.forEach(f => {
+        const goalKey = `custom_${sec.id}_${f.id}`;
+        if (newGoals[goalKey]) return; // Already handled from existing phase goals
+        const input = document.getElementById(`newPhaseGoal_${goalKey}`);
+        if (!input) return;
+
+        if (f.type === 'counter') {
+          const target = parseFloat(input.value) || f.config?.goalNumber || 0;
+          if (target > 0) {
+            newGoals[goalKey] = {
+              target,
+              unit: f.config?.unitLabel || '',
+              type: f.config?.goalType || 'daily',
+              description: `${sec.icon || ''} ${f.name}`,
+              customField: true,
+              sectionId: sec.id,
+              fieldId: f.id
+            };
+          }
+        } else if (f.type === 'toggle') {
+          if (input.checked) {
+            newGoals[goalKey] = {
+              target: true,
+              unit: 'bool',
+              type: 'daily',
+              description: `${sec.icon || ''} ${f.name}`,
+              customField: true,
+              sectionId: sec.id,
+              fieldId: f.id
+            };
+          }
+        }
+      });
+    });
+  }
 
   // Create new phase object
   const newPhase = {
@@ -1684,7 +1811,7 @@ function countMovementBreaks(d) {
 const GOALS = {
   sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "hrs", type: "daily-avg" },
   agua: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
-  supps: { name: "Supplements", icon: "💊", target: 4, unit: "of 4", type: "daily-all" },
+  supps: { name: "Supplements", icon: "💊", target: 6, unit: "of 6", type: "daily-all" },
   rehit: { name: "REHIT", icon: "🚴", target: 3, unit: "sessions", type: "weekly" },
   steps: { name: "Steps", icon: "👟", target: 5000, unit: "steps", type: "daily-avg" },
   movement: { name: "Movement", icon: "🚶", target: 2, unit: "breaks", type: "daily-avg" },
@@ -1813,15 +1940,17 @@ function calculateGoalStats(data, range, phaseId = null) {
     target: aguaTarget
   };
 
-  // Supps: all 4 each day
+  // Supps: all 6 each day
   let suppsDaysMet = 0;
   data.forEach(d => {
     const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
     const vitD = d.daily["Vitamin D"];
     const no2 = d.daily["NO2"];
     const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
-    const allFour = [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE" || v === "true").length;
-    if (allFour === 4) suppsDaysMet++;
+    const zinc = d.daily["Zinc"];
+    const prebiotic = d.daily["Prebiotic"];
+    const allSupps = [creatine, vitD, no2, psyllium, zinc, prebiotic].filter(v => v === true || v === "TRUE" || v === "true").length;
+    if (allSupps === 6) suppsDaysMet++;
   });
   stats.supps = {
     pct: elapsedDays > 0 ? Math.round((suppsDaysMet / elapsedDays) * 100) : 0,
@@ -2026,6 +2155,131 @@ function calculateGoalStats(data, range, phaseId = null) {
   stats.stories = { pct: elapsedDays > 0 ? Math.round((storiesDays / elapsedDays) * 100) : 0, detail: `${storiesDays}/${elapsedDays} days` };
   stats.carly = { pct: elapsedDays > 0 ? Math.round((carlyDays / elapsedDays) * 100) : 0, detail: `${carlyDays}/${elapsedDays} days` };
 
+  // Custom section goals
+  // Evaluate fields that have goal configs (counter with goalNumber, toggle, checkbox)
+  if (typeof appSettings !== 'undefined' && appSettings.sections) {
+    const customSections = appSettings.sections.filter(s => s.custom && s.fields);
+    customSections.forEach(sec => {
+      sec.fields.forEach(f => {
+        const goalKey = `custom_${sec.id}_${f.id}`;
+        const phaseGoal = phase?.goals?.[goalKey];
+
+        // Determine goal target: phase goal first, then field config
+        let goalTarget = null;
+        let goalType = 'daily'; // daily or weekly
+        let unit = '';
+
+        if (phaseGoal) {
+          goalTarget = phaseGoal.target;
+          goalType = phaseGoal.type || 'daily';
+          unit = phaseGoal.unit || '';
+        } else if (f.type === 'counter' && f.config?.goalNumber) {
+          goalTarget = f.config.goalNumber;
+          goalType = f.config.goalType || 'daily';
+          unit = f.config.unitLabel || '';
+        } else if (f.type === 'toggle') {
+          goalTarget = true;
+          goalType = 'daily';
+          unit = 'bool';
+        }
+
+        // Skip fields without goals
+        if (goalTarget === null) return;
+
+        if (f.type === 'counter' || f.type === 'number') {
+          if (goalType === 'daily') {
+            let daysMet = 0;
+            let total = 0;
+            let count = 0;
+            data.forEach(d => {
+              const val = parseFloat(d.customSections?.[sec.id]?.[f.id]?.value);
+              if (!isNaN(val)) {
+                total += val;
+                count++;
+                if (val >= goalTarget) daysMet++;
+              }
+            });
+            const avg = count > 0 ? (total / count).toFixed(1) : 0;
+            stats[goalKey] = {
+              pct: elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet,
+              totalDays: elapsedDays,
+              avg,
+              detail: `${daysMet}/${elapsedDays} days at ${goalTarget}+ ${unit}`,
+              target: goalTarget,
+              customField: true,
+              sectionName: sec.name,
+              fieldName: f.name,
+              icon: sec.icon
+            };
+          } else if (goalType === 'weekly') {
+            const weeklyTotals = {};
+            data.forEach(d => {
+              const date = parseDataDate(d.date);
+              const weekStart = new Date(date);
+              weekStart.setDate(date.getDate() - date.getDay());
+              const weekKey = `${weekStart.getMonth()+1}/${weekStart.getDate()}/${weekStart.getFullYear()}`;
+              const val = parseFloat(d.customSections?.[sec.id]?.[f.id]?.value);
+              if (!isNaN(val)) {
+                weeklyTotals[weekKey] = (weeklyTotals[weekKey] || 0) + val;
+              }
+            });
+            const weeksMet = Object.values(weeklyTotals).filter(v => v >= goalTarget).length;
+            stats[goalKey] = {
+              pct: elapsedWeeks > 0 ? Math.round((weeksMet / elapsedWeeks) * 100) : 0,
+              weeksMet,
+              totalWeeks: elapsedWeeks,
+              detail: `${weeksMet}/${elapsedWeeks} weeks at ${goalTarget}+ ${unit}`,
+              target: goalTarget,
+              customField: true,
+              sectionName: sec.name,
+              fieldName: f.name,
+              icon: sec.icon
+            };
+          }
+        } else if (f.type === 'toggle') {
+          let daysMet = 0;
+          data.forEach(d => {
+            const val = d.customSections?.[sec.id]?.[f.id]?.value;
+            if (val === true || val === "true") daysMet++;
+          });
+          stats[goalKey] = {
+            pct: elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+            daysMet,
+            totalDays: elapsedDays,
+            detail: `${daysMet}/${elapsedDays} days`,
+            target: true,
+            customField: true,
+            sectionName: sec.name,
+            fieldName: f.name,
+            icon: sec.icon
+          };
+        } else if (f.type === 'checkbox') {
+          // Goal: all checkboxes checked each day
+          const totalCbs = f.config?.checkboxes?.length || 0;
+          if (totalCbs > 0) {
+            let daysMet = 0;
+            data.forEach(d => {
+              const cbs = d.customSections?.[sec.id]?.[f.id]?.checkboxes;
+              if (Array.isArray(cbs) && cbs.filter(Boolean).length === totalCbs) daysMet++;
+            });
+            stats[goalKey] = {
+              pct: elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet,
+              totalDays: elapsedDays,
+              detail: `${daysMet}/${elapsedDays} days all checked`,
+              target: totalCbs,
+              customField: true,
+              sectionName: sec.name,
+              fieldName: f.name,
+              icon: sec.icon
+            };
+          }
+        }
+      });
+    });
+  }
+
   return stats;
 }
 
@@ -2167,14 +2421,18 @@ function renderHabitGrid(allData) {
         const vitD = d.daily["Vitamin D"];
         const no2 = d.daily["NO2"];
         const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
-        return [creatine, vitD, no2, psyllium].some(v => v === true || v === "TRUE" || v === "true");
+        const zinc = d.daily["Zinc"];
+        const prebiotic = d.daily["Prebiotic"];
+        return [creatine, vitD, no2, psyllium, zinc, prebiotic].some(v => v === true || v === "TRUE" || v === "true");
       },
       metGoal: (d) => {
         const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
         const vitD = d.daily["Vitamin D"];
         const no2 = d.daily["NO2"];
         const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
-        return [creatine, vitD, no2, psyllium].filter(v => v === true || v === "TRUE" || v === "true").length === 4;
+        const zinc = d.daily["Zinc"];
+        const prebiotic = d.daily["Prebiotic"];
+        return [creatine, vitD, no2, psyllium, zinc, prebiotic].filter(v => v === true || v === "TRUE" || v === "true").length === 6;
       }
     },
     { key: 'meals', icon: '🍽️', name: 'Meals',
@@ -2824,7 +3082,11 @@ function renderGoalPerformance(stats) {
     { key: 'reading', ...GOALS.reading, ...stats.reading },
     { key: 'meals', name: 'Meals', icon: '🍽️', ...stats.meals },
     { key: 'snacks', name: 'Snacks', icon: '🥗', ...stats.snacks },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', ...stats.noAlcohol }
+    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', ...stats.noAlcohol },
+    // Custom section goals
+    ...Object.keys(stats)
+      .filter(k => stats[k]?.customField)
+      .map(k => ({ key: k, name: stats[k].fieldName, icon: stats[k].icon || '📋', ...stats[k] }))
   ];
 
   const sorted = goals.sort((a, b) => b.pct - a.pct);
@@ -2873,6 +3135,15 @@ function renderHealthGoals(stats) {
   const safe = (s) => s || { pct: 0, detail: 'No data' };
 
   const frozen = isPhaseCurrentlyFrozen(getCurrentPhase());
+
+  // Custom section goal cards
+  const customCards = Object.keys(stats)
+    .filter(k => stats[k]?.customField)
+    .map(k => {
+      const s = stats[k];
+      return renderGoalStatCard(s.fieldName, s.icon || '📋', s.pct, s.detail);
+    }).join('');
+
   container.innerHTML = `
     ${renderGoalStatCard('Sleep', '🌙', safe(stats.sleep).pct, safe(stats.sleep).detail)}
     ${renderGoalStatCard('Water', '💧', safe(stats.agua).pct, safe(stats.agua).detail)}
@@ -2881,6 +3152,7 @@ function renderHealthGoals(stats) {
     ${renderGoalStatCard('Steps', '👟', safe(stats.steps).pct, safe(stats.steps).detail)}
     ${renderGoalStatCard('Movement', '🚶', safe(stats.movement).pct, safe(stats.movement).detail)}
     ${renderGoalStatCard('Reading', '📖', safe(stats.reading).pct, safe(stats.reading).detail)}
+    ${customCards}
   `;
 }
 
@@ -3116,6 +3388,7 @@ async function fetchChartData(maxDays = null, silent = false) {
           daily: daily || {},
           movements: result?.movements || [],
           readings: result?.readings || [],
+          customSections: result?.customSections || {},
           averages: result?.averages || {}
         });
       } else {
@@ -5353,6 +5626,8 @@ async function saveData(payload) {
     vitaminD: "Vitamin D",
     no2: "NO2",
     psyllium: "Psyllium Husk",
+    zinc: "Zinc",
+    prebiotic: "Prebiotic",
     breakfast: "Breakfast",
     lunch: "Lunch",
     dinner: "Dinner",
@@ -5479,6 +5754,8 @@ function buildPayloadFromUI() {
     vitaminD: !!document.getElementById("vitaminD")?.checked,
     no2: !!document.getElementById("no2")?.checked,
     psyllium: !!document.getElementById("psyllium")?.checked,
+    zinc: !!document.getElementById("zinc")?.checked,
+    prebiotic: !!document.getElementById("prebiotic")?.checked,
 
     breakfast: !!document.getElementById("breakfast")?.checked,
     lunch: !!document.getElementById("lunch")?.checked,
@@ -5977,6 +6254,8 @@ async function populateForm(data) {
   setCheckbox("vitaminD", d["Vitamin D"] ?? d["vitaminD"]);
   setCheckbox("no2", d["NO2"] ?? d["no2"]);
   setCheckbox("psyllium", d["Psyllium Husk"] ?? d["Psyllium"] ?? d["psyllium"]);
+  setCheckbox("zinc", d["Zinc"] ?? d["zinc"]);
+  setCheckbox("prebiotic", d["Prebiotic"] ?? d["prebiotic"]);
 
   setCheckbox("breakfast", d["Breakfast"] ?? d["breakfast"]);
   setCheckbox("lunch", d["Lunch"] ?? d["lunch"]);

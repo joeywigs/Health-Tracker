@@ -329,6 +329,8 @@ async function saveDay(data, env, corsHeaders) {
     "Vitamin D": data.vitaminD || false,
     "NO2": data.no2 || false,
     "Psyllium Husk": data.psyllium || data.psylliumHusk || false,
+    "Zinc": data.zinc || false,
+    "Prebiotic": data.prebiotic || false,
     // Nutrition
     "Breakfast": data.breakfast || false,
     "Lunch": data.lunch || false,
@@ -913,7 +915,7 @@ async function loadPhases(env, corsHeaders) {
         reading: { target: 60, unit: "min", type: "weekly", description: "Reading minutes per week" },
         movement: { target: 2, unit: "breaks", type: "daily", description: "Movement breaks" },
         meals: { target: 2, unit: "meals", type: "daily", description: "Healthy meals" },
-        supps: { target: 4, unit: "supps", type: "daily", description: "All 4 supplements" },
+        supps: { target: 6, unit: "supps", type: "daily", description: "All 6 supplements" },
         noAlcohol: { target: true, unit: "bool", type: "daily", description: "No alcohol" },
         meditation: { target: true, unit: "bool", type: "daily", description: "Daily meditation" },
         snacks: { target: 2, unit: "checks", type: "daily", description: "Healthy snacks (day + night)" }
@@ -1132,6 +1134,8 @@ async function auditData(env, corsHeaders) {
     { key: 'vitaminD', field: 'Vitamin D', type: 'boolean', description: 'Vitamin D supplement' },
     { key: 'no2', field: 'NO2', type: 'boolean', description: 'NO2 supplement' },
     { key: 'psyllium', fields: ['Psyllium Husk', 'Psyllium'], type: 'boolean', description: 'Psyllium supplement' },
+    { key: 'zinc', field: 'Zinc', type: 'boolean', description: 'Zinc supplement' },
+    { key: 'prebiotic', field: 'Prebiotic', type: 'boolean', description: 'Prebiotic supplement' },
     { key: 'breakfast', field: 'Breakfast', type: 'boolean', description: 'Healthy breakfast' },
     { key: 'lunch', field: 'Lunch', type: 'boolean', description: 'Healthy lunch' },
     { key: 'dinner', field: 'Dinner', type: 'boolean', description: 'Healthy dinner' },
