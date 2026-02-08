@@ -1733,6 +1733,11 @@
                 <option value="per phase">Per Phase</option>
               </select>
             </div>
+            <div class="field" id="goalCountField" style="display:none">
+              <label class="field-label">Times per Frequency</label>
+              <input type="number" class="input" id="newSectionGoalCount" placeholder="e.g., 5" min="1" max="100">
+              <span style="font-size:11px;color:var(--text-muted)">How many times the checkbox should be checked per timeframe</span>
+            </div>
           </div>
         </div>
 
@@ -2412,12 +2417,14 @@
         const freq = g.config.goalFrequency || 'daily';
         const desc = g.config.goalDescription || '';
         const freqColor = freq === 'daily' ? 'var(--accent-teal)' : 'var(--accent-purple)';
+        const goalCountInfo = g.config.goalCount ? `<div style="font-size:11px;color:var(--text-muted)">${g.config.goalCount}× per ${freq === 'per phase' ? 'phase' : freq === 'weekly' ? 'week' : 'day'}</div>` : '';
         return `
           <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
             <span style="font-size:20px">${g.icon}</span>
             <div style="flex:1">
               <div style="font-weight:600;font-size:14px">${g.name}</div>
               ${desc ? `<div style="font-size:12px;color:var(--text-muted)">${desc}</div>` : ''}
+              ${goalCountInfo}
             </div>
             <span style="font-size:10px;background:${freqColor};color:#fff;padding:2px 8px;border-radius:8px;font-weight:600">${freq}</span>
           </div>
@@ -2540,6 +2547,13 @@
     const goalToggle = document.getElementById('newSectionTrackGoal');
     const goalKnob = document.getElementById('goalToggleKnob');
     const goalOptions = document.getElementById('goalOptions');
+    function updateGoalCountFieldVisibility() {
+      const goalCountField = document.getElementById('goalCountField');
+      if (!goalCountField) return;
+      const type = document.getElementById('newSectionType')?.value;
+      const goalOn = goalToggle?.checked;
+      goalCountField.style.display = (goalOn && (type === 'checkbox' || type === 'toggle')) ? 'block' : 'none';
+    }
     if (goalToggle) {
       goalToggle.addEventListener('change', () => {
         goalOptions.style.display = goalToggle.checked ? 'block' : 'none';
@@ -2547,8 +2561,11 @@
           goalKnob.style.transform = goalToggle.checked ? 'translateX(20px)' : 'translateX(0)';
           goalKnob.parentElement.previousElementSibling.style.background = goalToggle.checked ? 'var(--accent-teal)' : 'var(--border)';
         }
+        updateGoalCountFieldVisibility();
       });
     }
+    // Also update when type changes
+    document.getElementById('newSectionType')?.addEventListener('change', updateGoalCountFieldVisibility);
 
     // Add log field button
     document.getElementById('addLogFieldBtn')?.addEventListener('click', () => {
@@ -2620,6 +2637,8 @@
         config.trackAsGoal = true;
         config.goalDescription = document.getElementById('newSectionGoalDesc')?.value || '';
         config.goalFrequency = document.getElementById('newSectionGoalFreq')?.value || 'daily';
+        const goalCountVal = parseInt(document.getElementById('newSectionGoalCount')?.value);
+        if (goalCountVal > 0) config.goalCount = goalCountVal;
       }
 
       appSettings.sections.push({
@@ -2664,6 +2683,7 @@
       }
       document.getElementById('newSectionGoalDesc').value = '';
       document.getElementById('newSectionGoalFreq').value = 'daily';
+      document.getElementById('newSectionGoalCount').value = '';
 
       renderSectionList();
     });
@@ -2696,6 +2716,10 @@
           cbHtml += '<div class="chip"><input type="checkbox" id="' + id + '_check_' + i + '"><div class="chip-dot">✓</div><span class="chip-text">' + cb + '</span></div>';
         });
         content = '<div class="chips">' + cbHtml + '</div>';
+        if (config.trackAsGoal && config.goalCount) {
+          const freqLabel = config.goalFrequency === 'weekly' ? 'this week' : config.goalFrequency === 'per phase' ? 'this phase' : 'today';
+          content += `<div class="card-avg" style="margin-top:8px" id="${id}_goalProgress"><span id="${id}_goalChecked">0</span> of ${config.goalCount} ${freqLabel}</div>`;
+        }
       
       } else if (type === 'number') {
         const unit = config.unit ? '<span class="card-unit">' + config.unit + '</span>' : '';
@@ -2806,10 +2830,88 @@
       
       // Wire up type-specific interactions
       wireUpCustomSection(section, id, type, config);
+
+      // Initial goal progress update for checkbox goals
+      if (type === 'checkbox' && config.trackAsGoal && config.goalCount) {
+        setTimeout(() => updateCheckboxGoalProgress(id, config), 2000);
+      }
     }
-    
+
+    // Count how many days a checkbox goal section was checked in the current timeframe
+    async function updateCheckboxGoalProgress(sectionId, config) {
+      const goalCount = config.goalCount;
+      const freq = config.goalFrequency || 'daily';
+      const progressEl = document.getElementById(`${sectionId}_goalChecked`);
+      if (!progressEl) return;
+
+      // For daily, just check today's value
+      if (freq === 'daily') {
+        const checkboxes = config.checkboxes || ['Done'];
+        const anyChecked = checkboxes.some((_, i) => {
+          const input = document.getElementById(`${sectionId}_check_${i}`);
+          return input?.checked;
+        });
+        progressEl.textContent = anyChecked ? '1' : '0';
+        return;
+      }
+
+      // Determine date range for the timeframe
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let startDate;
+
+      if (freq === 'weekly') {
+        // Sun-Sat week
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - today.getDay());
+      } else if (freq === 'per phase') {
+        // Phase start: Jan 19, 2026, 21-day cycles
+        const phaseStart = new Date('2026-01-19T00:00:00');
+        const daysSinceStart = Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24));
+        const dayInPhase = daysSinceStart % 21;
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - dayInPhase);
+      } else {
+        progressEl.textContent = '0';
+        return;
+      }
+
+      // Count days where any checkbox in this section was checked
+      let checkedCount = 0;
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const daysToCheck = Math.floor((today - startDate) / msPerDay) + 1;
+
+      for (let i = 0; i < daysToCheck; i++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+        const dateStr = typeof formatDateForAPI === 'function'
+          ? formatDateForAPI(d)
+          : `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+
+        try {
+          let dayData = null;
+          // Check day cache first
+          if (typeof cacheGet === 'function') {
+            dayData = cacheGet(dateStr);
+          }
+          if (!dayData && typeof apiGet === 'function') {
+            dayData = await apiGet('load', { date: dateStr });
+          }
+          const sectionData = dayData?.customSections?.[sectionId];
+          if (sectionData?.checkboxes && sectionData.checkboxes.some(v => v === true)) {
+            checkedCount++;
+          }
+        } catch (e) {
+          // skip failed loads
+        }
+      }
+
+      progressEl.textContent = String(checkedCount);
+    }
+
     function wireUpCustomSection(section, id, type, config) {
       if (type === 'checkbox') {
+        const hasGoalCount = config.trackAsGoal && config.goalCount;
         section.querySelectorAll('.chip').forEach(chip => {
           const cb = chip.querySelector('input');
           chip.addEventListener('click', (e) => {
@@ -2818,12 +2920,14 @@
               chip.classList.toggle('on', cb.checked);
               updateCompletionRingAurora();
               if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+              if (hasGoalCount) setTimeout(() => updateCheckboxGoalProgress(id, config), 1500);
             }
           });
           cb.addEventListener('change', () => {
             chip.classList.toggle('on', cb.checked);
             updateCompletionRingAurora();
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+            if (hasGoalCount) setTimeout(() => updateCheckboxGoalProgress(id, config), 1500);
           });
         });
       
@@ -3123,7 +3227,12 @@
       if (typeof updateCompletionRingAurora === 'function') {
         updateCompletionRingAurora();
       }
-      
+
+      // Update checkbox goal progress for all checkbox goals
+      appSettings.sections.filter(s => s.custom && s.type === 'checkbox' && s.config?.trackAsGoal && s.config?.goalCount).forEach(sec => {
+        setTimeout(() => updateCheckboxGoalProgress(sec.id, sec.config), 500);
+      });
+
       console.log('✅ loadCustomSectionsData ran', window.customSectionData);
     };
     
