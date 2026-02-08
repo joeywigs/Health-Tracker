@@ -992,7 +992,7 @@ function renderPhaseGoals(phaseId = null) {
         key,
         name: goal.description || key,
         icon: '',
-        format: (t) => typeof t === 'boolean' ? 'Daily' : `${t}+ ${goal.unit || ''}/${goal.type || 'daily'}`
+        format: (t) => typeof t === 'boolean' ? (goal.type === 'phase' ? 'Per Phase' : 'Daily') : `${t}+ ${goal.unit || ''}/${goal.type === 'phase' ? 'phase' : goal.type || 'daily'}`
       });
     }
   });
@@ -1617,8 +1617,23 @@ async function openNewPhaseModal(fromPhaseId = null) {
               </div>
             </div>
           `;
+        } else if (goalFreq === 'phase') {
+          // Per-phase boolean goals get a number input (how many times per phase)
+          const phaseTarget = c.goalTarget || 3;
+          customGoalsHtml += `
+            <div class="phase-goal-row">
+              <div class="phase-goal-info">
+                <span class="phase-goal-name">${sec.icon || ''} ${f.name}</span>
+                <span class="phase-goal-current">Per Phase${pct > 0 ? ` (${pct}% last phase)` : ''}</span>
+              </div>
+              <div class="phase-goal-input">
+                <input type="number" id="newPhaseGoal_${goalKey}" value="${phaseTarget}" min="1" step="1">
+                <span class="phase-goal-unit">times</span>
+              </div>
+            </div>
+          `;
         } else {
-          // Boolean-style goals: toggle, text, time, checkbox, log
+          // Daily/weekly boolean-style goals: toggle, text, time, checkbox, log
           customGoalsHtml += `
             <div class="phase-goal-row">
               <div class="phase-goal-info">
@@ -1722,17 +1737,18 @@ async function saveNewPhase(phaseId, startDate, length) {
         const goalFreq = c.goalFreq || c.goalType || 'daily';
         const unit = c.goalUnit || c.unitLabel || '';
 
-        if (needsTarget) {
+        if (needsTarget || goalFreq === 'phase') {
+          // Numeric target: counter/number/rating OR any "per phase" goal
           const target = parseFloat(input.value) || c.goalTarget || c.goalNumber || 1;
           if (target > 0) {
             newGoals[goalKey] = {
-              target, unit, type: goalFreq,
+              target, unit: unit || (goalFreq === 'phase' ? 'times' : ''), type: goalFreq,
               description: `${sec.icon || ''} ${f.name}`,
               customField: true, sectionId: sec.id, fieldId: f.id
             };
           }
         } else {
-          // Boolean-style: toggle, text, time, checkbox, log
+          // Daily/weekly boolean-style: toggle, text, time, checkbox, log
           if (input.checked) {
             newGoals[goalKey] = {
               target: true, unit: 'bool', type: goalFreq,
@@ -2192,7 +2208,20 @@ function calculateGoalStats(data, range, phaseId = null) {
         // Evaluate based on field type
         if (f.type === 'counter' || f.type === 'number') {
           if (goalTarget === null || goalTarget === true) goalTarget = c.goalNumber || 1;
-          if (goalType === 'weekly') {
+          if (goalType === 'phase') {
+            // Sum across entire phase, compare to target once
+            let total = 0;
+            data.forEach(d => {
+              const val = parseFloat(d.customSections?.[sec.id]?.[f.id]?.value);
+              if (!isNaN(val)) total += val;
+            });
+            const pct = Math.min(100, Math.round((total / goalTarget) * 100));
+            stats[goalKey] = {
+              pct, total, detail: `${total} of ${goalTarget} ${unit} this phase`,
+              target: goalTarget, customField: true,
+              sectionName: sec.name, fieldName: f.name, icon: sec.icon
+            };
+          } else if (goalType === 'weekly') {
             const weeklyTotals = {};
             data.forEach(d => {
               const date = parseDataDate(d.date);
@@ -2228,10 +2257,16 @@ function calculateGoalStats(data, range, phaseId = null) {
             const val = d.customSections?.[sec.id]?.[f.id]?.value;
             if (val === true || val === "true") daysMet++;
           });
-          stats[goalKey] = makeStatObj(
-            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-            daysMet, `${daysMet}/${elapsedDays} days`
-          );
+          if (goalType === 'phase') {
+            const phaseTarget = (typeof goalTarget === 'number') ? goalTarget : 1;
+            const pct = Math.min(100, Math.round((daysMet / phaseTarget) * 100));
+            stats[goalKey] = makeStatObj(pct, daysMet, `${daysMet} of ${phaseTarget} times this phase`);
+          } else {
+            stats[goalKey] = makeStatObj(
+              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet, `${daysMet}/${elapsedDays} days`
+            );
+          }
         } else if (f.type === 'checkbox') {
           const totalCbs = c.checkboxes?.length || 0;
           if (totalCbs > 0) {
@@ -2240,35 +2275,50 @@ function calculateGoalStats(data, range, phaseId = null) {
               const cbs = d.customSections?.[sec.id]?.[f.id]?.checkboxes;
               if (Array.isArray(cbs) && cbs.filter(Boolean).length === totalCbs) daysMet++;
             });
-            stats[goalKey] = makeStatObj(
-              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-              daysMet, `${daysMet}/${elapsedDays} days all checked`
-            );
+            if (goalType === 'phase') {
+              const phaseTarget = (typeof goalTarget === 'number') ? goalTarget : 1;
+              const pct = Math.min(100, Math.round((daysMet / phaseTarget) * 100));
+              stats[goalKey] = makeStatObj(pct, daysMet, `${daysMet} of ${phaseTarget} times this phase`);
+            } else {
+              stats[goalKey] = makeStatObj(
+                elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+                daysMet, `${daysMet}/${elapsedDays} days all checked`
+              );
+            }
           }
         } else if (f.type === 'text') {
-          // Goal met when field is non-empty
           let daysMet = 0;
           data.forEach(d => {
             const val = d.customSections?.[sec.id]?.[f.id]?.value;
             if (val && String(val).trim() !== '') daysMet++;
           });
-          stats[goalKey] = makeStatObj(
-            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-            daysMet, `${daysMet}/${elapsedDays} days completed`
-          );
+          if (goalType === 'phase') {
+            const phaseTarget = (typeof goalTarget === 'number') ? goalTarget : 1;
+            const pct = Math.min(100, Math.round((daysMet / phaseTarget) * 100));
+            stats[goalKey] = makeStatObj(pct, daysMet, `${daysMet} of ${phaseTarget} times this phase`);
+          } else {
+            stats[goalKey] = makeStatObj(
+              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet, `${daysMet}/${elapsedDays} days completed`
+            );
+          }
         } else if (f.type === 'time') {
-          // Goal met when time is filled in
           let daysMet = 0;
           data.forEach(d => {
             const val = d.customSections?.[sec.id]?.[f.id]?.value;
             if (val && val !== '') daysMet++;
           });
-          stats[goalKey] = makeStatObj(
-            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-            daysMet, `${daysMet}/${elapsedDays} days logged`
-          );
+          if (goalType === 'phase') {
+            const phaseTarget = (typeof goalTarget === 'number') ? goalTarget : 1;
+            const pct = Math.min(100, Math.round((daysMet / phaseTarget) * 100));
+            stats[goalKey] = makeStatObj(pct, daysMet, `${daysMet} of ${phaseTarget} times this phase`);
+          } else {
+            stats[goalKey] = makeStatObj(
+              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet, `${daysMet}/${elapsedDays} days logged`
+            );
+          }
         } else if (f.type === 'rating') {
-          // Goal met when rating >= target (default 1 = any rating)
           if (goalTarget === true) goalTarget = 1;
           let daysMet = 0, total = 0, count = 0;
           data.forEach(d => {
@@ -2276,18 +2326,28 @@ function calculateGoalStats(data, range, phaseId = null) {
             if (!isNaN(val) && val > 0) { total += val; count++; if (val >= goalTarget) daysMet++; }
           });
           const avg = count > 0 ? (total / count).toFixed(1) : 0;
-          stats[goalKey] = makeStatObj(
-            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-            daysMet, `${daysMet}/${elapsedDays} days at ${goalTarget}+ stars`, { avg }
-          );
+          if (goalType === 'phase') {
+            const phaseTarget = (typeof goalTarget === 'number') ? goalTarget : 1;
+            const pct = Math.min(100, Math.round((daysMet / phaseTarget) * 100));
+            stats[goalKey] = makeStatObj(pct, daysMet, `${daysMet} of ${phaseTarget} times this phase`, { avg });
+          } else {
+            stats[goalKey] = makeStatObj(
+              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet, `${daysMet}/${elapsedDays} days at ${goalTarget}+ stars`, { avg }
+            );
+          }
         } else if (f.type === 'log') {
-          // Goal met when log has entries for the day
           let daysMet = 0;
           data.forEach(d => {
             const entries = d.customSections?.[sec.id]?.[f.id]?.entries;
             if (Array.isArray(entries) && entries.length > 0) daysMet++;
           });
-          stats[goalKey] = makeStatObj(
+          if (goalType === 'phase') {
+            const phaseTarget = (typeof goalTarget === 'number') ? goalTarget : 1;
+            const pct = Math.min(100, Math.round((daysMet / phaseTarget) * 100));
+            stats[goalKey] = makeStatObj(pct, daysMet, `${daysMet} of ${phaseTarget} entries this phase`);
+          } else {
+            stats[goalKey] = makeStatObj(
             elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
             daysMet, `${daysMet}/${elapsedDays} days with entries`
           );
