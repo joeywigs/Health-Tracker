@@ -1627,6 +1627,7 @@ function showQuickConfirmation(message) {
 // =====================================
 let lastCompletionCount = 0;
 let personalBests = {};
+let shownMilestones = {}; // Track which streak milestones have been shown this session
 
 function setupDopamineBoosts() {
   // Add confetti to all checkboxes
@@ -1719,12 +1720,15 @@ function updateCompletionRing() {
 function checkForMilestones() {
   // Check streak milestones
   const streakCount = calculateCurrentStreak();
-  
-  if (streakCount === 7) {
+
+  if (streakCount === 7 && !shownMilestones[7]) {
+    shownMilestones[7] = true;
     setTimeout(() => showMilestone('🔥', '7 Day Streak!', 'One week of consistency!'), 500);
-  } else if (streakCount === 14) {
+  } else if (streakCount === 14 && !shownMilestones[14]) {
+    shownMilestones[14] = true;
     setTimeout(() => showMilestone('🔥🔥', '14 Day Streak!', 'Two weeks strong!'), 500);
-  } else if (streakCount === 21) {
+  } else if (streakCount === 21 && !shownMilestones[21]) {
+    shownMilestones[21] = true;
     setTimeout(() => showMilestone('🏆', '21 Day Streak!', 'Habit officially formed!'), 500);
   }
 }
