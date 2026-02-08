@@ -4258,6 +4258,8 @@
         <div class="mini-supp" title="Vitamin D"><input type="checkbox" id="vitaminD"><span>Vit D</span></div>
         <div class="mini-supp" title="NO2"><input type="checkbox" id="no2"><span>NO2</span></div>
         <div class="mini-supp" title="Psyllium"><input type="checkbox" id="psyllium"><span>Psyllium</span></div>
+        <div class="mini-supp" title="Zinc"><input type="checkbox" id="zinc"><span>Zinc</span></div>
+        <div class="mini-supp" title="Prebiotic"><input type="checkbox" id="prebiotic"><span>Prebiotic</span></div>
       </div>
     </div>
     <div class="card movement" id="stepsCard">
@@ -5009,10 +5011,10 @@
       // 8. Healthy night snacks
       if (document.getElementById('nightSnacks')?.checked) checked++;
 
-      // 9. Supplements: all 4 (creatine, vitD, NO2, psyllium)
-      const suppsChecked = ['creatine', 'vitaminD', 'no2', 'psyllium']
+      // 9. Supplements: all 6 (creatine, vitD, NO2, psyllium, zinc, prebiotic)
+      const suppsChecked = ['creatine', 'vitaminD', 'no2', 'psyllium', 'zinc', 'prebiotic']
         .filter(id => document.getElementById(id)?.checked).length;
-      if (suppsChecked === 4) checked++;
+      if (suppsChecked === 6) checked++;
 
       // 10. Email sprints ≥ goal
       const emailSprintGoalVal = (typeof appSettings !== 'undefined' && appSettings.emailSprintGoal) ? appSettings.emailSprintGoal : 3;
@@ -8416,7 +8418,7 @@
         case 'bloodPressure':
           return !!document.getElementById('systolic')?.value || !!document.getElementById('diastolic')?.value;
         case 'supps':
-          return ['creatine', 'vitaminD', 'no2', 'psyllium'].every(id => document.getElementById(id)?.checked);
+          return ['creatine', 'vitaminD', 'no2', 'psyllium', 'zinc', 'prebiotic'].every(id => document.getElementById(id)?.checked);
         case 'water':
           return !!morningCheckedState[item.id];
         case 'rehit':
@@ -8458,7 +8460,9 @@
             { id: 'creatine', label: 'Creat' },
             { id: 'vitaminD', label: 'Vit D' },
             { id: 'no2', label: 'NO2' },
-            { id: 'psyllium', label: 'Psyllium' }
+            { id: 'psyllium', label: 'Psyllium' },
+            { id: 'zinc', label: 'Zinc' },
+            { id: 'prebiotic', label: 'Prebio' }
           ];
           const chipsHtml = chips.map(c => {
             const checked = document.getElementById(c.id)?.checked;
