@@ -519,22 +519,29 @@ async function logBody(body, env, corsHeaders) {
   // Read existing daily data and merge body fields
   const existing = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
 
-  const weight = parseFloat(body.Weight || body.weight) || 0;
-  const leanMass = parseFloat(body.LeanMass || body.leanMass) || 0;
-  const fatMass = parseFloat(body.FatMass || body.fatMass || body.bodyFat) || 0;
-  const boneMass = parseFloat(body.BoneMass || body.boneMass) || 0;
-  const bodyWater = parseFloat(body.BodyWater || body.bodyWater || body.waterLbs) || 0;
-  const bodyFatPct = parseFloat(body.BodyFatPercentage || body.bodyFatPercentage) || 0;
-  const waist = parseFloat(body.Waist || body.waist) || 0;
+  const val = (a, b, c) => {
+    const v = a ?? b ?? c;
+    if (v === undefined || v === null || v === "") return null;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  };
 
-  // Only update fields that have non-zero values
+  const weight = val(body.Weight, body.weight);
+  const leanMass = val(body.LeanMass, body.leanMass);
+  const fatMass = val(body.FatMass, body.fatMass, body.bodyFat);
+  const boneMass = val(body.BoneMass, body.boneMass);
+  const bodyWater = val(body.BodyWater, body.bodyWater, body.waterLbs);
+  const bodyFatPct = val(body.BodyFatPercentage, body.bodyFatPercentage);
+  const waist = val(body.Waist, body.waist);
+
+  // Only update fields that were actually provided (skip null, allow zero)
   const updates = {};
-  if (weight) updates["Weight (lbs)"] = weight;
-  if (leanMass) updates["Lean Mass (lbs)"] = leanMass;
-  if (fatMass) updates["Body Fat (lbs)"] = fatMass;
-  if (boneMass) updates["Bone Mass (lbs)"] = boneMass;
-  if (bodyWater) updates["Water (lbs)"] = bodyWater;
-  if (waist) updates["Waist"] = waist;
+  if (weight !== null) updates["Weight (lbs)"] = weight;
+  if (leanMass !== null) updates["Lean Mass (lbs)"] = leanMass;
+  if (fatMass !== null) updates["Body Fat (lbs)"] = fatMass;
+  if (boneMass !== null) updates["Bone Mass (lbs)"] = boneMass;
+  if (bodyWater !== null) updates["Water (lbs)"] = bodyWater;
+  if (waist !== null) updates["Waist"] = waist;
 
   const merged = { ...existing, "Date": normalizedDate, ...updates };
   await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(merged));
