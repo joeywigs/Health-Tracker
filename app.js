@@ -2348,9 +2348,10 @@ function calculateGoalStats(data, range, phaseId = null) {
             stats[goalKey] = makeStatObj(pct, daysMet, `${daysMet} of ${phaseTarget} entries this phase`);
           } else {
             stats[goalKey] = makeStatObj(
-            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-            daysMet, `${daysMet}/${elapsedDays} days with entries`
-          );
+              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet, `${daysMet}/${elapsedDays} days with entries`
+            );
+          }
         }
       });
     });
