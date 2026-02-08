@@ -643,7 +643,7 @@ async function calculate7DayAverages(dateStr, env) {
     if (isThisWeek) {
       if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
       if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
-      if (i > 0 && rehit && rehit !== "") rehitCount++;
+      if (rehit && rehit !== "") rehitCount++;
       movementValues.push(movCount);
     }
 

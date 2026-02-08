@@ -1610,6 +1610,16 @@
       </div>
     </div>
     
+    <!-- Goals -->
+    <div class="section">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-orange);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Goals</span></div></div>
+      <div class="sec-content">
+        <div id="goalsList" style="min-height:32px">
+          <p style="font-size:13px;color:var(--text-muted)">No goals tracked yet. Create a custom section with "Track as Goal" enabled.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Custom Section -->
     <div class="section">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">➕</div><span class="sec-name">Add Custom Section</span></div></div>
@@ -1697,7 +1707,34 @@
             <input type="text" class="input" id="ratingLabel" placeholder="How was your day?">
           </div>
         </div>
-        
+
+        <!-- Goal Tracking Options (available for all types) -->
+        <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
+          <div class="field">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <label class="field-label" style="margin-bottom:0">Track as Goal</label>
+              <label style="position:relative;width:44px;height:24px;display:inline-block">
+                <input type="checkbox" id="newSectionTrackGoal" style="opacity:0;width:0;height:0">
+                <span style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:24px;transition:.3s"></span>
+                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s" id="goalToggleKnob"></span>
+              </label>
+            </div>
+          </div>
+          <div id="goalOptions" style="display:none">
+            <div class="field">
+              <label class="field-label">Goal Description</label>
+              <input type="text" class="input" id="newSectionGoalDesc" placeholder="e.g., Drink 8 glasses of water daily">
+            </div>
+            <div class="field">
+              <label class="field-label">Frequency</label>
+              <select class="input" id="newSectionGoalFreq">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
       </div>
     </div>
@@ -1841,18 +1878,21 @@
       const dotsContainer = document.getElementById('rehitDots');
       if (!dotsContainer) return;
       const dots = dotsContainer.querySelectorAll('.rehit-dot');
-      
-      // Try to get week count from the rehitWeek display (set by app.js)
+
+      // Get week count from the rehitWeek element's first text node only
+      // (avoids picking up comparison numbers like "↓ 3")
       let weekCount = 0;
       const rehitWeekEl = document.getElementById('rehitWeek');
       if (rehitWeekEl) {
-        const text = rehitWeekEl.textContent;
-        const match = text.match(/(\d+)/);
+        // Extract only the leading number before any comparison span
+        const firstChild = rehitWeekEl.firstChild;
+        const rawText = firstChild ? firstChild.textContent.trim() : rehitWeekEl.textContent.trim();
+        const match = rawText.match(/^(\d+)/);
         if (match) {
           weekCount = parseInt(match[1], 10);
         }
       }
-      
+
       // Update dots (max 4)
       dots.forEach((dot, i) => {
         dot.classList.toggle('on', i < Math.min(weekCount, 4));
@@ -2352,8 +2392,38 @@
       
       // Drag and drop
       setupDragAndDrop();
+
+      // Update goals list
+      renderGoalsList();
     }
-    
+
+    function renderGoalsList() {
+      const list = document.getElementById('goalsList');
+      if (!list) return;
+
+      const goals = appSettings.sections.filter(s => s.custom && s.config?.trackAsGoal);
+      if (goals.length === 0) {
+        list.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">No goals tracked yet. Create a custom section with "Track as Goal" enabled.</p>';
+        return;
+      }
+
+      list.innerHTML = goals.map(g => {
+        const freq = g.config.goalFrequency || 'daily';
+        const desc = g.config.goalDescription || '';
+        const freqColor = freq === 'daily' ? 'var(--accent-teal)' : 'var(--accent-purple)';
+        return `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:20px">${g.icon}</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:14px">${g.name}</div>
+              ${desc ? `<div style="font-size:12px;color:var(--text-muted)">${desc}</div>` : ''}
+            </div>
+            <span style="font-size:10px;background:${freqColor};color:#fff;padding:2px 8px;border-radius:8px;font-weight:600">${freq}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
     function setupDragAndDrop() {
       const items = document.querySelectorAll('.section-item');
       let draggedItem = null;
@@ -2465,6 +2535,20 @@
       }
     });
     
+    // Goal tracking toggle
+    const goalToggle = document.getElementById('newSectionTrackGoal');
+    const goalKnob = document.getElementById('goalToggleKnob');
+    const goalOptions = document.getElementById('goalOptions');
+    if (goalToggle) {
+      goalToggle.addEventListener('change', () => {
+        goalOptions.style.display = goalToggle.checked ? 'block' : 'none';
+        if (goalKnob) {
+          goalKnob.style.transform = goalToggle.checked ? 'translateX(20px)' : 'translateX(0)';
+          goalKnob.parentElement.previousElementSibling.style.background = goalToggle.checked ? 'var(--accent-teal)' : 'var(--border)';
+        }
+      });
+    }
+
     // Add log field button
     document.getElementById('addLogFieldBtn')?.addEventListener('click', () => {
       const list = document.getElementById('logFieldsList');
@@ -2528,7 +2612,15 @@
       } else if (type === 'rating') {
         config.label = document.getElementById('ratingLabel').value || 'Rate';
       }
-      
+
+      // Goal tracking config
+      const trackGoal = document.getElementById('newSectionTrackGoal')?.checked || false;
+      if (trackGoal) {
+        config.trackAsGoal = true;
+        config.goalDescription = document.getElementById('newSectionGoalDesc')?.value || '';
+        config.goalFrequency = document.getElementById('newSectionGoalFreq')?.value || 'daily';
+      }
+
       appSettings.sections.push({
         id,
         name,
@@ -2563,7 +2655,15 @@
       `;
       document.querySelectorAll('.type-options').forEach(opt => opt.style.display = 'none');
       document.getElementById('newSectionType').value = 'text';
-      
+      // Reset goal tracking fields
+      const goalCb = document.getElementById('newSectionTrackGoal');
+      if (goalCb) {
+        goalCb.checked = false;
+        goalCb.dispatchEvent(new Event('change'));
+      }
+      document.getElementById('newSectionGoalDesc').value = '';
+      document.getElementById('newSectionGoalFreq').value = 'daily';
+
       renderSectionList();
     });
     
@@ -2675,15 +2775,23 @@
         `;
       }
       
+      // Goal badge for sections tracked as goals
+      const goalBadge = config.trackAsGoal
+        ? `<span style="font-size:10px;background:var(--accent-teal);color:#fff;padding:2px 6px;border-radius:8px;margin-left:8px;font-weight:600">${config.goalFrequency || 'daily'}</span>`
+        : '';
+      const goalDesc = config.trackAsGoal && config.goalDescription
+        ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 12px 0;font-style:italic">Goal: ${config.goalDescription}</div>`
+        : '';
+
       section.innerHTML = `
         <div class="sec-head collapsed">
           <div class="sec-title">
             <div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink)">${icon}</div>
-            <span class="sec-name">${name}</span>
+            <span class="sec-name">${name}${goalBadge}</span>
           </div>
           <span class="sec-toggle">▼</span>
         </div>
-        <div class="sec-content collapsed">${content}</div>
+        <div class="sec-content collapsed">${goalDesc}${content}</div>
       `;
       
       form.appendChild(section);
