@@ -534,14 +534,14 @@ async function logBody(body, env, corsHeaders) {
   const bodyFatPct = val(body.BodyFatPercentage, body.bodyFatPercentage);
   const waist = val(body.Waist, body.waist);
 
-  // Only update fields that were actually provided (skip null, allow zero)
+  // Only update fields that have real positive values (0 is never valid for body data)
   const updates = {};
-  if (weight !== null) updates["Weight (lbs)"] = weight;
-  if (leanMass !== null) updates["Lean Mass (lbs)"] = leanMass;
-  if (fatMass !== null) updates["Body Fat (lbs)"] = fatMass;
-  if (boneMass !== null) updates["Bone Mass (lbs)"] = boneMass;
-  if (bodyWater !== null) updates["Water (lbs)"] = bodyWater;
-  if (waist !== null) updates["Waist"] = waist;
+  if (weight) updates["Weight (lbs)"] = weight;
+  if (leanMass) updates["Lean Mass (lbs)"] = leanMass;
+  if (fatMass) updates["Body Fat (lbs)"] = fatMass;
+  if (boneMass) updates["Bone Mass (lbs)"] = boneMass;
+  if (bodyWater) updates["Water (lbs)"] = bodyWater;
+  if (waist) updates["Waist"] = waist;
 
   const merged = { ...existing, "Date": normalizedDate, ...updates };
   await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(merged));
