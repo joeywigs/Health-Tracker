@@ -4705,7 +4705,7 @@
           <div class="field"><label class="field-label">Icon (emoji)</label><input type="text" class="input" id="newSectionIcon" placeholder="📝" maxlength="2" style="width:80px"></div>
           <div class="field"><label class="field-label">Show on Days</label><div class="day-picker" id="newSectionDays"><span class="day-chip selected" data-day="0">S</span><span class="day-chip selected" data-day="1">M</span><span class="day-chip selected" data-day="2">T</span><span class="day-chip selected" data-day="3">W</span><span class="day-chip selected" data-day="4">T</span><span class="day-chip selected" data-day="5">F</span><span class="day-chip selected" data-day="6">S</span></div></div>
           <div id="checkboxOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Checkbox Names (comma-separated)</label><input type="text" class="input" id="checkboxNames" placeholder="Morning, Afternoon, Evening"></div></div>
-          <div id="counterOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Goal Type</label><select class="input" id="counterGoalType"><option value="daily">Daily (progress bar)</option><option value="weekly">Weekly (dots)</option><option value="alltime">All-time (running total)</option></select></div><div class="field"><label class="field-label">Goal Number</label><input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20"></div><div class="field"><label class="field-label">Unit Label</label><input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times"></div></div>
+          <div id="counterOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Goal Type</label><select class="input" id="counterGoalType"><option value="daily">Daily (progress bar)</option><option value="weekly">Weekly (dots)</option><option value="phase">Per Phase (phase total)</option><option value="alltime">All-time (running total)</option></select></div><div class="field"><label class="field-label">Goal Number</label><input type="number" class="input" id="counterGoalNumber" placeholder="6" min="1" max="20"></div><div class="field"><label class="field-label">Unit Label</label><input type="text" class="input" id="counterUnitLabel" placeholder="glasses, sessions, times"></div></div>
           <div id="logOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Fields per Entry</label><div id="logFieldsList"><div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px"><input type="text" class="input" placeholder="Field name" style="flex:2"><select class="input" style="flex:1"><option value="text">Text</option><option value="number">Number</option><option value="select">Dropdown</option></select><button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button></div></div><button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button></div></div>
           <div id="numberOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Unit (optional)</label><input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc."></div><div class="field"><label class="field-label">Placeholder</label><input type="text" class="input" id="numberPlaceholder" placeholder="0"></div></div>
           <div id="ratingOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Rating Label</label><input type="text" class="input" id="ratingLabel" placeholder="How was your day?"></div></div>
@@ -6527,6 +6527,7 @@
             <select class="input" id="fieldCfg_${si}_${fi}_goalFreq" style="font-size:11px;padding:4px;flex:1">
               <option value="daily" ${goalFreq === 'daily' ? 'selected' : ''}>Daily</option>
               <option value="weekly" ${goalFreq === 'weekly' ? 'selected' : ''}>Weekly</option>
+              <option value="phase" ${goalFreq === 'phase' ? 'selected' : ''}>Per Phase</option>
             </select>
             ${needsTarget ? `<input type="number" class="input" id="fieldCfg_${si}_${fi}_goalTarget" placeholder="Target" value="${goalTarget}" min="1" style="font-size:11px;padding:4px;width:55px">` : ''}
             ${needsTarget ? `<input type="text" class="input" id="fieldCfg_${si}_${fi}_goalUnit" placeholder="Unit" value="${goalUnit}" style="font-size:11px;padding:4px;flex:1">` : ''}
@@ -7452,6 +7453,15 @@
             </div>
             <div class="progress-bar-h" style="margin-top:10px"><div class="progress-bar-h-fill" id="${fieldId}_fill" style="width:0%"></div></div>
             <div class="card-avg" id="${fieldId}_label" style="margin-top:6px">0 of ${goalNum} ${unit}</div>`;
+        } else if (gType === 'phase') {
+          return fLabel + `
+            <div style="display:flex;align-items:center;gap:12px">
+              <button type="button" class="water-btn counter-minus" data-id="${fieldId}">−</button>
+              <div class="water-num counter-value" id="${fieldId}_value">0</div>
+              <button type="button" class="water-btn counter-plus" data-id="${fieldId}">+</button>
+            </div>
+            <div class="progress-bar-h" style="margin-top:10px"><div class="progress-bar-h-fill" id="${fieldId}_fill" style="width:0%"></div></div>
+            <div class="card-avg" id="${fieldId}_label" style="margin-top:6px">0 of ${goalNum} ${unit} this phase</div>`;
         } else if (gType === 'weekly') {
           let dots = '';
           for (let i = 0; i < goalNum; i++) dots += `<div class="counter-dot" data-idx="${i}"></div>`;
