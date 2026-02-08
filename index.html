@@ -3560,12 +3560,52 @@
     /* Goal Settings Rows */
     .goal-setting-row {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       padding: 10px 0;
       border-bottom: 1px solid var(--border);
     }
     .goal-setting-row:last-child { border-bottom: none; }
+    .goal-day-overrides {
+      display: none;
+      width: 100%;
+      padding: 8px 0 4px 38px;
+      gap: 4px;
+    }
+    .goal-day-overrides.open { display: flex; flex-wrap: wrap; }
+    .goal-day-override-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .goal-day-override-cell label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .goal-day-override-cell input {
+      width: 36px;
+      text-align: center;
+      font-size: 12px;
+      padding: 3px 2px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--input-bg, rgba(255,255,255,0.06));
+      color: var(--text);
+    }
+    body.day-mode .goal-day-override-cell input {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+    }
+    .goal-day-toggle {
+      font-size: 10px;
+      color: var(--accent-teal);
+      cursor: pointer;
+      margin-left: 6px;
+      white-space: nowrap;
+    }
     .goal-setting-info {
       display: flex;
       align-items: center;
@@ -3934,7 +3974,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v2.1</div>
+      <div class="tagline">v2.2</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3996,7 +4036,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v2.1</div>
+          <div class="tagline">v2.2</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -5005,26 +5045,26 @@
 
       // 1. Sleep ≥ goal
       const sleepVal = parseFloat(document.getElementById('sleepHours')?.value) || 0;
-      const sleepGoal = (typeof appSettings !== 'undefined' && appSettings.sleepGoal) ? appSettings.sleepGoal : 7;
+      const sleepGoal = typeof getGoalForToday === 'function' ? getGoalForToday('sleepGoal', 7) : ((typeof appSettings !== 'undefined' && appSettings.sleepGoal) ? appSettings.sleepGoal : 7);
       if (sleepVal >= sleepGoal) checked++;
 
       // 2. Agua ≥ goal
-      const aguaGoal = (typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6;
+      const aguaGoal = typeof getGoalForToday === 'function' ? getGoalForToday('aguaGoal', 6) : ((typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6);
       const aguaEl = document.getElementById('aguaCount');
       if ((aguaEl ? parseInt(aguaEl.textContent) || 0 : 0) >= aguaGoal) checked++;
 
       // 3. Steps ≥ goal
       const stepsVal = parseInt(document.getElementById('steps')?.value) || 0;
-      const stepsGoal = (typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500;
+      const stepsGoal = typeof getGoalForToday === 'function' ? getGoalForToday('stepsGoal', 7500) : ((typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500);
       if (stepsVal >= stepsGoal) checked++;
 
       // 4. Movement breaks ≥ goal
-      const movementGoal = (typeof appSettings !== 'undefined' && appSettings.movementGoal) ? appSettings.movementGoal : 2;
+      const movementGoal = typeof getGoalForToday === 'function' ? getGoalForToday('movementGoal', 2) : ((typeof appSettings !== 'undefined' && appSettings.movementGoal) ? appSettings.movementGoal : 2);
       const movementCount = (typeof currentMovements !== 'undefined' && Array.isArray(currentMovements)) ? currentMovements.length : 0;
       if (movementCount >= movementGoal) checked++;
 
       // 5. Meals: breakfast, lunch, dinner checked >= goal
-      const mealsGoal = (typeof appSettings !== 'undefined' && appSettings.mealsGoal) ? appSettings.mealsGoal : 2;
+      const mealsGoal = typeof getGoalForToday === 'function' ? getGoalForToday('mealsGoal', 2) : ((typeof appSettings !== 'undefined' && appSettings.mealsGoal) ? appSettings.mealsGoal : 2);
       const mealsChecked = ['breakfast', 'lunch', 'dinner']
         .filter(id => document.getElementById(id)?.checked).length;
       if (mealsChecked >= mealsGoal) checked++;
@@ -5044,7 +5084,7 @@
       if (suppsChecked === 6) checked++;
 
       // 10. Email sprints ≥ goal
-      const emailSprintGoalVal = (typeof appSettings !== 'undefined' && appSettings.emailSprintGoal) ? appSettings.emailSprintGoal : 3;
+      const emailSprintGoalVal = typeof getGoalForToday === 'function' ? getGoalForToday('emailSprintGoal', 3) : ((typeof appSettings !== 'undefined' && appSettings.emailSprintGoal) ? appSettings.emailSprintGoal : 3);
       const emailSprintsCount = (typeof emailSprintCount !== 'undefined') ? emailSprintCount : 0;
       if (emailSprintsCount >= emailSprintGoalVal) checked++;
       
@@ -5544,18 +5584,18 @@
       const fill = document.getElementById('aguaBarFill');
       if(!aguaCount || !fill) return;
       const count = parseInt(aguaCount.textContent) || 0;
-      const goal = (typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6;
+      const goal = typeof getGoalForToday === 'function' ? getGoalForToday('aguaGoal', 6) : ((typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6);
       const pct = Math.min(100, (count / goal) * 100);
       fill.style.width = pct + '%';
     }
-    
+
     // Steps progress bar
     function updateStepsBar(){
       const stepsInput = document.getElementById('steps');
       const fill = document.getElementById('stepsBarFill');
       if(!stepsInput || !fill) return;
       const steps = parseInt(stepsInput.value) || 0;
-      const goal = (typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500;
+      const goal = typeof getGoalForToday === 'function' ? getGoalForToday('stepsGoal', 7500) : ((typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500);
       const pct = Math.min(100, (steps / goal) * 100);
       fill.style.width = pct + '%';
     }
@@ -7069,7 +7109,7 @@
       const sub = document.getElementById('settingsSub_' + pageName);
       if (sub) sub.classList.add('active');
       if (pageName === 'sections') renderSectionList();
-      if (pageName === 'goals') renderGoalsList();
+      if (pageName === 'goals') { renderGoalsList(); initGoalDayOverrides(); }
       if (pageName === 'notes') loadHabitNotes();
       window.scrollTo(0, 0);
     }
@@ -7158,6 +7198,96 @@
       el.addEventListener('change', handler);
       el.addEventListener('input', handler);
     });
+
+    // Per-day goal overrides
+    function getGoalForToday(key, defaultVal, date) {
+      const d = date || (window.currentDate || new Date());
+      const dayOfWeek = d.getDay(); // 0=Sun, 6=Sat
+      const overrides = appSettings[key + 'DayOverrides'];
+      if (overrides && overrides[dayOfWeek] !== undefined && overrides[dayOfWeek] !== null && overrides[dayOfWeek] !== '') {
+        return parseFloat(overrides[dayOfWeek]);
+      }
+      return (typeof appSettings !== 'undefined' && appSettings[key] !== undefined) ? appSettings[key] : defaultVal;
+    }
+    window.getGoalForToday = getGoalForToday;
+
+    function initGoalDayOverrides() {
+      const dayLabels = ['S','M','T','W','T','F','S'];
+      goalInputConfigs.forEach(config => {
+        const goalInput = document.getElementById(config.id);
+        if (!goalInput) return;
+        const row = goalInput.closest('.goal-setting-row');
+        if (!row || row.querySelector('.goal-day-overrides')) return; // Already initialized
+
+        // Add "per day" toggle link next to the controls
+        const controls = row.querySelector('.goal-setting-controls');
+        if (!controls) return;
+        const toggle = document.createElement('span');
+        toggle.className = 'goal-day-toggle';
+        toggle.textContent = 'per day';
+        toggle.addEventListener('click', () => {
+          const overrideDiv = row.querySelector('.goal-day-overrides');
+          if (overrideDiv) {
+            overrideDiv.classList.toggle('open');
+            toggle.textContent = overrideDiv.classList.contains('open') ? 'hide' : 'per day';
+          }
+        });
+        controls.appendChild(toggle);
+
+        // Create per-day override inputs
+        const overrideDiv = document.createElement('div');
+        overrideDiv.className = 'goal-day-overrides';
+        const existingOverrides = appSettings[config.key + 'DayOverrides'] || {};
+        const hasOverrides = Object.keys(existingOverrides).length > 0;
+
+        dayLabels.forEach((label, dayIdx) => {
+          const cell = document.createElement('div');
+          cell.className = 'goal-day-override-cell';
+          const lbl = document.createElement('label');
+          lbl.textContent = label;
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.placeholder = '-';
+          input.min = '0';
+          input.dataset.day = dayIdx;
+          input.dataset.goalKey = config.key;
+          const overrideVal = existingOverrides[dayIdx];
+          if (overrideVal !== undefined && overrideVal !== null && overrideVal !== '') {
+            input.value = overrideVal;
+          }
+          input.addEventListener('change', () => {
+            if (!appSettings[config.key + 'DayOverrides']) {
+              appSettings[config.key + 'DayOverrides'] = {};
+            }
+            if (input.value === '') {
+              delete appSettings[config.key + 'DayOverrides'][dayIdx];
+              if (Object.keys(appSettings[config.key + 'DayOverrides']).length === 0) {
+                delete appSettings[config.key + 'DayOverrides'];
+              }
+            } else {
+              appSettings[config.key + 'DayOverrides'][dayIdx] = parseFloat(input.value);
+            }
+            window.appSettings = appSettings;
+            saveSettings(appSettings);
+            if (config.updateRing && typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+            if (config.updateAguaBar && typeof updateAguaBar === 'function') updateAguaBar();
+            if (config.updateStepsBar && typeof updateStepsBar === 'function') updateStepsBar();
+          });
+          cell.appendChild(lbl);
+          cell.appendChild(input);
+          overrideDiv.appendChild(cell);
+        });
+
+        // If overrides exist, show them open
+        if (hasOverrides) {
+          overrideDiv.classList.add('open');
+          toggle.textContent = 'hide';
+        }
+
+        row.appendChild(overrideDiv);
+      });
+    }
+    initGoalDayOverrides();
 
     // Goal frequency selectors
     const freqConfigs = [
