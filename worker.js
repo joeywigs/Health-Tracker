@@ -529,7 +529,7 @@ async function logBody(body, env, corsHeaders) {
     const v = a ?? b ?? c;
     if (v === undefined || v === null || v === "") return null;
     const n = parseFloat(v);
-    return isNaN(n) ? null : n;
+    return isNaN(n) ? null : Math.round(n * 10) / 10;
   };
 
   const weight = val(body.Weight, body.weight);
@@ -540,11 +540,17 @@ async function logBody(body, env, corsHeaders) {
   const bodyFatPct = val(body.BodyFatPercentage, body.bodyFatPercentage);
   const waist = val(body.Waist, body.waist);
 
+  // Calculate FatMass from Weight and BodyFatPercentage if not provided directly
+  const calculatedFatMass = (!fatMass && weight && bodyFatPct)
+    ? Math.round(weight * bodyFatPct / 100 * 10) / 10
+    : null;
+
   // Only update fields that have real positive values (0 is never valid for body data)
   const updates = {};
   if (weight) updates["Weight (lbs)"] = weight;
   if (leanMass) updates["Lean Mass (lbs)"] = leanMass;
   if (fatMass) updates["Body Fat (lbs)"] = fatMass;
+  else if (calculatedFatMass) updates["Body Fat (lbs)"] = calculatedFatMass;
   if (boneMass) updates["Bone Mass (lbs)"] = boneMass;
   if (bodyWater) updates["Water (lbs)"] = bodyWater;
   if (waist) updates["Waist"] = waist;
