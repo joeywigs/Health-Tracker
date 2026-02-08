@@ -294,6 +294,12 @@ async function saveDay(data, env, corsHeaders) {
   // that the web UI may not have loaded yet.
   const existing = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
 
+  // Purge zero values from body fields — zeros are never valid body measurements
+  // and can get stuck in a loop (shortcut test → "0" string → autosave preserves it)
+  ["Weight (lbs)", "Waist", "Lean Mass (lbs)", "Body Fat (lbs)", "Bone Mass (lbs)", "Water (lbs)"].forEach(k => {
+    if (existing[k] === 0 || existing[k] === "0") delete existing[k];
+  });
+
   // Build daily data object from the incoming payload
   const daily = {
     ...existing,

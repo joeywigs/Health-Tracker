@@ -5705,7 +5705,7 @@ function hasAnyBodyData(daily) {
   return BODY_FIELDS.some(f =>
     f.keys.some(k => {
       const v = daily[k];
-      return v !== undefined && v !== null && v !== "";
+      return v !== undefined && v !== null && v !== "" && v !== 0 && v !== "0";
     })
   );
 }
