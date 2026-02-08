@@ -6492,28 +6492,55 @@
     function getFieldConfigHtml(si, fi, field) {
       const t = field.type;
       const c = field.config || {};
+      let typeConfig = '';
+
       if (t === 'checkbox') {
-        return `<input type="text" class="input" placeholder="Names (comma-separated)" id="fieldCfg_${si}_${fi}_cb" value="${(c.checkboxes || []).join(', ')}" style="font-size:11px;padding:4px 8px">`;
+        typeConfig = `<input type="text" class="input" placeholder="Names (comma-separated)" id="fieldCfg_${si}_${fi}_cb" value="${(c.checkboxes || []).join(', ')}" style="font-size:11px;padding:4px 8px">`;
       } else if (t === 'counter') {
-        return `<div style="display:flex;gap:6px">
-          <select class="input" id="fieldCfg_${si}_${fi}_goalType" style="font-size:11px;padding:4px;flex:1">
-            <option value="daily" ${c.goalType === 'daily' || (!c.goalType) ? 'selected' : ''}>Daily</option>
-            <option value="weekly" ${c.goalType === 'weekly' ? 'selected' : ''}>Weekly</option>
-            <option value="alltime" ${c.goalType === 'alltime' ? 'selected' : ''}>All-time</option>
-          </select>
+        typeConfig = `<div style="display:flex;gap:6px">
           <input type="number" class="input" id="fieldCfg_${si}_${fi}_goalNum" placeholder="Goal #" value="${c.goalNumber || 6}" min="1" style="font-size:11px;padding:4px;width:60px">
           <input type="text" class="input" id="fieldCfg_${si}_${fi}_unit" placeholder="Unit" value="${c.unitLabel || 'times'}" style="font-size:11px;padding:4px;flex:1">
         </div>`;
       } else if (t === 'number') {
-        return `<div style="display:flex;gap:6px">
+        typeConfig = `<div style="display:flex;gap:6px">
           <input type="text" class="input" id="fieldCfg_${si}_${fi}_unit" placeholder="Unit (optional)" value="${c.unit || ''}" style="font-size:11px;padding:4px;flex:1">
           <input type="text" class="input" id="fieldCfg_${si}_${fi}_ph" placeholder="Placeholder" value="${c.placeholder || '0'}" style="font-size:11px;padding:4px;flex:1">
         </div>`;
       } else if (t === 'rating') {
-        return `<input type="text" class="input" id="fieldCfg_${si}_${fi}_label" placeholder="Rating label" value="${c.label || 'Rate'}" style="font-size:11px;padding:4px">`;
+        typeConfig = `<input type="text" class="input" id="fieldCfg_${si}_${fi}_label" placeholder="Rating label" value="${c.label || 'Rate'}" style="font-size:11px;padding:4px">`;
       }
-      return '';
+
+      // Universal goal config for all field types
+      const hasGoal = c.goalEnabled || false;
+      const needsTarget = ['counter', 'number', 'rating'].includes(t);
+      const goalTarget = c.goalTarget || c.goalNumber || '';
+      const goalFreq = c.goalFreq || c.goalType || 'daily';
+      const goalUnit = c.goalUnit || c.unitLabel || '';
+
+      const goalConfig = `
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);cursor:pointer">
+            <input type="checkbox" id="fieldCfg_${si}_${fi}_goalEnabled" ${hasGoal ? 'checked' : ''} onchange="toggleGoalConfig(${si},${fi})">
+            Track as goal
+          </label>
+          <div id="fieldCfg_${si}_${fi}_goalOpts" style="display:${hasGoal ? 'flex' : 'none'};gap:6px;margin-top:4px">
+            <select class="input" id="fieldCfg_${si}_${fi}_goalFreq" style="font-size:11px;padding:4px;flex:1">
+              <option value="daily" ${goalFreq === 'daily' ? 'selected' : ''}>Daily</option>
+              <option value="weekly" ${goalFreq === 'weekly' ? 'selected' : ''}>Weekly</option>
+            </select>
+            ${needsTarget ? `<input type="number" class="input" id="fieldCfg_${si}_${fi}_goalTarget" placeholder="Target" value="${goalTarget}" min="1" style="font-size:11px;padding:4px;width:55px">` : ''}
+            ${needsTarget ? `<input type="text" class="input" id="fieldCfg_${si}_${fi}_goalUnit" placeholder="Unit" value="${goalUnit}" style="font-size:11px;padding:4px;flex:1">` : ''}
+          </div>
+        </div>`;
+
+      return typeConfig + goalConfig;
     }
+
+    window.toggleGoalConfig = function(si, fi) {
+      const cb = document.getElementById(`fieldCfg_${si}_${fi}_goalEnabled`);
+      const opts = document.getElementById(`fieldCfg_${si}_${fi}_goalOpts`);
+      if (opts) opts.style.display = cb?.checked ? 'flex' : 'none';
+    };
 
     window.onFieldTypeChange = function(si, fi) {
       const sel = document.getElementById(`fieldType_${si}_${fi}`);
@@ -6586,7 +6613,6 @@
           const val = document.getElementById(`fieldCfg_${si}_${fi}_cb`)?.value || '';
           f.config.checkboxes = val.split(',').map(s => s.trim()).filter(s => s);
         } else if (f.type === 'counter') {
-          f.config.goalType = document.getElementById(`fieldCfg_${si}_${fi}_goalType`)?.value || 'daily';
           f.config.goalNumber = parseInt(document.getElementById(`fieldCfg_${si}_${fi}_goalNum`)?.value) || 6;
           f.config.unitLabel = document.getElementById(`fieldCfg_${si}_${fi}_unit`)?.value || 'times';
         } else if (f.type === 'number') {
@@ -6594,6 +6620,24 @@
           f.config.placeholder = document.getElementById(`fieldCfg_${si}_${fi}_ph`)?.value || '0';
         } else if (f.type === 'rating') {
           f.config.label = document.getElementById(`fieldCfg_${si}_${fi}_label`)?.value || 'Rate';
+        }
+
+        // Universal goal config for all field types
+        const goalEnabled = document.getElementById(`fieldCfg_${si}_${fi}_goalEnabled`)?.checked || false;
+        f.config.goalEnabled = goalEnabled;
+        if (goalEnabled) {
+          f.config.goalFreq = document.getElementById(`fieldCfg_${si}_${fi}_goalFreq`)?.value || 'daily';
+          const goalTarget = document.getElementById(`fieldCfg_${si}_${fi}_goalTarget`)?.value;
+          if (goalTarget) f.config.goalTarget = parseInt(goalTarget) || 0;
+          const goalUnit = document.getElementById(`fieldCfg_${si}_${fi}_goalUnit`)?.value;
+          if (goalUnit) f.config.goalUnit = goalUnit;
+          // Keep counter goalType in sync with universal goalFreq
+          if (f.type === 'counter') {
+            f.config.goalType = f.config.goalFreq;
+          }
+        } else if (f.type === 'counter') {
+          // Counter always needs goalType for rendering
+          f.config.goalType = document.getElementById(`fieldCfg_${si}_${fi}_goalFreq`)?.value || 'daily';
         }
       });
     }
@@ -7302,6 +7346,9 @@
         config.goalType = document.getElementById('counterGoalType').value;
         config.goalNumber = parseInt(document.getElementById('counterGoalNumber').value) || 6;
         config.unitLabel = document.getElementById('counterUnitLabel').value || 'times';
+        config.goalEnabled = true;
+        config.goalFreq = config.goalType;
+        config.goalTarget = config.goalNumber;
       } else if (type === 'log') {
         const rows = document.querySelectorAll('#logFieldsList .log-field-row');
         config.fields = [];
@@ -7320,7 +7367,13 @@
       } else if (type === 'rating') {
         config.label = document.getElementById('ratingLabel').value || 'Rate';
       }
-      
+
+      // Toggle type defaults to goal enabled
+      if (type === 'toggle') {
+        config.goalEnabled = true;
+        config.goalFreq = 'daily';
+      }
+
       const fieldId = 'f_' + Date.now();
       appSettings.sections.push({
         id,
