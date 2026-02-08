@@ -264,6 +264,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+// Re-fetch data when returning from background (e.g. after running an iOS Shortcut)
+let _lastHidden = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    _lastHidden = Date.now();
+  } else if (Date.now() - _lastHidden > 3000) {
+    // Was in background for >3s — force reload to pick up shortcut-saved data
+    console.log("👁 App resumed, force-reloading data");
+    loadDataForCurrentDate({ force: true });
+  }
+});
+
 function updatePhaseInfo() {
   const phase = getCurrentPhase();
   if (!phase) {
@@ -5371,6 +5383,17 @@ async function saveData(payload) {
   if (payload.rehit !== undefined) {
     normalizedDaily["REHIT 2x10"] = payload.rehit;
     delete normalizedDaily.rehit;
+  }
+  // Preserve body fields from cache when form is empty (worker also preserves
+  // via existing fallback, but the local cache needs to match)
+  const prevCached = cacheGet(formatDateForAPI(currentDate));
+  if (prevCached?.daily) {
+    ["Weight (lbs)", "Waist", "Lean Mass (lbs)", "Body Fat (lbs)", "Bone Mass (lbs)", "Water (lbs)",
+     "Systolic", "Diastolic", "Heart Rate"].forEach(k => {
+      if (!normalizedDaily[k] && prevCached.daily[k]) {
+        normalizedDaily[k] = prevCached.daily[k];
+      }
+    });
   }
   const wrappedPayload = {
     daily: normalizedDaily,
