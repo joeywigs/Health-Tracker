@@ -557,6 +557,7 @@ async function logBody(body, env, corsHeaders) {
     date: normalizedDate,
     updated: Object.keys(updates),
     values: updates,
+    received: body,
     message: `Body data saved for ${normalizedDate}`
   }, 200, corsHeaders);
 }
