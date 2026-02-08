@@ -1572,7 +1572,7 @@ async function openNewPhaseModal(fromPhaseId = null) {
     `;
   });
 
-  // Add custom section goal inputs for fields that have goal configs
+  // Add custom section goal inputs for ALL fields with goalEnabled
   let customGoalsHtml = '';
   if (typeof appSettings !== 'undefined' && appSettings.sections) {
     const customSections = appSettings.sections.filter(s => s.custom && s.fields);
@@ -1581,12 +1581,18 @@ async function openNewPhaseModal(fromPhaseId = null) {
         const goalKey = `custom_${sec.id}_${f.id}`;
         // Skip if already in phase goals (handled above)
         if (goalKeys.includes(goalKey)) return;
+        // Only show if goal is enabled in field config
+        if (!f.config?.goalEnabled) return;
 
-        // Only show goal inputs for goalable field types
-        if (f.type === 'counter' && f.config?.goalNumber) {
-          const stat = stats[goalKey];
-          const pct = stat?.pct || 0;
-          const currentTarget = f.config.goalNumber;
+        const stat = stats[goalKey];
+        const pct = stat?.pct || 0;
+        const c = f.config;
+        const needsTarget = ['counter', 'number', 'rating'].includes(f.type);
+        const goalFreq = c.goalFreq || c.goalType || 'daily';
+        const unit = c.goalUnit || c.unitLabel || '';
+
+        if (needsTarget) {
+          const currentTarget = c.goalTarget || c.goalNumber || 1;
           let suggestion = currentTarget;
           let suggestionText = '';
           if (pct >= 90) {
@@ -1602,23 +1608,22 @@ async function openNewPhaseModal(fromPhaseId = null) {
             <div class="phase-goal-row">
               <div class="phase-goal-info">
                 <span class="phase-goal-name">${sec.icon || ''} ${f.name}</span>
-                <span class="phase-goal-current">Current: ${currentTarget} ${f.config.unitLabel || ''} (${f.config.goalType || 'daily'})</span>
+                <span class="phase-goal-current">Current: ${currentTarget} ${unit} (${goalFreq})</span>
                 ${suggestionText}
               </div>
               <div class="phase-goal-input">
                 <input type="number" id="newPhaseGoal_${goalKey}" value="${suggestion}" min="0" step="1">
-                <span class="phase-goal-unit">${f.config.unitLabel || ''}</span>
+                <span class="phase-goal-unit">${unit}</span>
               </div>
             </div>
           `;
-        } else if (f.type === 'toggle') {
-          const stat = stats[goalKey];
-          const pct = stat?.pct || 0;
+        } else {
+          // Boolean-style goals: toggle, text, time, checkbox, log
           customGoalsHtml += `
             <div class="phase-goal-row">
               <div class="phase-goal-info">
                 <span class="phase-goal-name">${sec.icon || ''} ${f.name}</span>
-                <span class="phase-goal-current">Daily toggle${pct > 0 ? ` (${pct}% last phase)` : ''}</span>
+                <span class="phase-goal-current">${goalFreq === 'weekly' ? 'Weekly' : 'Daily'}${pct > 0 ? ` (${pct}% last phase)` : ''}</span>
               </div>
               <div class="phase-goal-input">
                 <input type="checkbox" id="newPhaseGoal_${goalKey}" checked>
@@ -1701,39 +1706,38 @@ async function saveNewPhase(phaseId, startDate, length) {
     }
   });
 
-  // Collect custom section goals from modal inputs
+  // Collect custom section goals from modal inputs — all goalEnabled fields
   if (typeof appSettings !== 'undefined' && appSettings.sections) {
     const customSections = appSettings.sections.filter(s => s.custom && s.fields);
     customSections.forEach(sec => {
       sec.fields.forEach(f => {
         const goalKey = `custom_${sec.id}_${f.id}`;
         if (newGoals[goalKey]) return; // Already handled from existing phase goals
+        if (!f.config?.goalEnabled) return;
         const input = document.getElementById(`newPhaseGoal_${goalKey}`);
         if (!input) return;
 
-        if (f.type === 'counter') {
-          const target = parseFloat(input.value) || f.config?.goalNumber || 0;
+        const c = f.config;
+        const needsTarget = ['counter', 'number', 'rating'].includes(f.type);
+        const goalFreq = c.goalFreq || c.goalType || 'daily';
+        const unit = c.goalUnit || c.unitLabel || '';
+
+        if (needsTarget) {
+          const target = parseFloat(input.value) || c.goalTarget || c.goalNumber || 1;
           if (target > 0) {
             newGoals[goalKey] = {
-              target,
-              unit: f.config?.unitLabel || '',
-              type: f.config?.goalType || 'daily',
+              target, unit, type: goalFreq,
               description: `${sec.icon || ''} ${f.name}`,
-              customField: true,
-              sectionId: sec.id,
-              fieldId: f.id
+              customField: true, sectionId: sec.id, fieldId: f.id
             };
           }
-        } else if (f.type === 'toggle') {
+        } else {
+          // Boolean-style: toggle, text, time, checkbox, log
           if (input.checked) {
             newGoals[goalKey] = {
-              target: true,
-              unit: 'bool',
-              type: 'daily',
+              target: true, unit: 'bool', type: goalFreq,
               description: `${sec.icon || ''} ${f.name}`,
-              customField: true,
-              sectionId: sec.id,
-              fieldId: f.id
+              customField: true, sectionId: sec.id, fieldId: f.id
             };
           }
         }
@@ -2155,64 +2159,40 @@ function calculateGoalStats(data, range, phaseId = null) {
   stats.stories = { pct: elapsedDays > 0 ? Math.round((storiesDays / elapsedDays) * 100) : 0, detail: `${storiesDays}/${elapsedDays} days` };
   stats.carly = { pct: elapsedDays > 0 ? Math.round((carlyDays / elapsedDays) * 100) : 0, detail: `${carlyDays}/${elapsedDays} days` };
 
-  // Custom section goals
-  // Evaluate fields that have goal configs (counter with goalNumber, toggle, checkbox)
+  // Custom section goals — evaluate any field with goalEnabled or phase goal
   if (typeof appSettings !== 'undefined' && appSettings.sections) {
     const customSections = appSettings.sections.filter(s => s.custom && s.fields);
     customSections.forEach(sec => {
       sec.fields.forEach(f => {
         const goalKey = `custom_${sec.id}_${f.id}`;
         const phaseGoal = phase?.goals?.[goalKey];
+        const c = f.config || {};
 
-        // Determine goal target: phase goal first, then field config
-        let goalTarget = null;
-        let goalType = 'daily'; // daily or weekly
-        let unit = '';
+        // Determine if this field has a goal: phase goal OR goalEnabled in config
+        const hasGoal = phaseGoal || c.goalEnabled;
+        if (!hasGoal) return;
 
-        if (phaseGoal) {
-          goalTarget = phaseGoal.target;
-          goalType = phaseGoal.type || 'daily';
-          unit = phaseGoal.unit || '';
-        } else if (f.type === 'counter' && f.config?.goalNumber) {
-          goalTarget = f.config.goalNumber;
-          goalType = f.config.goalType || 'daily';
-          unit = f.config.unitLabel || '';
-        } else if (f.type === 'toggle') {
-          goalTarget = true;
-          goalType = 'daily';
-          unit = 'bool';
-        }
+        // Resolve goal parameters: phase goal overrides field config
+        let goalTarget = phaseGoal?.target ?? c.goalTarget ?? c.goalNumber ?? null;
+        let goalType = phaseGoal?.type ?? c.goalFreq ?? c.goalType ?? 'daily';
+        let unit = phaseGoal?.unit ?? c.goalUnit ?? c.unitLabel ?? '';
 
-        // Skip fields without goals
-        if (goalTarget === null) return;
+        // For types without numeric targets, default to "completed" semantics
+        const isBooleanGoal = ['toggle', 'text', 'time', 'log'].includes(f.type) ||
+          (f.type === 'checkbox' && !goalTarget);
+        if (isBooleanGoal && goalTarget === null) goalTarget = true;
 
+        const makeStatObj = (pct, daysMet, detail, extra = {}) => ({
+          pct, daysMet, totalDays: elapsedDays, detail,
+          target: goalTarget, customField: true,
+          sectionName: sec.name, fieldName: f.name, icon: sec.icon,
+          ...extra
+        });
+
+        // Evaluate based on field type
         if (f.type === 'counter' || f.type === 'number') {
-          if (goalType === 'daily') {
-            let daysMet = 0;
-            let total = 0;
-            let count = 0;
-            data.forEach(d => {
-              const val = parseFloat(d.customSections?.[sec.id]?.[f.id]?.value);
-              if (!isNaN(val)) {
-                total += val;
-                count++;
-                if (val >= goalTarget) daysMet++;
-              }
-            });
-            const avg = count > 0 ? (total / count).toFixed(1) : 0;
-            stats[goalKey] = {
-              pct: elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-              daysMet,
-              totalDays: elapsedDays,
-              avg,
-              detail: `${daysMet}/${elapsedDays} days at ${goalTarget}+ ${unit}`,
-              target: goalTarget,
-              customField: true,
-              sectionName: sec.name,
-              fieldName: f.name,
-              icon: sec.icon
-            };
-          } else if (goalType === 'weekly') {
+          if (goalTarget === null || goalTarget === true) goalTarget = c.goalNumber || 1;
+          if (goalType === 'weekly') {
             const weeklyTotals = {};
             data.forEach(d => {
               const date = parseDataDate(d.date);
@@ -2220,22 +2200,27 @@ function calculateGoalStats(data, range, phaseId = null) {
               weekStart.setDate(date.getDate() - date.getDay());
               const weekKey = `${weekStart.getMonth()+1}/${weekStart.getDate()}/${weekStart.getFullYear()}`;
               const val = parseFloat(d.customSections?.[sec.id]?.[f.id]?.value);
-              if (!isNaN(val)) {
-                weeklyTotals[weekKey] = (weeklyTotals[weekKey] || 0) + val;
-              }
+              if (!isNaN(val)) weeklyTotals[weekKey] = (weeklyTotals[weekKey] || 0) + val;
             });
             const weeksMet = Object.values(weeklyTotals).filter(v => v >= goalTarget).length;
             stats[goalKey] = {
               pct: elapsedWeeks > 0 ? Math.round((weeksMet / elapsedWeeks) * 100) : 0,
-              weeksMet,
-              totalWeeks: elapsedWeeks,
+              weeksMet, totalWeeks: elapsedWeeks,
               detail: `${weeksMet}/${elapsedWeeks} weeks at ${goalTarget}+ ${unit}`,
-              target: goalTarget,
-              customField: true,
-              sectionName: sec.name,
-              fieldName: f.name,
-              icon: sec.icon
+              target: goalTarget, customField: true,
+              sectionName: sec.name, fieldName: f.name, icon: sec.icon
             };
+          } else {
+            let daysMet = 0, total = 0, count = 0;
+            data.forEach(d => {
+              const val = parseFloat(d.customSections?.[sec.id]?.[f.id]?.value);
+              if (!isNaN(val)) { total += val; count++; if (val >= goalTarget) daysMet++; }
+            });
+            const avg = count > 0 ? (total / count).toFixed(1) : 0;
+            stats[goalKey] = makeStatObj(
+              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet, `${daysMet}/${elapsedDays} days at ${goalTarget}+ ${unit}`, { avg }
+            );
           }
         } else if (f.type === 'toggle') {
           let daysMet = 0;
@@ -2243,38 +2228,69 @@ function calculateGoalStats(data, range, phaseId = null) {
             const val = d.customSections?.[sec.id]?.[f.id]?.value;
             if (val === true || val === "true") daysMet++;
           });
-          stats[goalKey] = {
-            pct: elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-            daysMet,
-            totalDays: elapsedDays,
-            detail: `${daysMet}/${elapsedDays} days`,
-            target: true,
-            customField: true,
-            sectionName: sec.name,
-            fieldName: f.name,
-            icon: sec.icon
-          };
+          stats[goalKey] = makeStatObj(
+            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+            daysMet, `${daysMet}/${elapsedDays} days`
+          );
         } else if (f.type === 'checkbox') {
-          // Goal: all checkboxes checked each day
-          const totalCbs = f.config?.checkboxes?.length || 0;
+          const totalCbs = c.checkboxes?.length || 0;
           if (totalCbs > 0) {
             let daysMet = 0;
             data.forEach(d => {
               const cbs = d.customSections?.[sec.id]?.[f.id]?.checkboxes;
               if (Array.isArray(cbs) && cbs.filter(Boolean).length === totalCbs) daysMet++;
             });
-            stats[goalKey] = {
-              pct: elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
-              daysMet,
-              totalDays: elapsedDays,
-              detail: `${daysMet}/${elapsedDays} days all checked`,
-              target: totalCbs,
-              customField: true,
-              sectionName: sec.name,
-              fieldName: f.name,
-              icon: sec.icon
-            };
+            stats[goalKey] = makeStatObj(
+              elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+              daysMet, `${daysMet}/${elapsedDays} days all checked`
+            );
           }
+        } else if (f.type === 'text') {
+          // Goal met when field is non-empty
+          let daysMet = 0;
+          data.forEach(d => {
+            const val = d.customSections?.[sec.id]?.[f.id]?.value;
+            if (val && String(val).trim() !== '') daysMet++;
+          });
+          stats[goalKey] = makeStatObj(
+            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+            daysMet, `${daysMet}/${elapsedDays} days completed`
+          );
+        } else if (f.type === 'time') {
+          // Goal met when time is filled in
+          let daysMet = 0;
+          data.forEach(d => {
+            const val = d.customSections?.[sec.id]?.[f.id]?.value;
+            if (val && val !== '') daysMet++;
+          });
+          stats[goalKey] = makeStatObj(
+            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+            daysMet, `${daysMet}/${elapsedDays} days logged`
+          );
+        } else if (f.type === 'rating') {
+          // Goal met when rating >= target (default 1 = any rating)
+          if (goalTarget === true) goalTarget = 1;
+          let daysMet = 0, total = 0, count = 0;
+          data.forEach(d => {
+            const val = parseInt(d.customSections?.[sec.id]?.[f.id]?.value);
+            if (!isNaN(val) && val > 0) { total += val; count++; if (val >= goalTarget) daysMet++; }
+          });
+          const avg = count > 0 ? (total / count).toFixed(1) : 0;
+          stats[goalKey] = makeStatObj(
+            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+            daysMet, `${daysMet}/${elapsedDays} days at ${goalTarget}+ stars`, { avg }
+          );
+        } else if (f.type === 'log') {
+          // Goal met when log has entries for the day
+          let daysMet = 0;
+          data.forEach(d => {
+            const entries = d.customSections?.[sec.id]?.[f.id]?.entries;
+            if (Array.isArray(entries) && entries.length > 0) daysMet++;
+          });
+          stats[goalKey] = makeStatObj(
+            elapsedDays > 0 ? Math.round((daysMet / elapsedDays) * 100) : 0,
+            daysMet, `${daysMet}/${elapsedDays} days with entries`
+          );
         }
       });
     });
