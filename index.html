@@ -3934,7 +3934,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v2.0</div>
+      <div class="tagline">v2.1</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3996,7 +3996,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v2.0</div>
+          <div class="tagline">v2.1</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4680,6 +4680,14 @@
         </div>
       </div>
       <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-orange);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Custom Section Goals</span></div></div>
+        <div class="sec-content">
+          <div id="goalsList" style="min-height:32px">
+            <p style="font-size:13px;color:var(--text-muted)">No custom goals tracked yet. Create a custom section with "Track as Goal" enabled.</p>
+          </div>
+        </div>
+      </div>
+      <div class="section">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-purple);--icon-glow:var(--glow-teal)">ℹ️</div><span class="sec-name">About Goals</span></div></div>
         <div class="sec-content">
           <p style="color:var(--text-muted);font-size:13px;margin:0;line-height:1.5">These are your default goals. When you create a new Phase, these values are used as starting points. Each Phase can have its own targets that you set during the Phase planning process.<br><br><strong>Supplements</strong> (all 4 daily) is tracked separately as a fixed goal.</p>
@@ -4709,6 +4717,25 @@
           <div id="logOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Fields per Entry</label><div id="logFieldsList"><div class="log-field-row" style="display:flex;gap:8px;margin-bottom:8px"><input type="text" class="input" placeholder="Field name" style="flex:2"><select class="input" style="flex:1"><option value="text">Text</option><option value="number">Number</option><option value="select">Dropdown</option></select><button type="button" class="btn btn-danger" onclick="this.parentElement.remove()" style="padding:8px">×</button></div></div><button type="button" class="btn btn-secondary" id="addLogFieldBtn" style="width:100%;margin-top:4px">+ Add Field</button></div></div>
           <div id="numberOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Unit (optional)</label><input type="text" class="input" id="numberUnit" placeholder="lbs, mins, etc."></div><div class="field"><label class="field-label">Placeholder</label><input type="text" class="input" id="numberPlaceholder" placeholder="0"></div></div>
           <div id="ratingOptions" class="type-options" style="display:none"><div class="field"><label class="field-label">Rating Label</label><input type="text" class="input" id="ratingLabel" placeholder="How was your day?"></div></div>
+          <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
+            <div class="field">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <label class="field-label" style="margin-bottom:0">Track as Goal</label>
+                <label style="position:relative;width:44px;height:24px;display:inline-block">
+                  <input type="checkbox" id="newSectionTrackGoal" style="opacity:0;width:0;height:0">
+                  <span style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:24px;transition:.3s"></span>
+                  <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s" id="goalToggleKnob"></span>
+                </label>
+              </div>
+            </div>
+            <div id="goalOptions" style="display:none">
+              <div class="field"><label class="field-label">Goal Description</label><input type="text" class="input" id="newSectionGoalDesc" placeholder="e.g., Meditate 5 times this week"></div>
+              <div class="field"><label class="field-label">Timeframe</label><select class="input" id="newSectionGoalFreq"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="phase">Per Phase (21 days)</option></select></div>
+              <div class="field"><label class="field-label">Evaluation Mode</label><select class="input" id="newSectionGoalMode"><option value="days_met">Days Met (checkbox checked / toggle yes)</option><option value="cumulative_sum">Cumulative Sum (number / counter total)</option><option value="average">Average (number avg over period)</option><option value="count_entries">Count Entries (log entry count)</option></select></div>
+              <div class="field" id="goalThresholdField"><label class="field-label">Target</label><input type="number" class="input" id="newSectionGoalThreshold" placeholder="e.g., 5" min="1" max="9999" step="any"><span style="font-size:11px;color:var(--text-muted)" id="goalThresholdHint">Number of days the checkbox must be checked</span></div>
+              <div class="field"><label class="field-label">Comparator</label><select class="input" id="newSectionGoalComparator"><option value="gte">At least (&ge;)</option><option value="lte">At most (&le;)</option><option value="eq">Exactly (=)</option></select></div>
+            </div>
+          </div>
           <button type="button" class="btn btn-primary" id="addSectionBtn" style="width:100%;margin-top:12px">Add Section</button>
         </div>
       </div>
@@ -7042,6 +7069,7 @@
       const sub = document.getElementById('settingsSub_' + pageName);
       if (sub) sub.classList.add('active');
       if (pageName === 'sections') renderSectionList();
+      if (pageName === 'goals') renderGoalsList();
       if (pageName === 'notes') loadHabitNotes();
       window.scrollTo(0, 0);
     }
@@ -7284,7 +7312,53 @@
         document.getElementById('ratingOptions').style.display = 'block';
       }
     });
-    
+
+    // Goal tracking toggle
+    const goalToggle = document.getElementById('newSectionTrackGoal');
+    const goalKnob = document.getElementById('goalToggleKnob');
+    const goalOptionsDiv = document.getElementById('goalOptions');
+
+    function updateGoalFormForType() {
+      const type = document.getElementById('newSectionType')?.value;
+      const modeSelect = document.getElementById('newSectionGoalMode');
+      const hintEl = document.getElementById('goalThresholdHint');
+      if (!modeSelect) return;
+      if (type === 'checkbox' || type === 'toggle') {
+        modeSelect.value = 'days_met';
+        if (hintEl) hintEl.textContent = 'Number of days the checkbox must be checked';
+      } else if (type === 'number' || type === 'counter') {
+        modeSelect.value = 'cumulative_sum';
+        if (hintEl) hintEl.textContent = 'Target total for the timeframe';
+      } else if (type === 'log') {
+        modeSelect.value = 'count_entries';
+        if (hintEl) hintEl.textContent = 'Minimum number of log entries';
+      } else if (type === 'rating') {
+        modeSelect.value = 'average';
+        if (hintEl) hintEl.textContent = 'Target average rating';
+      }
+    }
+
+    if (goalToggle) {
+      goalToggle.addEventListener('change', () => {
+        goalOptionsDiv.style.display = goalToggle.checked ? 'block' : 'none';
+        if (goalKnob) {
+          goalKnob.style.transform = goalToggle.checked ? 'translateX(20px)' : 'translateX(0)';
+          goalKnob.parentElement.previousElementSibling.style.background = goalToggle.checked ? 'var(--accent-teal)' : 'var(--border)';
+        }
+        if (goalToggle.checked) updateGoalFormForType();
+      });
+    }
+    document.getElementById('newSectionType')?.addEventListener('change', () => {
+      if (goalToggle?.checked) updateGoalFormForType();
+    });
+    document.getElementById('newSectionGoalMode')?.addEventListener('change', () => {
+      const mode = document.getElementById('newSectionGoalMode').value;
+      const hintEl = document.getElementById('goalThresholdHint');
+      if (!hintEl) return;
+      const hints = { days_met: 'Number of days the condition must be met', cumulative_sum: 'Target total for the timeframe', average: 'Target average value', count_entries: 'Minimum number of log entries' };
+      hintEl.textContent = hints[mode] || '';
+    });
+
     // Day-picker chip toggle (works for both the "add" form and field editor)
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('day-chip')) {
@@ -7375,8 +7449,22 @@
         config.goalFreq = 'daily';
       }
 
+      // Goal tracking config
+      const trackGoal = document.getElementById('newSectionTrackGoal')?.checked || false;
+      const sectionGoal = {};
+      if (trackGoal) {
+        sectionGoal.trackAsGoal = true;
+        sectionGoal.goalDescription = document.getElementById('newSectionGoalDesc')?.value || '';
+        sectionGoal.goal = {
+          timeframe: document.getElementById('newSectionGoalFreq')?.value || 'daily',
+          mode: document.getElementById('newSectionGoalMode')?.value || 'days_met',
+          comparator: document.getElementById('newSectionGoalComparator')?.value || 'gte',
+          threshold: parseFloat(document.getElementById('newSectionGoalThreshold')?.value) || 1
+        };
+      }
+
       const fieldId = 'f_' + Date.now();
-      appSettings.sections.push({
+      const sectionDef = {
         id,
         name,
         icon,
@@ -7384,7 +7472,13 @@
         custom: true,
         days: days.length > 0 && days.length < 7 ? days : undefined,
         fields: [{ id: fieldId, name: name, type, config }]
-      });
+      };
+      if (sectionGoal.trackAsGoal) {
+        sectionDef.trackAsGoal = true;
+        sectionDef.goalDescription = sectionGoal.goalDescription;
+        sectionDef.goal = sectionGoal.goal;
+      }
+      appSettings.sections.push(sectionDef);
 
       saveSettings(appSettings);
 
@@ -7412,8 +7506,17 @@
       document.getElementById('newSectionType').value = 'text';
       // Reset day chips to all selected
       document.querySelectorAll('#newSectionDays .day-chip').forEach(c => c.classList.add('selected'));
+      // Reset goal tracking fields
+      const goalCb = document.getElementById('newSectionTrackGoal');
+      if (goalCb) { goalCb.checked = false; goalCb.dispatchEvent(new Event('change')); }
+      document.getElementById('newSectionGoalDesc').value = '';
+      document.getElementById('newSectionGoalFreq').value = 'daily';
+      document.getElementById('newSectionGoalMode').value = 'days_met';
+      document.getElementById('newSectionGoalThreshold').value = '';
+      document.getElementById('newSectionGoalComparator').value = 'gte';
 
       renderSectionList();
+      renderGoalsList();
       applySectionSettings();
 
       // Trigger a save so the new section's data frame gets persisted to KV
@@ -7515,6 +7618,255 @@
     }
 
     // Arrange fields into rows: pair compact fields side-by-side, give others a full row
+    // =============================================
+    // GOAL EVALUATION ENGINE
+    // =============================================
+    function resolveWindow(timeframe) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (timeframe === 'daily') {
+        return { startDate: new Date(today), endDate: new Date(today) };
+      } else if (timeframe === 'weekly') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - today.getDay());
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return { startDate: start, endDate: end };
+      } else if (timeframe === 'phase') {
+        const phaseStart = new Date('2026-01-19T00:00:00');
+        const daysSince = Math.floor((today - phaseStart) / 86400000);
+        const dayInPhase = ((daysSince % 21) + 21) % 21;
+        const start = new Date(today);
+        start.setDate(today.getDate() - dayInPhase);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 20);
+        return { startDate: start, endDate: end };
+      }
+      return { startDate: new Date(today), endDate: new Date(today) };
+    }
+
+    function goalDateStr(d) {
+      return typeof formatDateForAPI === 'function'
+        ? formatDateForAPI(d)
+        : `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+    }
+
+    async function loadDayData(dateStr) {
+      try {
+        if (typeof cacheGet === 'function') {
+          const cached = cacheGet(dateStr);
+          if (cached) return cached;
+        }
+        if (typeof apiGet === 'function') {
+          return await apiGet('load', { date: dateStr });
+        }
+      } catch (e) { /* skip */ }
+      return null;
+    }
+
+    function extractDayValue(sectionId, fields, dayData) {
+      const sd = dayData?.customSections?.[sectionId];
+      if (!sd) return null;
+      // Use first field for goal evaluation
+      const f = fields[0];
+      if (!f) return null;
+      const t = f.type;
+      const c = f.config || {};
+      // Data may be in new format (sd[fieldId]) or legacy format (sd.value/sd.checkboxes)
+      const fd = sd[f.id] || sd;
+      if (t === 'checkbox') {
+        const cbs = fd.checkboxes;
+        if (cbs) {
+          const allChecked = cbs.every(v => v === true);
+          return { met: allChecked, allChecked };
+        }
+        return null;
+      } else if (t === 'toggle') {
+        return { met: fd.value === true, value: fd.value };
+      } else if (t === 'number' || t === 'counter' || t === 'time') {
+        const v = t === 'counter' ? (fd.value ?? null) : (fd.value !== '' && fd.value !== undefined ? parseFloat(fd.value) : null);
+        return v !== null && !isNaN(v) ? { value: v } : null;
+      } else if (t === 'rating') {
+        const v = fd.value ? parseInt(fd.value) : null;
+        return v ? { value: v } : null;
+      } else if (t === 'log') {
+        const entries = fd.entries || [];
+        return { count: entries.length, entries };
+      }
+      return null;
+    }
+
+    async function evaluateGoal(sectionId, fields, goal) {
+      if (!goal) return { status: 'INSUFFICIENT_DATA', progress: 0, current: 0, threshold: 0 };
+      const { startDate, endDate } = resolveWindow(goal.timeframe);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const checkEnd = endDate > today ? today : endDate;
+      const msPerDay = 86400000;
+      const daysToCheck = Math.floor((checkEnd - startDate) / msPerDay) + 1;
+      const totalDaysInWindow = Math.floor((endDate - startDate) / msPerDay) + 1;
+
+      let daysMet = 0, sum = 0, valuesCount = 0, entryCount = 0;
+
+      for (let i = 0; i < daysToCheck; i++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+        const dateStr = goalDateStr(d);
+        const dayData = await loadDayData(dateStr);
+        const extracted = extractDayValue(sectionId, fields, dayData);
+        if (!extracted) continue;
+
+        const t = fields[0]?.type;
+        if (t === 'checkbox' || t === 'toggle') {
+          if (extracted.met) daysMet++;
+        } else if (t === 'number' || t === 'counter' || t === 'time' || t === 'rating') {
+          if (extracted.value !== undefined && extracted.value !== null) {
+            sum += extracted.value; valuesCount++; daysMet++;
+          }
+        } else if (t === 'log') {
+          entryCount += extracted.count;
+          if (extracted.count > 0) { daysMet++; }
+        }
+      }
+
+      const mode = goal.mode;
+      const threshold = goal.threshold || 1;
+      const comparator = goal.comparator || 'gte';
+      let current = 0;
+      if (mode === 'days_met') current = daysMet;
+      else if (mode === 'cumulative_sum') current = sum;
+      else if (mode === 'average') current = valuesCount > 0 ? sum / valuesCount : 0;
+      else if (mode === 'count_entries') current = entryCount;
+
+      const compare = (a, op, b) => {
+        if (op === 'gte') return a >= b;
+        if (op === 'lte') return a <= b;
+        if (op === 'eq') return a === b;
+        return a >= b;
+      };
+      const met = compare(current, comparator, threshold);
+      const progress = threshold > 0 ? Math.min(1, current / threshold) : (met ? 1 : 0);
+      return {
+        status: met ? 'SUCCESS' : 'FAIL',
+        progress,
+        current: Math.round(current * 100) / 100,
+        threshold, comparator, daysMet,
+        daysInWindow: totalDaysInWindow,
+        daysChecked: daysToCheck, mode
+      };
+    }
+
+    async function updateGoalProgress(sectionId, fields, goal) {
+      const progressEl = document.getElementById(`${sectionId}_goalProgress`);
+      if (!progressEl) return;
+      const result = await evaluateGoal(sectionId, fields, goal);
+      const comparatorSymbol = { gte: '\u2265', lte: '\u2264', eq: '=' }[goal.comparator] || '\u2265';
+      let label = '';
+      if (goal.mode === 'days_met') {
+        const timeLabel = goal.timeframe === 'weekly' ? 'this week' : goal.timeframe === 'phase' ? 'this phase' : 'today';
+        label = `${result.current} of ${result.threshold} days ${timeLabel}`;
+      } else if (goal.mode === 'cumulative_sum') {
+        label = `${result.current} / ${result.threshold} total`;
+      } else if (goal.mode === 'average') {
+        label = `avg ${result.current} (goal ${comparatorSymbol} ${result.threshold})`;
+      } else if (goal.mode === 'count_entries') {
+        label = `${result.current} / ${result.threshold} entries`;
+      }
+      const statusColor = result.status === 'SUCCESS' ? 'var(--accent-teal)' : 'var(--text-muted)';
+      const statusIcon = result.status === 'SUCCESS' ? '\u2713 ' : '';
+      progressEl.innerHTML = `<span style="color:${statusColor};font-weight:600">${statusIcon}${label}</span>`;
+      const barFill = document.getElementById(`${sectionId}_goalBarFill`);
+      if (barFill) {
+        barFill.style.width = Math.round(result.progress * 100) + '%';
+        barFill.style.background = result.status === 'SUCCESS' ? 'var(--accent-teal)' : 'var(--accent-purple)';
+      }
+    }
+
+    function triggerGoalUpdate(sectionId) {
+      const sec = appSettings.sections.find(s => s.id === sectionId);
+      if (sec?.trackAsGoal && sec?.goal && sec?.fields) {
+        setTimeout(() => updateGoalProgress(sectionId, sec.fields, sec.goal), 1500);
+      }
+    }
+
+    function renderGoalsList() {
+      const list = document.getElementById('goalsList');
+      if (!list) return;
+      const goals = appSettings.sections.filter(s => s.trackAsGoal && s.goal);
+      if (goals.length === 0) {
+        list.innerHTML = '<p style="font-size:13px;color:var(--text-muted)">No custom goals tracked yet. Create a custom section with "Track as Goal" enabled.</p>';
+        return;
+      }
+      list.innerHTML = goals.map(g => {
+        const goal = g.goal || {};
+        const tf = goal.timeframe || 'daily';
+        const mode = goal.mode || 'days_met';
+        const comp = goal.comparator || 'gte';
+        const threshold = goal.threshold || 1;
+        const desc = g.goalDescription || '';
+        const freqColor = tf === 'daily' ? 'var(--accent-teal)' : 'var(--accent-purple)';
+        const sectionIdx = appSettings.sections.indexOf(g);
+        return `
+          <div style="padding:12px 0;border-bottom:1px solid var(--border)" data-goal-section-idx="${sectionIdx}">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <span style="font-size:20px">${g.icon}</span>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:14px">${g.name}</div>
+                ${desc ? `<div style="font-size:12px;color:var(--text-muted)">${desc}</div>` : ''}
+              </div>
+              <span style="font-size:10px;background:${freqColor};color:#fff;padding:2px 8px;border-radius:8px;font-weight:600">${tf}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+              <div>
+                <label style="color:var(--text-muted);font-size:10px;display:block;margin-bottom:2px">Timeframe</label>
+                <select class="input goal-edit-tf" data-idx="${sectionIdx}" style="font-size:12px;padding:4px 6px">
+                  <option value="daily" ${tf==='daily'?'selected':''}>Daily</option>
+                  <option value="weekly" ${tf==='weekly'?'selected':''}>Weekly</option>
+                  <option value="phase" ${tf==='phase'?'selected':''}>Per Phase</option>
+                </select>
+              </div>
+              <div>
+                <label style="color:var(--text-muted);font-size:10px;display:block;margin-bottom:2px">Mode</label>
+                <select class="input goal-edit-mode" data-idx="${sectionIdx}" style="font-size:12px;padding:4px 6px">
+                  <option value="days_met" ${mode==='days_met'?'selected':''}>Days Met</option>
+                  <option value="cumulative_sum" ${mode==='cumulative_sum'?'selected':''}>Cumulative Sum</option>
+                  <option value="average" ${mode==='average'?'selected':''}>Average</option>
+                  <option value="count_entries" ${mode==='count_entries'?'selected':''}>Count Entries</option>
+                </select>
+              </div>
+              <div>
+                <label style="color:var(--text-muted);font-size:10px;display:block;margin-bottom:2px">Comparator</label>
+                <select class="input goal-edit-comp" data-idx="${sectionIdx}" style="font-size:12px;padding:4px 6px">
+                  <option value="gte" ${comp==='gte'?'selected':''}>At least (\u2265)</option>
+                  <option value="lte" ${comp==='lte'?'selected':''}>At most (\u2264)</option>
+                  <option value="eq" ${comp==='eq'?'selected':''}>Exactly (=)</option>
+                </select>
+              </div>
+              <div>
+                <label style="color:var(--text-muted);font-size:10px;display:block;margin-bottom:2px">Target</label>
+                <input type="number" class="input goal-edit-threshold" data-idx="${sectionIdx}" value="${threshold}" min="0" step="any" style="font-size:12px;padding:4px 6px">
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      // Wire up goal edit handlers
+      list.querySelectorAll('.goal-edit-tf, .goal-edit-mode, .goal-edit-comp, .goal-edit-threshold').forEach(el => {
+        el.addEventListener('change', () => {
+          const idx = parseInt(el.dataset.idx);
+          const sec = appSettings.sections[idx];
+          if (!sec) return;
+          if (!sec.goal) sec.goal = {};
+          const row = el.closest('[data-goal-section-idx]');
+          sec.goal.timeframe = row.querySelector('.goal-edit-tf').value;
+          sec.goal.mode = row.querySelector('.goal-edit-mode').value;
+          sec.goal.comparator = row.querySelector('.goal-edit-comp').value;
+          sec.goal.threshold = parseFloat(row.querySelector('.goal-edit-threshold').value) || 1;
+          saveSettings(appSettings);
+        });
+      });
+    }
+
     function layoutFields(id, fields) {
       if (fields.length <= 1) {
         // Single field: no grid, just render directly
@@ -7594,17 +7946,43 @@
       section.style.setProperty('--icon-end', 'var(--accent-pink)');
 
       // Build content with smart layout
-      const contentParts = layoutFields(id, fields);
+      let contentParts = layoutFields(id, fields);
+
+      // Look up goal config from settings
+      const secDef = appSettings.sections.find(s => s.id === id);
+      const isGoalTracked = secDef?.trackAsGoal && secDef?.goal;
+      const goalObj = secDef?.goal || {};
+
+      // Goal progress bar for tracked goals
+      if (isGoalTracked) {
+        contentParts += `
+          <div style="margin-top:10px">
+            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+              <div id="${id}_goalBarFill" style="height:100%;width:0%;border-radius:2px;transition:width .5s,background .3s;background:var(--accent-purple)"></div>
+            </div>
+            <div class="card-avg" style="margin-top:4px" id="${id}_goalProgress">--</div>
+          </div>
+        `;
+      }
+
+      // Goal badge
+      const tf = goalObj.timeframe || 'daily';
+      const goalBadge = isGoalTracked
+        ? `<span style="font-size:10px;background:var(--accent-teal);color:#fff;padding:2px 6px;border-radius:8px;margin-left:8px;font-weight:600">${tf}</span>`
+        : '';
+      const goalDesc = isGoalTracked && secDef.goalDescription
+        ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 12px 0;font-style:italic">Goal: ${secDef.goalDescription}</div>`
+        : '';
 
       section.innerHTML = `
         <div class="sec-head collapsed">
           <div class="sec-title">
             <div class="sec-icon">${icon}</div>
-            <span class="sec-name">${name}</span>
+            <span class="sec-name">${name}${goalBadge}</span>
           </div>
           <span class="sec-toggle">▼</span>
         </div>
-        <div class="sec-content collapsed">${contentParts}</div>
+        <div class="sec-content collapsed">${goalDesc}${contentParts}</div>
       `;
 
       form.appendChild(section);
@@ -7621,6 +7999,11 @@
         const fieldId = `${id}__${f.id}`;
         wireUpField(section, id, fieldId, f);
       });
+
+      // Trigger goal progress update
+      if (isGoalTracked) {
+        setTimeout(() => updateGoalProgress(id, fields, goalObj), 2000);
+      }
     }
     
     function wireUpField(section, sectionId, fieldId, field) {
@@ -7637,7 +8020,7 @@
             if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
           });
           const cb = supp.querySelector('input[type="checkbox"]');
-          cb?.addEventListener('change', () => { updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+          cb?.addEventListener('change', () => { updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); triggerGoalUpdate(sectionId); });
         });
 
       } else if (t === 'counter') {
@@ -7677,6 +8060,7 @@
             if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
             else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+            triggerGoalUpdate(sectionId);
           }
         });
         minus?.addEventListener('click', () => {
@@ -7692,6 +8076,7 @@
             if (isWeekly) { section.querySelectorAll(`#${CSS.escape(fieldId)}_dots .counter-dot`).forEach((d,i) => d.classList.toggle('on', i < val)); }
             else { const fill = document.getElementById(`${fieldId}_fill`); if (fill) fill.style.height = Math.min(100, (val/goalNum)*100)+'%'; }
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+            triggerGoalUpdate(sectionId);
           }
         });
 
@@ -7707,6 +8092,7 @@
             const val = parseInt(star.dataset.val); input.value = val; sd()[fid] = { value: val };
             stars.forEach((s,i) => { s.textContent = i < val ? '★' : '☆'; s.classList.toggle('filled', i < val); });
             if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+            triggerGoalUpdate(sectionId);
           });
         });
 
@@ -7714,8 +8100,8 @@
         const chip = document.getElementById(`${fieldId}_toggle`);
         if (!chip) return;
         const cb = chip.querySelector('input');
-        chip.addEventListener('click', (e) => { if (e.target.type !== 'checkbox') { cb.checked = !cb.checked; chip.classList.toggle('on', cb.checked); chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No'; updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); }});
-        cb.addEventListener('change', () => { chip.classList.toggle('on', cb.checked); chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No'; updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        chip.addEventListener('click', (e) => { if (e.target.type !== 'checkbox') { cb.checked = !cb.checked; chip.classList.toggle('on', cb.checked); chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No'; updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); triggerGoalUpdate(sectionId); }});
+        cb.addEventListener('change', () => { chip.classList.toggle('on', cb.checked); chip.querySelector('.chip-text').textContent = cb.checked ? 'Yes' : 'No'; updateCompletionRingAurora(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); triggerGoalUpdate(sectionId); });
 
       } else if (t === 'text') {
         const input = document.getElementById(`${fieldId}_input`);
@@ -7723,11 +8109,11 @@
 
       } else if (t === 'number') {
         const input = document.getElementById(`${fieldId}_input`);
-        if (input) input.addEventListener('change', () => { sd()[fid] = { value: input.value }; if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        if (input) input.addEventListener('change', () => { sd()[fid] = { value: input.value }; if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); triggerGoalUpdate(sectionId); });
 
       } else if (t === 'time') {
         const input = document.getElementById(`${fieldId}_input`);
-        if (input) input.addEventListener('change', () => { sd()[fid] = { value: input.value }; if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        if (input) input.addEventListener('change', () => { sd()[fid] = { value: input.value }; if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); triggerGoalUpdate(sectionId); });
       }
     }
     
@@ -7885,8 +8271,13 @@
       });
 
       if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+
+      // Update goal progress for all goal-tracked sections
+      appSettings.sections.filter(s => s.trackAsGoal && s.goal && s.fields).forEach(sec => {
+        setTimeout(() => updateGoalProgress(sec.id, sec.fields, sec.goal), 500);
+      });
     };
-    
+
     // Collect custom sections data from UI for saving
     window.collectCustomSectionsData = function() {
       appSettings.sections.filter(s => s.custom || (s.fields && s.fields.length > 0)).forEach(sec => {
