@@ -700,7 +700,7 @@ async function getRehitWeekCount(dateStr, env, corsHeaders) {
 
   dailyData.forEach((data, i) => {
     const dateKey = dates[i];
-    const rehitVal = data?.["REHIT 2x10"];
+    const rehitVal = data?.["REHIT 2x10"] ?? data?.["REHIT"];
     const is2x10 = rehitVal === "2x10" || rehitVal === true || rehitVal === "TRUE";
     const is3x10 = rehitVal === "3x10";
     const hasRehit = is2x10 || is3x10;
