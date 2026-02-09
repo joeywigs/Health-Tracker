@@ -2633,47 +2633,6 @@
       padding: 16px;
       border: 1px solid var(--border);
     }
-    .habit-grid-banner {
-      background: linear-gradient(135deg, #2a1f1a 0%, var(--bg-card) 100%);
-      border: 1px solid #4a3520;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 16px;
-      position: relative;
-      overflow: hidden;
-    }
-    .habit-grid-banner::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #ff9f1c, #e76f51);
-    }
-    .banner-header { margin-bottom: 10px; }
-    .banner-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #ff9f1c;
-    }
-    .banner-subtitle {
-      font-size: 12px;
-      color: #998877;
-      margin-top: 2px;
-    }
-    .banner-habits { display: flex; flex-direction: column; gap: 6px; }
-    .banner-habit {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      background: rgba(255,159,28,0.08);
-      border-radius: 8px;
-      border: 1px solid rgba(255,159,28,0.15);
-    }
-    .banner-habit-icon { font-size: 14px; }
-    .banner-habit-name { font-size: 12px; font-weight: 500; color: var(--text); }
-    .banner-streak-note { font-size: 10px; color: #887766; margin-left: auto; }
-
     .habit-grid-header {
       display: flex;
       justify-content: space-between;
@@ -2816,14 +2775,6 @@
     /* Day mode habit grid */
     body.day-mode .habit-grid-container {
       background: var(--bg-card);
-    }
-    body.day-mode .habit-grid-banner {
-      background: linear-gradient(135deg, #fff5eb 0%, var(--bg-card) 100%);
-      border-color: #e8d5c4;
-    }
-    body.day-mode .banner-habit {
-      background: rgba(255,159,28,0.1);
-      border-color: rgba(255,159,28,0.2);
     }
 
     .goal-stats-grid {
@@ -3916,7 +3867,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v2.8</div>
+      <div class="tagline">v2.10</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -3978,7 +3929,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v2.8</div>
+          <div class="tagline">v2.10</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>

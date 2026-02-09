@@ -462,6 +462,7 @@ async function logMovement(body, env, corsHeaders) {
   const duration = Math.round(parseFloat(body.duration) || 0);
 
   // Parse startTime - Apple Shortcuts may send various formats
+  // If no startTime provided, use current server time for dedup
   let parsedStart = null;
   if (body.startTime) {
     let d = new Date(body.startTime);
@@ -473,40 +474,46 @@ async function logMovement(body, env, corsHeaders) {
       parsedStart = d;
     }
   }
+  if (!parsedStart) {
+    parsedStart = new Date();
+  }
 
   // Determine date
   let normalizedDate;
   if (body.date) {
     normalizedDate = normalizeDate(body.date);
-  } else if (parsedStart) {
-    normalizedDate = normalizeDate(formatDateForKV(parsedStart));
   } else {
-    normalizedDate = normalizeDate(formatDateForKV(new Date()));
+    normalizedDate = normalizeDate(formatDateForKV(parsedStart));
   }
 
-  // Append to movements array for this date (deduplicate by startTime)
+  // Append to movements array for this date (deduplicate)
   let movements = await env.HABIT_DATA.get(`movements:${normalizedDate}`, "json") || [];
 
   const entry = {
     type: mappedType,
     duration: duration,
+    startTime: parsedStart.toISOString(),
   };
-  if (parsedStart) {
-    entry.startTime = parsedStart.toISOString();
 
-    // Skip if a movement with this startTime already exists
-    const alreadyExists = movements.some(m => m.startTime === entry.startTime);
-    if (alreadyExists) {
-      return jsonResponse({
-        success: true,
-        date: normalizedDate,
-        duplicate: true,
-        message: `Movement already logged for ${entry.startTime}`,
-        type: mappedType,
-        duration: duration,
-        movementCount: movements.length,
-      }, 200, corsHeaders);
+  // Dedup: exact startTime match OR same type+duration within 5-minute window
+  const alreadyExists = movements.some(m => {
+    if (m.startTime === entry.startTime) return true;
+    if (m.type === entry.type && m.duration === entry.duration && m.startTime) {
+      const timeDiff = Math.abs(new Date(m.startTime).getTime() - parsedStart.getTime());
+      if (timeDiff < 5 * 60 * 1000) return true;
     }
+    return false;
+  });
+  if (alreadyExists) {
+    return jsonResponse({
+      success: true,
+      date: normalizedDate,
+      duplicate: true,
+      message: `Duplicate movement skipped (${mappedType} ${duration}min)`,
+      type: mappedType,
+      duration: duration,
+      movementCount: movements.length,
+    }, 200, corsHeaders);
   }
 
   movements.push(entry);
