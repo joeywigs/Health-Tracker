@@ -1627,7 +1627,7 @@ function showQuickConfirmation(message) {
 // =====================================
 let lastCompletionCount = 0;
 let personalBests = {};
-let shownMilestones = {}; // Track which streak milestones have been shown this session
+// Milestone tracking moved to localStorage (keyed by title + date) so celebrations show only once per day
 
 function setupDopamineBoosts() {
   // Add confetti to all checkboxes
@@ -1721,14 +1721,11 @@ function checkForMilestones() {
   // Check streak milestones
   const streakCount = calculateCurrentStreak();
 
-  if (streakCount === 7 && !shownMilestones[7]) {
-    shownMilestones[7] = true;
+  if (streakCount === 7) {
     setTimeout(() => showMilestone('🔥', '7 Day Streak!', 'One week of consistency!'), 500);
-  } else if (streakCount === 14 && !shownMilestones[14]) {
-    shownMilestones[14] = true;
+  } else if (streakCount === 14) {
     setTimeout(() => showMilestone('🔥🔥', '14 Day Streak!', 'Two weeks strong!'), 500);
-  } else if (streakCount === 21 && !shownMilestones[21]) {
-    shownMilestones[21] = true;
+  } else if (streakCount === 21) {
     setTimeout(() => showMilestone('🏆', '21 Day Streak!', 'Habit officially formed!'), 500);
   }
 }
@@ -1789,17 +1786,23 @@ function checkPersonalBest(input) {
 }
 
 function showMilestone(emoji, title, subtitle) {
+  // Only show each milestone once per calendar day
+  const today = formatDateForAPI(new Date());
+  const milestoneKey = `milestone_shown_${title}_${today}`;
+  if (localStorage.getItem(milestoneKey)) return;
+  localStorage.setItem(milestoneKey, '1');
+
   const overlay = document.getElementById('milestoneOverlay');
   const emojiEl = document.getElementById('milestoneEmoji');
   const titleEl = document.getElementById('milestoneTitle');
   const subtitleEl = document.getElementById('milestoneSubtitle');
-  
+
   if (overlay && emojiEl && titleEl && subtitleEl) {
     emojiEl.textContent = emoji;
     titleEl.textContent = title;
     subtitleEl.textContent = subtitle;
     overlay.classList.add('show');
-    
+
     // Create celebration confetti
     createCelebrationConfetti();
   }

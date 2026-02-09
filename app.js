@@ -4960,17 +4960,23 @@ function checkPersonalBest(input) {
 }
 
 function showMilestone(emoji, title, subtitle) {
+  // Only show each milestone once per calendar day
+  const today = formatDateForAPI(new Date());
+  const milestoneKey = `milestone_shown_${title}_${today}`;
+  if (localStorage.getItem(milestoneKey)) return;
+  localStorage.setItem(milestoneKey, '1');
+
   const overlay = document.getElementById('milestoneOverlay');
   const emojiEl = document.getElementById('milestoneEmoji');
   const titleEl = document.getElementById('milestoneTitle');
   const subtitleEl = document.getElementById('milestoneSubtitle');
-  
+
   if (overlay && emojiEl && titleEl && subtitleEl) {
     emojiEl.textContent = emoji;
     titleEl.textContent = title;
     subtitleEl.textContent = subtitle;
     overlay.classList.add('show');
-    
+
     // Create celebration confetti
     createCelebrationConfetti();
   }
@@ -6177,7 +6183,15 @@ async function populateForm(data) {
   // reset state
   readings = [];
   honeyDos = [];
+  currentMovements = [];
   currentAverages = null;
+
+  // Cancel any pending autosave so stale data from the previous date
+  // can't be written to the new date during async operations below
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = null;
+  }
 
   const d = data?.daily || null;
 
