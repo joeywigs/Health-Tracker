@@ -484,7 +484,7 @@ async function logMovement(body, env, corsHeaders) {
     normalizedDate = normalizeDate(formatDateForKV(new Date()));
   }
 
-  // Append to movements array for this date
+  // Append to movements array for this date (deduplicate by startTime)
   let movements = await env.HABIT_DATA.get(`movements:${normalizedDate}`, "json") || [];
 
   const entry = {
@@ -493,6 +493,20 @@ async function logMovement(body, env, corsHeaders) {
   };
   if (parsedStart) {
     entry.startTime = parsedStart.toISOString();
+
+    // Skip if a movement with this startTime already exists
+    const alreadyExists = movements.some(m => m.startTime === entry.startTime);
+    if (alreadyExists) {
+      return jsonResponse({
+        success: true,
+        date: normalizedDate,
+        duplicate: true,
+        message: `Movement already logged for ${entry.startTime}`,
+        type: mappedType,
+        duration: duration,
+        movementCount: movements.length,
+      }, 200, corsHeaders);
+    }
   }
 
   movements.push(entry);
