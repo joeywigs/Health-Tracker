@@ -2592,13 +2592,6 @@ function renderHabitGrid(allData) {
     streaks[h.key] = streak;
   });
 
-  // Find habits missed yesterday (for "never miss twice" banner)
-  const yesterday = days[days.length - 2];
-  const missedYesterday = HABITS.filter(h => {
-    if (!yesterday.data) return true;
-    return !h.metGoal(yesterday.data, h.targetKey ? getTarget(h.targetKey) : null);
-  });
-
   // Calculate daily completion percentages
   const dailyPcts = days.map(day => {
     if (day.isToday || !day.data) return null;
@@ -2608,27 +2601,6 @@ function renderHabitGrid(allData) {
 
   // Build HTML
   let html = '';
-
-  // "Never Miss Twice" Banner (if habits were missed yesterday)
-  if (missedYesterday.length > 0 && missedYesterday.length < HABITS.length) {
-    html += `
-      <div class="habit-grid-banner">
-        <div class="banner-header">
-          <div class="banner-title">⚡ Don't break the chain</div>
-          <div class="banner-subtitle">You missed ${missedYesterday.length} habit${missedYesterday.length > 1 ? 's' : ''} yesterday</div>
-        </div>
-        <div class="banner-habits">
-          ${missedYesterday.slice(0, 3).map(h => `
-            <div class="banner-habit">
-              <span class="banner-habit-icon">${h.icon}</span>
-              <span class="banner-habit-name">${h.name}</span>
-              ${streaks[h.key] > 0 ? `<span class="banner-streak-note">Had ${streaks[h.key]}-day streak</span>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
 
   // Date range header
   const startDate = days[0].date;
