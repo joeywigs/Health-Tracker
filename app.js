@@ -655,8 +655,8 @@ function updateWeighReminder() {
   const today = new Date(currentDate);
   const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday
 
-  // Only show on Mondays
-  if (dayOfWeek !== 1) {
+  // Only show on Tuesdays
+  if (dayOfWeek !== 2) {
     hideWeighReminder();
     return;
   }
@@ -689,7 +689,7 @@ function showWeighReminder() {
     card.innerHTML = `
       <button class="reminder-close" onclick="sessionStorage.setItem('weighReminderDismissed', '${formatDateForAPI(currentDate)}'); document.getElementById('weighReminder').remove()">✕</button>
       <div class="reminder-icon">⚖️</div>
-      <div class="reminder-title">Weigh-in Monday!</div>
+      <div class="reminder-title">Weigh-in Tuesday!</div>
       <div class="reminder-sub">Don't forget to log your body measurements.</div>
     `;
 
