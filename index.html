@@ -1056,30 +1056,6 @@
       color: #0891b2;
       border-color: rgba(8, 145, 178, 0.2);
     }
-    .rehit-dots-row {
-      display: flex;
-      gap: 8px;
-      margin: 10px 0 14px 0;
-    }
-    .rehit-dots-row .rehit-dot {
-      flex: 1;
-      height: 8px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.15);
-      transition: all 0.3s;
-    }
-    .rehit-dots-row .rehit-dot.on {
-      background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
-      box-shadow: 0 0 10px var(--glow-pink);
-    }
-    .rehit-dots-row .rehit-dot.on-2x10 {
-      background: linear-gradient(90deg, #ec4899, #f43f5e);
-      box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
-    }
-    .rehit-dots-row .rehit-dot.on-3x10 {
-      background: linear-gradient(90deg, #f97316, #fb923c);
-      box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
-    }
     .rehit-layout {
       display: flex;
       gap: 20px;
@@ -1237,40 +1213,6 @@
     .input-row { display: flex; align-items: baseline; }
     .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
     
-    /* REHIT Dots */
-    .rehit-dots { display: flex; gap: 6px; margin-left: auto; }
-    .rehit-dot { 
-      width: 10px; height: 10px; 
-      border-radius: 50%; 
-      background: rgba(255,255,255,0.2); 
-      transition: all 0.3s;
-    }
-    .rehit-dot.on { 
-      background: var(--accent-teal); 
-      box-shadow: 0 0 8px var(--glow-teal);
-    }
-    body.day-mode .rehit-dot {
-      background: rgba(0,0,0,0.15);
-    }
-    body.day-mode .rehit-dot.on {
-      background: var(--success);
-      box-shadow: 0 0 8px rgba(5,150,105,0.4);
-    }
-    body.day-mode .rehit-dots-row .rehit-dot {
-      background: rgba(0,0,0,0.1);
-    }
-    body.day-mode .rehit-dots-row .rehit-dot.on {
-      background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
-      box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
-    }
-    body.day-mode .rehit-dots-row .rehit-dot.on-2x10 {
-      background: linear-gradient(90deg, #ec4899, #f43f5e);
-      box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
-    }
-    body.day-mode .rehit-dots-row .rehit-dot.on-3x10 {
-      background: linear-gradient(90deg, #f97316, #fb923c);
-      box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
-    }
     
     /* Counter dots (for weekly goals) */
     .counter-dot {
@@ -3974,7 +3916,7 @@
   <div class="nav-drawer" id="navDrawer">
     <div class="nav-drawer-header">
       <h2>Habits</h2>
-      <div class="tagline">v2.3</div>
+      <div class="tagline">v2.4</div>
     </div>
     <div class="nav-drawer-items">
       <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
@@ -4036,7 +3978,7 @@
       <div class="brand">
         <div>
           <h1>Habits</h1>
-          <div class="tagline">v2.3</div>
+          <div class="tagline">v2.4</div>
         </div>
       </div>
       <button class="hamburger-btn" id="headerMenuBtn">☰</button>
@@ -4320,12 +4262,6 @@
       <div class="card-head" style="margin-bottom:0">
         <div class="card-icon">🚴</div>
         <div class="card-title">REHIT</div>
-      </div>
-      <div class="rehit-dots-row" id="rehitDots">
-        <div class="rehit-dot"></div>
-        <div class="rehit-dot"></div>
-        <div class="rehit-dot"></div>
-        <div class="rehit-dot"></div>
       </div>
       <div class="rehit-layout">
         <div class="rehit-left">
@@ -5600,130 +5536,6 @@
       fill.style.width = pct + '%';
     }
     
-    // REHIT dots - count sessions this week with color coding
-    // Pink/red = 2x10, Orange = 3x10
-    const REHIT_API = "https://habit-proxy.joeywigs.workers.dev/";
-    window._rehitServerCount = 0;  // Count from server
-    window._rehitTodaySaved = false; // Whether today's REHIT was saved on server
-    window._rehitSessionTypes = []; // Array of session types: '2x10' or '3x10'
-    window._rehitTodayType = null;  // Today's saved type
-
-    // Fetch REHIT count from dedicated endpoint
-    async function fetchRehitWeekCount() {
-      try {
-        // Format date as M/D/YY for the API
-        const d = window.currentDate || new Date();
-        const date = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
-        const resp = await fetch(`${REHIT_API}?action=rehit_week&date=${encodeURIComponent(date)}`);
-        const data = await resp.json();
-
-        if (data.ok) {
-          window._rehitServerCount = data.count;
-
-          // Build array of session types from details (excluding today)
-          window._rehitSessionTypes = [];
-          const todayStr = date;
-
-          data.details?.forEach(detail => {
-            // Determine session type from detail fields
-            const is3x10 = (detail.rehit3 && detail.rehit3 !== "" && detail.rehit3 !== "false")
-                        || detail.rehit2 === "3x10";
-            const is2x10 = !is3x10 && detail.hasRehit;
-
-            if (detail.date === todayStr) {
-              // Track today separately
-              window._rehitTodaySaved = detail.hasRehit || false;
-              window._rehitTodayType = is3x10 ? '3x10' : is2x10 ? '2x10' : null;
-            } else if (detail.hasRehit) {
-              // Past days - add to session types array
-              window._rehitSessionTypes.push(is3x10 ? '3x10' : '2x10');
-            }
-          });
-
-          // Update display
-          updateRehitDotsFromState();
-        }
-      } catch (err) {
-        console.error('Failed to fetch REHIT week count:', err);
-      }
-    }
-
-    // Calculate display count based on server + current checkbox state
-    // Color dots based on session type: pink = 2x10, orange = 3x10
-    function updateRehitDotsFromState() {
-      const dotsContainer = document.getElementById('rehitDots');
-      if (!dotsContainer) return;
-      const dots = dotsContainer.querySelectorAll('.rehit-dot');
-
-      // Current checkbox state
-      const today2x10Checked = document.getElementById('rehit2')?.checked;
-      const today3x10Checked = document.getElementById('rehit3')?.checked;
-      const todayChecked = today2x10Checked || today3x10Checked;
-
-      // Build session types array including today's current state
-      let sessionTypes = [...window._rehitSessionTypes];
-
-      // Handle today's session
-      if (todayChecked) {
-        // Add today's type based on current checkbox state
-        if (today3x10Checked) {
-          sessionTypes.push('3x10');
-        } else if (today2x10Checked) {
-          sessionTypes.push('2x10');
-        }
-      }
-
-      // Update dots (max 4) with color coding
-      dots.forEach((dot, i) => {
-        // Clear all classes first
-        dot.classList.remove('on', 'on-2x10', 'on-3x10');
-
-        if (i < sessionTypes.length) {
-          const type = sessionTypes[i];
-          if (type === '3x10') {
-            dot.classList.add('on-3x10');
-          } else if (type === '2x10') {
-            dot.classList.add('on-2x10');
-          } else {
-            dot.classList.add('on');
-          }
-        }
-      });
-    }
-
-    // Update the number of REHIT dots based on targets
-    function updateRehitDotsCount() {
-      const dotsContainer = document.getElementById('rehitDots');
-      if (!dotsContainer) return;
-
-      // Get targets from settings (default 2+3=5)
-      // Use ?? to allow 0 values
-      const target2x10 = parseInt(window.appSettings?.rehit2x10Goal ?? 2);
-      const target3x10 = parseInt(window.appSettings?.rehit3x10Goal ?? 3);
-      const totalDots = target2x10 + target3x10;
-
-      // Rebuild dots
-      dotsContainer.innerHTML = '';
-      for (let i = 0; i < totalDots; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'rehit-dot';
-        dotsContainer.appendChild(dot);
-      }
-
-      // Re-update the dot states
-      updateRehitDotsFromState();
-    }
-
-    // Called when checkbox changes - update display immediately (optimistic)
-    function updateRehitDots() {
-      updateRehitDotsFromState();
-    }
-
-    // Expose globally
-    window.updateRehitDots = updateRehitDots;
-    window.updateRehitDotsCount = updateRehitDotsCount;
-    window.fetchRehitWeekCount = fetchRehitWeekCount;
-    
     // Hook populateForm - wait for app.js to define it first
     function setupPopulateFormHook() {
       if (typeof window.populateForm === 'function' && !window._populateFormHooked) {
@@ -5738,7 +5550,6 @@
           updateRehitDisplay();
           updateStepsBar();
           updateCompletionRingAurora();
-          updateRehitDots();
         };
         window._populateFormHooked = true;
       } else if (!window._populateFormHooked) {
@@ -5756,9 +5567,6 @@
 
       // Sync settings from KV (async - will update UI when complete)
       if (typeof syncSettingsFromKV === 'function') syncSettingsFromKV();
-
-      // Update REHIT dots based on target settings
-      if (typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
 
       // Wire up chip toggles
       document.querySelectorAll('.chip').forEach(c => {
@@ -5836,25 +5644,17 @@
 
       // Movement list updates trigger completion ring via renderMovementList -> updateCompletionRing
       
-      // REHIT week observer
-      const rehitWeek = document.getElementById('rehitWeek');
-      if (rehitWeek) {
-        const rehitObserver = new MutationObserver(updateRehitDots);
-        rehitObserver.observe(rehitWeek, { childList: true, characterData: true, subtree: true });
-      }
-      
-      // REHIT checkbox change listeners (chip click→toggle is handled by generic chip handler at line 2752)
+      // REHIT checkbox change listeners (chip click→toggle is handled by generic chip handler)
       const rehit2 = document.getElementById('rehit2');
       const rehit3 = document.getElementById('rehit3');
-      if (rehit2) rehit2.addEventListener('change', () => { syncAllChips(); updateRehitDots(); updateRehitDisplay(); });
-      if (rehit3) rehit3.addEventListener('change', () => { syncAllChips(); updateRehitDots(); updateRehitDisplay(); });
-      
+      if (rehit2) rehit2.addEventListener('change', () => { syncAllChips(); updateRehitDisplay(); });
+      if (rehit3) rehit3.addEventListener('change', () => { syncAllChips(); updateRehitDisplay(); });
+
       // Initial update after app.js loads data
       setTimeout(() => {
         syncAllChips();
         updateAguaBar();
         updateStepsBar();
-        fetchRehitWeekCount(); // Fetch from new endpoint
         updateRehitDisplay();
         updateCompletionRingAurora();
         updatePhaseInfoFixed();
@@ -6190,7 +5990,6 @@
         Object.assign(appSettings, kvSettings);
         window.appSettings = appSettings;
         // Update UI elements that depend on settings
-        if (typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
         if (typeof updateAguaBar === 'function') updateAguaBar();
         if (typeof updateStepsBar === 'function') updateStepsBar();
         if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
@@ -7175,8 +6974,8 @@
       { id: 'mealsGoal', key: 'mealsGoal', default: 2, name: 'Meals', updateRing: true },
       { id: 'snacksGoal', key: 'snacksGoal', default: 2, name: 'Snacks', updateRing: true },
       { id: 'noAlcoholGoal', key: 'noAlcoholGoal', default: 7, name: 'No Alcohol' },
-      { id: 'rehit2x10Goal', key: 'rehit2x10Goal', default: 2, name: 'REHIT 2x10', updateRehitDots: true },
-      { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10', updateRehitDots: true },
+      { id: 'rehit2x10Goal', key: 'rehit2x10Goal', default: 2, name: 'REHIT 2x10' },
+      { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10' },
       { id: 'readingGoal', key: 'readingGoal', default: 60, name: 'Reading' },
       { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' },
       { id: 'emailSprintGoal', key: 'emailSprintGoal', default: 3, name: 'Email Sprints', updateRing: true }
@@ -7193,7 +6992,6 @@
         if (config.updateRing && typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
         if (config.updateAguaBar && typeof updateAguaBar === 'function') updateAguaBar();
         if (config.updateStepsBar && typeof updateStepsBar === 'function') updateStepsBar();
-        if (config.updateRehitDots && typeof updateRehitDotsCount === 'function') updateRehitDotsCount();
       };
       el.addEventListener('change', handler);
       el.addEventListener('input', handler);

@@ -436,22 +436,6 @@
       margin-bottom: 16px;
       min-height: auto;
     }
-    .rehit-dots-row {
-      display: flex;
-      gap: 8px;
-      margin: 10px 0 14px 0;
-    }
-    .rehit-dots-row .rehit-dot {
-      flex: 1;
-      height: 8px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.15);
-      transition: all 0.3s;
-    }
-    .rehit-dots-row .rehit-dot.on {
-      background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
-      box-shadow: 0 0 10px var(--glow-pink);
-    }
     .rehit-layout {
       display: flex;
       gap: 20px;
@@ -595,32 +579,6 @@
     .card-unit { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: 4px; }
     .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
     
-    /* REHIT Dots */
-    .rehit-dots { display: flex; gap: 6px; margin-left: auto; }
-    .rehit-dot { 
-      width: 10px; height: 10px; 
-      border-radius: 50%; 
-      background: rgba(255,255,255,0.2); 
-      transition: all 0.3s;
-    }
-    .rehit-dot.on { 
-      background: var(--accent-teal); 
-      box-shadow: 0 0 8px var(--glow-teal);
-    }
-    body.day-mode .rehit-dot {
-      background: rgba(0,0,0,0.15);
-    }
-    body.day-mode .rehit-dot.on {
-      background: var(--success);
-      box-shadow: 0 0 8px rgba(5,150,105,0.4);
-    }
-    body.day-mode .rehit-dots-row .rehit-dot {
-      background: rgba(0,0,0,0.1);
-    }
-    body.day-mode .rehit-dots-row .rehit-dot.on {
-      background: linear-gradient(90deg, var(--accent-pink), var(--accent-orange));
-      box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
-    }
     
     /* Counter dots (for weekly goals) */
     .counter-dot {
@@ -1308,7 +1266,7 @@
     <div class="header-top">
       <div class="brand">
         <div>
-          <h1>Habits <span class="version">v2.3</span></h1>
+          <h1>Habits <span class="version">v2.4</span></h1>
           <div class="tagline">Phase 1</div>
           <div class="phase-day" id="phaseDayCount">Day -- of 21</div>
         </div>
@@ -1380,12 +1338,6 @@
       <div class="card-head" style="margin-bottom:0">
         <div class="card-icon">🚴</div>
         <div class="card-title">REHIT</div>
-      </div>
-      <div class="rehit-dots-row" id="rehitDots">
-        <div class="rehit-dot"></div>
-        <div class="rehit-dot"></div>
-        <div class="rehit-dot"></div>
-        <div class="rehit-dot"></div>
       </div>
       <div class="rehit-layout">
         <div class="rehit-left">
@@ -1896,32 +1848,6 @@
       fill.style.width = pct + '%';
     }
     
-    // REHIT dots - count sessions this week (goal: 4 sessions per week)
-    function updateRehitDots() {
-      const dotsContainer = document.getElementById('rehitDots');
-      if (!dotsContainer) return;
-      const dots = dotsContainer.querySelectorAll('.rehit-dot');
-
-      // Get week count from the rehitWeek element's first text node only
-      // (avoids picking up comparison numbers like "↓ 3")
-      let weekCount = 0;
-      const rehitWeekEl = document.getElementById('rehitWeek');
-      if (rehitWeekEl) {
-        // Extract only the leading number before any comparison span
-        const firstChild = rehitWeekEl.firstChild;
-        const rawText = firstChild ? firstChild.textContent.trim() : rehitWeekEl.textContent.trim();
-        const match = rawText.match(/^(\d+)/);
-        if (match) {
-          weekCount = parseInt(match[1], 10);
-        }
-      }
-
-      // Update dots (max 4)
-      dots.forEach((dot, i) => {
-        dot.classList.toggle('on', i < Math.min(weekCount, 4));
-      });
-    }
-    
     // Hook populateForm - wait for app.js to define it first
     function setupPopulateFormHook() {
       if (typeof window.populateForm === 'function' && !window._populateFormHooked) {
@@ -1937,7 +1863,6 @@
             updateRehitDisplay(); 
             updateStepsBar();
             updateCompletionRingAurora();
-            updateRehitDots();
           }, 100);
         };
         window._populateFormHooked = true;
@@ -2012,25 +1937,17 @@
         stepsInput.addEventListener('change', updateStepsBar);
       }
       
-      // REHIT week observer
-      const rehitWeek = document.getElementById('rehitWeek');
-      if (rehitWeek) {
-        const rehitObserver = new MutationObserver(updateRehitDots);
-        rehitObserver.observe(rehitWeek, { childList: true, characterData: true, subtree: true });
-      }
-      
       // REHIT checkbox listeners
       const rehit2 = document.getElementById('rehit2');
       const rehit3 = document.getElementById('rehit3');
-      if (rehit2) rehit2.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
-      if (rehit3) rehit3.addEventListener('change', () => { updateRehitDots(); updateRehitDisplay(); });
-      
+      if (rehit2) rehit2.addEventListener('change', () => { updateRehitDisplay(); });
+      if (rehit3) rehit3.addEventListener('change', () => { updateRehitDisplay(); });
+
       // Initial update after app.js loads data
-      setTimeout(() => { 
-        syncAllChips(); 
-        updateWaterBar(); 
+      setTimeout(() => {
+        syncAllChips();
+        updateWaterBar();
         updateStepsBar();
-        updateRehitDots();
         updateRehitDisplay();
         updateCompletionRingAurora();
         updatePhaseInfoFixed();
