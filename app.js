@@ -5978,7 +5978,6 @@ function setupRehitMutualExclusion() {
       syncCheckboxVisual(rehit3);
     }
     toggleRehitFields();
-    if (typeof window.updateRehitDots === 'function') window.updateRehitDots();
   });
 
   rehit3.addEventListener("change", () => {
@@ -5987,7 +5986,6 @@ function setupRehitMutualExclusion() {
       syncCheckboxVisual(rehit2);
     }
     toggleRehitFields();
-    if (typeof window.updateRehitDots === 'function') window.updateRehitDots();
   });
   
   // Initial state

@@ -105,13 +105,6 @@ async function handleGet(request, env, corsHeaders) {
     return await loadSettings(env, corsHeaders);
   }
 
-  if (action === "rehit_week") {
-    const date = url.searchParams.get("date");
-    if (!date) {
-      return jsonResponse({ error: true, message: "Missing date" }, 400, corsHeaders);
-    }
-    return await getRehitWeekCount(date, env, corsHeaders);
-  }
 
   // iOS Shortcut may send steps as GET
   if (action === "steps") {
@@ -673,53 +666,6 @@ async function calculate7DayAverages(dateStr, env) {
 
 // ===== Get REHIT Week Count =====
 // Dedicated endpoint to count REHIT sessions for the current week (Sun-Sat)
-async function getRehitWeekCount(dateStr, env, corsHeaders) {
-  const targetDate = parseDate(dateStr);
-  targetDate.setHours(12, 0, 0, 0); // Use noon to avoid timezone edge cases
-
-  // Get week boundaries (Sun-Sat)
-  const dayOfWeek = targetDate.getDay(); // 0 = Sunday
-  const weekStart = new Date(targetDate);
-  weekStart.setDate(targetDate.getDate() - dayOfWeek);
-  weekStart.setHours(0, 0, 0, 0);
-
-  // Fetch all days from Sunday up to and including today
-  const dates = [];
-  for (let i = 0; i <= dayOfWeek; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    dates.push(normalizeDate(formatDateForKV(d)));
-  }
-
-  const dailyData = await Promise.all(
-    dates.map(d => env.HABIT_DATA.get(`daily:${d}`, "json"))
-  );
-
-  let count = 0;
-  const details = []; // For debugging
-
-  dailyData.forEach((data, i) => {
-    const dateKey = dates[i];
-    const rehitVal = data?.["REHIT 2x10"] ?? data?.["REHIT"];
-    const is2x10 = rehitVal === "2x10" || rehitVal === true || rehitVal === "TRUE";
-    const is3x10 = rehitVal === "3x10";
-    const hasRehit = is2x10 || is3x10;
-
-    details.push({ date: dateKey, rehit2: is2x10 ? "2x10" : "", rehit3: is3x10 ? "3x10" : "", hasRehit });
-
-    if (hasRehit) count++;
-  });
-
-  return jsonResponse({
-    ok: true,
-    count,
-    weekStart: normalizeDate(formatDateForKV(weekStart)),
-    targetDate: normalizeDate(dateStr),
-    daysChecked: dates.length,
-    details // Include details for debugging
-  }, 200, corsHeaders);
-}
-
 // ===== Get Last Body Data (carry-forward) =====
 async function getLastBodyData(dateStr, env) {
   const targetDate = parseDate(dateStr);
