@@ -623,28 +623,28 @@ async function calculate7DayAverages(dateStr, env) {
     const steps = data ? parseInt(data["Steps"], 10) : NaN;
     const rehit = data ? data["REHIT 2x10"] : "";
 
-    // Count movements: new array format first, fall back to old daily fields
+    // Sum movement duration in minutes: new array format first, fall back to old daily fields
     const movArr = movementsData[i];
-    let movCount = 0;
+    let movMinutes = 0;
     if (movArr && Array.isArray(movArr) && movArr.length > 0) {
-      movCount = movArr.length;
+      movMinutes = movArr.reduce((sum, m) => sum + (parseFloat(m.duration) || 0), 0);
     } else if (data) {
-      if (data["Morning Movement Type"] && data["Morning Movement Type"] !== "") movCount++;
-      if (data["Afternoon Movement Type"] && data["Afternoon Movement Type"] !== "") movCount++;
+      if (data["Morning Movement Duration"]) movMinutes += parseInt(data["Morning Movement Duration"]) || 0;
+      if (data["Afternoon Movement Duration"]) movMinutes += parseInt(data["Afternoon Movement Duration"]) || 0;
     }
 
     if (isThisWeek) {
       if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
       if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
       if (rehit && rehit !== "") rehitCount++;
-      movementValues.push(movCount);
+      movementValues.push(movMinutes);
     }
 
     if (isLastWeek) {
       if (!isNaN(sleep) && sleep > 0) lastWeekSleep.push(sleep);
       if (!isNaN(steps) && steps > 0) lastWeekSteps.push(steps);
       if (rehit && rehit !== "") lastWeekRehit++;
-      lastWeekMovements.push(movCount);
+      lastWeekMovements.push(movMinutes);
     }
   });
 
@@ -664,8 +664,6 @@ async function calculate7DayAverages(dateStr, env) {
   };
 }
 
-// ===== Get REHIT Week Count =====
-// Dedicated endpoint to count REHIT sessions for the current week (Sun-Sat)
 // ===== Get Last Body Data (carry-forward) =====
 async function getLastBodyData(dateStr, env) {
   const targetDate = parseDate(dateStr);
