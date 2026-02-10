@@ -1872,6 +1872,67 @@
       background: rgba(255,255,255,0.5);
     }
 
+    /* Reading Weekly Progress */
+    .reading-week-progress {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 4px 14px;
+    }
+    .reading-week-bar-track {
+      width: 8px;
+      height: 60px;
+      border-radius: 4px;
+      background: rgba(196, 113, 237, 0.15);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+    .reading-week-bar-fill {
+      width: 100%;
+      border-radius: 4px;
+      background: linear-gradient(to top, #c471ed, #6dd5ed);
+      box-shadow: 0 0 8px var(--glow-purple);
+      transition: height 0.5s ease;
+      height: 0%;
+    }
+    .reading-week-bar-fill.goal-met {
+      background: linear-gradient(to top, #52b788, #74c69d);
+      box-shadow: 0 0 8px rgba(82, 183, 136, 0.4);
+    }
+    .reading-week-info {
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .reading-week-mins {
+      font-size: 26px;
+      font-weight: 700;
+      color: #c471ed;
+    }
+    .reading-week-mins.goal-met {
+      color: #52b788;
+    }
+    .reading-week-separator {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+    .reading-week-goal {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+    .reading-week-unit {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: 2px;
+    }
+    body.day-mode .reading-week-bar-track {
+      background: rgba(196, 113, 237, 0.1);
+    }
+
     .big-input { width: auto; flex: 1; min-width: 0; background: transparent; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: white; outline: none; transition: color 0.3s; }
     .big-input::placeholder { color: var(--text-muted); }
     .big-input:focus { color: var(--accent-teal); }
@@ -4360,6 +4421,17 @@
     <div class="section" id="mentalHabitsSection">
       <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#6dd5ed;--icon-glow:var(--glow-purple)">📖</div><span class="sec-name">Reading</span></div><span class="sec-toggle">▼</span></div>
       <div class="sec-content collapsed">
+        <div class="reading-week-progress">
+          <div class="reading-week-bar-track">
+            <div class="reading-week-bar-fill" id="readingWeekBarFill"></div>
+          </div>
+          <div class="reading-week-info">
+            <span class="reading-week-mins" id="readingWeekMins">0</span>
+            <span class="reading-week-separator">/</span>
+            <span class="reading-week-goal" id="readingWeekGoal">60</span>
+            <span class="reading-week-unit">min this week</span>
+          </div>
+        </div>
         <div id="readingList" class="items"></div>
         <button type="button" class="btn btn-secondary" id="addReadingBtn">+ Add Reading</button>
       </div>

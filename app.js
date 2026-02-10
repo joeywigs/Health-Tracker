@@ -180,6 +180,7 @@ let currentDate = new Date();
 let dataChanged = false;
 
 let readings = [];
+let readingWeekBase = 0; // weekly reading mins excluding today (set on load)
 let honeyDos = [];
 let currentMovements = [];
 let emailSprintCount = 0;
@@ -6134,6 +6135,7 @@ async function populateForm(data) {
 
   // reset state
   readings = [];
+  readingWeekBase = 0;
   honeyDos = [];
   currentMovements = [];
   currentAverages = null;
@@ -6765,6 +6767,33 @@ function renderReadings() {
 
   // If you have completion logic, call it safely
   if (typeof checkSectionCompletion === "function") checkSectionCompletion();
+  updateReadingWeeklyDisplay();
+}
+
+function getTodayReadingMins() {
+  return readings.reduce((sum, r) => {
+    return sum + (parseInt(r.duration ?? r["duration (min)"] ?? r["Duration"] ?? r["Duration (min)"]) || 0);
+  }, 0);
+}
+
+function updateReadingWeeklyDisplay() {
+  const minsEl = document.getElementById('readingWeekMins');
+  const goalEl = document.getElementById('readingWeekGoal');
+  const barFill = document.getElementById('readingWeekBarFill');
+  if (!minsEl) return;
+
+  const target = (typeof appSettings !== 'undefined' && appSettings.readingGoal) ? appSettings.readingGoal : 60;
+  const weekTotal = readingWeekBase + getTodayReadingMins();
+  const pct = Math.min(100, target > 0 ? (weekTotal / target) * 100 : 0);
+  const met = weekTotal >= target;
+
+  minsEl.textContent = weekTotal;
+  if (goalEl) goalEl.textContent = target;
+  if (barFill) {
+    barFill.style.height = `${pct}%`;
+    barFill.classList.toggle('goal-met', met);
+  }
+  minsEl.classList.toggle('goal-met', met);
 }
 
 function updateAverages(averages) {
@@ -6833,6 +6862,13 @@ function updateAverages(averages) {
     const display = (v === null || v === undefined || v === "") ? "--" : String(v);
     const comparison = formatComparison(v, lastV, 0);
     rehitWeekEl.innerHTML = display + comparison;
+  }
+
+  // Reading: set base (server week total minus today's readings, which are already in the readings array)
+  if (averages.readingWeek !== undefined) {
+    readingWeekBase = (averages.readingWeek || 0) - getTodayReadingMins();
+    if (readingWeekBase < 0) readingWeekBase = 0;
+    updateReadingWeeklyDisplay();
   }
 }
 
