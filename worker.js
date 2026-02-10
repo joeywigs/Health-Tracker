@@ -347,9 +347,22 @@ async function saveDay(data, env, corsHeaders) {
     env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily)),
   ];
 
-  // Save movements if provided
+  // Save movements if provided (deduplicate first)
   if (data.movements && Array.isArray(data.movements)) {
-    saves.push(env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(data.movements)));
+    const seen = [];
+    const dedupedMovements = data.movements.filter(m => {
+      const dominated = seen.some(s => {
+        if (s.startTime && m.startTime && s.startTime === m.startTime) return true;
+        if (s.type === m.type && s.duration === m.duration && s.startTime && m.startTime) {
+          const timeDiff = Math.abs(new Date(s.startTime).getTime() - new Date(m.startTime).getTime());
+          if (timeDiff < 5 * 60 * 1000) return true;
+        }
+        return false;
+      });
+      if (!dominated) { seen.push(m); return true; }
+      return false;
+    });
+    saves.push(env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(dedupedMovements)));
   }
 
   // Save readings if provided
