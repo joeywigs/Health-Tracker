@@ -6417,6 +6417,16 @@ async function populateForm(data) {
   // Optional renders/averages/completion
   if (typeof updateAverages === "function") updateAverages(data?.averages);
   if (typeof renderReadings === "function") renderReadings();
+  // Auto-expand reading section if readings exist
+  if (readings.length > 0) {
+    const sec = document.getElementById("mentalHabitsSection");
+    if (sec) {
+      const head = sec.querySelector(".sec-head");
+      const content = sec.querySelector(".sec-content");
+      if (head) head.classList.remove("collapsed");
+      if (content) content.classList.remove("collapsed");
+    }
+  }
   if (typeof renderHoneyDos === "function") renderHoneyDos();
   if (typeof checkSectionCompletion === "function") checkSectionCompletion();
 
