@@ -403,26 +403,53 @@ async function syncWorkouts(workouts, dateStr, env, corsHeaders) {
   // Get existing workouts for this date
   let existing = await env.HABIT_DATA.get(`workouts:${normalizedDate}`, "json") || [];
 
-  // Merge new workouts, avoiding duplicates by start time
-  const existingStarts = new Set(existing.map(w => w.startTime));
+  let skipped = 0;
 
   for (const workout of workouts) {
+    // Parse startTime - Apple Shortcuts may send various formats
+    let parsedStart = null;
+    const rawStart = workout.startTime || workout.start;
+    if (rawStart) {
+      let d = new Date(rawStart);
+      if (isNaN(d.getTime())) {
+        const cleaned = String(rawStart).replace(/\s+at\s+/i, " ");
+        d = new Date(cleaned);
+      }
+      if (!isNaN(d.getTime())) {
+        parsedStart = d;
+      }
+    }
+    if (!parsedStart) {
+      parsedStart = new Date();
+    }
+
     // Normalize workout data
     const normalized = {
       type: workout.type || workout.workoutType || 'Unknown',
       duration: workout.duration || workout.durationMinutes || 0,
       calories: workout.calories || workout.activeCalories || 0,
-      startTime: workout.startTime || workout.start || new Date().toISOString(),
+      startTime: parsedStart.toISOString(),
       endTime: workout.endTime || workout.end || null,
       distance: workout.distance || null,
       avgHeartRate: workout.avgHeartRate || workout.heartRate || null,
     };
 
-    // Only add if not already present (by start time)
-    if (!existingStarts.has(normalized.startTime)) {
-      existing.push(normalized);
-      existingStarts.add(normalized.startTime);
+    // Dedup: exact startTime match OR same type+duration within 5-minute window
+    const alreadyExists = existing.some(w => {
+      if (w.startTime === normalized.startTime) return true;
+      if (w.type === normalized.type && w.duration === normalized.duration && w.startTime) {
+        const timeDiff = Math.abs(new Date(w.startTime).getTime() - parsedStart.getTime());
+        if (timeDiff < 5 * 60 * 1000) return true;
+      }
+      return false;
+    });
+
+    if (alreadyExists) {
+      skipped++;
+      continue;
     }
+
+    existing.push(normalized);
   }
 
   // Sort by start time (newest first)
@@ -436,7 +463,8 @@ async function syncWorkouts(workouts, dateStr, env, corsHeaders) {
     date: normalizedDate,
     workoutCount: existing.length,
     workouts: existing,
-    message: `Synced ${workouts.length} workout(s) for ${normalizedDate}`
+    skipped,
+    message: `Synced ${workouts.length - skipped} new workout(s) for ${normalizedDate}, ${skipped} duplicate(s) skipped`
   }, 200, corsHeaders);
 }
 
