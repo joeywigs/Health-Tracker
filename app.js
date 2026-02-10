@@ -2592,11 +2592,19 @@ function renderHabitGrid(allData) {
     streaks[h.key] = streak;
   });
 
+  // Filter habits by completion ring settings
+  const ringHabits = (typeof appSettings !== 'undefined' && appSettings.completionRingHabits) || {};
+  const habitToRingKey = { sleep:'sleep', agua:'agua', steps:'steps', rehit:'rehit2x10', movement:'movement', supps:'supplements', meals:'meals', reading:'reading', noAlcohol:'noAlcohol', meditation:'meditation' };
+  const activeHabits = HABITS.filter(h => {
+    const ringKey = habitToRingKey[h.key];
+    return ringKey ? (ringHabits[ringKey] !== false) : true;
+  });
+
   // Calculate daily completion percentages
   const dailyPcts = days.map(day => {
     if (day.isToday || !day.data) return null;
-    const done = HABITS.filter(h => h.metGoal(day.data, h.targetKey ? getTarget(h.targetKey) : null)).length;
-    return Math.round((done / HABITS.length) * 100);
+    const done = activeHabits.filter(h => h.metGoal(day.data, h.targetKey ? getTarget(h.targetKey) : null)).length;
+    return Math.round((done / activeHabits.length) * 100);
   });
 
   // Build HTML
@@ -4692,37 +4700,9 @@ function createConfetti(element) {
 }
 
 function updateCompletionRing() {
-  const allCheckboxes = document.querySelectorAll('#healthForm .checkbox-field input[type="checkbox"]');
-  
-  // Exclude Grey's inhaler checkboxes and multiplication
-  const checkboxes = Array.from(allCheckboxes).filter(cb => 
-    cb.id !== 'inhalerMorning' && cb.id !== 'inhalerEvening' && cb.id !== 'multiplication'
-  );
-  
-  const total = checkboxes.length;
-  const checked = checkboxes.filter(cb => cb.checked).length;
-  
-  const progress = document.getElementById('completionProgress');
-  const number = document.getElementById('completionNumber');
-  
-  if (progress && number) {
-    const circumference = 2 * Math.PI * 32; // r=32
-    const offset = circumference - (checked / total) * circumference;
-    progress.style.strokeDashoffset = offset;
-    
-    // Animate number change
-    if (checked !== lastCompletionCount) {
-      number.classList.add('bumping');
-      setTimeout(() => number.classList.remove('bumping'), 300);
-    }
-    
-    number.textContent = checked;
-    lastCompletionCount = checked;
-    
-    // Check for all complete
-    if (checked === total && total > 0) {
-      showMilestone('🌟', 'All Habits Complete!', 'You crushed it today!');
-    }
+  // Delegate to the Aurora ring which respects completionRingHabits settings
+  if (typeof updateCompletionRingAurora === 'function') {
+    updateCompletionRingAurora();
   }
 }
 
