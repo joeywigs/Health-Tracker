@@ -2975,6 +2975,23 @@
     .email-sprint-timer.done {
       color: #52b788;
     }
+    .email-sprint-progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: rgba(77, 157, 224, 0.15);
+      overflow: hidden;
+    }
+    .email-sprint-progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #4d9de0, #6dd5ed);
+      transition: width 1s linear;
+    }
+    .email-sprint-progress-bar.done {
+      background: linear-gradient(90deg, #52b788, #74c69d);
+    }
     .email-sprint-btn {
       padding: 12px 32px;
       border-radius: var(--radius-sm);
@@ -3460,6 +3477,38 @@
       border-bottom: 1px solid var(--border);
     }
     .goal-setting-row:last-child { border-bottom: none; }
+    .ring-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .ring-toggle input { display: none; }
+    .ring-toggle-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2.5px solid var(--border);
+      background: transparent;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .ring-toggle input:checked + .ring-toggle-icon {
+      border-color: var(--accent-teal, #2dd4bf);
+      background: var(--accent-teal, #2dd4bf);
+    }
+    .ring-toggle input:checked + .ring-toggle-icon::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 6px;
+      width: 5px;
+      height: 9px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
     .goal-day-overrides {
       display: none;
       width: 100%;
@@ -4316,6 +4365,7 @@
         <div class="email-sprint-container">
           <div class="email-sprint-count"><span id="emailSprintCount">0</span><span class="email-sprint-label"> sprints today</span></div>
           <div class="email-sprint-timer" id="emailSprintTimer">2:00</div>
+          <div class="email-sprint-progress-track"><div class="email-sprint-progress-bar" id="emailSprintProgress"></div></div>
           <button type="button" class="email-sprint-btn" id="emailSprintBtn">Start Sprint</button>
         </div>
       </div>
@@ -4591,19 +4641,21 @@
       <div class="section">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">🎯</div><span class="sec-name">Goal Settings</span></div></div>
         <div class="sec-content">
-          <p style="color:var(--text-muted);font-size:12px;margin:0 0 16px 0">Set your target for each goal and choose daily or weekly frequency.</p>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🌙</span><span class="goal-setting-name">Sleep</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12"><span class="goal-unit">hrs</span><select class="goal-freq" id="sleepFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">💧</span><span class="goal-setting-name">Water</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20"><span class="goal-unit">glasses</span><select class="goal-freq" id="aguaFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">👟</span><span class="goal-setting-name">Steps</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="stepsGoal" value="5000" min="1000" max="50000" step="500"><span class="goal-unit">steps</span><select class="goal-freq" id="stepsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🚶</span><span class="goal-setting-name">Movement</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10"><span class="goal-unit">sessions</span><select class="goal-freq" id="movementFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🍽️</span><span class="goal-setting-name">Meals</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3"><span class="goal-unit">meals</span><select class="goal-freq" id="mealsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🥗</span><span class="goal-setting-name">Healthy Snacks</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2"><span class="goal-unit">checks</span><select class="goal-freq" id="snacksFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🍺</span><span class="goal-setting-name">No Alcohol</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7"><span class="goal-unit">days</span><select class="goal-freq" id="noAlcoholFreq"><option value="weekly" selected>Weekly</option><option value="daily">Daily</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 2x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit2x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 3x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit3x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">📖</span><span class="goal-setting-name">Reading</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5"><span class="goal-unit">min</span><select class="goal-freq" id="readingFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">🧘</span><span class="goal-setting-name">Meditation</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="meditationGoal" value="3" min="1" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="meditationFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info"><span class="goal-setting-icon">📧</span><span class="goal-setting-name">Email Sprints</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10"><span class="goal-unit">sprints</span><select class="goal-freq" id="emailSprintFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <p style="color:var(--text-muted);font-size:12px;margin:0 0 16px 0">Set your target for each goal and choose daily or weekly frequency. Use the ring toggle to include/exclude from the completion circle.</p>
+          <div class="goal-setting-row" data-ring-key="sleep"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_sleep" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🌙</span><span class="goal-setting-name">Sleep</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12"><span class="goal-unit">hrs</span><select class="goal-freq" id="sleepFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="agua"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_agua" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">💧</span><span class="goal-setting-name">Water</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20"><span class="goal-unit">glasses</span><select class="goal-freq" id="aguaFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="steps"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_steps" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">👟</span><span class="goal-setting-name">Steps</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="stepsGoal" value="5000" min="1000" max="50000" step="500"><span class="goal-unit">steps</span><select class="goal-freq" id="stepsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="movement"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_movement" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚶</span><span class="goal-setting-name">Movement</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10"><span class="goal-unit">sessions</span><select class="goal-freq" id="movementFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="meals"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_meals" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍽️</span><span class="goal-setting-name">Meals</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3"><span class="goal-unit">meals</span><select class="goal-freq" id="mealsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="snacks"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_snacks" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🥗</span><span class="goal-setting-name">Healthy Snacks</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2"><span class="goal-unit">checks</span><select class="goal-freq" id="snacksFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="noAlcohol"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_noAlcohol" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍺</span><span class="goal-setting-name">No Alcohol</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7"><span class="goal-unit">days</span><select class="goal-freq" id="noAlcoholFreq"><option value="weekly" selected>Weekly</option><option value="daily">Daily</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="supplements"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_supplements" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">💊</span><span class="goal-setting-name">Supplements</span></div><div class="goal-setting-controls"><span class="goal-unit" style="color:var(--text-muted);font-size:12px">All 6 daily</span></div></div>
+          <div class="goal-setting-row" data-ring-key="rehit2x10"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit2x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 2x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit2x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="rehit3x10"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit3x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 3x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit3x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="reading"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_reading"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">📖</span><span class="goal-setting-name">Reading</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5"><span class="goal-unit">min</span><select class="goal-freq" id="readingFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="meditation"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_meditation"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🧘</span><span class="goal-setting-name">Meditation</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="meditationGoal" value="3" min="1" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="meditationFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="emailSprints"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_emailSprints" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">📧</span><span class="goal-setting-name">Email Sprints</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10"><span class="goal-unit">sprints</span><select class="goal-freq" id="emailSprintFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row" style="padding-left:38px"><div class="goal-setting-info"><span class="goal-setting-icon">&#9201;</span><span class="goal-setting-name">Sprint Length</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="emailSprintDuration" value="2" min="1" max="30"><span class="goal-unit">min</span></div></div>
         </div>
       </div>
       <div class="section">
@@ -4925,59 +4977,109 @@
     // Exposed globally so app.js movement list can call it
     window.updateCompletionRingAurora = updateCompletionRingAurora;
     function updateCompletionRingAurora() {
-      // 10 daily goals: sleep, agua, steps, movement, meals, no alcohol,
-      // day snacks, night snacks, supplements, email sprints
-      const total = 10;
+      const rh = (typeof appSettings !== 'undefined' && appSettings.completionRingHabits) || {};
+      // Helper: check if a habit is enabled for the ring (default true for legacy items)
+      const defaults = { sleep:true, agua:true, steps:true, movement:true, meals:true, snacks:true, noAlcohol:true, supplements:true, emailSprints:true, rehit2x10:false, rehit3x10:false, reading:false, meditation:false };
+      const on = (key) => rh[key] !== undefined ? rh[key] : (defaults[key] ?? false);
+
+      const getGoal = (key, def) => typeof getGoalForToday === 'function' ? getGoalForToday(key, def) : ((typeof appSettings !== 'undefined' && appSettings[key] !== undefined) ? appSettings[key] : def);
+
+      let total = 0;
       let checked = 0;
 
-      // 1. Sleep ≥ goal
-      const sleepVal = parseFloat(document.getElementById('sleepHours')?.value) || 0;
-      const sleepGoal = typeof getGoalForToday === 'function' ? getGoalForToday('sleepGoal', 7) : ((typeof appSettings !== 'undefined' && appSettings.sleepGoal) ? appSettings.sleepGoal : 7);
-      if (sleepVal >= sleepGoal) checked++;
+      // Sleep
+      if (on('sleep')) {
+        total++;
+        const sleepVal = parseFloat(document.getElementById('sleepHours')?.value) || 0;
+        if (sleepVal >= getGoal('sleepGoal', 7)) checked++;
+      }
 
-      // 2. Agua ≥ goal
-      const aguaGoal = typeof getGoalForToday === 'function' ? getGoalForToday('aguaGoal', 6) : ((typeof appSettings !== 'undefined' && appSettings.aguaGoal) ? appSettings.aguaGoal : 6);
-      const aguaEl = document.getElementById('aguaCount');
-      if ((aguaEl ? parseInt(aguaEl.textContent) || 0 : 0) >= aguaGoal) checked++;
+      // Water
+      if (on('agua')) {
+        total++;
+        const aguaEl = document.getElementById('aguaCount');
+        if ((aguaEl ? parseInt(aguaEl.textContent) || 0 : 0) >= getGoal('aguaGoal', 6)) checked++;
+      }
 
-      // 3. Steps ≥ goal
-      const stepsVal = parseInt(document.getElementById('steps')?.value) || 0;
-      const stepsGoal = typeof getGoalForToday === 'function' ? getGoalForToday('stepsGoal', 7500) : ((typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500);
-      if (stepsVal >= stepsGoal) checked++;
+      // Steps
+      if (on('steps')) {
+        total++;
+        const stepsVal = parseInt(document.getElementById('steps')?.value) || 0;
+        if (stepsVal >= getGoal('stepsGoal', 7500)) checked++;
+      }
 
-      // 4. Movement breaks ≥ goal
-      const movementGoal = typeof getGoalForToday === 'function' ? getGoalForToday('movementGoal', 2) : ((typeof appSettings !== 'undefined' && appSettings.movementGoal) ? appSettings.movementGoal : 2);
-      const movementCount = (typeof currentMovements !== 'undefined' && Array.isArray(currentMovements)) ? currentMovements.length : 0;
-      if (movementCount >= movementGoal) checked++;
+      // Movement
+      if (on('movement')) {
+        total++;
+        const movementCount = (typeof currentMovements !== 'undefined' && Array.isArray(currentMovements)) ? currentMovements.length : 0;
+        if (movementCount >= getGoal('movementGoal', 2)) checked++;
+      }
 
-      // 5. Meals: breakfast, lunch, dinner checked >= goal
-      const mealsGoal = typeof getGoalForToday === 'function' ? getGoalForToday('mealsGoal', 2) : ((typeof appSettings !== 'undefined' && appSettings.mealsGoal) ? appSettings.mealsGoal : 2);
-      const mealsChecked = ['breakfast', 'lunch', 'dinner']
-        .filter(id => document.getElementById(id)?.checked).length;
-      if (mealsChecked >= mealsGoal) checked++;
+      // Meals
+      if (on('meals')) {
+        total++;
+        const mealsChecked = ['breakfast', 'lunch', 'dinner']
+          .filter(id => document.getElementById(id)?.checked).length;
+        if (mealsChecked >= getGoal('mealsGoal', 2)) checked++;
+      }
 
-      // 6. No alcohol
-      if (document.getElementById('noAlcohol')?.checked) checked++;
+      // Snacks (day + night)
+      if (on('snacks')) {
+        total++;
+        const dayOk = document.getElementById('daySnacks')?.checked;
+        const nightOk = document.getElementById('nightSnacks')?.checked;
+        if (dayOk && nightOk) checked++;
+      }
 
-      // 7. Healthy day snacks
-      if (document.getElementById('daySnacks')?.checked) checked++;
+      // No Alcohol
+      if (on('noAlcohol')) {
+        total++;
+        if (document.getElementById('noAlcohol')?.checked) checked++;
+      }
 
-      // 8. Healthy night snacks
-      if (document.getElementById('nightSnacks')?.checked) checked++;
+      // Supplements
+      if (on('supplements')) {
+        total++;
+        const suppsChecked = ['creatine', 'vitaminD', 'no2', 'psyllium', 'zinc', 'prebiotic']
+          .filter(id => document.getElementById(id)?.checked).length;
+        if (suppsChecked === 6) checked++;
+      }
 
-      // 9. Supplements: all 6 (creatine, vitD, NO2, psyllium, zinc, prebiotic)
-      const suppsChecked = ['creatine', 'vitaminD', 'no2', 'psyllium', 'zinc', 'prebiotic']
-        .filter(id => document.getElementById(id)?.checked).length;
-      if (suppsChecked === 6) checked++;
+      // Email Sprints
+      if (on('emailSprints')) {
+        total++;
+        const emailSprintsCount = (typeof emailSprintCount !== 'undefined') ? emailSprintCount : 0;
+        if (emailSprintsCount >= getGoal('emailSprintGoal', 3)) checked++;
+      }
 
-      // 10. Email sprints ≥ goal
-      const emailSprintGoalVal = typeof getGoalForToday === 'function' ? getGoalForToday('emailSprintGoal', 3) : ((typeof appSettings !== 'undefined' && appSettings.emailSprintGoal) ? appSettings.emailSprintGoal : 3);
-      const emailSprintsCount = (typeof emailSprintCount !== 'undefined') ? emailSprintCount : 0;
-      if (emailSprintsCount >= emailSprintGoalVal) checked++;
-      
+      // REHIT 2x10
+      if (on('rehit2x10')) {
+        total++;
+        if (document.getElementById('rehit2')?.checked) checked++;
+      }
+
+      // REHIT 3x10
+      if (on('rehit3x10')) {
+        total++;
+        if (document.getElementById('rehit3')?.checked) checked++;
+      }
+
+      // Reading (any reading entries logged)
+      if (on('reading')) {
+        total++;
+        const readingList = document.getElementById('readingList');
+        if (readingList && readingList.children.length > 0) checked++;
+      }
+
+      // Meditation
+      if (on('meditation')) {
+        total++;
+        if (document.getElementById('meditation')?.checked) checked++;
+      }
+
       const progress = document.getElementById('completionProgress');
       const number = document.getElementById('completionNumber');
-      
+
       if (progress && number) {
         const circumference = 2 * Math.PI * 32; // r=32 = ~201
         let offset;
@@ -5852,6 +5954,7 @@
       readingGoal: 60,
       meditationGoal: 3,
       emailSprintGoal: 3,
+      emailSprintDuration: 2, // minutes
       // Goal frequencies
       sleepFreq: 'daily',
       aguaFreq: 'daily',
@@ -5865,6 +5968,22 @@
       readingFreq: 'weekly',
       meditationFreq: 'weekly',
       emailSprintFreq: 'daily',
+      // Which habits count toward the completion ring
+      completionRingHabits: {
+        sleep: true,
+        agua: true,
+        steps: true,
+        movement: true,
+        meals: true,
+        snacks: true,
+        noAlcohol: true,
+        supplements: true,
+        emailSprints: true,
+        rehit2x10: false,
+        rehit3x10: false,
+        reading: false,
+        meditation: false,
+      },
       sections: [
         { id: 'sleepSection', name: 'Sleep', icon: '🌙', visible: true, custom: false, group: 1 },
         { id: 'waterSection', name: 'Water', icon: '💧', visible: true, custom: false, group: 1 },
@@ -6044,6 +6163,7 @@
       document.getElementById('readingGoal').value = appSettings.readingGoal ?? 60;
       document.getElementById('meditationGoal').value = appSettings.meditationGoal ?? 3;
       document.getElementById('emailSprintGoal').value = appSettings.emailSprintGoal ?? 3;
+      document.getElementById('emailSprintDuration').value = appSettings.emailSprintDuration ?? 2;
 
       // Goal frequencies
       document.getElementById('sleepFreq').value = appSettings.sleepFreq || 'daily';
@@ -6058,6 +6178,13 @@
       document.getElementById('readingFreq').value = appSettings.readingFreq || 'weekly';
       document.getElementById('meditationFreq').value = appSettings.meditationFreq || 'weekly';
       document.getElementById('emailSprintFreq').value = appSettings.emailSprintFreq || 'daily';
+
+      // Completion ring toggles
+      const ringHabits = appSettings.completionRingHabits || {};
+      document.querySelectorAll('.ring-toggle-cb').forEach(cb => {
+        const key = cb.id.replace('ringToggle_', '');
+        cb.checked = ringHabits[key] !== false; // default to true for any missing keys
+      });
 
       window.scrollTo(0, 0);
       renderSectionList();
@@ -6929,7 +7056,8 @@
       { id: 'rehit3x10Goal', key: 'rehit3x10Goal', default: 3, name: 'REHIT 3x10' },
       { id: 'readingGoal', key: 'readingGoal', default: 60, name: 'Reading' },
       { id: 'meditationGoal', key: 'meditationGoal', default: 3, name: 'Meditation' },
-      { id: 'emailSprintGoal', key: 'emailSprintGoal', default: 3, name: 'Email Sprints', updateRing: true }
+      { id: 'emailSprintGoal', key: 'emailSprintGoal', default: 3, name: 'Email Sprints', updateRing: true },
+      { id: 'emailSprintDuration', key: 'emailSprintDuration', default: 2, name: 'Sprint Length' }
     ];
 
     goalInputConfigs.forEach(config => {
@@ -6946,6 +7074,18 @@
       };
       el.addEventListener('change', handler);
       el.addEventListener('input', handler);
+    });
+
+    // Completion ring toggle change handlers
+    document.querySelectorAll('.ring-toggle-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const key = cb.id.replace('ringToggle_', '');
+        if (!appSettings.completionRingHabits) appSettings.completionRingHabits = {};
+        appSettings.completionRingHabits[key] = cb.checked;
+        window.appSettings = appSettings;
+        saveSettings(appSettings);
+        if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+      });
     });
 
     // Per-day goal overrides
