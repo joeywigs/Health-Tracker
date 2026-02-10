@@ -6198,16 +6198,27 @@ async function populateForm(data) {
         const elapsed = Date.now() - (workout.startTime || 0);
         const duration = Math.round(elapsed / 60000);
         if (duration > 0 && duration < 180) {
-          currentMovements.push({
-            type: workout.type,
-            duration: duration,
-            startTime: workout.startTime
+          // Dedup: skip if a matching movement was already logged (e.g. by iOS Shortcut)
+          const isDuplicate = currentMovements.some(m => {
+            if (m.startTime && workout.startTime) {
+              if (m.startTime === workout.startTime || m.startTime === new Date(workout.startTime).toISOString()) return true;
+              const timeDiff = Math.abs(new Date(m.startTime).getTime() - workout.startTime);
+              if (m.type === workout.type && timeDiff < 5 * 60 * 1000) return true;
+            }
+            return false;
           });
-          renderMovementList();
-          triggerSaveSoon();
-          checkMovementGoal();
-          if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-          if (typeof showToast === 'function') showToast(`${workout.type} logged — ${duration} min`, 'success');
+          if (!isDuplicate) {
+            currentMovements.push({
+              type: workout.type,
+              duration: duration,
+              startTime: workout.startTime
+            });
+            renderMovementList();
+            triggerSaveSoon();
+            checkMovementGoal();
+            if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+            if (typeof showToast === 'function') showToast(`${workout.type} logged — ${duration} min`, 'success');
+          }
         }
       } catch (e) {
         localStorage.removeItem('pendingWorkout');
