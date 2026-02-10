@@ -186,6 +186,7 @@ let emailSprintCount = 0;
 let emailSprintTimer = null;
 let emailSprintSecondsLeft = 0;
 let emailSprintTotalSeconds = 0;
+let emailSprintEndTime = 0;
 let currentAverages = null;
 let lastBookTitle = localStorage.getItem('lastBookTitle') || "";
 let aguaCount = 0;
@@ -6612,6 +6613,7 @@ function startEmailSprint() {
   if (!btn || !timerEl) return;
 
   emailSprintTotalSeconds = getSprintDurationSeconds();
+  emailSprintEndTime = Date.now() + emailSprintTotalSeconds * 1000;
   emailSprintSecondsLeft = emailSprintTotalSeconds;
   btn.textContent = 'Cancel';
   btn.classList.add('running');
@@ -6624,7 +6626,7 @@ function startEmailSprint() {
   updateEmailSprintTimerDisplay();
 
   emailSprintTimer = setInterval(() => {
-    emailSprintSecondsLeft--;
+    emailSprintSecondsLeft = Math.max(0, Math.ceil((emailSprintEndTime - Date.now()) / 1000));
     updateEmailSprintTimerDisplay();
 
     if (emailSprintSecondsLeft <= 0) {
