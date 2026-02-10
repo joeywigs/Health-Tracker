@@ -185,6 +185,7 @@ let currentMovements = [];
 let emailSprintCount = 0;
 let emailSprintTimer = null;
 let emailSprintSecondsLeft = 0;
+let emailSprintTotalSeconds = 0;
 let currentAverages = null;
 let lastBookTitle = localStorage.getItem('lastBookTitle') || "";
 let aguaCount = 0;
@@ -6575,19 +6576,38 @@ function setupEmailSprintUI() {
   });
 
   updateEmailSprintDisplay();
+  // Set initial timer to configured duration
+  const timerEl = document.getElementById('emailSprintTimer');
+  if (timerEl && !emailSprintTimer) {
+    timerEl.textContent = formatSprintTime(getSprintDurationSeconds());
+  }
   console.log("✅ Email Sprint UI wired");
+}
+
+function getSprintDurationSeconds() {
+  const mins = (typeof appSettings !== 'undefined' && appSettings.emailSprintDuration) ? appSettings.emailSprintDuration : 2;
+  return Math.max(60, mins * 60); // minimum 1 minute
+}
+
+function formatSprintTime(totalSeconds) {
+  const min = Math.floor(totalSeconds / 60);
+  const sec = totalSeconds % 60;
+  return `${min}:${sec.toString().padStart(2, '0')}`;
 }
 
 function startEmailSprint() {
   const btn = document.getElementById('emailSprintBtn');
   const timerEl = document.getElementById('emailSprintTimer');
+  const progressBar = document.getElementById('emailSprintProgress');
   if (!btn || !timerEl) return;
 
-  emailSprintSecondsLeft = 120; // 2 minutes
+  emailSprintTotalSeconds = getSprintDurationSeconds();
+  emailSprintSecondsLeft = emailSprintTotalSeconds;
   btn.textContent = 'Cancel';
   btn.classList.add('running');
   timerEl.classList.add('running');
   timerEl.classList.remove('done');
+  if (progressBar) { progressBar.style.width = '100%'; progressBar.classList.remove('done'); }
 
   updateEmailSprintTimerDisplay();
 
@@ -6608,8 +6628,10 @@ function cancelEmailSprint() {
 
   const btn = document.getElementById('emailSprintBtn');
   const timerEl = document.getElementById('emailSprintTimer');
+  const progressBar = document.getElementById('emailSprintProgress');
   if (btn) { btn.textContent = 'Start Sprint'; btn.classList.remove('running'); }
-  if (timerEl) { timerEl.textContent = '2:00'; timerEl.classList.remove('running', 'done'); }
+  if (timerEl) { timerEl.textContent = formatSprintTime(getSprintDurationSeconds()); timerEl.classList.remove('running', 'done'); }
+  if (progressBar) { progressBar.style.width = '0%'; progressBar.classList.remove('done'); }
 }
 
 function completeEmailSprint() {
@@ -6622,14 +6644,16 @@ function completeEmailSprint() {
 
   const btn = document.getElementById('emailSprintBtn');
   const timerEl = document.getElementById('emailSprintTimer');
+  const progressBar = document.getElementById('emailSprintProgress');
   if (btn) { btn.textContent = 'Start Sprint'; btn.classList.remove('running'); }
   if (timerEl) { timerEl.textContent = '0:00'; timerEl.classList.remove('running'); timerEl.classList.add('done'); }
+  if (progressBar) { progressBar.style.width = '0%'; progressBar.classList.add('done'); }
 
   // Reset timer display after a moment
   setTimeout(() => {
-    if (!emailSprintTimer && timerEl) {
-      timerEl.textContent = '2:00';
-      timerEl.classList.remove('done');
+    if (!emailSprintTimer) {
+      if (timerEl) { timerEl.textContent = formatSprintTime(getSprintDurationSeconds()); timerEl.classList.remove('done'); }
+      if (progressBar) { progressBar.style.width = '0%'; progressBar.classList.remove('done'); }
     }
   }, 2000);
 
@@ -6641,9 +6665,14 @@ function completeEmailSprint() {
 function updateEmailSprintTimerDisplay() {
   const timerEl = document.getElementById('emailSprintTimer');
   if (!timerEl) return;
-  const min = Math.floor(emailSprintSecondsLeft / 60);
-  const sec = emailSprintSecondsLeft % 60;
-  timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+  timerEl.textContent = formatSprintTime(emailSprintSecondsLeft);
+
+  // Update progress bar
+  const progressBar = document.getElementById('emailSprintProgress');
+  if (progressBar && emailSprintTotalSeconds > 0) {
+    const pct = (emailSprintSecondsLeft / emailSprintTotalSeconds) * 100;
+    progressBar.style.width = `${pct}%`;
+  }
 }
 
 function updateEmailSprintDisplay() {
