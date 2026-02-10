@@ -659,6 +659,8 @@ async function calculate7DayAverages(dateStr, env) {
   let lastWeekRehit = 0;
   let movementValues = [];
   let lastWeekMovements = [];
+  let readingMins = 0;
+  let lastWeekReadingMins = 0;
 
   // Fetch up to 14 days of data
   const dates = [];
@@ -668,9 +670,10 @@ async function calculate7DayAverages(dateStr, env) {
     dates.push(normalizeDate(formatDateForKV(d)));
   }
 
-  const [dailyData, movementsData] = await Promise.all([
+  const [dailyData, movementsData, readingsData] = await Promise.all([
     Promise.all(dates.map(d => env.HABIT_DATA.get(`daily:${d}`, "json"))),
     Promise.all(dates.map(d => env.HABIT_DATA.get(`movements:${d}`, "json"))),
+    Promise.all(dates.map(d => env.HABIT_DATA.get(`readings:${d}`, "json"))),
   ]);
 
   dailyData.forEach((data, i) => {
@@ -695,11 +698,19 @@ async function calculate7DayAverages(dateStr, env) {
       if (data["Afternoon Movement Duration"]) movMinutes += parseInt(data["Afternoon Movement Duration"]) || 0;
     }
 
+    // Sum reading minutes from readings array
+    const rdArr = readingsData[i];
+    let rdMins = 0;
+    if (rdArr && Array.isArray(rdArr)) {
+      rdMins = rdArr.reduce((sum, r) => sum + (parseInt(r.duration || r["duration (min)"] || r["Duration"] || 0) || 0), 0);
+    }
+
     if (isThisWeek) {
       if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
       if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
       if (rehit && rehit !== "") rehitCount++;
       movementValues.push(movMinutes);
+      readingMins += rdMins;
     }
 
     if (isLastWeek) {
@@ -707,6 +718,7 @@ async function calculate7DayAverages(dateStr, env) {
       if (!isNaN(steps) && steps > 0) lastWeekSteps.push(steps);
       if (rehit && rehit !== "") lastWeekRehit++;
       lastWeekMovements.push(movMinutes);
+      lastWeekReadingMins += rdMins;
     }
   });
 
@@ -717,11 +729,13 @@ async function calculate7DayAverages(dateStr, env) {
     steps: stepsValues.length ? Math.round(avg(stepsValues)) : null,
     movements: avg(movementValues),
     rehitWeek: rehitCount,
+    readingWeek: readingMins,
     lastWeek: {
       sleep: avg(lastWeekSleep),
       steps: lastWeekSteps.length ? Math.round(avg(lastWeekSteps)) : null,
       movements: avg(lastWeekMovements),
       rehitWeek: lastWeekRehit,
+      readingWeek: lastWeekReadingMins,
     }
   };
 }
