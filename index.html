@@ -3011,6 +3011,21 @@
       color: #ff6b6b;
     }
     .email-sprint-btn.running:hover { background: rgba(255, 107, 107, 0.25); }
+    .email-sprint-done-btn {
+      display: none;
+      padding: 12px 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #52b788;
+      background: rgba(82, 183, 136, 0.15);
+      color: #52b788;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .email-sprint-done-btn:hover { background: rgba(82, 183, 136, 0.25); }
+    .email-sprint-done-btn.visible { display: inline-block; }
     body.day-mode .email-sprint-timer { color: #9ca3af; }
     body.day-mode .email-sprint-timer.running { color: #4d9de0; }
     body.day-mode .email-sprint-btn { background: rgba(77, 157, 224, 0.1); }
@@ -4367,6 +4382,7 @@
           <div class="email-sprint-timer" id="emailSprintTimer">2:00</div>
           <div class="email-sprint-progress-track"><div class="email-sprint-progress-bar" id="emailSprintProgress"></div></div>
           <button type="button" class="email-sprint-btn" id="emailSprintBtn">Start Sprint</button>
+          <button type="button" class="email-sprint-done-btn" id="emailSprintDoneBtn">Mark Done ✓</button>
         </div>
       </div>
     </div>

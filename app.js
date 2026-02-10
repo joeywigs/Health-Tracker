@@ -6575,6 +6575,16 @@ function setupEmailSprintUI() {
     }
   });
 
+  const doneBtn = document.getElementById('emailSprintDoneBtn');
+  if (doneBtn) {
+    doneBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (emailSprintTimer) {
+        completeEmailSprint();
+      }
+    });
+  }
+
   updateEmailSprintDisplay();
   // Set initial timer to configured duration
   const timerEl = document.getElementById('emailSprintTimer');
@@ -6608,6 +6618,8 @@ function startEmailSprint() {
   timerEl.classList.add('running');
   timerEl.classList.remove('done');
   if (progressBar) { progressBar.style.width = '100%'; progressBar.classList.remove('done'); }
+  const doneBtn = document.getElementById('emailSprintDoneBtn');
+  if (doneBtn) doneBtn.classList.add('visible');
 
   updateEmailSprintTimerDisplay();
 
@@ -6632,6 +6644,8 @@ function cancelEmailSprint() {
   if (btn) { btn.textContent = 'Start Sprint'; btn.classList.remove('running'); }
   if (timerEl) { timerEl.textContent = formatSprintTime(getSprintDurationSeconds()); timerEl.classList.remove('running', 'done'); }
   if (progressBar) { progressBar.style.width = '0%'; progressBar.classList.remove('done'); }
+  const doneBtn = document.getElementById('emailSprintDoneBtn');
+  if (doneBtn) doneBtn.classList.remove('visible');
 }
 
 function completeEmailSprint() {
@@ -6648,6 +6662,8 @@ function completeEmailSprint() {
   if (btn) { btn.textContent = 'Start Sprint'; btn.classList.remove('running'); }
   if (timerEl) { timerEl.textContent = '0:00'; timerEl.classList.remove('running'); timerEl.classList.add('done'); }
   if (progressBar) { progressBar.style.width = '0%'; progressBar.classList.add('done'); }
+  const doneBtn = document.getElementById('emailSprintDoneBtn');
+  if (doneBtn) doneBtn.classList.remove('visible');
 
   // Reset timer display after a moment
   setTimeout(() => {
