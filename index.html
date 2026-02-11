@@ -995,15 +995,6 @@
       box-shadow: 0 0 20px var(--glow-pink);
       transition: width 0.6s;
     }
-    .sync-btns { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
-    .sync-shortcut-btn { padding: 5px 14px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: var(--radius-pill); background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
-    .sync-shortcut-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); border-color: var(--accent-teal); }
-    .sync-shortcut-btn.syncing { opacity: 0.5; pointer-events: none; }
-    .sync-shortcut-btn.done { border-color: var(--accent-teal); color: var(--accent-teal); }
-    body.day-mode .sync-shortcut-btn { background: rgba(0,0,0,0.03); }
-    body.day-mode .sync-shortcut-btn:hover { background: rgba(0,0,0,0.06); border-color: var(--accent-orange); color: var(--accent-orange); }
-    body.day-mode .sync-shortcut-btn.done { border-color: var(--accent-orange); color: var(--accent-orange); }
-    
     /* Cards - Glowing borders on hover */
     .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     
@@ -4410,10 +4401,6 @@
           <input type="number" id="movementAddDuration" placeholder="min" min="1" max="120" inputmode="numeric">
           <button type="button" class="movement-add-btn" id="movementAddBtn">+</button>
         </div>
-        <div class="sync-btns" style="margin-top:10px">
-          <button type="button" class="sync-shortcut-btn" id="startWalkBtn">🚶 Start Walk</button>
-          <button type="button" class="sync-shortcut-btn" id="startCyclingBtn">🚴 Start Cycling</button>
-        </div>
         <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span> min</div>
       </div>
     </div>
@@ -7089,17 +7076,6 @@
     document.getElementById('headerMenuBtn')?.addEventListener('click', openNavDrawer);
     document.getElementById('stickyMenuBtn')?.addEventListener('click', openNavDrawer);
     navBackdrop?.addEventListener('click', closeNavDrawer);
-
-    // Start workout shortcut buttons (x-callback-url returns to app)
-    const appReturnUrl = encodeURIComponent(window.location.href.split('?')[0]);
-    document.getElementById('startWalkBtn')?.addEventListener('click', function() {
-      localStorage.setItem('pendingWorkout', JSON.stringify({ type: 'Walk', startTime: Date.now() }));
-      window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('Start Outdoor Walk')}&x-success=${appReturnUrl}`;
-    });
-    document.getElementById('startCyclingBtn')?.addEventListener('click', function() {
-      localStorage.setItem('pendingWorkout', JSON.stringify({ type: 'Carol Bike', startTime: Date.now() }));
-      window.location.href = `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('Start Cycling')}&x-success=${appReturnUrl}`;
-    });
 
     // Drawer navigation items
     document.querySelectorAll('.nav-drawer-item').forEach(item => {

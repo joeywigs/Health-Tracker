@@ -158,13 +158,6 @@ async function handlePost(request, env, corsHeaders) {
     return await syncWorkouts(body.workouts, body.date, env, corsHeaders);
   }
 
-  // iOS Shortcut endpoint - log a movement break from Apple Fitness
-  if (action === "movement") {
-    if (!body.type) {
-      return jsonResponse({ error: true, message: "Missing type", received: body }, 400, corsHeaders);
-    }
-    return await logMovement(body, env, corsHeaders);
-  }
 
   // iOS Shortcut endpoint - sync body composition data
   if (action === "body") {
@@ -347,22 +340,9 @@ async function saveDay(data, env, corsHeaders) {
     env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily)),
   ];
 
-  // Save movements if provided (deduplicate first)
+  // Save movements if provided
   if (data.movements && Array.isArray(data.movements)) {
-    const seen = [];
-    const dedupedMovements = data.movements.filter(m => {
-      const dominated = seen.some(s => {
-        if (s.startTime && m.startTime && s.startTime === m.startTime) return true;
-        if (s.type === m.type && s.duration === m.duration && s.startTime && m.startTime) {
-          const timeDiff = Math.abs(new Date(s.startTime).getTime() - new Date(m.startTime).getTime());
-          if (timeDiff < 5 * 60 * 1000) return true;
-        }
-        return false;
-      });
-      if (!dominated) { seen.push(m); return true; }
-      return false;
-    });
-    saves.push(env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(dedupedMovements)));
+    saves.push(env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(data.movements)));
   }
 
   // Save readings if provided
@@ -481,94 +461,6 @@ async function syncWorkouts(workouts, dateStr, env, corsHeaders) {
   }, 200, corsHeaders);
 }
 
-// ===== Log Movement Break (from iOS Shortcut or app) =====
-async function logMovement(body, env, corsHeaders) {
-  // Map Apple Fitness workout types to app movement types
-  const typeMap = {
-    "walking": "Walk",
-    "walk": "Walk",
-    "hiking": "Walk",
-    "cycling": "Carol Bike",
-    "indoor cycling": "Carol Bike",
-    "indoor cycle": "Carol Bike",
-    "carol bike": "Carol Bike",
-    "traditional strength training": "Other",
-    "strength training": "Other",
-    "running": "Other",
-    "yoga": "Other",
-  };
-
-  const rawType = (body.type || "").split(/[\n\r,]+/)[0].trim();
-  const mappedType = typeMap[rawType.toLowerCase()] || "Other";
-  const duration = Math.round(parseFloat(body.duration) || 0);
-
-  // Parse startTime - Apple Shortcuts may send various formats
-  // If no startTime provided, use current server time for dedup
-  let parsedStart = null;
-  if (body.startTime) {
-    let d = new Date(body.startTime);
-    if (isNaN(d.getTime())) {
-      const cleaned = String(body.startTime).replace(/\s+at\s+/i, " ");
-      d = new Date(cleaned);
-    }
-    if (!isNaN(d.getTime())) {
-      parsedStart = d;
-    }
-  }
-  if (!parsedStart) {
-    parsedStart = new Date();
-  }
-
-  // Determine date
-  let normalizedDate;
-  if (body.date) {
-    normalizedDate = normalizeDate(body.date);
-  } else {
-    normalizedDate = normalizeDate(formatDateForKV(parsedStart));
-  }
-
-  // Append to movements array for this date (deduplicate)
-  let movements = await env.HABIT_DATA.get(`movements:${normalizedDate}`, "json") || [];
-
-  const entry = {
-    type: mappedType,
-    duration: duration,
-    startTime: parsedStart.toISOString(),
-  };
-
-  // Dedup: exact startTime match OR same type+duration within 5-minute window
-  const alreadyExists = movements.some(m => {
-    if (m.startTime === entry.startTime) return true;
-    if (m.type === entry.type && m.duration === entry.duration && m.startTime) {
-      const timeDiff = Math.abs(new Date(m.startTime).getTime() - parsedStart.getTime());
-      if (timeDiff < 5 * 60 * 1000) return true;
-    }
-    return false;
-  });
-  if (alreadyExists) {
-    return jsonResponse({
-      success: true,
-      date: normalizedDate,
-      duplicate: true,
-      message: `Duplicate movement skipped (${mappedType} ${duration}min)`,
-      type: mappedType,
-      duration: duration,
-      movementCount: movements.length,
-    }, 200, corsHeaders);
-  }
-
-  movements.push(entry);
-  await env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(movements));
-
-  return jsonResponse({
-    success: true,
-    date: normalizedDate,
-    entry,
-    rawType,
-    count: movements.length,
-    message: `Logged ${mappedType} (${duration} min) for ${normalizedDate} — ${movements.length} total today`
-  }, 200, corsHeaders);
-}
 
 // ===== Log Body Composition (from iOS Shortcut) =====
 async function logBody(body, env, corsHeaders) {
