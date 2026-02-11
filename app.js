@@ -6191,42 +6191,6 @@ async function populateForm(data) {
     }
     renderMovementList();
 
-    // Check if returning from a workout shortcut (after movements are loaded)
-    const pendingWorkout = localStorage.getItem('pendingWorkout');
-    if (pendingWorkout) {
-      try {
-        const workout = JSON.parse(pendingWorkout);
-        localStorage.removeItem('pendingWorkout');
-        const elapsed = Date.now() - (workout.startTime || 0);
-        const duration = Math.round(elapsed / 60000);
-        if (duration > 0 && duration < 180) {
-          // Dedup: skip if a matching movement was already logged (e.g. by iOS Shortcut)
-          const isDuplicate = currentMovements.some(m => {
-            if (m.startTime && workout.startTime) {
-              if (m.startTime === workout.startTime || m.startTime === new Date(workout.startTime).toISOString()) return true;
-              const timeDiff = Math.abs(new Date(m.startTime).getTime() - workout.startTime);
-              if (m.type === workout.type && timeDiff < 5 * 60 * 1000) return true;
-            }
-            return false;
-          });
-          if (!isDuplicate) {
-            currentMovements.push({
-              type: workout.type,
-              duration: duration,
-              startTime: workout.startTime
-            });
-            renderMovementList();
-            triggerSaveSoon();
-            checkMovementGoal();
-            if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
-            if (typeof showToast === 'function') showToast(`${workout.type} logged — ${duration} min`, 'success');
-          }
-        }
-      } catch (e) {
-        localStorage.removeItem('pendingWorkout');
-      }
-    }
-
     // Clear grooming checkboxes
     const haircutEl = document.getElementById("groomingHaircut");
     const beardEl = document.getElementById("groomingBeardTrim");
@@ -6809,6 +6773,7 @@ function updateAverages(averages) {
     if (avgStepsEl) avgStepsEl.textContent = "--";
     if (avgMovementsEl) avgMovementsEl.textContent = "--";
     if (rehitWeekEl) rehitWeekEl.textContent = "--";
+    updateReadingWeeklyDisplay();
     return;
   }
 
@@ -6865,11 +6830,12 @@ function updateAverages(averages) {
   }
 
   // Reading: set base (server week total minus today's readings, which are already in the readings array)
+  // If server doesn't provide readingWeek (old worker), base stays 0 and only today's mins show
   if (averages.readingWeek !== undefined) {
     readingWeekBase = (averages.readingWeek || 0) - getTodayReadingMins();
     if (readingWeekBase < 0) readingWeekBase = 0;
-    updateReadingWeeklyDisplay();
   }
+  updateReadingWeeklyDisplay();
 }
 
 function markSleepSaved() {
