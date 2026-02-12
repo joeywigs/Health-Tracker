@@ -1920,6 +1920,53 @@
       background: rgba(196, 113, 237, 0.1);
     }
 
+    /* Reading History */
+    .reading-history-date {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 12px 0 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .reading-history-date:first-child { padding-top: 0; }
+    .reading-history-entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .reading-history-book {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .reading-history-duration {
+      flex-shrink: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #c471ed;
+      margin-left: 12px;
+    }
+    .reading-history-summary {
+      text-align: center;
+      padding: 12px 0;
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .reading-history-summary strong {
+      color: #c471ed;
+      font-size: 18px;
+    }
+
     .big-input { width: auto; flex: 1; min-width: 0; background: transparent; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: white; outline: none; transition: color 0.3s; }
     .big-input::placeholder { color: var(--text-muted); }
     .big-input:focus { color: var(--accent-teal); }
@@ -4702,6 +4749,11 @@
           <div class="settings-card-label">Data</div>
           <div class="settings-card-desc">Export & import</div>
         </div>
+        <div class="settings-card" data-settings-page="readingHistory">
+          <div class="settings-card-icon">📖</div>
+          <div class="settings-card-label">Reading History</div>
+          <div class="settings-card-desc">View & export sessions</div>
+        </div>
       </div>
     </div>
 
@@ -4868,6 +4920,22 @@
           <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
           <input type="file" id="importSettingsFile" accept=".json" style="display:none">
           <button type="button" class="btn btn-secondary" id="exportReflectionsBtn" style="width:100%;margin-bottom:8px">Export Reflections</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subpage: Reading History -->
+    <div class="settings-subpage" id="settingsSub_readingHistory">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#6dd5ed;--icon-glow:var(--glow-purple)">📖</div><span class="sec-name">Reading History</span></div></div>
+        <div class="sec-content">
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button type="button" class="btn btn-secondary" id="loadReadingHistoryBtn" style="flex:1">Load Reading History</button>
+            <button type="button" class="btn btn-secondary" id="exportReadingHistoryBtn" style="flex:1" disabled>Export CSV</button>
+          </div>
+          <div id="readingHistoryStatus" style="text-align:center;color:var(--text-muted);font-size:13px;padding:8px;display:none"></div>
+          <div id="readingHistoryList"></div>
         </div>
       </div>
     </div>
@@ -8476,6 +8544,105 @@
         btn.disabled = false;
         btn.textContent = origText;
       }
+    });
+
+    // Reading History - load and export
+    let _readingHistoryData = [];
+
+    document.getElementById('loadReadingHistoryBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('loadReadingHistoryBtn');
+      const statusEl = document.getElementById('readingHistoryStatus');
+      const listEl = document.getElementById('readingHistoryList');
+      const exportBtn = document.getElementById('exportReadingHistoryBtn');
+      const origText = btn.textContent;
+      btn.disabled = true;
+      statusEl.style.display = 'block';
+      listEl.innerHTML = '';
+      _readingHistoryData = [];
+
+      try {
+        const startDate = new Date('2026-01-19');
+        startDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let d = new Date(today); d >= startDate; d.setDate(d.getDate() - 1)) {
+          const dateStr = formatDateForAPI(d);
+          statusEl.textContent = `Loading ${dateStr}...`;
+          try {
+            const result = await apiGet('load', { date: dateStr });
+            const rdArr = result?.readings;
+            if (rdArr && Array.isArray(rdArr) && rdArr.length > 0) {
+              rdArr.forEach(r => {
+                _readingHistoryData.push({
+                  date: dateStr,
+                  book: r.book ?? r['Book'] ?? r['book'] ?? '',
+                  duration: parseInt(r.duration ?? r['duration (min)'] ?? r['Duration'] ?? r['Duration (min)']) || 0,
+                  time: r.time ?? r['time'] ?? ''
+                });
+              });
+            }
+          } catch (e) { /* skip */ }
+        }
+
+        if (_readingHistoryData.length === 0) {
+          statusEl.textContent = 'No reading sessions found.';
+          exportBtn.disabled = true;
+          return;
+        }
+
+        // Render summary
+        const totalMins = _readingHistoryData.reduce((s, r) => s + r.duration, 0);
+        const books = new Set(_readingHistoryData.map(r => r.book).filter(Boolean));
+
+        let html = `<div class="reading-history-summary">
+          <strong>${_readingHistoryData.length}</strong> sessions &nbsp;·&nbsp;
+          <strong>${totalMins}</strong> min &nbsp;·&nbsp;
+          <strong>${books.size}</strong> book${books.size !== 1 ? 's' : ''}
+        </div>`;
+
+        // Group by date
+        let currentDate = '';
+        _readingHistoryData.forEach(r => {
+          if (r.date !== currentDate) {
+            currentDate = r.date;
+            html += `<div class="reading-history-date">${r.date}</div>`;
+          }
+          html += `<div class="reading-history-entry">
+            <span class="reading-history-book">${r.book || 'Untitled'}</span>
+            <span class="reading-history-duration">${r.duration} min</span>
+          </div>`;
+        });
+
+        listEl.innerHTML = html;
+        statusEl.style.display = 'none';
+        exportBtn.disabled = false;
+      } catch (err) {
+        statusEl.textContent = 'Failed to load: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    });
+
+    document.getElementById('exportReadingHistoryBtn')?.addEventListener('click', () => {
+      if (_readingHistoryData.length === 0) return;
+
+      const rows = [['Date', 'Book', 'Duration (min)', 'Time']];
+      _readingHistoryData.forEach(r => {
+        rows.push([r.date, `"${(r.book || '').replace(/"/g, '""')}"`, r.duration, r.time]);
+      });
+
+      const csv = rows.map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reading-history-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      if (typeof showToast === 'function') showToast(`Exported ${_readingHistoryData.length} reading sessions`, 'success');
     });
 
     // Initialize section settings on load
