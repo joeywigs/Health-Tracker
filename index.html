@@ -1073,10 +1073,6 @@
       font-size: 15px;
       font-weight: 600;
     }
-    .rehit-week-count {
-      margin-top: auto;
-      padding-top: 0;
-    }
     .rehit-right {
       flex: 1;
       display: flex;
@@ -4336,7 +4332,6 @@
             <div class="chip rehit-chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
             <div class="chip rehit-chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
           </div>
-          <div class="card-avg rehit-week-count">This week: <span id="rehitWeek">--</span></div>
         </div>
         <div class="rehit-right">
           <div class="rehit-stats-grid">
@@ -4872,6 +4867,7 @@
           <button type="button" class="btn btn-secondary" id="exportSettingsBtn" style="width:100%;margin-bottom:8px">Export Settings</button>
           <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
           <input type="file" id="importSettingsFile" accept=".json" style="display:none">
+          <button type="button" class="btn btn-secondary" id="exportReflectionsBtn" style="width:100%;margin-bottom:8px">Export Reflections</button>
         </div>
       </div>
     </div>
@@ -8428,7 +8424,60 @@
       };
       reader.readAsText(file);
     });
-    
+
+    // Export Reflections
+    document.getElementById('exportReflectionsBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('exportReflectionsBtn');
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Exporting...';
+
+      try {
+        const entries = [];
+        const startDate = new Date('2026-01-19');
+        startDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let d = new Date(today); d >= startDate; d.setDate(d.getDate() - 1)) {
+          const dateStr = formatDateForAPI(d);
+          btn.textContent = `Loading ${dateStr}...`;
+          try {
+            const result = await apiGet('load', { date: dateStr });
+            const text = result?.reflections || result?.daily?.['Reflections'] || '';
+            if (text.trim()) {
+              entries.push({ date: dateStr, text: text.trim() });
+            }
+          } catch (e) { /* skip failed days */ }
+        }
+
+        if (entries.length === 0) {
+          alert('No reflections found.');
+          return;
+        }
+
+        let output = 'Reflections Export\n==================\n\n';
+        entries.forEach(e => {
+          output += `${e.date}\n${'-'.repeat(e.date.length)}\n${e.text}\n\n`;
+        });
+
+        const blob = new Blob([output], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reflections-export-${new Date().toISOString().slice(0, 10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        if (typeof showToast === 'function') showToast(`Exported ${entries.length} reflections`, 'success');
+      } catch (err) {
+        alert('Export failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    });
+
     // Initialize section settings on load
     document.addEventListener('DOMContentLoaded', () => {
       // Recreate any custom sections first (migrate if needed)

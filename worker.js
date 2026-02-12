@@ -544,11 +544,9 @@ async function calculate7DayAverages(dateStr, env) {
   // Collect data for this week and last week
   let sleepValues = [];
   let stepsValues = [];
-  let rehitCount = 0;
 
   let lastWeekSleep = [];
   let lastWeekSteps = [];
-  let lastWeekRehit = 0;
   let movementValues = [];
   let lastWeekMovements = [];
   let readingMins = 0;
@@ -578,7 +576,6 @@ async function calculate7DayAverages(dateStr, env) {
 
     const sleep = data ? parseFloat(data["Hours of Sleep"]) : NaN;
     const steps = data ? parseInt(data["Steps"], 10) : NaN;
-    const rehit = data ? data["REHIT 2x10"] : "";
 
     // Sum movement duration in minutes: new array format first, fall back to old daily fields
     const movArr = movementsData[i];
@@ -600,7 +597,6 @@ async function calculate7DayAverages(dateStr, env) {
     if (isThisWeek) {
       if (!isNaN(sleep) && sleep > 0) sleepValues.push(sleep);
       if (!isNaN(steps) && steps > 0) stepsValues.push(steps);
-      if (rehit && rehit !== "") rehitCount++;
       movementValues.push(movMinutes);
       readingMins += rdMins;
     }
@@ -608,7 +604,6 @@ async function calculate7DayAverages(dateStr, env) {
     if (isLastWeek) {
       if (!isNaN(sleep) && sleep > 0) lastWeekSleep.push(sleep);
       if (!isNaN(steps) && steps > 0) lastWeekSteps.push(steps);
-      if (rehit && rehit !== "") lastWeekRehit++;
       lastWeekMovements.push(movMinutes);
       lastWeekReadingMins += rdMins;
     }
@@ -620,13 +615,11 @@ async function calculate7DayAverages(dateStr, env) {
     sleep: avg(sleepValues),
     steps: stepsValues.length ? Math.round(avg(stepsValues)) : null,
     movements: avg(movementValues),
-    rehitWeek: rehitCount,
     readingWeek: readingMins,
     lastWeek: {
       sleep: avg(lastWeekSleep),
       steps: lastWeekSteps.length ? Math.round(avg(lastWeekSteps)) : null,
       movements: avg(lastWeekMovements),
-      rehitWeek: lastWeekRehit,
       readingWeek: lastWeekReadingMins,
     }
   };
