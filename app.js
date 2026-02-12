@@ -6766,13 +6766,11 @@ function updateAverages(averages) {
   const avgSleepEl = document.getElementById("avgSleep");
   const avgStepsEl = document.getElementById("avgSteps");
   const avgMovementsEl = document.getElementById("avgMovements");
-  const rehitWeekEl = document.getElementById("rehitWeek");
 
   if (!averages) {
     if (avgSleepEl) avgSleepEl.textContent = "--";
     if (avgStepsEl) avgStepsEl.textContent = "--";
     if (avgMovementsEl) avgMovementsEl.textContent = "--";
-    if (rehitWeekEl) rehitWeekEl.textContent = "--";
     updateReadingWeeklyDisplay();
     return;
   }
@@ -6818,15 +6816,6 @@ function updateAverages(averages) {
     const display = (num === null || Number.isNaN(num)) ? "--" : num.toFixed(1);
     const comparison = formatComparison(num, lastNum, 1);
     avgMovementsEl.innerHTML = display + comparison;
-  }
-
-  // REHIT sessions this week with comparison
-  if (rehitWeekEl) {
-    const v = averages.rehitWeek;
-    const lastV = averages.lastWeek?.rehitWeek;
-    const display = (v === null || v === undefined || v === "") ? "--" : String(v);
-    const comparison = formatComparison(v, lastV, 0);
-    rehitWeekEl.innerHTML = display + comparison;
   }
 
   // Reading: set base (server week total minus today's readings, which are already in the readings array)
