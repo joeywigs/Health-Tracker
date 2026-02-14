@@ -183,8 +183,6 @@ let readings = [];
 let readingWeekBase = 0; // weekly reading mins excluding today (set on load)
 let honeyDos = [];
 let currentMovements = [];
-let currentDumbbell = [];
-window._dumbbellCarriedForward = false;
 let emailSprintCount = 0;
 let emailSprintTimer = null;
 let emailSprintSecondsLeft = 0;
@@ -5834,9 +5832,6 @@ function buildPayloadFromUI() {
     // Movement breaks (list)
     movements: currentMovements,
 
-    // Dumbbell exercises (only send if user has interacted, not carry-forward)
-    ...(window._dumbbellCarriedForward ? {} : { dumbbell: currentDumbbell }),
-
     // Email sprints
     emailSprints: emailSprintCount,
 
@@ -6153,8 +6148,6 @@ async function populateForm(data) {
   readingWeekBase = 0;
   honeyDos = [];
   currentMovements = [];
-  currentDumbbell = [];
-  window._dumbbellCarriedForward = false;
   currentAverages = null;
 
   // Cancel any pending autosave so stale data from the previous date
@@ -6209,9 +6202,6 @@ async function populateForm(data) {
       currentMovements = [];
     }
     renderMovementList();
-
-    // Dumbbell exercises - load or carry-forward
-    loadDumbbellData(data);
 
     // Clear grooming checkboxes
     const haircutEl = document.getElementById("groomingHaircut");
@@ -6364,9 +6354,6 @@ async function populateForm(data) {
   }
   console.log("Loading movement data:", currentMovements);
   renderMovementList();
-
-  // Dumbbell exercises - load or carry-forward
-  loadDumbbellData(data);
 
   // Lists
   readings = (data?.readings || []).map(r => ({
@@ -6563,89 +6550,6 @@ function setupMovementUI() {
   }
   renderMovementList();
   console.log("✅ Movement UI wired");
-}
-
-// =====================================
-// DUMBBELL EXERCISES
-// =====================================
-function getDumbbellExercises() {
-  if (typeof appSettings !== 'undefined' && appSettings.dumbbellExercises) {
-    return appSettings.dumbbellExercises;
-  }
-  return [
-    { id: 1, name: 'Chest Press', order: 0 },
-    { id: 2, name: 'Shrugs', order: 1 },
-    { id: 3, name: 'Bent Over Row', order: 2 },
-  ];
-}
-
-function loadDumbbellData(data) {
-  const dbData = data?.dumbbell;
-  if (dbData && Array.isArray(dbData) && dbData.length > 0) {
-    currentDumbbell = dbData;
-    window._dumbbellCarriedForward = false;
-  } else if (data?.dumbbellCarryForward && Array.isArray(data.dumbbellCarryForward) && data.dumbbellCarryForward.length > 0) {
-    currentDumbbell = data.dumbbellCarryForward;
-    window._dumbbellCarriedForward = true;
-  } else {
-    currentDumbbell = [];
-    window._dumbbellCarriedForward = false;
-  }
-  renderDumbbellExercises();
-}
-
-function renderDumbbellExercises() {
-  const container = document.getElementById('dumbbellExercises');
-  if (!container) return;
-
-  const exercises = getDumbbellExercises();
-
-  container.innerHTML = exercises.map(ex => {
-    // Find existing data for this exercise
-    const exData = currentDumbbell.find(d => d.name === ex.name) || {};
-    return `<div class="dumbbell-exercise" data-exercise="${ex.name}">
-      <div class="dumbbell-exercise-name">${ex.name}</div>
-      <div class="dumbbell-inputs">
-        <div class="dumbbell-field">
-          <span class="dumbbell-label">Sets</span>
-          <input type="number" class="dumbbell-input" data-field="sets" inputmode="numeric" placeholder="--" value="${exData.sets || ''}" min="0" max="20">
-        </div>
-        <div class="dumbbell-field">
-          <span class="dumbbell-label">Reps</span>
-          <input type="number" class="dumbbell-input" data-field="reps" inputmode="numeric" placeholder="--" value="${exData.reps || ''}" min="0" max="100">
-        </div>
-        <div class="dumbbell-field">
-          <span class="dumbbell-label">Weight</span>
-          <input type="number" class="dumbbell-input" data-field="weight" inputmode="decimal" placeholder="--" value="${exData.weight || ''}" min="0" max="500" step="0.5">
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Wire input handlers
-  container.querySelectorAll('.dumbbell-input').forEach(input => {
-    input.addEventListener('input', () => {
-      window._dumbbellCarriedForward = false;
-      collectDumbbellFromUI();
-      triggerSaveSoon();
-    });
-  });
-}
-
-function collectDumbbellFromUI() {
-  const container = document.getElementById('dumbbellExercises');
-  if (!container) return;
-
-  currentDumbbell = [];
-  container.querySelectorAll('.dumbbell-exercise').forEach(exEl => {
-    const name = exEl.dataset.exercise;
-    const sets = exEl.querySelector('[data-field="sets"]')?.value || '';
-    const reps = exEl.querySelector('[data-field="reps"]')?.value || '';
-    const weight = exEl.querySelector('[data-field="weight"]')?.value || '';
-    if (sets || reps || weight) {
-      currentDumbbell.push({ name, sets, reps, weight });
-    }
-  });
 }
 
 function setupEmailSprintUI() {

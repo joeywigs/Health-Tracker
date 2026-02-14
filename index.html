@@ -2971,16 +2971,6 @@
     .body-input:focus { color: var(--accent-teal); }
     .body-pct { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: var(--accent-teal); }
 
-    /* Dumbbell Exercises */
-    .dumbbell-exercises { display: flex; flex-direction: column; gap: 10px; }
-    .dumbbell-exercise { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
-    .dumbbell-exercise-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-    .dumbbell-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .dumbbell-field { display: flex; flex-direction: column; gap: 2px; }
-    .dumbbell-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
-    .dumbbell-input { width: 100%; background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: var(--text); outline: none; text-align: center; transition: border-color 0.3s, color 0.3s; }
-    .dumbbell-input:focus { border-color: var(--accent-pink); color: var(--accent-pink); }
-
     /* Movement Breaks List */
     .movement-list { display: flex; flex-direction: column; gap: 6px; }
     .movement-item {
@@ -4457,13 +4447,6 @@
       </div>
     </div>
 
-    <div class="section" id="dumbbellSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">🏋️</div><span class="sec-name">Dumbbell Session</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div id="dumbbellExercises" class="dumbbell-exercises"></div>
-      </div>
-    </div>
-
     <div class="section" id="mentalHabitsSection">
       <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#6dd5ed;--icon-glow:var(--glow-purple)">📖</div><span class="sec-name">Reading</span></div><span class="sec-toggle">▼</span></div>
       <div class="sec-content collapsed">
@@ -4746,11 +4729,6 @@
           <div class="settings-card-label">Habit Stacks</div>
           <div class="settings-card-desc">Bedtime & morning</div>
         </div>
-        <div class="settings-card" data-settings-page="dumbbell">
-          <div class="settings-card-icon">🏋️</div>
-          <div class="settings-card-label">Dumbbell</div>
-          <div class="settings-card-desc">Exercises & schedule</div>
-        </div>
         <div class="settings-card" data-settings-page="theme">
           <div class="settings-card-icon">🌗</div>
           <div class="settings-card-label">Appearance</div>
@@ -4881,32 +4859,6 @@
           <div id="morningItemsList" class="section-list"></div>
           <div style="display:flex;gap:8px;margin-top:12px"><input type="text" class="input" id="newMorningItem" placeholder="New item name..." style="flex:1"><button type="button" class="btn btn-primary" id="addMorningItemBtn" style="padding:8px 16px">Add</button></div>
           <button type="button" id="showMorningRoutineBtn" class="btn" onclick="resetMorningRoutine()" style="margin-top:16px;width:100%;padding:10px;background:rgba(255,183,77,0.15);border:1px solid rgba(255,183,77,0.3);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer">☀️ Show Morning Routine Again</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Subpage: Dumbbell -->
-    <div class="settings-subpage" id="settingsSub_dumbbell">
-      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
-      <div class="section">
-        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-pink);--icon-end:var(--accent-orange);--icon-glow:var(--glow-pink)">🏋️</div><span class="sec-name">Dumbbell Exercises</span></div></div>
-        <div class="sec-content">
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Add, remove, and reorder your dumbbell exercises. Drag to reorder.</p>
-          <div id="dumbbellItemsList" class="section-list"></div>
-          <div style="display:flex;gap:8px;margin-top:12px"><input type="text" class="input" id="newDumbbellExercise" placeholder="New exercise name..." style="flex:1"><button type="button" class="btn btn-primary" id="addDumbbellExerciseBtn" style="padding:8px 16px">Add</button></div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal);--icon-end:var(--accent-pink);--icon-glow:var(--glow-teal)">📅</div><span class="sec-name">Schedule & Goal</span></div></div>
-        <div class="sec-content">
-          <div class="field"><label class="field-label">Show on Days</label><div class="day-picker" id="dumbbellDayPicker"><span class="day-chip selected" data-day="0">S</span><span class="day-chip selected" data-day="1">M</span><span class="day-chip selected" data-day="2">T</span><span class="day-chip selected" data-day="3">W</span><span class="day-chip selected" data-day="4">T</span><span class="day-chip selected" data-day="5">F</span><span class="day-chip selected" data-day="6">S</span></div></div>
-          <div class="field" style="margin-top:12px">
-            <label class="field-label">Weekly Goal</label>
-            <div style="display:flex;align-items:center;gap:8px">
-              <input type="number" class="input" id="dumbbellGoalInput" value="3" min="1" max="7" style="width:70px;text-align:center">
-              <span style="color:var(--text-muted);font-size:13px">sessions per week</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -6141,15 +6093,6 @@
       meditationGoal: 3,
       emailSprintGoal: 3,
       emailSprintDuration: 2, // minutes
-      // Dumbbell exercises
-      dumbbellExercises: [
-        { id: 1, name: 'Chest Press', order: 0 },
-        { id: 2, name: 'Shrugs', order: 1 },
-        { id: 3, name: 'Bent Over Row', order: 2 },
-      ],
-      dumbbellGoal: 3, // sessions per week
-      dumbbellFreq: 'weekly',
-      dumbbellDays: [0, 1, 2, 3, 4, 5, 6], // all days by default
       // Goal frequencies
       sleepFreq: 'daily',
       aguaFreq: 'daily',
@@ -6188,7 +6131,6 @@
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'mealsSection', name: 'Meals', icon: '🍽️', visible: true, custom: false },
         { id: 'movementSection', name: 'Movement Breaks', icon: '🚶', visible: true, custom: false },
-        { id: 'dumbbellSection', name: 'Dumbbell Session', icon: '🏋️', visible: true, custom: false },
         { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
         { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: true, custom: false },
         { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
@@ -7184,7 +7126,6 @@
       if (pageName === 'sections') renderSectionList();
       if (pageName === 'goals') { renderGoalsList(); initGoalDayOverrides(); }
       if (pageName === 'notes') loadHabitNotes();
-      if (pageName === 'dumbbell') initDumbbellSettings();
       window.scrollTo(0, 0);
     }
 
@@ -9135,225 +9076,6 @@
       // Check every minute if bedtime routine should show
       setInterval(checkBedtimeRoutine, 60000);
     });
-
-    // ===== Dumbbell Settings =====
-    function renderDumbbellSettings() {
-      const list = document.getElementById('dumbbellItemsList');
-      if (!list) return;
-
-      const exercises = appSettings.dumbbellExercises || [];
-      list.innerHTML = exercises.map((item, idx) => `
-        <div class="section-item" draggable="true" data-idx="${idx}" data-id="${item.id}">
-          <span class="section-item-drag">⋮⋮</span>
-          <input type="text" class="input dumbbell-edit-input" value="${item.name}" data-id="${item.id}" style="flex:1;padding:6px 10px;font-size:13px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-          <button class="section-item-delete" data-id="${item.id}">🗑️</button>
-        </div>
-      `).join('');
-
-      // Edit name handlers
-      list.querySelectorAll('.dumbbell-edit-input').forEach(input => {
-        input.addEventListener('change', (e) => {
-          const id = parseInt(e.target.dataset.id);
-          const item = appSettings.dumbbellExercises.find(i => i.id === id);
-          if (item) {
-            item.name = e.target.value.trim() || item.name;
-            saveSettings(appSettings);
-            renderDumbbellExercises();
-          }
-        });
-      });
-
-      // Delete handlers
-      list.querySelectorAll('.section-item-delete').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = parseInt(btn.dataset.id);
-          appSettings.dumbbellExercises = appSettings.dumbbellExercises.filter(i => i.id !== id);
-          appSettings.dumbbellExercises.forEach((item, i) => item.order = i);
-          saveSettings(appSettings);
-          renderDumbbellSettings();
-          renderDumbbellExercises();
-        });
-      });
-
-      setupDumbbellDragDrop();
-    }
-
-    function setupDumbbellDragDrop() {
-      const list = document.getElementById('dumbbellItemsList');
-      if (!list) return;
-
-      let draggedItem = null;
-
-      list.querySelectorAll('.section-item').forEach(item => {
-        item.addEventListener('dragstart', (e) => {
-          draggedItem = item;
-          item.classList.add('dragging');
-          e.dataTransfer.effectAllowed = 'move';
-        });
-
-        item.addEventListener('dragend', () => {
-          item.classList.remove('dragging');
-          list.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
-          draggedItem = null;
-        });
-
-        item.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          if (draggedItem && draggedItem !== item) {
-            item.classList.add('drag-over');
-          }
-        });
-
-        item.addEventListener('dragleave', () => {
-          item.classList.remove('drag-over');
-        });
-
-        item.addEventListener('drop', (e) => {
-          e.preventDefault();
-          item.classList.remove('drag-over');
-          if (!draggedItem || draggedItem === item) return;
-
-          const fromIdx = parseInt(draggedItem.dataset.idx);
-          const toIdx = parseInt(item.dataset.idx);
-
-          const [moved] = appSettings.dumbbellExercises.splice(fromIdx, 1);
-          appSettings.dumbbellExercises.splice(toIdx, 0, moved);
-          appSettings.dumbbellExercises.forEach((ex, i) => ex.order = i);
-          saveSettings(appSettings);
-          renderDumbbellSettings();
-          renderDumbbellExercises();
-        });
-
-        // Mobile touch events
-        const dragHandle = item.querySelector('.section-item-drag');
-        if (dragHandle) {
-          let touchCurrentItem = null;
-          dragHandle.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            touchCurrentItem = item;
-            item.classList.add('dragging');
-            if (navigator.vibrate) navigator.vibrate(30);
-          }, { passive: false });
-
-          dragHandle.addEventListener('touchmove', (e) => {
-            if (!touchCurrentItem) return;
-            e.preventDefault();
-            const touchY = e.touches[0].clientY;
-            list.querySelectorAll('.section-item').forEach(otherItem => {
-              if (otherItem === touchCurrentItem) return;
-              const rect = otherItem.getBoundingClientRect();
-              otherItem.classList.toggle('drag-over', touchY > rect.top && touchY < rect.bottom);
-            });
-          }, { passive: false });
-
-          dragHandle.addEventListener('touchend', (e) => {
-            if (!touchCurrentItem) return;
-            const touchY = e.changedTouches[0].clientY;
-            let targetItem = null;
-            list.querySelectorAll('.section-item').forEach(otherItem => {
-              if (otherItem === touchCurrentItem) return;
-              const rect = otherItem.getBoundingClientRect();
-              if (touchY > rect.top && touchY < rect.bottom) targetItem = otherItem;
-            });
-
-            if (targetItem) {
-              const fromIdx = parseInt(touchCurrentItem.dataset.idx);
-              const toIdx = parseInt(targetItem.dataset.idx);
-              const [moved] = appSettings.dumbbellExercises.splice(fromIdx, 1);
-              appSettings.dumbbellExercises.splice(toIdx, 0, moved);
-              appSettings.dumbbellExercises.forEach((ex, i) => ex.order = i);
-              saveSettings(appSettings);
-              renderDumbbellSettings();
-              renderDumbbellExercises();
-              if (navigator.vibrate) navigator.vibrate(50);
-            }
-
-            touchCurrentItem.classList.remove('dragging');
-            list.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
-            touchCurrentItem = null;
-          });
-        }
-      });
-    }
-
-    function addDumbbellExercise() {
-      const input = document.getElementById('newDumbbellExercise');
-      const name = input?.value.trim();
-      if (!name) return;
-
-      if (!appSettings.dumbbellExercises) appSettings.dumbbellExercises = [];
-      const maxId = appSettings.dumbbellExercises.reduce((max, i) => Math.max(max, i.id), 0);
-      appSettings.dumbbellExercises.push({
-        id: maxId + 1,
-        name: name,
-        order: appSettings.dumbbellExercises.length
-      });
-
-      saveSettings(appSettings);
-      renderDumbbellSettings();
-      renderDumbbellExercises();
-      input.value = '';
-    }
-
-    let _dumbbellSettingsInitialized = false;
-    function initDumbbellSettings() {
-      if (!_dumbbellSettingsInitialized) {
-        // Add exercise button (only once)
-        document.getElementById('addDumbbellExerciseBtn')?.addEventListener('click', addDumbbellExercise);
-        document.getElementById('newDumbbellExercise')?.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') { e.preventDefault(); addDumbbellExercise(); }
-        });
-
-        // Day picker click handlers (only once)
-        const dayPicker = document.getElementById('dumbbellDayPicker');
-        if (dayPicker) {
-          dayPicker.querySelectorAll('.day-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-              chip.classList.toggle('selected');
-              const selectedDays = [];
-              dayPicker.querySelectorAll('.day-chip.selected').forEach(c => {
-                selectedDays.push(parseInt(c.dataset.day));
-              });
-              appSettings.dumbbellDays = selectedDays;
-
-              // Update the dumbbell section's days in sections array
-              const sec = appSettings.sections.find(s => s.id === 'dumbbellSection');
-              if (sec) sec.days = selectedDays.length < 7 ? selectedDays : undefined;
-
-              saveSettings(appSettings);
-              applySectionSettings();
-            });
-          });
-        }
-
-        // Goal input handler (only once)
-        const goalInput = document.getElementById('dumbbellGoalInput');
-        if (goalInput) {
-          goalInput.addEventListener('change', () => {
-            appSettings.dumbbellGoal = parseInt(goalInput.value) || 3;
-            saveSettings(appSettings);
-          });
-        }
-
-        _dumbbellSettingsInitialized = true;
-      }
-
-      // Refresh visual state each time settings page is opened
-      const dayPicker = document.getElementById('dumbbellDayPicker');
-      if (dayPicker) {
-        const days = appSettings.dumbbellDays || [0,1,2,3,4,5,6];
-        dayPicker.querySelectorAll('.day-chip').forEach(chip => {
-          const day = parseInt(chip.dataset.day);
-          chip.classList.toggle('selected', days.includes(day));
-        });
-      }
-      const goalInput = document.getElementById('dumbbellGoalInput');
-      if (goalInput) {
-        goalInput.value = appSettings.dumbbellGoal || 3;
-      }
-
-      renderDumbbellSettings();
-    }
 
     // ===== Morning Habit Stack =====
     let morningItems = [
