@@ -5697,12 +5697,13 @@ async function saveData(payload) {
     normalizedDaily["REHIT 2x10"] = payload.rehit;
     delete normalizedDaily.rehit;
   }
-  // Preserve body fields from cache when form is empty (worker also preserves
-  // via existing fallback, but the local cache needs to match)
+  // Preserve non-body fields from cache when form is empty (worker also preserves
+  // via existing fallback, but the local cache needs to match).
+  // Body fields are NOT preserved here — carry-forward values should stay
+  // display-only and not be written back as real data for this date.
   const prevCached = cacheGet(formatDateForAPI(currentDate));
   if (prevCached?.daily) {
-    ["Weight (lbs)", "Waist", "Lean Mass (lbs)", "Body Fat (lbs)", "Bone Mass (lbs)", "Water (lbs)",
-     "Systolic", "Diastolic", "Heart Rate"].forEach(k => {
+    ["Systolic", "Diastolic", "Heart Rate"].forEach(k => {
       if (!normalizedDaily[k] && prevCached.daily[k]) {
         normalizedDaily[k] = prevCached.daily[k];
       }
@@ -5812,13 +5813,16 @@ function buildPayloadFromUI() {
     // Agua (hydration glasses) - read from DOM to stay in sync with inline handlers
     agua: parseInt(document.getElementById("aguaCount")?.textContent) || 0,
 
-    // Body
-    weight: document.getElementById("weight")?.value || "",
-    waist: document.getElementById("waist")?.value || "",
-    leanMass: document.getElementById("leanMass")?.value || "",
-    bodyFat: document.getElementById("bodyFat")?.value || "",
-    boneMass: document.getElementById("boneMass")?.value || "",
-    bodywater: document.getElementById("bodywater")?.value || "",
+    // Body — omit carried-forward values (undefined is stripped by JSON.stringify)
+    // so the worker preserves existing data instead of writing phantom entries
+    ...(window._bodyCarriedForward ? {} : {
+      weight: document.getElementById("weight")?.value || "",
+      waist: document.getElementById("waist")?.value || "",
+      leanMass: document.getElementById("leanMass")?.value || "",
+      bodyFat: document.getElementById("bodyFat")?.value || "",
+      boneMass: document.getElementById("boneMass")?.value || "",
+      bodywater: document.getElementById("bodywater")?.value || "",
+    }),
 
     // Blood Pressure
     systolic: document.getElementById("systolic")?.value || "",
@@ -6119,9 +6123,15 @@ function calculatePercentages() {
 }
 
 // Wire up live percentage calculation on body input changes
-['weight', 'leanMass', 'bodyFat', 'boneMass', 'bodywater'].forEach(id => {
+// Also clear the carry-forward flag when user edits any body field
+['weight', 'waist', 'leanMass', 'bodyFat', 'boneMass', 'bodywater'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('input', calculatePercentages);
+  if (el) {
+    el.addEventListener('input', () => {
+      window._bodyCarriedForward = false;
+      calculatePercentages();
+    });
+  }
 });
 
 // =====================================
@@ -6153,6 +6163,7 @@ async function populateForm(data) {
   // if daily is missing OR daily exists but body is blank => carry forward
   // Prefer the worker's pre-calculated bodyCarryForward to avoid expensive API calls
   let bodySource = d;
+  window._bodyCarriedForward = false;
   if (!hasAnyBodyData(d)) {
     const cf = data?.bodyCarryForward;
     if (cf && Object.keys(cf).length > 0) {
@@ -6167,6 +6178,7 @@ async function populateForm(data) {
     } else {
       bodySource = await getMostRecentBodyDaily(currentDate);
     }
+    window._bodyCarriedForward = true;
   }
 
   updateAverages(data?.averages);
