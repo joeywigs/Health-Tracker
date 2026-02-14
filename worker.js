@@ -236,13 +236,14 @@ async function loadDay(dateStr, env, corsHeaders) {
   const normalizedDate = normalizeDate(dateStr);
 
   // Fetch all data for this day in parallel
-  const [daily, movements, readings, honeyDos, customSections, workouts] = await Promise.all([
+  const [daily, movements, readings, honeyDos, customSections, workouts, dumbbellData] = await Promise.all([
     env.HABIT_DATA.get(`daily:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`movements:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`readings:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`honeyDos:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`custom:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`workouts:${normalizedDate}`, "json"),
+    env.HABIT_DATA.get(`dumbbell:${normalizedDate}`, "json"),
   ]);
 
   // Calculate averages
@@ -254,6 +255,12 @@ async function loadDay(dateStr, env, corsHeaders) {
     bodyCarryForward = await getLastBodyData(normalizedDate, env);
   }
 
+  // Get carry-forward dumbbell data if needed
+  let dumbbellCarryForward = null;
+  if (!dumbbellData || dumbbellData.length === 0) {
+    dumbbellCarryForward = await getLastDumbbellData(normalizedDate, env);
+  }
+
   return jsonResponse({
     daily: daily || {},
     movements: movements || [],
@@ -261,6 +268,8 @@ async function loadDay(dateStr, env, corsHeaders) {
     honeyDos: honeyDos || [],
     customSections: customSections || {},
     workouts: workouts || [],
+    dumbbell: dumbbellData || [],
+    dumbbellCarryForward,
     averages,
     bodyCarryForward,
   }, 200, corsHeaders);
@@ -358,6 +367,11 @@ async function saveDay(data, env, corsHeaders) {
   // Save custom sections if provided
   if (data.customSections && typeof data.customSections === 'object') {
     saves.push(env.HABIT_DATA.put(`custom:${normalizedDate}`, JSON.stringify(data.customSections)));
+  }
+
+  // Save dumbbell exercises if provided
+  if (data.dumbbell && Array.isArray(data.dumbbell)) {
+    saves.push(env.HABIT_DATA.put(`dumbbell:${normalizedDate}`, JSON.stringify(data.dumbbell)));
   }
 
   await Promise.all(saves);
@@ -651,6 +665,25 @@ async function getLastBodyData(dateStr, env) {
   }
 
   return {};
+}
+
+// ===== Dumbbell Carry-Forward =====
+async function getLastDumbbellData(dateStr, env) {
+  const targetDate = parseDate(dateStr);
+
+  // Look back up to 30 days for most recent dumbbell data
+  for (let i = 1; i <= 30; i++) {
+    const d = new Date(targetDate);
+    d.setDate(d.getDate() - i);
+    const checkDate = normalizeDate(formatDateForKV(d));
+
+    const data = await env.HABIT_DATA.get(`dumbbell:${checkDate}`, "json");
+    if (data && Array.isArray(data) && data.length > 0) {
+      return data;
+    }
+  }
+
+  return null;
 }
 
 // ===== Biomarkers =====
