@@ -1263,7 +1263,7 @@ async function togglePhaseFreeze() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     phase.frozenSince = formatDateStr(today);
-    if (typeof showToast === 'function') showToast('Phase frozen — REHIT paused', 'info');
+    if (typeof showToast === 'function') showToast('Phase frozen — REHIT & Movement paused', 'info');
   }
 
   await savePhases();
@@ -1303,7 +1303,7 @@ function updateFreezeButton() {
   if (statusTitle) statusTitle.textContent = frozen ? 'Phase Frozen' : 'Phase Active';
   if (statusDesc) {
     if (frozen) {
-      statusDesc.textContent = `Frozen since ${phase.frozenSince} — REHIT paused`;
+      statusDesc.textContent = `Frozen since ${phase.frozenSince} — REHIT & Movement paused`;
     } else if (frozenCount > 0) {
       statusDesc.textContent = `${frozenCount} days were frozen this phase`;
     } else {
@@ -1313,10 +1313,11 @@ function updateFreezeButton() {
 }
 
 function updateFreezeOverlay() {
-  const overlay = document.getElementById('rehitFreezeOverlay');
-  if (!overlay) return;
   const frozen = isTodayFrozen();
-  overlay.style.display = frozen ? 'flex' : 'none';
+  const rehitOverlay = document.getElementById('rehitFreezeOverlay');
+  if (rehitOverlay) rehitOverlay.style.display = frozen ? 'flex' : 'none';
+  const movementOverlay = document.getElementById('movementFreezeOverlay');
+  if (movementOverlay) movementOverlay.style.display = frozen ? 'flex' : 'none';
 }
 
 async function clearFrozenDays() {
@@ -1464,8 +1465,8 @@ async function openNewPhaseModal(fromPhaseId = null) {
       </div>`;
   }
 
-  // Movement stats
-  if (stats.movement) {
+  // Movement stats (skip if phase is currently frozen)
+  if (stats.movement && !isPhaseCurrentlyFrozen(phase)) {
     performanceHtml += `
       <div class="phase-stat-row">
         <div class="phase-stat-label">Movement</div>
@@ -2457,7 +2458,7 @@ function renderSummaryOverview(data, stats, range, allData, phaseId = null) {
   const frozen = phase ? isPhaseCurrentlyFrozen(phase) : false;
   const frozenBanner = frozen ? `
     <div class="summary-freeze-banner">
-      <span>❄️</span> Phase frozen — REHIT paused, other goals still tracking
+      <span>❄️</span> Phase frozen — REHIT & Movement paused, other goals still tracking
       <span style="opacity:0.5;font-size:11px">(${frozenDays.length}d frozen)</span>
     </div>` : '';
 
@@ -3140,7 +3141,7 @@ function renderGoalPerformance(stats) {
     { key: 'supps', name: 'Supplements', icon: '💊', ...stats.supps },
     ...(!frozen ? [{ key: 'rehit', ...GOALS.rehit, ...stats.rehit }] : []),
     { key: 'steps', ...GOALS.steps, ...stats.steps },
-    { key: 'movement', ...GOALS.movement, ...stats.movement },
+    ...(!frozen ? [{ key: 'movement', ...GOALS.movement, ...stats.movement }] : []),
     { key: 'reading', ...GOALS.reading, ...stats.reading },
     { key: 'meals', name: 'Meals', icon: '🍽️', ...stats.meals },
     { key: 'snacks', name: 'Snacks', icon: '🥗', ...stats.snacks },
@@ -3212,7 +3213,7 @@ function renderHealthGoals(stats) {
     ${renderGoalStatCard('Supps', '💊', safe(stats.supps).pct, safe(stats.supps).detail)}
     ${frozen ? '<div class="goal-stat-card" style="opacity:0.4;text-align:center;padding:12px"><span>🚴</span> REHIT paused</div>' : renderGoalStatCard('REHIT', '🚴', safe(stats.rehit).pct, safe(stats.rehit).detail)}
     ${renderGoalStatCard('Steps', '👟', safe(stats.steps).pct, safe(stats.steps).detail)}
-    ${renderGoalStatCard('Movement', '🚶', safe(stats.movement).pct, safe(stats.movement).detail)}
+    ${frozen ? '<div class="goal-stat-card" style="opacity:0.4;text-align:center;padding:12px"><span>🚶</span> Movement paused</div>' : renderGoalStatCard('Movement', '🚶', safe(stats.movement).pct, safe(stats.movement).detail)}
     ${renderGoalStatCard('Reading', '📖', safe(stats.reading).pct, safe(stats.reading).detail)}
     ${customCards}
   `;

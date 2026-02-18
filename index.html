@@ -4376,7 +4376,7 @@
     <div class="card movement rehit-full" id="rehitCard" style="position:relative">
       <div id="rehitFreezeOverlay" class="rehit-freeze-overlay" style="display:none">
         <div class="rehit-freeze-icon">❄️</div>
-        <div class="rehit-freeze-text">REHIT Paused</div>
+        <div class="rehit-freeze-text">REHIT & Movement Paused</div>
         <div class="rehit-freeze-sub">Phase is frozen — enjoy your vacation!</div>
       </div>
       <div class="card-head" style="margin-bottom:0">
@@ -4440,7 +4440,12 @@
       </div>
     </div>
 
-    <div class="section" id="movementSection">
+    <div class="section" id="movementSection" style="position:relative">
+      <div id="movementFreezeOverlay" class="rehit-freeze-overlay" style="display:none">
+        <div class="rehit-freeze-icon">❄️</div>
+        <div class="rehit-freeze-text">Movement Paused</div>
+        <div class="rehit-freeze-sub">Phase is frozen — breaks won't count toward goals</div>
+      </div>
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">🚶</div><span class="sec-name">Movement Breaks</span></div><span class="sec-toggle">▼</span></div>
       <div class="sec-content">
         <div id="movementList" class="movement-list"></div>
@@ -4930,7 +4935,7 @@
       <div class="section">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#2193b0;--icon-glow:rgba(109,213,237,0.4)">❄️</div><span class="sec-name">Phase Freeze</span></div></div>
         <div class="sec-content">
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Freeze your phase during vacations. Frozen days extend the phase end date and REHIT is paused — other goals still track normally.</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Freeze your phase during vacations. Frozen days extend the phase end date and REHIT & Movement are paused — other goals still track normally.</p>
           <div class="setting-row" style="flex-direction:column;gap:8px;align-items:stretch">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div class="setting-label"><span class="setting-title" id="freezeStatusTitle">Phase Active</span><span class="setting-desc" id="freezeStatusDesc">Tap to freeze your current phase</span></div>
