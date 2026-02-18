@@ -6189,8 +6189,6 @@ async function populateForm(data) {
     window._bodyCarriedForward = true;
   }
 
-  updateAverages(data?.averages);
-
   // No daily data for this date
   if (!d) {
     aguaCount = 0;
@@ -6226,6 +6224,10 @@ async function populateForm(data) {
       book: r.book ?? r["book"] ?? r["Book"]
     }));
     renderReadings();
+
+    // Update averages AFTER readings is populated so readingWeekBase
+    // correctly subtracts today's reading mins and avoids double-counting.
+    updateAverages(data?.averages);
 
     honeyDos = data?.honeyDos || [];
 
