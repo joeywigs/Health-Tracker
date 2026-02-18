@@ -604,11 +604,15 @@ async function calculate7DayAverages(dateStr, env) {
   let lastWeekReadingMins = 0;
 
   // Fetch up to 14 days of data
+  // Use the same date formatting as normalizeDate/parseDate (no timezone conversion)
+  // to stay aligned with how KV keys are stored. formatDateForKV uses America/Chicago
+  // which shifts midnight-UTC dates back a day, causing a mismatch with the week
+  // boundary checks below.
   const dates = [];
   for (let i = 0; i < 14; i++) {
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
-    dates.push(normalizeDate(formatDateForKV(d)));
+    dates.push(`${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`);
   }
 
   const [dailyData, movementsData, readingsData] = await Promise.all([
@@ -686,7 +690,7 @@ async function getLastBodyData(dateStr, env) {
   for (let i = 1; i <= 45; i++) {
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
-    const checkDate = normalizeDate(formatDateForKV(d));
+    const checkDate = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
 
     const bodyData = await env.HABIT_DATA.get(`body:${checkDate}`, "json");
     if (bodyData && bodyData.weight) {
@@ -706,7 +710,7 @@ async function getLastBodyData(dateStr, env) {
   for (let i = 1; i <= 45; i++) {
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
-    const checkDate = normalizeDate(formatDateForKV(d));
+    const checkDate = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
 
     const data = await env.HABIT_DATA.get(`daily:${checkDate}`, "json");
     if (data && data["Weight (lbs)"]) {
@@ -733,7 +737,7 @@ async function getLastDumbbellData(dateStr, env) {
   for (let i = 1; i <= 30; i++) {
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
-    const checkDate = normalizeDate(formatDateForKV(d));
+    const checkDate = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
 
     const data = await env.HABIT_DATA.get(`dumbbell:${checkDate}`, "json");
     if (data && Array.isArray(data) && data.length > 0) {
