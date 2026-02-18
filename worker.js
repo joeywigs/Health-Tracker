@@ -250,8 +250,11 @@ async function loadDay(dateStr, env, corsHeaders) {
   const averages = await calculate7DayAverages(normalizedDate, env);
 
   // Get carry-forward body data if needed
+  // Check the dedicated body:{date} key to determine if today has a REAL entry.
+  // daily["Weight (lbs)"] can contain phantom data from before the fix.
+  const todayBody = await env.HABIT_DATA.get(`body:${normalizedDate}`, "json");
   let bodyCarryForward = {};
-  if (!daily || !daily["Weight (lbs)"]) {
+  if (!todayBody || !todayBody.weight) {
     bodyCarryForward = await getLastBodyData(normalizedDate, env);
   }
 
@@ -348,6 +351,23 @@ async function saveDay(data, env, corsHeaders) {
   const saves = [
     env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily)),
   ];
+
+  // Save explicit body data to dedicated key (used for clean carry-forward)
+  if ("weight" in data) {
+    const bodyEntry = {
+      weight: data.weight || "",
+      waist: data.waist || "",
+      leanMass: data.leanMass || "",
+      bodyFat: data.bodyFat || "",
+      boneMass: data.boneMass || "",
+      waterLbs: data.bodywater || data.waterLbs || "",
+      enteredAt: new Date().toISOString(),
+    };
+    // Only write if at least one field has a real value
+    if (bodyEntry.weight || bodyEntry.waist || bodyEntry.leanMass || bodyEntry.bodyFat || bodyEntry.boneMass || bodyEntry.waterLbs) {
+      saves.push(env.HABIT_DATA.put(`body:${normalizedDate}`, JSON.stringify(bodyEntry)));
+    }
+  }
 
   // Save movements if provided
   if (data.movements && Array.isArray(data.movements)) {
@@ -519,7 +539,24 @@ async function logBody(body, env, corsHeaders) {
   if (waist) updates["Waist"] = waist;
 
   const merged = { ...existing, "Date": normalizedDate, ...updates };
-  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(merged));
+  const bodyPuts = [
+    env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(merged)),
+  ];
+
+  // Also write to dedicated body key for clean carry-forward
+  if (Object.keys(updates).length > 0) {
+    const bodyEntry = {
+      weight: updates["Weight (lbs)"] || "",
+      waist: updates["Waist"] || "",
+      leanMass: updates["Lean Mass (lbs)"] || "",
+      bodyFat: updates["Body Fat (lbs)"] || "",
+      boneMass: updates["Bone Mass (lbs)"] || "",
+      waterLbs: updates["Water (lbs)"] || "",
+      enteredAt: new Date().toISOString(),
+    };
+    bodyPuts.push(env.HABIT_DATA.put(`body:${normalizedDate}`, JSON.stringify(bodyEntry)));
+  }
+  await Promise.all(bodyPuts);
 
   return jsonResponse({
     success: true,
@@ -640,17 +677,38 @@ async function calculate7DayAverages(dateStr, env) {
 }
 
 // ===== Get Last Body Data (carry-forward) =====
+// Uses dedicated body:{date} keys first (written only on explicit entry),
+// then falls back to daily:{date} for data saved before this change.
 async function getLastBodyData(dateStr, env) {
   const targetDate = parseDate(dateStr);
 
-  // Look back up to 45 days
+  // Pass 1: check dedicated body:{date} keys (clean, no phantom data)
+  for (let i = 1; i <= 45; i++) {
+    const d = new Date(targetDate);
+    d.setDate(d.getDate() - i);
+    const checkDate = normalizeDate(formatDateForKV(d));
+
+    const bodyData = await env.HABIT_DATA.get(`body:${checkDate}`, "json");
+    if (bodyData && bodyData.weight) {
+      return {
+        weight: bodyData.weight,
+        waist: bodyData.waist,
+        leanMass: bodyData.leanMass,
+        bodyFat: bodyData.bodyFat,
+        boneMass: bodyData.boneMass,
+        waterLbs: bodyData.waterLbs,
+        fromDate: checkDate,
+      };
+    }
+  }
+
+  // Pass 2: fall back to daily:{date} for legacy data (before body: keys existed)
   for (let i = 1; i <= 45; i++) {
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
     const checkDate = normalizeDate(formatDateForKV(d));
 
     const data = await env.HABIT_DATA.get(`daily:${checkDate}`, "json");
-
     if (data && data["Weight (lbs)"]) {
       return {
         weight: data["Weight (lbs)"],
