@@ -1317,7 +1317,12 @@ function updateFreezeButton() {
 }
 
 function updateFreezeOverlay() {
-  const frozen = isTodayFrozen();
+  // Use isPhaseCurrentlyFrozen (checks frozenSince) instead of isTodayFrozen
+  // (checks frozenDays list). After unfreezing, today may still be in the
+  // historical frozenDays list, but the overlay should only block interaction
+  // when the phase is actively frozen.
+  const phase = getCurrentPhase();
+  const frozen = phase ? isPhaseCurrentlyFrozen(phase) : false;
   const rehitOverlay = document.getElementById('rehitFreezeOverlay');
   if (rehitOverlay) rehitOverlay.style.display = frozen ? 'flex' : 'none';
   const movementOverlay = document.getElementById('movementFreezeOverlay');
