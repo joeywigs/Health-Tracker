@@ -1246,16 +1246,20 @@ async function togglePhaseFreeze() {
 
   if (isPhaseCurrentlyFrozen(phase)) {
     // Unfreeze: convert the frozenSince range into explicit frozenDays
+    // Exclude today so it becomes the first active (unfrozen) day
     const start = parseDataDate(phase.frozenSince);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const cursor = new Date(start);
     cursor.setHours(0, 0, 0, 0);
-    while (cursor <= today) {
+    while (cursor < today) {
       const ds = formatDateStr(cursor);
       if (!phase.frozenDays.includes(ds)) phase.frozenDays.push(ds);
       cursor.setDate(cursor.getDate() + 1);
     }
+    // Clean up: ensure today is not in frozenDays (bug fix for previously unfrozen phases)
+    const todayStr = formatDateStr(today);
+    phase.frozenDays = phase.frozenDays.filter(d => d !== todayStr);
     delete phase.frozenSince;
     if (typeof showToast === 'function') showToast('Phase unfrozen — welcome back!', 'success');
   } else {
