@@ -205,6 +205,7 @@ let dailyGoalsAchieved = {
 };
 
 let autoSaveTimeout = null;
+let populateFormGeneration = 0;  // guards against stale async populateForm calls
 
 const PREFETCH_RANGE = 3;          // how many days ahead/behind to prefetch
 const CACHE_MAX_DAYS = 21;         // cap memory (tweak as you like)
@@ -6158,6 +6159,10 @@ async function populateForm(data) {
   // briefly cleared before the async body-carry-forward resolved, letting
   // syncAllChips() see them as unchecked and remove the chip .on class.
 
+  // Bump generation so any in-flight populateForm from a previous date
+  // will bail out after its next await instead of overwriting our state.
+  const myGen = ++populateFormGeneration;
+
   // reset state
   readings = [];
   readingWeekBase = 0;
@@ -6194,6 +6199,11 @@ async function populateForm(data) {
       };
     } else {
       bodySource = await getMostRecentBodyDaily(currentDate);
+      // After the await, a newer populateForm may have started — bail out
+      if (myGen !== populateFormGeneration) {
+        console.log("⏭️ populateForm superseded after body carry-forward, bailing out");
+        return;
+      }
     }
     window._bodyCarriedForward = true;
   }
