@@ -45,7 +45,10 @@ async function apiGet(action, params = {}) {
   url.searchParams.set("action", action);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
-  const res = await fetch(url.toString(), { method: "GET" });
+  const res = await fetch(url.toString(), { method: "GET", cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`API ${action}: HTTP ${res.status}`);
+  }
   return await res.json();
 }
 
@@ -5643,7 +5646,7 @@ async function loadDataForCurrentDate(options = {}) {
         return loadDataForCurrentDate({ ...options, force: true, _retried: true });
       }
       if (typeof hideLoading === 'function') hideLoading();
-      if (typeof showToast === 'function') showToast('Failed to load', 'error');
+      if (typeof showToast === 'function') showToast('Failed to load: ' + (result.message || 'unknown backend error'), 'error');
       return;
     }
 
@@ -5667,7 +5670,8 @@ async function loadDataForCurrentDate(options = {}) {
       return loadDataForCurrentDate({ ...options, force: true, _retried: true });
     }
     if (typeof hideLoading === 'function') hideLoading();
-    if (typeof showToast === 'function') showToast('Load failed', 'error');
+    const detail = err?.message || String(err);
+    if (typeof showToast === 'function') showToast('Load failed: ' + detail, 'error');
   }
 }
 
