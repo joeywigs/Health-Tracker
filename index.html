@@ -2988,11 +2988,12 @@
       align-items: center;
       gap: 10px;
       padding: 8px 12px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
+      background: var(--success-soft);
+      border: 1px solid var(--success);
       border-radius: var(--radius-sm);
       font-size: 13px;
       color: var(--text);
+      box-shadow: 0 0 15px var(--glow-teal);
     }
     .movement-item-type { font-weight: 600; }
     .movement-item-duration { color: var(--text-muted); margin-left: auto; }
@@ -3040,7 +3041,11 @@
       transition: all 0.2s;
     }
     .movement-add-btn:hover { background: rgba(255,107,157,0.2); border-color: #ff6b9d; }
-    body.day-mode .movement-item { background: rgba(0,0,0,0.03); }
+    body.day-mode .movement-item {
+      background: rgba(251, 146, 60, 0.25);
+      border-color: #f97316;
+      box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
+    }
     body.day-mode .movement-add-row select,
     body.day-mode .movement-add-row input[type="number"] { background: rgba(255,255,255,0.8); color: #1f2937; }
     body.day-mode .movement-add-btn { background: rgba(0,0,0,0.05); }
