@@ -5637,6 +5637,11 @@ async function loadDataForCurrentDate(options = {}) {
 
     if (result?.error) {
       console.error("Backend error:", result.message);
+      // Retry once on backend error (transient KV/network issues)
+      if (!options._retried) {
+        console.log("Retrying load after backend error...");
+        return loadDataForCurrentDate({ ...options, force: true, _retried: true });
+      }
       if (typeof hideLoading === 'function') hideLoading();
       if (typeof showToast === 'function') showToast('Failed to load', 'error');
       return;
@@ -5656,6 +5661,11 @@ async function loadDataForCurrentDate(options = {}) {
     dataChanged = false;
   } catch (err) {
     console.error("Load failed:", err);
+    // Retry once on network failure
+    if (!options._retried) {
+      console.log("Retrying load after network error...");
+      return loadDataForCurrentDate({ ...options, force: true, _retried: true });
+    }
     if (typeof hideLoading === 'function') hideLoading();
     if (typeof showToast === 'function') showToast('Load failed', 'error');
   }
