@@ -9318,7 +9318,8 @@
         const dayPicker = document.getElementById('dumbbellDayPicker');
         if (dayPicker) {
           dayPicker.querySelectorAll('.day-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
+            chip.addEventListener('click', (e) => {
+              e.stopPropagation(); // prevent generic day-chip handler from double-toggling
               chip.classList.toggle('selected');
               const selectedDays = [];
               dayPicker.querySelectorAll('.day-chip.selected').forEach(c => {
