@@ -5755,6 +5755,9 @@ async function saveData(payload) {
     console.log("💾 Saved successfully", saveResult);
     dataChanged = false;
 
+    // Invalidate chart cache so the summary page reflects the updated data
+    chartDataCache = null;
+
     // Show success toast
     if (typeof showToast === 'function') showToast('Saved ✓', 'success');
 
