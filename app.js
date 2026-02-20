@@ -49,8 +49,15 @@ async function apiGet(action, params = {}) {
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
-      const body = await res.json();
-      if (body?.message) detail += ': ' + body.message;
+      const text = await res.text();
+      // Try to parse as JSON for structured error
+      try {
+        const body = JSON.parse(text);
+        if (body?.message) detail += ': ' + body.message;
+      } catch (_) {
+        // Not JSON — include first 120 chars of raw response
+        if (text) detail += ': ' + text.slice(0, 120);
+      }
     } catch (_) {}
     throw new Error(`API ${action}: ${detail}`);
   }
@@ -5631,7 +5638,14 @@ async function loadDataForCurrentDate(options = {}) {
     await populateForm(cached);
     prefetchAround(currentDate);
     if (typeof hideLoading === 'function') hideLoading();
-    
+
+    // If the cache came from a lite prefetch (no averages), upgrade in background
+    if (cached.averages === null) {
+      fetchDay(currentDate, true).then(full => {
+        if (full && !full.error) populateForm(full);
+      }).catch(() => {});
+    }
+
     // Start chart data loading in background if not already loaded
     if (!chartDataCache && !chartDataLoading) {
       setTimeout(() => prefetchChartData(), 100);
@@ -6543,13 +6557,15 @@ function cacheGet(key) {
   return hit.value;
 }
 
-async function fetchDay(dateObj, force = false) {
+async function fetchDay(dateObj, force = false, lite = false) {
   const dateStr = formatDateForAPI(dateObj);
   const cached = cacheGet(dateStr);
   if (cached && !force) return cached;
 
   try {
-    const result = await apiGet("load", { date: dateStr });
+    const params = { date: dateStr };
+    if (lite) params.lite = "1";
+    const result = await apiGet("load", params);
     cacheSet(dateStr, result);
     // Also persist to IndexedDB for offline access
     if (result && !result.error) cacheDayLocally(dateStr, result);
@@ -6566,14 +6582,14 @@ async function fetchDay(dateObj, force = false) {
 }
 
 function prefetchAround(dateObj) {
-  // fire-and-forget prefetch
+  // fire-and-forget prefetch (lite mode skips averages/carry-forward to save KV reads)
   for (let delta = -PREFETCH_RANGE; delta <= PREFETCH_RANGE; delta++) {
     if (delta === 0) continue;
     const d = addDays(dateObj, delta);
     const key = formatDateForAPI(d);
     if (cacheGet(key)) continue;
 
-    fetchDay(d).catch(() => {});
+    fetchDay(d, false, true).catch(() => {});
   }
 }
 

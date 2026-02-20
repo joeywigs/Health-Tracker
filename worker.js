@@ -70,7 +70,8 @@ async function handleGet(request, env, corsHeaders) {
     if (!date) {
       return jsonResponse({ error: true, message: "Missing date" }, 400, corsHeaders);
     }
-    return await loadDay(date, env, corsHeaders);
+    const lite = url.searchParams.get("lite") === "1";
+    return await loadDay(date, env, corsHeaders, lite);
   }
 
   if (action === "biomarkers_load") {
@@ -235,7 +236,7 @@ async function handlePost(request, env, corsHeaders) {
 }
 
 // ===== Load Day =====
-async function loadDay(dateStr, env, corsHeaders) {
+async function loadDay(dateStr, env, corsHeaders, lite = false) {
   const normalizedDate = normalizeDate(dateStr);
 
   // Fetch all data for this day in parallel
@@ -249,22 +250,46 @@ async function loadDay(dateStr, env, corsHeaders) {
     env.HABIT_DATA.get(`dumbbell:${normalizedDate}`, "json"),
   ]);
 
+  // Lite mode: skip averages and carry-forward (used by prefetch)
+  // This reduces KV reads from ~50+ to just 7 per prefetched day
+  if (lite) {
+    return jsonResponse({
+      daily: daily || {},
+      movements: movements || [],
+      readings: readings || [],
+      honeyDos: honeyDos || [],
+      customSections: customSections || {},
+      workouts: workouts || [],
+      dumbbell: dumbbellData || [],
+      dumbbellCarryForward: null,
+      averages: null,
+      bodyCarryForward: {},
+    }, 200, corsHeaders);
+  }
+
   // Calculate averages
   const averages = await calculate7DayAverages(normalizedDate, env);
 
-  // Get carry-forward body data if needed
-  // Check the dedicated body:{date} key to determine if today has a REAL entry.
-  // daily["Weight (lbs)"] can contain phantom data from before the fix.
-  const todayBody = await env.HABIT_DATA.get(`body:${normalizedDate}`, "json");
-  let bodyCarryForward = {};
-  if (!todayBody || !todayBody.weight) {
-    bodyCarryForward = await getLastBodyData(normalizedDate, env);
-  }
+  // Get carry-forward data — cached per day so we only compute once
+  const cfKey = `cf:${normalizedDate}`;
+  let cf = await env.HABIT_DATA.get(cfKey, "json");
+  if (!cf) {
+    // Compute carry-forward body data if needed
+    const todayBody = await env.HABIT_DATA.get(`body:${normalizedDate}`, "json");
+    let bodyCarryForward = {};
+    if (!todayBody || !todayBody.weight) {
+      bodyCarryForward = await getLastBodyData(normalizedDate, env);
+    }
 
-  // Get carry-forward dumbbell data if needed
-  let dumbbellCarryForward = null;
-  if (!dumbbellData || dumbbellData.length === 0) {
-    dumbbellCarryForward = await getLastDumbbellData(normalizedDate, env);
+    // Compute carry-forward dumbbell data if needed
+    let dumbbellCarryForward = null;
+    if (!dumbbellData || dumbbellData.length === 0) {
+      dumbbellCarryForward = await getLastDumbbellData(normalizedDate, env);
+    }
+
+    cf = { bodyCarryForward, dumbbellCarryForward };
+    // Cache for the rest of the day (expires in 24h)
+    await env.HABIT_DATA.put(cfKey, JSON.stringify(cf), { expirationTtl: 86400 });
   }
 
   return jsonResponse({
@@ -275,9 +300,9 @@ async function loadDay(dateStr, env, corsHeaders) {
     customSections: customSections || {},
     workouts: workouts || [],
     dumbbell: dumbbellData || [],
-    dumbbellCarryForward,
+    dumbbellCarryForward: cf.dumbbellCarryForward,
     averages,
-    bodyCarryForward,
+    bodyCarryForward: cf.bodyCarryForward,
   }, 200, corsHeaders);
 }
 
@@ -369,6 +394,8 @@ async function saveDay(data, env, corsHeaders) {
     // Only write if at least one field has a real value
     if (bodyEntry.weight || bodyEntry.waist || bodyEntry.leanMass || bodyEntry.bodyFat || bodyEntry.boneMass || bodyEntry.waterLbs) {
       saves.push(env.HABIT_DATA.put(`body:${normalizedDate}`, JSON.stringify(bodyEntry)));
+      // Update the "latest" pointer for O(1) carry-forward lookups
+      saves.push(env.HABIT_DATA.put("body:latest", JSON.stringify({ date: normalizedDate, data: bodyEntry })));
     }
   }
 
@@ -405,7 +432,14 @@ async function saveDay(data, env, corsHeaders) {
   // Save dumbbell exercises if provided
   if (data.dumbbell && Array.isArray(data.dumbbell)) {
     saves.push(env.HABIT_DATA.put(`dumbbell:${normalizedDate}`, JSON.stringify(data.dumbbell)));
+    // Update the "latest" pointer for O(1) carry-forward lookups
+    if (data.dumbbell.length > 0) {
+      saves.push(env.HABIT_DATA.put("dumbbell:latest", JSON.stringify({ date: normalizedDate, data: data.dumbbell })));
+    }
   }
+
+  // Invalidate carry-forward cache when body or dumbbell data changes
+  saves.push(env.HABIT_DATA.delete(`cf:${normalizedDate}`));
 
   await Promise.all(saves);
 
@@ -568,6 +602,8 @@ async function logBody(body, env, corsHeaders) {
       enteredAt: new Date().toISOString(),
     };
     bodyPuts.push(env.HABIT_DATA.put(`body:${normalizedDate}`, JSON.stringify(bodyEntry)));
+    bodyPuts.push(env.HABIT_DATA.put("body:latest", JSON.stringify({ date: normalizedDate, data: bodyEntry })));
+    bodyPuts.push(env.HABIT_DATA.delete(`cf:${normalizedDate}`));
   }
   await Promise.all(bodyPuts);
 
@@ -697,14 +733,31 @@ async function calculate7DayAverages(dateStr, env) {
 // Uses dedicated body:{date} keys first (written only on explicit entry),
 // then falls back to daily:{date} for data saved before this change.
 async function getLastBodyData(dateStr, env) {
-  const targetDate = parseDate(dateStr);
+  // Use the cached "latest" key for O(1) lookup instead of scanning up to 90 days
+  const latest = await env.HABIT_DATA.get("body:latest", "json");
+  if (latest && latest.date && latest.data?.weight) {
+    // Only use if the latest entry is from before the requested date
+    const target = parseDate(dateStr);
+    const latestDate = parseDate(latest.date);
+    if (latestDate < target) {
+      return {
+        weight: latest.data.weight,
+        waist: latest.data.waist,
+        leanMass: latest.data.leanMass,
+        bodyFat: latest.data.bodyFat,
+        boneMass: latest.data.boneMass,
+        waterLbs: latest.data.waterLbs,
+        fromDate: latest.date,
+      };
+    }
+  }
 
-  // Pass 1: check dedicated body:{date} keys (clean, no phantom data)
-  for (let i = 1; i <= 45; i++) {
+  // Fallback: scan last 7 days only (not 45+45)
+  const targetDate = parseDate(dateStr);
+  for (let i = 1; i <= 7; i++) {
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
     const checkDate = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
-
     const bodyData = await env.HABIT_DATA.get(`body:${checkDate}`, "json");
     if (bodyData && bodyData.weight) {
       return {
@@ -719,39 +772,27 @@ async function getLastBodyData(dateStr, env) {
     }
   }
 
-  // Pass 2: fall back to daily:{date} for legacy data (before body: keys existed)
-  for (let i = 1; i <= 45; i++) {
-    const d = new Date(targetDate);
-    d.setDate(d.getDate() - i);
-    const checkDate = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
-
-    const data = await env.HABIT_DATA.get(`daily:${checkDate}`, "json");
-    if (data && data["Weight (lbs)"]) {
-      return {
-        weight: data["Weight (lbs)"],
-        waist: data["Waist"],
-        leanMass: data["Lean Mass (lbs)"],
-        bodyFat: data["Body Fat (lbs)"],
-        boneMass: data["Bone Mass (lbs)"],
-        waterLbs: data["Water (lbs)"],
-        fromDate: checkDate,
-      };
-    }
-  }
-
   return {};
 }
 
 // ===== Dumbbell Carry-Forward =====
 async function getLastDumbbellData(dateStr, env) {
-  const targetDate = parseDate(dateStr);
+  // Use the cached "latest" key for O(1) lookup instead of scanning up to 30 days
+  const latest = await env.HABIT_DATA.get("dumbbell:latest", "json");
+  if (latest && latest.date && Array.isArray(latest.data) && latest.data.length > 0) {
+    const target = parseDate(dateStr);
+    const latestDate = parseDate(latest.date);
+    if (latestDate < target) {
+      return latest.data;
+    }
+  }
 
-  // Look back up to 30 days for most recent dumbbell data
-  for (let i = 1; i <= 30; i++) {
+  // Fallback: scan last 7 days only (not 30)
+  const targetDate = parseDate(dateStr);
+  for (let i = 1; i <= 7; i++) {
     const d = new Date(targetDate);
     d.setDate(d.getDate() - i);
     const checkDate = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
-
     const data = await env.HABIT_DATA.get(`dumbbell:${checkDate}`, "json");
     if (data && Array.isArray(data) && data.length > 0) {
       return data;
