@@ -47,7 +47,12 @@ async function apiGet(action, params = {}) {
 
   const res = await fetch(url.toString(), { method: "GET", cache: "no-store" });
   if (!res.ok) {
-    throw new Error(`API ${action}: HTTP ${res.status}`);
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.message) detail += ': ' + body.message;
+    } catch (_) {}
+    throw new Error(`API ${action}: ${detail}`);
   }
   return await res.json();
 }
