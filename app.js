@@ -49,8 +49,15 @@ async function apiGet(action, params = {}) {
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
-      const body = await res.json();
-      if (body?.message) detail += ': ' + body.message;
+      const text = await res.text();
+      // Try to parse as JSON for structured error
+      try {
+        const body = JSON.parse(text);
+        if (body?.message) detail += ': ' + body.message;
+      } catch (_) {
+        // Not JSON — include first 120 chars of raw response
+        if (text) detail += ': ' + text.slice(0, 120);
+      }
     } catch (_) {}
     throw new Error(`API ${action}: ${detail}`);
   }
