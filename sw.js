@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'habits-v9.26';
+const CACHE_VERSION = 'habits-v9.27';
 
 // Install: activate immediately, don't wait for old SW to finish
 self.addEventListener('install', (event) => {
@@ -17,17 +17,24 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch: network-first, fall back to cache for offline support
-// Never cache the HTML page or service worker so updates propagate immediately
+// Never cache the HTML page, service worker, or API calls
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   const isNavigate = event.request.mode === 'navigate';
   const isSW = url.pathname.endsWith('sw.js');
+  const isAPI = url.hostname.includes('workers.dev');
 
   // HTML pages and sw.js always go straight to network (no cache fallback for sw.js)
   if (isNavigate || isSW) {
     event.respondWith(
       fetch(event.request).catch(() => isNavigate ? caches.match(event.request) : Response.error())
     );
+    return;
+  }
+
+  // API calls: always network, never cache (app has its own IndexedDB offline cache)
+  if (isAPI) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
