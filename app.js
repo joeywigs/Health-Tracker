@@ -5738,6 +5738,14 @@ async function saveData(payload) {
     carly: payload.carly || "",
     customSections: payload.customSections || {}
   };
+  // Preserve bodyCarryForward so cache-loaded data matches API-loaded data.
+  // Without this, the cache has no body fields (omitted when carried-forward),
+  // and a subsequent cache hit triggers getMostRecentBodyDaily instead of using
+  // the pre-computed carry-forward — which can return different (stale) values,
+  // causing the body data to fluctuate between two values.
+  if (prevCached?.bodyCarryForward) {
+    wrappedPayload.bodyCarryForward = prevCached.bodyCarryForward;
+  }
   cacheDayLocally(payload.date, wrappedPayload);
   cacheSet(formatDateForAPI(currentDate), wrappedPayload);
 
@@ -6190,28 +6198,32 @@ async function populateForm(data) {
   const d = data?.daily || null;
 
   // BODY CARRY-FORWARD:
-  // if daily is missing OR daily exists but body is blank => carry forward
-  // Prefer the worker's pre-calculated bodyCarryForward to avoid expensive API calls
+  // The worker provides bodyCarryForward when the dedicated body:{date} key is
+  // missing, meaning no real body data was entered for this date. Trust the worker
+  // over daily data, because daily can contain stale/phantom body values from old
+  // saves that don't match the actual most-recent body entry.
   let bodySource = d;
   window._bodyCarriedForward = false;
-  if (!hasAnyBodyData(d)) {
-    const cf = data?.bodyCarryForward;
-    if (cf && Object.keys(cf).length > 0) {
-      bodySource = {
-        "Weight (lbs)": cf.weight,
-        "Waist": cf.waist,
-        "Lean Mass (lbs)": cf.leanMass,
-        "Body Fat (lbs)": cf.bodyFat,
-        "Bone Mass (lbs)": cf.boneMass,
-        "Water (lbs)": cf.waterLbs,
-      };
-    } else {
-      bodySource = await getMostRecentBodyDaily(currentDate);
-      // After the await, a newer populateForm may have started — bail out
-      if (myGen !== populateFormGeneration) {
-        console.log("⏭️ populateForm superseded after body carry-forward, bailing out");
-        return;
-      }
+  const cf = data?.bodyCarryForward;
+  const workerSaysCarryForward = cf && Object.keys(cf).length > 0;
+  if (workerSaysCarryForward) {
+    // Worker determined this date has no real body entry — use carry-forward
+    bodySource = {
+      "Weight (lbs)": cf.weight,
+      "Waist": cf.waist,
+      "Lean Mass (lbs)": cf.leanMass,
+      "Body Fat (lbs)": cf.bodyFat,
+      "Bone Mass (lbs)": cf.boneMass,
+      "Water (lbs)": cf.waterLbs,
+    };
+    window._bodyCarriedForward = true;
+  } else if (!hasAnyBodyData(d)) {
+    // No carry-forward from worker and no body in daily — try client-side lookback
+    bodySource = await getMostRecentBodyDaily(currentDate);
+    // After the await, a newer populateForm may have started — bail out
+    if (myGen !== populateFormGeneration) {
+      console.log("⏭️ populateForm superseded after body carry-forward, bailing out");
+      return;
     }
     window._bodyCarriedForward = true;
   }

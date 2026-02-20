@@ -313,12 +313,17 @@ async function saveDay(data, env, corsHeaders) {
     "Watt Seconds": data.wattSeconds || "",
     "Calories": data.calories || "",
     "Water": data.agua ?? data.hydrationGood ?? data.water ?? 0,
-    "Weight (lbs)": ("weight" in data) ? (data.weight || "") : (existing["Weight (lbs)"] || ""),
-    "Waist": ("waist" in data) ? (data.waist || "") : (existing["Waist"] || ""),
-    "Lean Mass (lbs)": ("leanMass" in data) ? (data.leanMass || "") : (existing["Lean Mass (lbs)"] || ""),
-    "Body Fat (lbs)": ("bodyFat" in data) ? (data.bodyFat || "") : (existing["Body Fat (lbs)"] || ""),
-    "Bone Mass (lbs)": ("boneMass" in data) ? (data.boneMass || "") : (existing["Bone Mass (lbs)"] || ""),
-    "Water (lbs)": ("bodywater" in data || "waterLbs" in data) ? (data.bodywater || data.waterLbs || "") : (existing["Water (lbs)"] || ""),
+    // Body fields: only write when explicitly included in the payload.
+    // When omitted (carry-forward mode), clear stale values from daily so they
+    // don't diverge from the dedicated body:{date} key (which is the source of
+    // truth for carry-forward). Preserving stale body data here caused the UI
+    // to fluctuate between the stale daily values and the correct carry-forward.
+    "Weight (lbs)": ("weight" in data) ? (data.weight || "") : "",
+    "Waist": ("waist" in data) ? (data.waist || "") : "",
+    "Lean Mass (lbs)": ("leanMass" in data) ? (data.leanMass || "") : "",
+    "Body Fat (lbs)": ("bodyFat" in data) ? (data.bodyFat || "") : "",
+    "Bone Mass (lbs)": ("boneMass" in data) ? (data.boneMass || "") : "",
+    "Water (lbs)": ("bodywater" in data || "waterLbs" in data) ? (data.bodywater || data.waterLbs || "") : "",
     "Systolic": data.systolic || existing["Systolic"] || "",
     "Diastolic": data.diastolic || existing["Diastolic"] || "",
     "Heart Rate": data.heartRate || existing["Heart Rate"] || "",
