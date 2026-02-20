@@ -369,9 +369,19 @@ async function saveDay(data, env, corsHeaders) {
     }
   }
 
-  // Save movements if provided
+  // Save movements if provided — never overwrite existing data with an empty array
+  // (protects against race conditions in the frontend where currentMovements is
+  // briefly reset to [] by a stale populateForm before the correct data loads)
   if (data.movements && Array.isArray(data.movements)) {
-    saves.push(env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(data.movements)));
+    if (data.movements.length > 0) {
+      saves.push(env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify(data.movements)));
+    } else {
+      // Only clear movements if the server has none either (prevents accidental wipes)
+      const existing = await env.HABIT_DATA.get(`movements:${normalizedDate}`, "json");
+      if (!existing || existing.length === 0) {
+        saves.push(env.HABIT_DATA.put(`movements:${normalizedDate}`, JSON.stringify([])));
+      }
+    }
   }
 
   // Save readings if provided
