@@ -4978,6 +4978,7 @@
           <button type="button" class="btn btn-secondary" id="importSettingsBtn" style="width:100%;margin-bottom:8px">Import Settings</button>
           <input type="file" id="importSettingsFile" accept=".json" style="display:none">
           <button type="button" class="btn btn-secondary" id="exportReflectionsBtn" style="width:100%;margin-bottom:8px">Export Reflections</button>
+          <button type="button" class="btn btn-secondary" id="exportForAIBtn" style="width:100%;margin-bottom:8px">Export for AI</button>
         </div>
       </div>
     </div>
@@ -7134,6 +7135,12 @@
       });
       const fab = document.getElementById('quickLogFab');
       if (fab) fab.style.display = 'none';
+      // Hide habit stacks that live outside the form (use classList so
+      // checkMorningRoutine/checkBedtimeRoutine can restore them cleanly)
+      ['morningRoutine', 'bedtimeRoutine'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('show');
+      });
     };
 
     window.setActiveNav = function(page) {
@@ -7148,6 +7155,8 @@
         hideAllPages();
         document.getElementById('healthForm').style.display = '';
         document.getElementById('quickLogFab').style.display = 'block';
+        if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
+        if (typeof checkBedtimeRoutine === 'function') checkBedtimeRoutine();
         window.scrollTo(0, 0);
       } else if (page === 'writing') {
         hideAllPages();
@@ -8609,6 +8618,336 @@
         if (typeof showToast === 'function') showToast(`Exported ${entries.length} reflections`, 'success');
       } catch (err) {
         alert('Export failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
+    });
+
+    // ===== Export for AI =====
+    document.getElementById('exportForAIBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('exportForAIBtn');
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Fetching all data...';
+
+      try {
+        const data = await apiGet('export_all');
+        btn.textContent = 'Building export...';
+
+        const lines = [];
+        lines.push('# Health Tracker — Full Data Export');
+        lines.push(`Generated: ${new Date().toISOString().slice(0, 10)}`);
+        lines.push('');
+
+        // ── Settings & Goals ──
+        const s = data.settings || {};
+        lines.push('## Settings & Goals');
+        lines.push('');
+        lines.push('| Setting | Value |');
+        lines.push('|---------|-------|');
+        const goalDescs = {
+          sleepGoal: ['Sleep target', 'hours/night'],
+          aguaGoal: ['Water target', 'glasses/day'],
+          stepsGoal: ['Steps target', 'steps/day'],
+          movementGoal: ['Movement breaks target', 'breaks/day'],
+          mealsGoal: ['Healthy meals target', 'meals/day'],
+          readingGoal: ['Reading target', 'min/week'],
+          meditationGoal: ['Meditation target', 'days/week'],
+          dumbbellGoal: ['Dumbbell sessions target', 'sessions/week'],
+          emailSprintGoal: ['Email sprints target', 'sprints/day'],
+        };
+        Object.entries(goalDescs).forEach(([key, [label, unit]]) => {
+          if (s[key] !== undefined) lines.push(`| ${label} | ${s[key]} ${unit} |`);
+        });
+        lines.push('');
+
+        // ── Sort dates chronologically ──
+        const parseDateKey = (d) => {
+          // Format: "M/D/YY"
+          const parts = d.split('/');
+          if (parts.length !== 3) return new Date(0);
+          const year = 2000 + parseInt(parts[2]);
+          return new Date(year, parseInt(parts[0]) - 1, parseInt(parts[1]));
+        };
+        const allDates = [...new Set([
+          ...Object.keys(data.daily || {}),
+          ...Object.keys(data.movements || {}),
+          ...Object.keys(data.readings || {}),
+          ...Object.keys(data.dumbbell || {}),
+          ...Object.keys(data.workouts || {}),
+        ])].sort((a, b) => parseDateKey(a) - parseDateKey(b));
+
+        // ── Daily Data ──
+        lines.push('## Daily Tracking Data');
+        lines.push('');
+        lines.push('Each day tracks: sleep, hydration, steps, supplements, meals, exercise, body composition, blood pressure, and more.');
+        lines.push('Boolean fields: true = completed/taken, false = not done.');
+        lines.push('');
+
+        for (const date of allDates) {
+          const d = data.daily?.[date];
+          const mov = data.movements?.[date];
+          const rdg = data.readings?.[date];
+          const db = data.dumbbell?.[date];
+          const wk = data.workouts?.[date];
+          const bd = data.body?.[date];
+          const cs = data.custom?.[date];
+
+          if (!d && !mov && !rdg && !db && !wk) continue;
+
+          lines.push(`### ${date}`);
+          lines.push('');
+
+          if (d) {
+            // Core metrics
+            const metrics = [];
+            if (d['Hours of Sleep']) metrics.push(`Sleep: ${d['Hours of Sleep']} hrs`);
+            if (d['Water'] || d['Water (glasses)']) metrics.push(`Water: ${d['Water'] || d['Water (glasses)']} glasses`);
+            if (d['Steps']) metrics.push(`Steps: ${d['Steps']}`);
+            if (d['Calories']) metrics.push(`Calories: ${d['Calories']}`);
+            if (d['Email Sprints']) metrics.push(`Email Sprints: ${d['Email Sprints']}`);
+            if (metrics.length) {
+              lines.push('**Metrics:** ' + metrics.join(' | '));
+              lines.push('');
+            }
+
+            // REHIT
+            const rehit = d['REHIT 2x10'] || d['REHIT'];
+            if (rehit && rehit !== '' && rehit !== false) {
+              lines.push(`**REHIT:** ${rehit === true || rehit === 'TRUE' ? '2x10' : rehit}`);
+              const rehitDetails = [];
+              if (d['Fitness Score']) rehitDetails.push(`Fitness Score: ${d['Fitness Score']}`);
+              if (d['Peak Watts']) rehitDetails.push(`Peak Watts: ${d['Peak Watts']}`);
+              if (d['Watt Seconds'] || d['Watt-Seconds']) rehitDetails.push(`Watt-Seconds: ${d['Watt Seconds'] || d['Watt-Seconds']}`);
+              if (rehitDetails.length) lines.push(rehitDetails.join(' | '));
+              lines.push('');
+            }
+
+            // Supplements (only list what was taken)
+            const supps = [];
+            if (d['Creatine Chews'] || d['Creatine']) supps.push('Creatine');
+            if (d['Vitamin D']) supps.push('Vitamin D');
+            if (d['NO2']) supps.push('NO2');
+            if (d['Psyllium Husk'] || d['Psyllium']) supps.push('Psyllium Husk');
+            if (d['Zinc']) supps.push('Zinc');
+            if (d['Prebiotic']) supps.push('Prebiotic');
+            if (supps.length) {
+              lines.push('**Supplements taken:** ' + supps.join(', '));
+              lines.push('');
+            }
+
+            // Meals
+            const meals = [];
+            if (d['Breakfast']) meals.push('Breakfast');
+            if (d['Lunch']) meals.push('Lunch');
+            if (d['Dinner']) meals.push('Dinner');
+            const snacks = [];
+            if (d['Healthy Day Snacks'] || d['Day Snacks']) snacks.push('Healthy day snacks');
+            if (d['Healthy Night Snacks'] || d['Night Snacks']) snacks.push('Healthy night snacks');
+            if (d['No Alcohol']) snacks.push('No alcohol');
+            if (meals.length || snacks.length) {
+              lines.push('**Nutrition:** ' + [...meals, ...snacks].join(', '));
+              lines.push('');
+            }
+
+            // Body composition (only if real data present)
+            const bodyFields = [];
+            const bSrc = bd || d;
+            const w = bd ? bd.weight : (d['Weight (lbs)'] || d['Weight']);
+            if (w && w !== '' && w !== 0 && w !== '0') {
+              bodyFields.push(`Weight: ${w} lbs`);
+              const waist = bd ? bd.waist : (d['Waist (in)'] || d['Waist']);
+              if (waist && waist !== '' && waist !== 0) bodyFields.push(`Waist: ${waist} in`);
+              const lean = bd ? bd.leanMass : (d['Lean Mass (lbs)'] || d['Lean Mass']);
+              if (lean && lean !== '' && lean !== 0) bodyFields.push(`Lean Mass: ${lean} lbs`);
+              const fat = bd ? bd.bodyFat : (d['Body Fat (lbs)'] || d['Body Fat']);
+              if (fat && fat !== '' && fat !== 0) bodyFields.push(`Body Fat: ${fat} lbs`);
+              const bone = bd ? bd.boneMass : (d['Bone Mass (lbs)'] || d['Bone Mass']);
+              if (bone && bone !== '' && bone !== 0) bodyFields.push(`Bone Mass: ${bone} lbs`);
+              const water = bd ? bd.waterLbs : d['Water (lbs)'];
+              if (water && water !== '' && water !== 0) bodyFields.push(`Body Water: ${water} lbs`);
+            }
+            if (bodyFields.length) {
+              lines.push('**Body Composition:** ' + bodyFields.join(' | '));
+              lines.push('');
+            }
+
+            // Blood Pressure
+            const sys = d['Systolic'] || d['systolic'];
+            const dia = d['Diastolic'] || d['diastolic'];
+            if (sys && dia) {
+              let bp = `**Blood Pressure:** ${sys}/${dia}`;
+              const hr = d['Heart Rate'] || d['heartRate'];
+              if (hr) bp += ` | Heart Rate: ${hr} bpm`;
+              lines.push(bp);
+              lines.push('');
+            }
+
+            // Other habits
+            const habits = [];
+            if (d['Meditation']) habits.push('Meditation');
+            if (d["Grey's Inhaler Morning"] || d['Inhaler Morning']) habits.push('Inhaler (morning)');
+            if (d["Grey's Inhaler Evening"] || d['Inhaler Evening']) habits.push('Inhaler (evening)');
+            if (d['5 min Multiplication'] || d['multiplication']) habits.push('Multiplication practice');
+            if (d['Grooming Haircut']) habits.push('Haircut');
+            if (d['Grooming Beard Trim']) habits.push('Beard trim');
+            if (habits.length) {
+              lines.push('**Other habits:** ' + habits.join(', '));
+              lines.push('');
+            }
+          }
+
+          // Movement breaks
+          if (mov && Array.isArray(mov) && mov.length > 0) {
+            const movStr = mov.map(m => `${m.type} (${m.duration} min)`).join(', ');
+            lines.push(`**Movement breaks:** ${movStr}`);
+            lines.push('');
+          }
+
+          // Dumbbell exercises
+          if (db && Array.isArray(db) && db.length > 0) {
+            lines.push('**Dumbbell session:**');
+            db.forEach(ex => {
+              const parts = [];
+              if (ex.weight) parts.push(`${ex.weight} lbs`);
+              if (ex.reps) parts.push(`${ex.reps} reps`);
+              if (ex.sets) parts.push(`${ex.sets} sets`);
+              lines.push(`- ${ex.name || ex.exercise || 'Exercise'}: ${parts.join(', ') || 'completed'}`);
+            });
+            lines.push('');
+          }
+
+          // Workouts
+          if (wk && Array.isArray(wk) && wk.length > 0) {
+            lines.push('**Workouts:**');
+            wk.forEach(w => {
+              const parts = [];
+              if (w.type) parts.push(w.type);
+              if (w.duration) parts.push(`${w.duration} min`);
+              if (w.calories) parts.push(`${w.calories} cal`);
+              lines.push(`- ${parts.join(', ') || JSON.stringify(w)}`);
+            });
+            lines.push('');
+          }
+
+          // Readings
+          if (rdg && Array.isArray(rdg) && rdg.length > 0) {
+            const rdgStr = rdg.map(r => `"${r.book || r.Book || 'Unknown'}" (${r.duration || r['duration (min)'] || r.Duration || '?'} min)`).join(', ');
+            lines.push(`**Reading:** ${rdgStr}`);
+            lines.push('');
+          }
+
+          // Custom sections
+          if (cs && typeof cs === 'object') {
+            const sectionMeta = (appSettings.sections || []).filter(sec => sec.custom);
+            Object.entries(cs).forEach(([secId, secData]) => {
+              const meta = sectionMeta.find(m => m.id === secId);
+              const secName = meta?.name || secId;
+              const fields = meta?.fields || [];
+              const parts = [];
+              Object.entries(secData).forEach(([fId, fVal]) => {
+                const fMeta = fields.find(f => f.id === fId);
+                const fName = fMeta?.name || fId;
+                if (fVal.checkboxes) {
+                  const cbNames = fMeta?.config?.checkboxes || fVal.checkboxes.map((_, i) => `Item ${i + 1}`);
+                  const checked = cbNames.filter((_, i) => fVal.checkboxes[i]);
+                  if (checked.length) parts.push(`${fName}: ${checked.join(', ')}`);
+                } else if (fVal.value !== undefined && fVal.value !== '' && fVal.value !== false) {
+                  parts.push(`${fName}: ${fVal.value}`);
+                } else if (fVal.entries && fVal.entries.length > 0) {
+                  parts.push(`${fName}: ${fVal.entries.length} entries`);
+                }
+              });
+              if (parts.length) {
+                lines.push(`**${secName}:** ${parts.join(' | ')}`);
+                lines.push('');
+              }
+            });
+          }
+
+          // Reflections
+          const refl = d?.['Reflections'] || data.daily?.[date]?.['Reflections'];
+          if (refl && refl.trim()) {
+            lines.push('**Reflections:**');
+            lines.push(refl.trim());
+            lines.push('');
+          }
+
+          // Stories
+          const stories = d?.['Stories'] || data.daily?.[date]?.['Stories'];
+          if (stories && stories.trim()) {
+            lines.push('**Stories/Notes:**');
+            lines.push(stories.trim());
+            lines.push('');
+          }
+        }
+
+        // ── Biomarkers ──
+        if (data.biomarkers && Object.keys(data.biomarkers).length > 0) {
+          lines.push('## Biomarker Lab Results');
+          lines.push('');
+          lines.push('Blood test results by date. Values are numeric lab measurements.');
+          lines.push('');
+          const biomarkDates = Object.keys(data.biomarkers).sort((a, b) => new Date(a) - new Date(b));
+          biomarkDates.forEach(date => {
+            const vals = data.biomarkers[date];
+            if (vals && vals.length > 0) {
+              lines.push(`### Lab Results — ${date}`);
+              lines.push('');
+              vals.forEach(v => {
+                if (v.value !== undefined && v.value !== '' && v.value !== null) {
+                  lines.push(`- ${v.name}: ${v.value} ${v.unit || ''}`);
+                }
+              });
+              lines.push('');
+            }
+          });
+        }
+
+        // ── Phases ──
+        if (data.phases && data.phases.length > 0) {
+          lines.push('## Training Phases');
+          lines.push('');
+          lines.push('Phases define training periods with specific goals and durations.');
+          lines.push('');
+          data.phases.forEach(p => {
+            const parts = [`**${p.name || p.id || 'Phase'}**`];
+            if (p.startDate) parts.push(`Start: ${p.startDate}`);
+            if (p.length) parts.push(`Duration: ${p.length} days`);
+            if (p.status) parts.push(`Status: ${p.status}`);
+            lines.push(parts.join(' | '));
+          });
+          lines.push('');
+        }
+
+        // ── Habit Notes ──
+        if (data.habitNotes && data.habitNotes.length > 0) {
+          lines.push('## Habit Notes & Insights');
+          lines.push('');
+          data.habitNotes.forEach(n => {
+            if (typeof n === 'string') {
+              lines.push(`- ${n}`);
+            } else if (n.text || n.note) {
+              lines.push(`- ${n.text || n.note}`);
+            }
+          });
+          lines.push('');
+        }
+
+        const output = lines.join('\n');
+        const blob = new Blob([output], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `health-data-export-${new Date().toISOString().slice(0, 10)}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        if (typeof showToast === 'function') showToast(`Exported ${allDates.length} days of data`, 'success');
+      } catch (err) {
+        alert('Export failed: ' + err.message);
+        console.error('Export for AI failed:', err);
       } finally {
         btn.disabled = false;
         btn.textContent = origText;
