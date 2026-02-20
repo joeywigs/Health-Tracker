@@ -6251,17 +6251,10 @@ async function populateForm(data) {
     };
     window._bodyCarriedForward = true;
   } else if (!hasAnyBodyData(d)) {
-    // No carry-forward from worker and no body in daily — try client-side lookback
-    bodySource = await getMostRecentBodyDaily(currentDate);
-    // After the await, a newer populateForm may have started — bail out
-    if (myGen !== populateFormGeneration) {
-      console.log("⏭️ populateForm superseded after body carry-forward, bailing out");
-      // Still refresh morning routine before bailing
-      if (typeof checkMorningRoutine === 'function') {
-        try { checkMorningRoutine(currentDate.toDateString() === new Date().toDateString()); } catch(e) {}
-      }
-      return;
-    }
+    // No carry-forward from worker and no body in daily — leave fields empty.
+    // The worker handles carry-forward via body:latest; client-side lookback
+    // was removed because it could return stale values from a different source,
+    // causing body data to oscillate between two values.
     window._bodyCarriedForward = true;
   }
 
