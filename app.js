@@ -403,12 +403,17 @@ function setupDateNav() {
 }
 
 function changeDate(days) {
-  // Flush any pending autosave for the current date before switching
+  // Flush any pending or unsaved data for the current date before switching.
+  // Check autoSaveTimeout (pending debounce) OR dataChanged (autosave timer
+  // was cleared by populateForm/force-reload but data was never persisted).
   if (autoSaveTimeout) {
     clearTimeout(autoSaveTimeout);
     autoSaveTimeout = null;
+  }
+  if (dataChanged) {
     const payload = buildPayloadFromUI();
     saveData(payload);
+    dataChanged = false;
   }
 
   currentDate.setDate(currentDate.getDate() + days);
