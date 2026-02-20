@@ -105,6 +105,9 @@ async function handleGet(request, env, corsHeaders) {
     return await loadSettings(env, corsHeaders);
   }
 
+  if (action === "export_all") {
+    return await exportAll(env, corsHeaders);
+  }
 
   // iOS Shortcut may send steps as GET
   if (action === "steps") {
@@ -313,17 +316,12 @@ async function saveDay(data, env, corsHeaders) {
     "Watt Seconds": data.wattSeconds || "",
     "Calories": data.calories || "",
     "Water": data.agua ?? data.hydrationGood ?? data.water ?? 0,
-    // Body fields: only write when explicitly included in the payload.
-    // When omitted (carry-forward mode), clear stale values from daily so they
-    // don't diverge from the dedicated body:{date} key (which is the source of
-    // truth for carry-forward). Preserving stale body data here caused the UI
-    // to fluctuate between the stale daily values and the correct carry-forward.
-    "Weight (lbs)": ("weight" in data) ? (data.weight || "") : "",
-    "Waist": ("waist" in data) ? (data.waist || "") : "",
-    "Lean Mass (lbs)": ("leanMass" in data) ? (data.leanMass || "") : "",
-    "Body Fat (lbs)": ("bodyFat" in data) ? (data.bodyFat || "") : "",
-    "Bone Mass (lbs)": ("boneMass" in data) ? (data.boneMass || "") : "",
-    "Water (lbs)": ("bodywater" in data || "waterLbs" in data) ? (data.bodywater || data.waterLbs || "") : "",
+    "Weight (lbs)": ("weight" in data) ? (data.weight || "") : (existing["Weight (lbs)"] || ""),
+    "Waist": ("waist" in data) ? (data.waist || "") : (existing["Waist"] || ""),
+    "Lean Mass (lbs)": ("leanMass" in data) ? (data.leanMass || "") : (existing["Lean Mass (lbs)"] || ""),
+    "Body Fat (lbs)": ("bodyFat" in data) ? (data.bodyFat || "") : (existing["Body Fat (lbs)"] || ""),
+    "Bone Mass (lbs)": ("boneMass" in data) ? (data.boneMass || "") : (existing["Bone Mass (lbs)"] || ""),
+    "Water (lbs)": ("bodywater" in data || "waterLbs" in data) ? (data.bodywater || data.waterLbs || "") : (existing["Water (lbs)"] || ""),
     "Systolic": data.systolic || existing["Systolic"] || "",
     "Diastolic": data.diastolic || existing["Diastolic"] || "",
     "Heart Rate": data.heartRate || existing["Heart Rate"] || "",
@@ -981,6 +979,66 @@ function formatDateForKV(date) {
   const options = { timeZone: 'America/Chicago', year: 'numeric', month: 'numeric', day: 'numeric' };
   const localDate = new Date(date.toLocaleString('en-US', options));
   return `${localDate.getMonth() + 1}/${localDate.getDate()}/${String(localDate.getFullYear()).slice(-2)}`;
+}
+
+// ===== Export All Data =====
+async function exportAll(env, corsHeaders) {
+  // Collect all KV keys by prefix in parallel
+  const [dailyKeys, movementKeys, readingKeys, dumbbellKeys, customKeys, workoutKeys, bodyKeys] = await Promise.all([
+    env.HABIT_DATA.list({ prefix: "daily:" }),
+    env.HABIT_DATA.list({ prefix: "movements:" }),
+    env.HABIT_DATA.list({ prefix: "readings:" }),
+    env.HABIT_DATA.list({ prefix: "dumbbell:" }),
+    env.HABIT_DATA.list({ prefix: "custom:" }),
+    env.HABIT_DATA.list({ prefix: "workouts:" }),
+    env.HABIT_DATA.list({ prefix: "body:" }),
+  ]);
+
+  // Fetch all values in parallel (batch by type)
+  const fetchAll = async (keys) => {
+    const entries = {};
+    const promises = keys.keys.map(async (k) => {
+      const date = k.name.split(":").slice(1).join(":");
+      entries[date] = await env.HABIT_DATA.get(k.name, "json");
+    });
+    await Promise.all(promises);
+    return entries;
+  };
+
+  const [daily, movements, readings, dumbbell, custom, workouts, body,
+         biomarkers, phases, settings, bedtime, morning, habitNotes, cueLogs] = await Promise.all([
+    fetchAll(dailyKeys),
+    fetchAll(movementKeys),
+    fetchAll(readingKeys),
+    fetchAll(dumbbellKeys),
+    fetchAll(customKeys),
+    fetchAll(workoutKeys),
+    fetchAll(bodyKeys),
+    env.HABIT_DATA.get("biomarkers:values", "json"),
+    env.HABIT_DATA.get("phases", "json"),
+    env.HABIT_DATA.get("app:settings", "json"),
+    env.HABIT_DATA.get("bedtime:items", "json"),
+    env.HABIT_DATA.get("morning:items", "json"),
+    env.HABIT_DATA.get("habit:notes", "json"),
+    env.HABIT_DATA.get("cue:logs", "json"),
+  ]);
+
+  return jsonResponse({
+    daily,
+    movements,
+    readings,
+    dumbbell,
+    custom,
+    workouts,
+    body,
+    biomarkers: biomarkers || {},
+    phases: phases || [],
+    settings: settings || {},
+    bedtime: bedtime || [],
+    morning: morning || [],
+    habitNotes: habitNotes || [],
+    cueLogs: cueLogs || [],
+  }, 200, corsHeaders);
 }
 
 // ===== Migration: Convert legacy movements to morning/afternoon format =====
