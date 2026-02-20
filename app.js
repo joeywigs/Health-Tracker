@@ -6223,6 +6223,10 @@ async function populateForm(data) {
     // After the await, a newer populateForm may have started — bail out
     if (myGen !== populateFormGeneration) {
       console.log("⏭️ populateForm superseded after body carry-forward, bailing out");
+      // Still refresh morning routine before bailing
+      if (typeof checkMorningRoutine === 'function') {
+        try { checkMorningRoutine(currentDate.toDateString() === new Date().toDateString()); } catch(e) {}
+      }
       return;
     }
     window._bodyCarriedForward = true;
@@ -6294,6 +6298,15 @@ async function populateForm(data) {
     }
 
     document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
+
+    // Refresh morning routine (must happen even on the no-daily path)
+    if (typeof checkMorningRoutine === 'function') {
+      try {
+        const viewingToday = currentDate.toDateString() === new Date().toDateString();
+        checkMorningRoutine(viewingToday);
+      } catch(e) { checkMorningRoutine(); }
+    }
+
     console.log("✅ populateForm ran (no daily)");
     return;
   }

@@ -7135,6 +7135,12 @@
       });
       const fab = document.getElementById('quickLogFab');
       if (fab) fab.style.display = 'none';
+      // Hide habit stacks that live outside the form (use classList so
+      // checkMorningRoutine/checkBedtimeRoutine can restore them cleanly)
+      ['morningRoutine', 'bedtimeRoutine'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('show');
+      });
     };
 
     window.setActiveNav = function(page) {
@@ -7149,6 +7155,8 @@
         hideAllPages();
         document.getElementById('healthForm').style.display = '';
         document.getElementById('quickLogFab').style.display = 'block';
+        if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
+        if (typeof checkBedtimeRoutine === 'function') checkBedtimeRoutine();
         window.scrollTo(0, 0);
       } else if (page === 'writing') {
         hideAllPages();
