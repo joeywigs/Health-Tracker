@@ -494,6 +494,45 @@ window.migrateMovements = async function() {
   }
 };
 
+// Migration: Backfill custom section fields into daily KV records with descriptive names
+window.migrateCustomFields = async function() {
+  try {
+    // Build section metadata from appSettings so the worker can map field IDs to names
+    const sections = (typeof appSettings !== 'undefined' && appSettings.sections) || [];
+    const sectionMeta = sections
+      .filter(s => s.custom || (s.fields && s.fields.length > 0))
+      .map(sec => ({
+        id: sec.id,
+        name: sec.name,
+        fields: (sec.fields || []).map(f => ({
+          fieldId: f.id,
+          fieldName: f.name,
+          type: f.type,
+          checkboxes: f.config?.checkboxes
+        }))
+      }))
+      .filter(s => s.fields.length > 0);
+
+    if (sectionMeta.length === 0) {
+      alert('No custom sections found to migrate.');
+      return;
+    }
+
+    console.log('Starting custom fields migration with metadata:', sectionMeta);
+    const result = await apiPost('migrate_custom_fields', { sectionMeta });
+    console.log('Migration complete:', result);
+    alert(`Custom fields migration complete!\n\nDays updated: ${result.migrated}\nSkipped: ${result.skipped}\nErrors: ${result.errors?.length || 0}`);
+    if (result.errors && result.errors.length > 0) {
+      console.warn('Migration errors:', result.errors);
+    }
+    return result;
+  } catch (err) {
+    console.error('Custom fields migration failed:', err);
+    alert('Migration failed: ' + err.message);
+    throw err;
+  }
+};
+
 // Data Audit: Scan all historical data for inconsistencies
 window.auditData = async function() {
   try {
