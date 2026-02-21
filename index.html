@@ -2225,6 +2225,7 @@
       justify-content: center;
       transition: all 0.2s;
       flex-shrink: 0;
+      cursor: pointer;
     }
     .morning-item.checked .morning-checkbox {
       background: linear-gradient(135deg, #ffb74d, #ff8a65);
@@ -9790,17 +9791,17 @@
     function isMorningItemDone(item) {
       switch (item.type) {
         case 'pulse':
-          return !!document.getElementById('heartRate')?.value;
+          return !!document.getElementById('heartRate')?.value || !!morningCheckedState[item.id];
         case 'bloodPressure':
-          return !!document.getElementById('systolic')?.value || !!document.getElementById('diastolic')?.value;
+          return !!document.getElementById('systolic')?.value || !!document.getElementById('diastolic')?.value || !!morningCheckedState[item.id];
         case 'supps':
           return ['creatine', 'vitaminD', 'no2', 'psyllium', 'zinc', 'prebiotic'].every(id => document.getElementById(id)?.checked);
         case 'water':
           return !!morningCheckedState[item.id];
         case 'rehit':
-          return document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked;
+          return document.getElementById('rehit2')?.checked || document.getElementById('rehit3')?.checked || !!morningCheckedState[item.id];
         case 'fitnessMetrics':
-          return !!document.getElementById('fitnessScore')?.value;
+          return !!document.getElementById('fitnessScore')?.value || !!morningCheckedState[item.id];
         case 'meditated':
           return document.getElementById('meditation')?.checked;
         case 'custom':
@@ -9919,9 +9920,71 @@
       checkMorningAllDone();
     }
 
+    function toggleMorningItem(item) {
+      const currentlyDone = isMorningItemDone(item);
+      const newState = !currentlyDone;
+
+      switch (item.type) {
+        case 'meditated': {
+          const cb = document.getElementById('meditation');
+          if (cb) {
+            cb.checked = newState;
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
+            if (typeof syncCheckboxVisual === 'function') syncCheckboxVisual(cb);
+          }
+          break;
+        }
+        case 'supps': {
+          ['creatine', 'vitaminD', 'no2', 'psyllium', 'zinc', 'prebiotic'].forEach(id => {
+            const cb = document.getElementById(id);
+            if (cb) {
+              cb.checked = newState;
+              cb.dispatchEvent(new Event('change', { bubbles: true }));
+              if (typeof syncCheckboxVisual === 'function') syncCheckboxVisual(cb);
+            }
+          });
+          break;
+        }
+        case 'water': {
+          if (!currentlyDone) {
+            morningCheckedState[item.id] = true;
+            if (typeof window.handleAguaPlus === 'function') {
+              window.handleAguaPlus();
+              window.handleAguaPlus();
+            }
+          } else {
+            morningCheckedState[item.id] = false;
+          }
+          break;
+        }
+        case 'custom':
+          morningCheckedState[item.id] = newState;
+          break;
+        default:
+          // pulse, bloodPressure, fitnessMetrics, rehit — manual override
+          morningCheckedState[item.id] = newState;
+          break;
+      }
+
+      if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+    }
+
     function setupMorningItemListeners() {
       const container = document.getElementById('morningItems');
       if (!container) return;
+
+      // Checkbox circle click: toggle item done state
+      container.querySelectorAll('.morning-checkbox').forEach(cb => {
+        cb.addEventListener('click', (e) => {
+          const itemEl = e.target.closest('.morning-item');
+          if (!itemEl) return;
+          const itemId = parseInt(itemEl.dataset.morningId);
+          const item = morningItems.find(i => i.id === itemId);
+          if (!item) return;
+          toggleMorningItem(item);
+          updateMorningItemStates();
+        });
+      });
 
       // Input sync: morning input → real form field
       container.querySelectorAll('[data-sync]').forEach(input => {
