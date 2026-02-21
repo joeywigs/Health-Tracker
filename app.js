@@ -5711,6 +5711,7 @@ async function saveData(payload) {
     inhalerMorning: "Inhaler Morning",
     inhalerEvening: "Inhaler Evening",
     multiplication: "5 min Multiplication",
+    greysPoints: "Grey's Points",
     creatine: "Creatine Chews",
     vitaminD: "Vitamin D",
     no2: "NO2",
@@ -5846,6 +5847,7 @@ function buildPayloadFromUI() {
     inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
     inhalerEvening: !!document.getElementById("inhalerEvening")?.checked,
     multiplication: !!document.getElementById("multiplication")?.checked,
+    greysPoints: document.getElementById("greysPoints")?.value || "",
     
     // REHIT: send "2x10", "3x10", or ""
     rehit: document.getElementById("rehit2")?.checked ? "2x10" : 
@@ -6360,6 +6362,9 @@ async function populateForm(data) {
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"] ?? d["inhalerMorning"]);
   setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"] ?? d["inhalerEvening"]);
   setCheckbox("multiplication", d["5 min Multiplication"] ?? d["multiplication"]);
+
+  const greysPointsEl = document.getElementById("greysPoints");
+  if (greysPointsEl) greysPointsEl.value = d["Grey's Points"] ?? d["greysPoints"] ?? "";
 
   // REHIT: check the right one based on value
   const rehitVal = d["REHIT 2x10"] ?? d["REHIT"] ?? d["rehit"] ?? "";
