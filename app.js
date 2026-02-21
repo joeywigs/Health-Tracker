@@ -208,6 +208,7 @@ let emailSprintEndTime = 0;
 let currentAverages = null;
 let lastBookTitle = localStorage.getItem('lastBookTitle') || "";
 let aguaCount = 0;
+let proteinTotal = 0;
 
 // Track which daily goals have been celebrated today (reset on date change)
 let dailyGoalsAchieved = {
@@ -5959,6 +5960,9 @@ function buildPayloadFromUI() {
     // Agua (hydration glasses) - read from DOM to stay in sync with inline handlers
     agua: parseInt(document.getElementById("aguaCount")?.textContent) || 0,
 
+    // Protein (grams) - read from DOM to stay in sync with inline handler
+    protein: parseInt(document.getElementById("proteinTotal")?.textContent) || 0,
+
     // Body — omit carried-forward values (undefined is stripped by JSON.stringify)
     // so the worker preserves existing data instead of writing phantom entries
     ...(window._bodyCarriedForward ? {} : {
@@ -6119,6 +6123,14 @@ function setupAguaButtons() {
   // Sync aguaCount from DOM in case it was changed before app.js loaded.
   const el = document.getElementById("aguaCount");
   if (el) aguaCount = parseInt(el.textContent) || 0;
+}
+
+// =====================================
+// PROTEIN TRACKING
+// =====================================
+function updateProteinDisplay() {
+  const el = document.getElementById("proteinTotal");
+  if (el) el.textContent = String(proteinTotal);
 }
 
 // =====================================
@@ -6350,6 +6362,9 @@ async function populateForm(data) {
     aguaCount = 0;
     updateAguaDisplay();
 
+    proteinTotal = 0;
+    updateProteinDisplay();
+
     emailSprintCount = 0;
     updateEmailSprintDisplay();
 
@@ -6489,6 +6504,10 @@ async function populateForm(data) {
   // Agua counter
   aguaCount = parseInt(d["agua"] ?? d["Water"] ?? d["Water (glasses)"] ?? d["hydrationGood"], 10) || 0;
   updateAguaDisplay();
+
+  // Protein counter
+  proteinTotal = parseInt(d["Protein"] ?? d["protein"], 10) || 0;
+  updateProteinDisplay();
 
   // Body fields: use current day if present, else carry-forward source
   applyBodyFieldsFromDaily(bodySource);
