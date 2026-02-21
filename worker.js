@@ -334,7 +334,7 @@ async function saveDay(data, env, corsHeaders) {
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
-    "Grey's Points": data.greysPoints || "",
+    "Grey's Points": parseInt(data.greysPoints) || 0,
     "Steps": data.steps || "",
     "REHIT 2x10": data.rehit || "",
     "Fitness Score": data.fitnessScore || "",
