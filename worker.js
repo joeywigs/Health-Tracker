@@ -214,6 +214,13 @@ async function handlePost(request, env, corsHeaders) {
     return await migrateMovements(env, corsHeaders);
   }
 
+  if (action === "migrate_custom_fields") {
+    if (!body.sectionMeta || !Array.isArray(body.sectionMeta)) {
+      return jsonResponse({ error: true, message: "Missing sectionMeta array" }, 400, corsHeaders);
+    }
+    return await migrateCustomFields(body.sectionMeta, env, corsHeaders);
+  }
+
   if (action === "audit_data") {
     return await auditData(env, corsHeaders);
   }
@@ -334,7 +341,6 @@ async function saveDay(data, env, corsHeaders) {
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
-    "Grey's Points": parseInt(data.greysPoints) || 0,
     "Steps": data.steps || "",
     "REHIT 2x10": data.rehit || "",
     "Fitness Score": data.fitnessScore || "",
@@ -375,6 +381,12 @@ async function saveDay(data, env, corsHeaders) {
     "Grooming Haircut": data.groomingHaircut || false,
     "Grooming Beard Trim": data.groomingBeardTrim || false,
   };
+
+  // Merge custom section fields into daily record with descriptive names
+  // (e.g. "Grey's Habits: Points", "Gratitude", etc.)
+  if (data.customFieldsFlat && typeof data.customFieldsFlat === 'object') {
+    Object.assign(daily, data.customFieldsFlat);
+  }
 
   // Save all data in parallel
   const saves = [
@@ -1022,6 +1034,92 @@ function formatDateForKV(date) {
   const options = { timeZone: 'America/Chicago', year: 'numeric', month: 'numeric', day: 'numeric' };
   const localDate = new Date(date.toLocaleString('en-US', options));
   return `${localDate.getMonth() + 1}/${localDate.getDate()}/${String(localDate.getFullYear()).slice(-2)}`;
+}
+
+// ===== Migration: Backfill custom section fields into daily records =====
+// Takes section metadata from the client (since worker doesn't have appSettings)
+// and writes descriptive named fields into each daily:{date} record.
+async function migrateCustomFields(sectionMeta, env, corsHeaders) {
+  const results = { migrated: 0, skipped: 0, errors: [] };
+
+  // Build a lookup: sectionId → { sectionName, fields: [{ fieldId, fieldName, type, config }] }
+  const metaMap = {};
+  sectionMeta.forEach(s => {
+    metaMap[s.id] = s;
+  });
+
+  // List all custom:{date} keys
+  const customKeys = await env.HABIT_DATA.list({ prefix: "custom:" });
+
+  for (const key of customKeys.keys) {
+    try {
+      const dateStr = key.name.replace("custom:", "");
+      const customData = await env.HABIT_DATA.get(key.name, "json");
+      if (!customData || typeof customData !== 'object') {
+        results.skipped++;
+        continue;
+      }
+
+      // Build flat named fields from this day's custom data
+      const flat = {};
+      for (const [sectionId, sectionData] of Object.entries(customData)) {
+        const meta = metaMap[sectionId];
+        if (!meta || !meta.fields) continue;
+
+        for (const fieldMeta of meta.fields) {
+          const fd = sectionData[fieldMeta.fieldId];
+          if (!fd) continue;
+
+          const fields = meta.fields;
+          const fieldKey = (fields.length > 1 || (fieldMeta.fieldName && fieldMeta.fieldName !== meta.name))
+            ? `${meta.name}: ${fieldMeta.fieldName}`
+            : meta.name;
+
+          const t = fieldMeta.type;
+          if (t === 'counter') {
+            flat[fieldKey] = fd.value || 0;
+          } else if (t === 'checkbox') {
+            const cbs = fieldMeta.checkboxes || ['Done'];
+            if (cbs.length === 1) {
+              flat[fieldKey] = fd.checkboxes?.[0] || false;
+            } else {
+              cbs.forEach((cb, i) => {
+                flat[`${fieldKey}: ${cb}`] = fd.checkboxes?.[i] || false;
+              });
+            }
+          } else if (t === 'toggle') {
+            flat[fieldKey] = fd.value || false;
+          } else if (t === 'rating') {
+            flat[fieldKey] = fd.value || 0;
+          } else if (t === 'log') {
+            flat[fieldKey] = fd.entries || [];
+          } else {
+            flat[fieldKey] = fd.value || '';
+          }
+        }
+      }
+
+      if (Object.keys(flat).length === 0) {
+        results.skipped++;
+        continue;
+      }
+
+      // Merge into existing daily record
+      const daily = await env.HABIT_DATA.get(`daily:${dateStr}`, "json") || {};
+      Object.assign(daily, flat);
+      await env.HABIT_DATA.put(`daily:${dateStr}`, JSON.stringify(daily));
+
+      results.migrated++;
+    } catch (e) {
+      results.errors.push({ key: key.name, error: e.message });
+    }
+  }
+
+  return jsonResponse({
+    success: true,
+    message: `Migration complete: ${results.migrated} days updated, ${results.skipped} skipped, ${results.errors.length} errors`,
+    ...results
+  }, 200, corsHeaders);
 }
 
 // ===== Export All Data =====

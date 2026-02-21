@@ -494,6 +494,45 @@ window.migrateMovements = async function() {
   }
 };
 
+// Migration: Backfill custom section fields into daily KV records with descriptive names
+window.migrateCustomFields = async function() {
+  try {
+    // Build section metadata from appSettings so the worker can map field IDs to names
+    const sections = (typeof appSettings !== 'undefined' && appSettings.sections) || [];
+    const sectionMeta = sections
+      .filter(s => s.custom || (s.fields && s.fields.length > 0))
+      .map(sec => ({
+        id: sec.id,
+        name: sec.name,
+        fields: (sec.fields || []).map(f => ({
+          fieldId: f.id,
+          fieldName: f.name,
+          type: f.type,
+          checkboxes: f.config?.checkboxes
+        }))
+      }))
+      .filter(s => s.fields.length > 0);
+
+    if (sectionMeta.length === 0) {
+      alert('No custom sections found to migrate.');
+      return;
+    }
+
+    console.log('Starting custom fields migration with metadata:', sectionMeta);
+    const result = await apiPost('migrate_custom_fields', { sectionMeta });
+    console.log('Migration complete:', result);
+    alert(`Custom fields migration complete!\n\nDays updated: ${result.migrated}\nSkipped: ${result.skipped}\nErrors: ${result.errors?.length || 0}`);
+    if (result.errors && result.errors.length > 0) {
+      console.warn('Migration errors:', result.errors);
+    }
+    return result;
+  } catch (err) {
+    console.error('Custom fields migration failed:', err);
+    alert('Migration failed: ' + err.message);
+    throw err;
+  }
+};
+
 // Data Audit: Scan all historical data for inconsistencies
 window.auditData = async function() {
   try {
@@ -5711,7 +5750,6 @@ async function saveData(payload) {
     inhalerMorning: "Inhaler Morning",
     inhalerEvening: "Inhaler Evening",
     multiplication: "5 min Multiplication",
-    greysPoints: "Grey's Points",
     creatine: "Creatine Chews",
     vitaminD: "Vitamin D",
     no2: "NO2",
@@ -5831,6 +5869,51 @@ function triggerSaveSoon() {
   }, 1500);
 }
 
+// Build flat key-value map of all custom section fields with descriptive names
+// so they get stored as named fields in the daily:{date} KV record.
+function buildCustomFieldsFlat() {
+  const flat = {};
+  const sections = (typeof appSettings !== 'undefined' && appSettings.sections) || [];
+  sections.filter(s => s.custom || (s.fields && s.fields.length > 0)).forEach(sec => {
+    const sectionData = window.customSectionData?.[sec.id] || {};
+    const fields = sec.fields || [];
+    if (fields.length === 0) return;
+
+    fields.forEach(f => {
+      const fd = sectionData[f.id];
+      if (!fd) return;
+
+      // Build descriptive name: "Section: Field" or just "Section" if names match
+      const key = (fields.length > 1 || (f.name && f.name !== sec.name))
+        ? `${sec.name}: ${f.name}`
+        : sec.name;
+
+      if (f.type === 'counter') {
+        flat[key] = fd.value || 0;
+      } else if (f.type === 'checkbox') {
+        const cbs = f.config?.checkboxes || ['Done'];
+        if (cbs.length === 1) {
+          flat[key] = fd.checkboxes?.[0] || false;
+        } else {
+          cbs.forEach((cb, i) => {
+            flat[`${key}: ${cb}`] = fd.checkboxes?.[i] || false;
+          });
+        }
+      } else if (f.type === 'toggle') {
+        flat[key] = fd.value || false;
+      } else if (f.type === 'rating') {
+        flat[key] = fd.value || 0;
+      } else if (f.type === 'log') {
+        flat[key] = fd.entries || [];
+      } else {
+        // text, number, time
+        flat[key] = fd.value || '';
+      }
+    });
+  });
+  return flat;
+}
+
 function buildPayloadFromUI() {
   return {
     date: formatDateForAPI(currentDate),
@@ -5847,7 +5930,6 @@ function buildPayloadFromUI() {
     inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
     inhalerEvening: !!document.getElementById("inhalerEvening")?.checked,
     multiplication: !!document.getElementById("multiplication")?.checked,
-    greysPoints: parseInt(document.querySelector('#greysHabitsSection .counter-value')?.textContent) || 0,
     
     // REHIT: send "2x10", "3x10", or ""
     rehit: document.getElementById("rehit2")?.checked ? "2x10" : 
@@ -5910,9 +5992,12 @@ function buildPayloadFromUI() {
     carly: document.getElementById("carly")?.value || "",
     
     // Custom sections data - collect from UI first
-    customSections: typeof window.collectCustomSectionsData === 'function' 
-      ? window.collectCustomSectionsData() 
-      : (window.customSectionData || {})
+    customSections: typeof window.collectCustomSectionsData === 'function'
+      ? window.collectCustomSectionsData()
+      : (window.customSectionData || {}),
+
+    // Flat named copy of custom fields for the daily:{date} record
+    customFieldsFlat: buildCustomFieldsFlat()
   };
 }
 
@@ -6362,9 +6447,6 @@ async function populateForm(data) {
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"] ?? d["inhalerMorning"]);
   setCheckbox("inhalerEvening", d["Grey's Inhaler Evening"] ?? d["Inhaler Evening"] ?? d["inhalerEvening"]);
   setCheckbox("multiplication", d["5 min Multiplication"] ?? d["multiplication"]);
-
-  const greysPointsEl = document.querySelector('#greysHabitsSection .counter-value');
-  if (greysPointsEl) greysPointsEl.textContent = d["Grey's Points"] ?? d["greysPoints"] ?? 0;
 
   // REHIT: check the right one based on value
   const rehitVal = d["REHIT 2x10"] ?? d["REHIT"] ?? d["rehit"] ?? "";
