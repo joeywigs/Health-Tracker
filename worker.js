@@ -334,7 +334,6 @@ async function saveDay(data, env, corsHeaders) {
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
-    "Grey's Points": parseInt(data.greysPoints) || 0,
     "Steps": data.steps || "",
     "REHIT 2x10": data.rehit || "",
     "Fitness Score": data.fitnessScore || "",
@@ -375,6 +374,12 @@ async function saveDay(data, env, corsHeaders) {
     "Grooming Haircut": data.groomingHaircut || false,
     "Grooming Beard Trim": data.groomingBeardTrim || false,
   };
+
+  // Merge custom section fields into daily record with descriptive names
+  // (e.g. "Grey's Habits: Points", "Gratitude", etc.)
+  if (data.customFieldsFlat && typeof data.customFieldsFlat === 'object') {
+    Object.assign(daily, data.customFieldsFlat);
+  }
 
   // Save all data in parallel
   const saves = [
