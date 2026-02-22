@@ -371,6 +371,7 @@ async function saveDay(data, env, corsHeaders) {
     "Healthy Day Snacks": data.daySnacks || data.healthyDaySnacks || false,
     "Healthy Night Snacks": data.nightSnacks || data.healthyNightSnacks || false,
     "No Alcohol": data.noAlcohol || false,
+    "Protein": parseInt(data.protein) || 0,
     // Other
     "Meditation": data.meditation || false,
     "Email Sprints": parseInt(data.emailSprints) || 0,
@@ -1356,6 +1357,7 @@ async function auditData(env, corsHeaders) {
     { key: 'daySnacks', fields: ['Healthy Day Snacks', 'Day Snacks'], type: 'boolean', description: 'Healthy day snacks' },
     { key: 'nightSnacks', fields: ['Healthy Night Snacks', 'Night Snacks'], type: 'boolean', description: 'Healthy night snacks' },
     { key: 'noAlcohol', field: 'No Alcohol', type: 'boolean', description: 'No alcohol' },
+    { key: 'protein', field: 'Protein', type: 'numeric', description: 'Protein grams' },
     { key: 'meditation', fields: ['Meditation', 'Meditated'], type: 'boolean', description: 'Meditation' },
     { key: 'readingMinutes', field: 'Reading Minutes', type: 'numeric', description: 'Reading minutes (legacy field)' },
   ];
