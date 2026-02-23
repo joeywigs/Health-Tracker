@@ -6373,6 +6373,7 @@ async function populateForm(data) {
     if (movArr && Array.isArray(movArr) && movArr.length > 0) {
       currentMovements = movArr.map(m => ({
         type: m.type || '', duration: m.duration || 0,
+        ...(m.steps ? { steps: m.steps } : {}),
         ...(m.startTime ? { startTime: m.startTime } : {})
       }));
     } else {
@@ -6533,6 +6534,7 @@ async function populateForm(data) {
     currentMovements = movementsArr.map(m => ({
       type: m.type || '',
       duration: m.duration || 0,
+      ...(m.steps ? { steps: m.steps } : {}),
       ...(m.startTime ? { startTime: m.startTime } : {})
     }));
   } else {
@@ -6701,14 +6703,21 @@ function renderMovementList() {
     return;
   }
 
+  const totalSteps = currentMovements.reduce((sum, m) => sum + (m.steps || 0), 0);
+
   listEl.innerHTML = currentMovements.map((m, i) => {
     const dur = m.duration ? ` — ${m.duration} min` : '';
+    const steps = m.steps ? ` — ${m.steps.toLocaleString()} steps` : '';
     const time = m.startTime ? ` (${new Date(m.startTime).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})})` : '';
     return `<div class="movement-item">
-      <span>${m.type}${dur}${time}</span>
+      <span>${m.type}${dur}${steps}${time}</span>
       <button type="button" class="movement-item-remove" data-idx="${i}">&times;</button>
     </div>`;
   }).join('');
+
+  if (totalSteps > 0) {
+    listEl.innerHTML += `<div class="movement-steps-total">${totalSteps.toLocaleString()} total steps</div>`;
+  }
 
   // Wire remove buttons
   listEl.querySelectorAll('.movement-item-remove').forEach(btn => {
@@ -6726,20 +6735,25 @@ function renderMovementList() {
 function addMovementFromUI() {
   const typeEl = document.getElementById('movementAddType');
   const durEl = document.getElementById('movementAddDuration');
+  const stepsEl = document.getElementById('movementAddSteps');
   if (!typeEl) return;
 
   const type = typeEl.value;
   const duration = parseInt(durEl?.value) || 0;
+  const steps = parseInt(stepsEl?.value) || 0;
   if (!type) return;
 
-  currentMovements.push({ type, duration });
+  const entry = { type, duration };
+  if (steps > 0) entry.steps = steps;
+  currentMovements.push(entry);
   renderMovementList();
   triggerSaveSoon();
   checkMovementGoal();
   if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
 
-  // Reset duration input
+  // Reset inputs
   if (durEl) durEl.value = '';
+  if (stepsEl) stepsEl.value = '';
 }
 
 function setupMovementUI() {
