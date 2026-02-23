@@ -7082,6 +7082,8 @@ function updateAverages(averages) {
     if (avgSleepEl) avgSleepEl.textContent = "--";
     if (avgStepsEl) avgStepsEl.textContent = "--";
     if (avgMovementsEl) avgMovementsEl.textContent = "--";
+    const stepsWeekResetEl = document.getElementById("stepsWeekTotal");
+    if (stepsWeekResetEl) stepsWeekResetEl.textContent = "--";
     updateReadingWeeklyDisplay();
     return;
   }
@@ -7116,6 +7118,16 @@ function updateAverages(averages) {
     const display = (v === null || v === undefined || v === "") ? "--" : Number(v).toLocaleString();
     const comparison = formatComparison(v, lastV, 0);
     avgStepsEl.innerHTML = display + comparison;
+  }
+
+  // Steps: weekly total (Sun–Sat)
+  const stepsWeekEl = document.getElementById("stepsWeekTotal");
+  if (stepsWeekEl) {
+    const v = averages.stepsWeek;
+    const lastV = averages.lastWeek?.stepsWeek;
+    const display = (v === null || v === undefined || !v) ? "--" : Number(v).toLocaleString();
+    const comparison = formatComparison(v, lastV, 0);
+    stepsWeekEl.innerHTML = display + comparison;
   }
 
   // Movements per day with comparison
