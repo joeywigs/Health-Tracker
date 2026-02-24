@@ -1209,8 +1209,18 @@
     .card-unit { font-size: 13px; color: var(--text); margin-left: 4px; }
     .input-row { display: flex; align-items: baseline; }
     .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
-    
-    
+    .inline-week-input {
+      background: transparent; border: none; border-bottom: 1px dashed rgba(255,255,255,0.25);
+      color: inherit; font: inherit; width: 64px; padding: 0 2px; text-align: right;
+      -moz-appearance: textfield;
+    }
+    .inline-week-input::-webkit-inner-spin-button,
+    .inline-week-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .inline-week-input:focus { outline: none; border-bottom-color: var(--accent-teal); }
+    .inline-week-input.user-override { color: var(--accent-teal); font-weight: 600; }
+    body.day-mode .inline-week-input { border-bottom-color: rgba(0,0,0,0.2); }
+    body.day-mode .inline-week-input:focus { border-bottom-color: var(--accent-teal); }
+
     /* Counter dots (for weekly goals) */
     .counter-dot {
       width: 10px; height: 10px;
@@ -4432,7 +4442,7 @@
         <div class="progress-bar-h-fill" id="stepsBarFill"></div>
       </div>
       <div class="card-avg">7-day avg: <span id="avgSteps">--</span></div>
-      <div class="card-avg">Week total: <span id="stepsWeekTotal">--</span></div>
+      <div class="card-avg">Week total: <input type="number" inputmode="numeric" id="stepsWeekTotal" class="inline-week-input" placeholder="--"></div>
     </div>
 
     <div class="card movement rehit-full" id="rehitCard" style="position:relative">

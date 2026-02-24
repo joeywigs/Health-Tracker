@@ -5777,6 +5777,7 @@ async function saveData(payload) {
     diastolic: "Diastolic",
     heartRate: "Heart Rate",
     emailSprints: "Email Sprints",
+    stepsWeekOverride: "Steps Week Override",
     // movements handled separately as array, not in daily normalization
   };
   const normalizedDaily = {};
@@ -5985,6 +5986,11 @@ function buildPayloadFromUI() {
     // Dumbbell exercises (only send if user has interacted, not carry-forward)
     ...(window._dumbbellCarriedForward ? {} : { dumbbell: currentDumbbell }),
 
+    // Steps week override (only when user manually overrides)
+    stepsWeekOverride: document.getElementById("stepsWeekTotal")?.dataset.override
+      ? document.getElementById("stepsWeekTotal").value
+      : "",
+
     // Email sprints
     emailSprints: emailSprintCount,
 
@@ -6147,6 +6153,22 @@ function setupInputAutosave() {
       el.addEventListener("change", triggerSaveSoon);
     }
   });
+
+  // Steps week total: detect user override vs auto-populated
+  const swEl = document.getElementById("stepsWeekTotal");
+  if (swEl) {
+    swEl.addEventListener("input", () => {
+      if (swEl.value !== "" && Number(swEl.value) !== swEl._computedWeek) {
+        swEl.dataset.override = "1";
+        swEl.classList.add("user-override");
+      } else if (swEl.value === "") {
+        // Cleared → revert to auto
+        delete swEl.dataset.override;
+        swEl.classList.remove("user-override");
+        swEl.value = swEl._computedWeek || "";
+      }
+    });
+  }
 
   console.log("✅ Input autosave wired");
 }
@@ -6446,6 +6468,20 @@ async function populateForm(data) {
 
   const stepsEl = document.getElementById("steps");
   if (stepsEl) stepsEl.value = d["Steps"] ?? d["steps"] ?? "";
+
+  // Restore steps week override if saved
+  const swOverride = d["Steps Week Override"] ?? d["stepsWeekOverride"] ?? "";
+  const swInput = document.getElementById("stepsWeekTotal");
+  if (swInput) {
+    if (swOverride && swOverride !== "") {
+      swInput.value = swOverride;
+      swInput.dataset.override = "1";
+      swInput.classList.add("user-override");
+    } else {
+      delete swInput.dataset.override;
+      swInput.classList.remove("user-override");
+    }
+  }
 
   const fitnessEl = document.getElementById("fitnessScore");
   if (fitnessEl) fitnessEl.value = d["Fitness Score"] ?? d["fitnessScore"] ?? "";
@@ -7077,7 +7113,7 @@ function updateAverages(averages) {
     if (avgStepsEl) avgStepsEl.textContent = "--";
     if (avgMovementsEl) avgMovementsEl.textContent = "--";
     const stepsWeekResetEl = document.getElementById("stepsWeekTotal");
-    if (stepsWeekResetEl) stepsWeekResetEl.textContent = "--";
+    if (stepsWeekResetEl) { stepsWeekResetEl.value = ""; stepsWeekResetEl.placeholder = "--"; delete stepsWeekResetEl.dataset.override; stepsWeekResetEl.classList.remove("user-override"); }
     updateReadingWeeklyDisplay();
     return;
   }
@@ -7114,14 +7150,18 @@ function updateAverages(averages) {
     avgStepsEl.innerHTML = display + comparison;
   }
 
-  // Steps: weekly total (Sun–Sat)
+  // Steps: weekly total (Sun–Sat) — editable input with auto-populate
   const stepsWeekEl = document.getElementById("stepsWeekTotal");
   if (stepsWeekEl) {
     const v = averages.stepsWeek;
-    const lastV = averages.lastWeek?.stepsWeek;
-    const display = (v === null || v === undefined || !v) ? "--" : Number(v).toLocaleString();
-    const comparison = formatComparison(v, lastV, 0);
-    stepsWeekEl.innerHTML = display + comparison;
+    // Store the computed value so we can show it as placeholder
+    stepsWeekEl._computedWeek = v || 0;
+    // Only auto-fill if user hasn't manually overridden
+    if (!stepsWeekEl.dataset.override) {
+      stepsWeekEl.value = (v === null || v === undefined || !v) ? "" : v;
+      stepsWeekEl.placeholder = "--";
+      stepsWeekEl.classList.remove("user-override");
+    }
   }
 
   // Movements per day with comparison
