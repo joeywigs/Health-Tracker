@@ -7105,15 +7105,15 @@ function updateAverages(averages) {
   currentAverages = averages || null;
 
   const avgSleepEl = document.getElementById("avgSleep");
-  const avgStepsEl = document.getElementById("avgSteps");
   const avgMovementsEl = document.getElementById("avgMovements");
 
   if (!averages) {
     if (avgSleepEl) avgSleepEl.textContent = "--";
-    if (avgStepsEl) avgStepsEl.textContent = "--";
     if (avgMovementsEl) avgMovementsEl.textContent = "--";
     const stepsWeekResetEl = document.getElementById("stepsWeekTotal");
     if (stepsWeekResetEl) { stepsWeekResetEl.value = ""; stepsWeekResetEl.placeholder = "--"; delete stepsWeekResetEl.dataset.override; stepsWeekResetEl.classList.remove("user-override"); }
+    const stepsWeekCompareResetEl = document.getElementById("stepsWeekCompare");
+    if (stepsWeekCompareResetEl) stepsWeekCompareResetEl.innerHTML = "";
     updateReadingWeeklyDisplay();
     return;
   }
@@ -7141,19 +7141,11 @@ function updateAverages(averages) {
     avgSleepEl.innerHTML = display + comparison;
   }
 
-  // Steps: show whole number w/ commas with comparison
-  if (avgStepsEl) {
-    const v = averages.steps;
-    const lastV = averages.lastWeek?.steps;
-    const display = (v === null || v === undefined || v === "") ? "--" : Number(v).toLocaleString();
-    const comparison = formatComparison(v, lastV, 0);
-    avgStepsEl.innerHTML = display + comparison;
-  }
-
   // Steps: weekly total (Sun–Sat) — editable input with auto-populate
   const stepsWeekEl = document.getElementById("stepsWeekTotal");
   if (stepsWeekEl) {
     const v = averages.stepsWeek;
+    const lastV = averages.lastWeek?.stepsWeek;
     // Store the computed value so we can show it as placeholder
     stepsWeekEl._computedWeek = v || 0;
     // Only auto-fill if user hasn't manually overridden
@@ -7161,6 +7153,12 @@ function updateAverages(averages) {
       stepsWeekEl.value = (v === null || v === undefined || !v) ? "" : v;
       stepsWeekEl.placeholder = "--";
       stepsWeekEl.classList.remove("user-override");
+    }
+    // Show comparison vs same days last week
+    const compareEl = document.getElementById("stepsWeekCompare");
+    if (compareEl) {
+      const current = v || 0;
+      compareEl.innerHTML = (current && lastV) ? formatComparison(current, lastV, 0) : "";
     }
   }
 

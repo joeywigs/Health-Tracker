@@ -661,6 +661,7 @@ async function calculate7DayAverages(dateStr, env) {
 
   let lastWeekSleep = [];
   let lastWeekSteps = [];
+  let lastWeekStepsPartial = [];  // same days-of-week as current week for apples-to-apples comparison
   let movementValues = [];
   let lastWeekMovements = [];
   let readingMins = 0;
@@ -724,6 +725,10 @@ async function calculate7DayAverages(dateStr, env) {
       if (!isNaN(steps) && steps > 0) lastWeekSteps.push(steps);
       lastWeekMovements.push(movMinutes);
       lastWeekReadingMins += rdMins;
+      // Partial-week: only include days up to the same day-of-week as today
+      if (d.getDay() <= dayOfWeek && !isNaN(steps) && steps > 0) {
+        lastWeekStepsPartial.push(steps);
+      }
     }
   });
 
@@ -739,7 +744,7 @@ async function calculate7DayAverages(dateStr, env) {
     lastWeek: {
       sleep: avg(lastWeekSleep),
       steps: lastWeekSteps.length ? Math.round(avg(lastWeekSteps)) : null,
-      stepsWeek: sum(lastWeekSteps),
+      stepsWeek: sum(lastWeekStepsPartial),
       movements: avg(lastWeekMovements),
       readingWeek: lastWeekReadingMins,
     }
