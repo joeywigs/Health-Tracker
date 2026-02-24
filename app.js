@@ -6703,8 +6703,6 @@ function renderMovementList() {
     return;
   }
 
-  const totalSteps = currentMovements.reduce((sum, m) => sum + (m.steps || 0), 0);
-
   listEl.innerHTML = currentMovements.map((m, i) => {
     const dur = m.duration ? ` — ${m.duration} min` : '';
     const steps = m.steps ? ` — ${m.steps.toLocaleString()} steps` : '';
@@ -6714,10 +6712,6 @@ function renderMovementList() {
       <button type="button" class="movement-item-remove" data-idx="${i}">&times;</button>
     </div>`;
   }).join('');
-
-  if (totalSteps > 0) {
-    listEl.innerHTML += `<div class="movement-steps-total">${totalSteps.toLocaleString()} total steps</div>`;
-  }
 
   // Wire remove buttons
   listEl.querySelectorAll('.movement-item-remove').forEach(btn => {
