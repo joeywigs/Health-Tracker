@@ -728,15 +728,18 @@ async function calculate7DayAverages(dateStr, env) {
   });
 
   const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+  const sum = arr => arr.reduce((a, b) => a + b, 0);
 
   return {
     sleep: avg(sleepValues),
     steps: stepsValues.length ? Math.round(avg(stepsValues)) : null,
+    stepsWeek: sum(stepsValues),
     movements: avg(movementValues),
     readingWeek: readingMins,
     lastWeek: {
       sleep: avg(lastWeekSleep),
       steps: lastWeekSteps.length ? Math.round(avg(lastWeekSteps)) : null,
+      stepsWeek: sum(lastWeekSteps),
       movements: avg(lastWeekMovements),
       readingWeek: lastWeekReadingMins,
     }
