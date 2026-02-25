@@ -166,6 +166,17 @@ async function handlePost(request, env, corsHeaders) {
     return jsonResponse({ ok: true, ts: new Date().toISOString(), via: "post" }, 200, corsHeaders);
   }
 
+  // Withings callback - handle both POST (developer portal verification) and code exchange
+  if (action === "withings_callback") {
+    return await withingsCallback(url, env, corsHeaders);
+  }
+
+  // Withings sleep sync via POST
+  if (action === "withings_sleep") {
+    const dateParam = url.searchParams.get("date") || body.date || null;
+    return await withingsFetchSleep(dateParam, env, corsHeaders);
+  }
+
   if (action === "save") {
     if (!body.data) {
       return jsonResponse({ error: true, message: "Missing data" }, 400, corsHeaders);
@@ -1148,8 +1159,8 @@ async function withingsCallback(url, env, corsHeaders) {
   const state = url.searchParams.get("state");
 
   if (!code) {
-    return new Response("<html><body><h2>Authorization failed</h2><p>No code received.</p></body></html>",
-      { status: 400, headers: { "Content-Type": "text/html", ...corsHeaders } });
+    // Withings developer portal sends POST to verify the URL is reachable — respond 200
+    return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain", ...corsHeaders } });
   }
 
   // Validate CSRF state
