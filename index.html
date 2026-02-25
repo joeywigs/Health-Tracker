@@ -1214,7 +1214,7 @@
     .sleep-metrics-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.05em; }
     .sleep-metrics-chevron { font-size: 12px; color: rgba(255,255,255,0.35); transition: transform 0.2s; }
     .sleep-metrics-chevron.open { transform: rotate(90deg); }
-    .sleep-metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .sleep-metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
     .sleep-metric-item { display: flex; flex-direction: column; gap: 3px; }
     .sleep-metric-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.04em; }
     .sleep-metric-input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; padding: 6px 8px; width: 100%; box-sizing: border-box; outline: none; }
@@ -1225,13 +1225,9 @@
     .sleep-metric-input-wrap .sleep-metric-input:focus { border: none; }
     .sleep-metric-input-wrap:focus-within { border-color: var(--accent-purple); }
     .sleep-metric-unit { font-size: 10px; color: rgba(255,255,255,0.35); white-space: nowrap; }
-    .sleep-metric-select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; padding: 6px 8px; width: 100%; box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; }
-    .sleep-metric-select:focus { border-color: var(--accent-purple); }
-    .sleep-metric-select option { background: #1a1a2e; color: #fff; }
     body.day-mode .sleep-metric-input { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); color: var(--text); }
     body.day-mode .sleep-metric-input::placeholder { color: rgba(0,0,0,0.2); }
     body.day-mode .sleep-metric-input-wrap { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
-    body.day-mode .sleep-metric-select { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); color: var(--text); }
     body.day-mode .sleep-metrics { border-top-color: rgba(0,0,0,0.08); }
     body.day-mode .sleep-metrics-label { color: rgba(0,0,0,0.45); }
     body.day-mode .sleep-metrics-chevron { color: rgba(0,0,0,0.35); }
@@ -4474,33 +4470,25 @@
       <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
       <div class="sleep-metrics" id="sleepMetrics">
         <div class="sleep-metrics-header" id="sleepMetricsToggle">
-          <span class="sleep-metrics-label">Withings Sleep</span>
+          <span class="sleep-metrics-label">Sleep Stages</span>
           <span class="sleep-metrics-chevron" id="sleepMetricsChevron">▸</span>
         </div>
         <div class="sleep-metrics-grid" id="sleepMetricsGrid" style="display:none">
           <div class="sleep-metric-item">
-            <label class="sleep-metric-label">Score</label>
-            <input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepScore" min="0" max="100" placeholder="--">
+            <label class="sleep-metric-label">Awake</label>
+            <div class="sleep-metric-input-wrap"><input type="number" inputmode="decimal" class="sleep-metric-input" id="sleepAwake" min="0" step="0.1" placeholder="--"><span class="sleep-metric-unit">hrs</span></div>
           </div>
           <div class="sleep-metric-item">
-            <label class="sleep-metric-label">HR</label>
-            <div class="sleep-metric-input-wrap"><input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepHR" min="30" max="200" placeholder="--"><span class="sleep-metric-unit">bpm</span></div>
+            <label class="sleep-metric-label">Core</label>
+            <div class="sleep-metric-input-wrap"><input type="number" inputmode="decimal" class="sleep-metric-input" id="sleepCore" min="0" step="0.1" placeholder="--"><span class="sleep-metric-unit">hrs</span></div>
           </div>
           <div class="sleep-metric-item">
-            <label class="sleep-metric-label">HRV</label>
-            <div class="sleep-metric-input-wrap"><input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepHRV" min="0" max="300" placeholder="--"><span class="sleep-metric-unit">ms</span></div>
+            <label class="sleep-metric-label">Deep</label>
+            <div class="sleep-metric-input-wrap"><input type="number" inputmode="decimal" class="sleep-metric-input" id="sleepDeep" min="0" step="0.1" placeholder="--"><span class="sleep-metric-unit">hrs</span></div>
           </div>
           <div class="sleep-metric-item">
-            <label class="sleep-metric-label">Depth</label>
-            <select class="sleep-metric-select" id="sleepDepth"><option value="">--</option><option value="Bad">Bad</option><option value="Poor">Poor</option><option value="Fair">Fair</option><option value="Good">Good</option><option value="Optimal">Optimal</option></select>
-          </div>
-          <div class="sleep-metric-item">
-            <label class="sleep-metric-label">Regularity</label>
-            <select class="sleep-metric-select" id="sleepRegularity"><option value="">--</option><option value="Bad">Bad</option><option value="Poor">Poor</option><option value="Fair">Fair</option><option value="Good">Good</option><option value="Optimal">Optimal</option></select>
-          </div>
-          <div class="sleep-metric-item">
-            <label class="sleep-metric-label">Interruptions</label>
-            <input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepInterruptions" min="0" max="50" placeholder="--">
+            <label class="sleep-metric-label">REM</label>
+            <div class="sleep-metric-input-wrap"><input type="number" inputmode="decimal" class="sleep-metric-input" id="sleepREM" min="0" step="0.1" placeholder="--"><span class="sleep-metric-unit">hrs</span></div>
           </div>
         </div>
       </div>
@@ -8875,7 +8863,7 @@
         // ── Daily Data ──
         lines.push('## Daily Tracking Data');
         lines.push('');
-        lines.push('Each day tracks: sleep (hours + Withings quality metrics: score, HR, HRV, depth, regularity, interruptions), hydration, steps, supplements, meals, exercise, body composition, blood pressure, and more.');
+        lines.push('Each day tracks: sleep (total hours + Apple Health stages: awake, core, deep, REM), hydration, steps, supplements, meals, exercise, body composition, blood pressure, and more.');
         lines.push('Boolean fields: true = completed/taken, false = not done.');
         lines.push('');
 
@@ -8906,16 +8894,14 @@
               lines.push('');
             }
 
-            // Withings sleep metrics
+            // Apple Health sleep stages
             const sleepDetails = [];
-            if (d['Sleep Score']) sleepDetails.push(`Score: ${d['Sleep Score']}/100`);
-            if (d['Sleep HR']) sleepDetails.push(`HR: ${d['Sleep HR']} bpm`);
-            if (d['Sleep HRV']) sleepDetails.push(`HRV: ${d['Sleep HRV']} ms`);
-            if (d['Sleep Depth']) sleepDetails.push(`Depth: ${d['Sleep Depth']}`);
-            if (d['Sleep Regularity']) sleepDetails.push(`Regularity: ${d['Sleep Regularity']}`);
-            if (d['Sleep Interruptions']) sleepDetails.push(`Interruptions: ${d['Sleep Interruptions']}`);
+            if (d['Sleep Awake']) sleepDetails.push(`Awake: ${d['Sleep Awake']} hrs`);
+            if (d['Sleep Core']) sleepDetails.push(`Core: ${d['Sleep Core']} hrs`);
+            if (d['Sleep Deep']) sleepDetails.push(`Deep: ${d['Sleep Deep']} hrs`);
+            if (d['Sleep REM']) sleepDetails.push(`REM: ${d['Sleep REM']} hrs`);
             if (sleepDetails.length) {
-              lines.push('**Sleep Quality (Withings):** ' + sleepDetails.join(' | '));
+              lines.push('**Sleep Stages:** ' + sleepDetails.join(' | '));
               lines.push('');
             }
 

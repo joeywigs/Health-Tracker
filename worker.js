@@ -128,7 +128,7 @@ async function handleGet(request, env, corsHeaders) {
   }
 
   // iOS Shortcut: send sleep data via GET query params
-  // e.g. ?action=sleep&hours=7.2&hr=52&hrv=45&interruptions=2&depth=Good
+  // e.g. ?action=sleep&hours=7.2&awake=0.5&core=3.5&deep=1.2&rem=2.0
   if (action === "sleep") {
     const params = {};
     for (const [k, v] of url.searchParams.entries()) {
@@ -182,7 +182,7 @@ async function handlePost(request, env, corsHeaders) {
     return await logBody(body, env, corsHeaders);
   }
 
-  // iOS Shortcut endpoint - sync sleep metrics (Withings)
+  // iOS Shortcut endpoint - sync sleep metrics (Apple Health)
   if (action === "sleep") {
     return await logSleep(body, env, corsHeaders);
   }
@@ -357,12 +357,10 @@ async function saveDay(data, env, corsHeaders) {
     ...existing,
     "Date": normalizedDate,
     "Hours of Sleep": data.sleepHours || "",
-    "Sleep Score": data.sleepScore || "",
-    "Sleep HR": data.sleepHR || "",
-    "Sleep HRV": data.sleepHRV || "",
-    "Sleep Depth": data.sleepDepth || "",
-    "Sleep Regularity": data.sleepRegularity || "",
-    "Sleep Interruptions": data.sleepInterruptions || "",
+    "Sleep Awake": data.sleepAwake || "",
+    "Sleep Core": data.sleepCore || "",
+    "Sleep Deep": data.sleepDeep || "",
+    "Sleep REM": data.sleepREM || "",
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
@@ -669,38 +667,30 @@ async function logSleep(body, env, corsHeaders) {
 
   const updates = {};
 
-  // Sleep hours (duration)
+  // Total sleep hours
   const hours = parseFloat(body.hours ?? body.duration ?? body.sleepHours);
   if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
 
-  // Sleep quality score (0-100)
-  const score = parseInt(body.score ?? body.sleepScore ?? body.quality);
-  if (!isNaN(score) && score >= 0) updates["Sleep Score"] = score;
+  // Awake time (hours)
+  const awake = parseFloat(body.awake ?? body.sleepAwake);
+  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake * 10) / 10;
 
-  // Heart rate during sleep
-  const hr = parseInt(body.hr ?? body.heartRate ?? body.sleepHR);
-  if (!isNaN(hr) && hr > 0) updates["Sleep HR"] = hr;
+  // Core sleep (hours)
+  const core = parseFloat(body.core ?? body.sleepCore);
+  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = Math.round(core * 10) / 10;
 
-  // HRV during sleep
-  const hrv = parseInt(body.hrv ?? body.sleepHRV);
-  if (!isNaN(hrv) && hrv >= 0) updates["Sleep HRV"] = hrv;
+  // Deep sleep (hours)
+  const deep = parseFloat(body.deep ?? body.sleepDeep);
+  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = Math.round(deep * 10) / 10;
 
-  // Depth rating (Bad/Poor/Fair/Good/Optimal)
-  const depth = body.depth ?? body.sleepDepth ?? "";
-  if (depth) updates["Sleep Depth"] = String(depth);
-
-  // Regularity rating (Bad/Poor/Fair/Good/Optimal)
-  const regularity = body.regularity ?? body.sleepRegularity ?? "";
-  if (regularity) updates["Sleep Regularity"] = String(regularity);
-
-  // Interruptions count
-  const interruptions = parseInt(body.interruptions ?? body.sleepInterruptions);
-  if (!isNaN(interruptions) && interruptions >= 0) updates["Sleep Interruptions"] = interruptions;
+  // REM sleep (hours)
+  const rem = parseFloat(body.rem ?? body.sleepREM);
+  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem * 10) / 10;
 
   if (Object.keys(updates).length === 0) {
     return jsonResponse({
       error: true,
-      message: "No valid sleep data found. Send fields like: hours, score, hr, hrv, depth, regularity, interruptions",
+      message: "No valid sleep data found. Send fields like: hours, awake, core, deep, rem",
       received: body
     }, 400, corsHeaders);
   }
@@ -1435,12 +1425,10 @@ async function auditData(env, corsHeaders) {
   // Define habits to audit with their expected formats
   const habitsToAudit = [
     { key: 'sleep', field: 'Hours of Sleep', type: 'numeric', description: 'Sleep hours' },
-    { key: 'sleepScore', field: 'Sleep Score', type: 'numeric', description: 'Withings sleep quality score (0-100)' },
-    { key: 'sleepHR', field: 'Sleep HR', type: 'numeric', description: 'Withings sleep heart rate (bpm)' },
-    { key: 'sleepHRV', field: 'Sleep HRV', type: 'numeric', description: 'Withings sleep HRV (ms)' },
-    { key: 'sleepDepth', field: 'Sleep Depth', type: 'string', description: 'Withings sleep depth rating' },
-    { key: 'sleepRegularity', field: 'Sleep Regularity', type: 'string', description: 'Withings sleep regularity rating' },
-    { key: 'sleepInterruptions', field: 'Sleep Interruptions', type: 'numeric', description: 'Withings sleep interruptions count' },
+    { key: 'sleepAwake', field: 'Sleep Awake', type: 'numeric', description: 'Apple Health awake time (hours)' },
+    { key: 'sleepCore', field: 'Sleep Core', type: 'numeric', description: 'Apple Health core sleep (hours)' },
+    { key: 'sleepDeep', field: 'Sleep Deep', type: 'numeric', description: 'Apple Health deep sleep (hours)' },
+    { key: 'sleepREM', field: 'Sleep REM', type: 'numeric', description: 'Apple Health REM sleep (hours)' },
     { key: 'agua', fields: ['agua', 'Water', 'Water (glasses)', 'hydrationGood'], type: 'numeric', description: 'Water glasses' },
     { key: 'steps', field: 'Steps', type: 'numeric', description: 'Daily steps' },
     { key: 'rehit', field: 'REHIT 2x10', type: 'mixed', description: 'REHIT sessions' },

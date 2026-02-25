@@ -5744,12 +5744,10 @@ async function saveData(payload) {
   // Normalize camelCase payload keys to API column names so chart/summary functions can find the data
   const keyMap = {
     sleepHours: "Hours of Sleep",
-    sleepScore: "Sleep Score",
-    sleepHR: "Sleep HR",
-    sleepHRV: "Sleep HRV",
-    sleepDepth: "Sleep Depth",
-    sleepRegularity: "Sleep Regularity",
-    sleepInterruptions: "Sleep Interruptions",
+    sleepAwake: "Sleep Awake",
+    sleepCore: "Sleep Core",
+    sleepDeep: "Sleep Deep",
+    sleepREM: "Sleep REM",
     steps: "Steps",
     fitnessScore: "Fitness Score",
     calories: "Calories",
@@ -5929,12 +5927,10 @@ function buildPayloadFromUI() {
 
     // Daily numbers
     sleepHours: document.getElementById("sleepHours")?.value || "",
-    sleepScore: document.getElementById("sleepScore")?.value || "",
-    sleepHR: document.getElementById("sleepHR")?.value || "",
-    sleepHRV: document.getElementById("sleepHRV")?.value || "",
-    sleepDepth: document.getElementById("sleepDepth")?.value || "",
-    sleepRegularity: document.getElementById("sleepRegularity")?.value || "",
-    sleepInterruptions: document.getElementById("sleepInterruptions")?.value || "",
+    sleepAwake: document.getElementById("sleepAwake")?.value || "",
+    sleepCore: document.getElementById("sleepCore")?.value || "",
+    sleepDeep: document.getElementById("sleepDeep")?.value || "",
+    sleepREM: document.getElementById("sleepREM")?.value || "",
     steps: document.getElementById("steps")?.value || "",
     fitnessScore: document.getElementById("fitnessScore")?.value || "",
     calories: document.getElementById("calories")?.value || "",
@@ -6165,11 +6161,6 @@ function setupInputAutosave() {
     } else {
       el.addEventListener("change", triggerSaveSoon);
     }
-  });
-
-  // Sleep metric selects (not caught by input querySelectorAll)
-  document.querySelectorAll(".sleep-metric-select").forEach(el => {
-    el.addEventListener("change", triggerSaveSoon);
   });
 
   // Steps week total: detect user override vs auto-populated
@@ -6468,11 +6459,8 @@ async function populateForm(data) {
 
     document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 
-    // Clear sleep metrics
-    ["sleepScore","sleepHR","sleepHRV","sleepInterruptions"].forEach(id => {
-      const el = document.getElementById(id); if (el) el.value = "";
-    });
-    ["sleepDepth","sleepRegularity"].forEach(id => {
+    // Clear sleep stage metrics
+    ["sleepAwake","sleepCore","sleepDeep","sleepREM"].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = "";
     });
     const smGrid = document.getElementById("sleepMetricsGrid");
@@ -6496,22 +6484,18 @@ async function populateForm(data) {
   const sleepEl = document.getElementById("sleepHours");
   if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
 
-  // Withings sleep metrics
-  const sleepScoreEl = document.getElementById("sleepScore");
-  if (sleepScoreEl) sleepScoreEl.value = d["Sleep Score"] ?? d["sleepScore"] ?? "";
-  const sleepHREl = document.getElementById("sleepHR");
-  if (sleepHREl) sleepHREl.value = d["Sleep HR"] ?? d["sleepHR"] ?? "";
-  const sleepHRVEl = document.getElementById("sleepHRV");
-  if (sleepHRVEl) sleepHRVEl.value = d["Sleep HRV"] ?? d["sleepHRV"] ?? "";
-  const sleepDepthEl = document.getElementById("sleepDepth");
-  if (sleepDepthEl) sleepDepthEl.value = d["Sleep Depth"] ?? d["sleepDepth"] ?? "";
-  const sleepRegularityEl = document.getElementById("sleepRegularity");
-  if (sleepRegularityEl) sleepRegularityEl.value = d["Sleep Regularity"] ?? d["sleepRegularity"] ?? "";
-  const sleepInterruptionsEl = document.getElementById("sleepInterruptions");
-  if (sleepInterruptionsEl) sleepInterruptionsEl.value = d["Sleep Interruptions"] ?? d["sleepInterruptions"] ?? "";
+  // Apple Health sleep stage metrics
+  const sleepAwakeEl = document.getElementById("sleepAwake");
+  if (sleepAwakeEl) sleepAwakeEl.value = d["Sleep Awake"] ?? d["sleepAwake"] ?? "";
+  const sleepCoreEl = document.getElementById("sleepCore");
+  if (sleepCoreEl) sleepCoreEl.value = d["Sleep Core"] ?? d["sleepCore"] ?? "";
+  const sleepDeepEl = document.getElementById("sleepDeep");
+  if (sleepDeepEl) sleepDeepEl.value = d["Sleep Deep"] ?? d["sleepDeep"] ?? "";
+  const sleepREMEl = document.getElementById("sleepREM");
+  if (sleepREMEl) sleepREMEl.value = d["Sleep REM"] ?? d["sleepREM"] ?? "";
 
   // Auto-expand sleep metrics if any data exists
-  if (d["Sleep Score"] || d["Sleep HR"] || d["Sleep HRV"] || d["Sleep Depth"] || d["Sleep Regularity"] || d["Sleep Interruptions"]) {
+  if (d["Sleep Awake"] || d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"]) {
     const grid = document.getElementById("sleepMetricsGrid");
     const chevron = document.getElementById("sleepMetricsChevron");
     if (grid) grid.style.display = "";
