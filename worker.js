@@ -693,6 +693,12 @@ async function logSleep(body, env, corsHeaders) {
   const rem = toHours(parseFloat(body.rem ?? body.sleepREM));
   if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem * 10) / 10;
 
+  // Auto-calculate total sleep from stages if hours wasn't explicitly provided
+  if (!updates["Hours of Sleep"]) {
+    const stageSum = (updates["Sleep Core"] || 0) + (updates["Sleep Deep"] || 0) + (updates["Sleep REM"] || 0);
+    if (stageSum > 0) updates["Hours of Sleep"] = Math.round(stageSum * 10) / 10;
+  }
+
   if (Object.keys(updates).length === 0) {
     return jsonResponse({
       error: true,
