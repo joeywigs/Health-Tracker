@@ -665,26 +665,32 @@ async function logSleep(body, env, corsHeaders) {
 
   const existing = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
 
+  // Auto-detect seconds vs hours: if any value > 24 assume seconds and convert
+  const toHours = (val) => {
+    if (isNaN(val)) return NaN;
+    return val > 24 ? val / 3600 : val;
+  };
+
   const updates = {};
 
   // Total sleep hours
-  const hours = parseFloat(body.hours ?? body.duration ?? body.sleepHours);
+  const hours = toHours(parseFloat(body.hours ?? body.duration ?? body.sleepHours));
   if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
 
   // Awake time (hours)
-  const awake = parseFloat(body.awake ?? body.sleepAwake);
+  const awake = toHours(parseFloat(body.awake ?? body.sleepAwake));
   if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake * 10) / 10;
 
   // Core sleep (hours)
-  const core = parseFloat(body.core ?? body.sleepCore);
+  const core = toHours(parseFloat(body.core ?? body.sleepCore));
   if (!isNaN(core) && core >= 0) updates["Sleep Core"] = Math.round(core * 10) / 10;
 
   // Deep sleep (hours)
-  const deep = parseFloat(body.deep ?? body.sleepDeep);
+  const deep = toHours(parseFloat(body.deep ?? body.sleepDeep));
   if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = Math.round(deep * 10) / 10;
 
   // REM sleep (hours)
-  const rem = parseFloat(body.rem ?? body.sleepREM);
+  const rem = toHours(parseFloat(body.rem ?? body.sleepREM));
   if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem * 10) / 10;
 
   if (Object.keys(updates).length === 0) {
