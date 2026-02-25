@@ -6483,7 +6483,9 @@ async function populateForm(data) {
   // Numbers (API column names ?? payload key names)
   const sleepEl = document.getElementById("sleepHours");
   let sleepTotal = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
-  if (!sleepTotal && (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"])) {
+  // Always derive total from stages when available — the stored "Hours of Sleep"
+  // may be stale "time in bed" from the old shortcut code
+  if (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"]) {
     const sum = (parseFloat(d["Sleep Core"]) || 0) + (parseFloat(d["Sleep Deep"]) || 0) + (parseFloat(d["Sleep REM"]) || 0);
     if (sum > 0) sleepTotal = Math.round(sum * 10) / 10;
   }
