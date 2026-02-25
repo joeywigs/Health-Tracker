@@ -166,15 +166,23 @@ async function handlePost(request, env, corsHeaders) {
     return jsonResponse({ ok: true, ts: new Date().toISOString(), via: "post" }, 200, corsHeaders);
   }
 
-  // Withings callback - handle both POST (developer portal verification) and code exchange
+  // Withings endpoints - handle POST for developer portal verification and flexibility
   if (action === "withings_callback") {
     return await withingsCallback(url, env, corsHeaders);
   }
-
-  // Withings sleep sync via POST
+  if (action === "withings_auth") {
+    return await withingsAuth(request, env, corsHeaders);
+  }
   if (action === "withings_sleep") {
     const dateParam = url.searchParams.get("date") || body.date || null;
     return await withingsFetchSleep(dateParam, env, corsHeaders);
+  }
+  if (action === "withings_status") {
+    return await withingsStatus(env, corsHeaders);
+  }
+  if (action === "withings_deauth") {
+    await env.HABIT_DATA.delete("withings:tokens");
+    return jsonResponse({ success: true, message: "Withings disconnected" }, 200, corsHeaders);
   }
 
   if (action === "save") {
@@ -1131,6 +1139,11 @@ async function savePhases(phases, env, corsHeaders) {
 //   https://habit-proxy.joeywigs.workers.dev/?action=withings_callback
 
 async function withingsAuth(request, env, corsHeaders) {
+  // Respond 200 to POST verification probes from Withings developer portal
+  if (request.method === "POST") {
+    return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain", ...corsHeaders } });
+  }
+
   if (!env.WITHINGS_CLIENT_ID) {
     return jsonResponse({
       error: true,
