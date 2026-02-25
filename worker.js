@@ -240,6 +240,10 @@ async function handlePost(request, env, corsHeaders) {
     return await migrateCustomFields(body.sectionMeta, env, corsHeaders);
   }
 
+  if (action === "migrate_sleep") {
+    return await migrateSleepUnits(env, corsHeaders);
+  }
+
   if (action === "audit_data") {
     return await auditData(env, corsHeaders);
   }
@@ -665,33 +669,37 @@ async function logSleep(body, env, corsHeaders) {
 
   const existing = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
 
-  // Auto-detect seconds vs hours: if any value > 24 assume seconds and convert
-  const toHours = (val) => {
+  // Auto-detect seconds: values > 24 are assumed to be in seconds
+  const secsToHours = (val) => {
     if (isNaN(val)) return NaN;
     return val > 24 ? val / 3600 : val;
+  };
+  const secsToMinutes = (val) => {
+    if (isNaN(val)) return NaN;
+    return val > 24 ? val / 60 : val;
   };
 
   const updates = {};
 
-  // Total sleep hours
-  const hours = toHours(parseFloat(body.hours ?? body.duration ?? body.sleepHours));
+  // Total sleep → decimal hours (e.g. 7.2)
+  const hours = secsToHours(parseFloat(body.hours ?? body.duration ?? body.sleepHours));
   if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
 
-  // Awake time (hours)
-  const awake = toHours(parseFloat(body.awake ?? body.sleepAwake));
-  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake * 10) / 10;
+  // Awake time → minutes
+  const awake = secsToMinutes(parseFloat(body.awake ?? body.sleepAwake));
+  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake);
 
-  // Core sleep (hours)
-  const core = toHours(parseFloat(body.core ?? body.sleepCore));
-  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = Math.round(core * 10) / 10;
+  // Core sleep → minutes
+  const core = secsToMinutes(parseFloat(body.core ?? body.sleepCore));
+  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = Math.round(core);
 
-  // Deep sleep (hours)
-  const deep = toHours(parseFloat(body.deep ?? body.sleepDeep));
-  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = Math.round(deep * 10) / 10;
+  // Deep sleep → minutes
+  const deep = secsToMinutes(parseFloat(body.deep ?? body.sleepDeep));
+  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = Math.round(deep);
 
-  // REM sleep (hours)
-  const rem = toHours(parseFloat(body.rem ?? body.sleepREM));
-  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem * 10) / 10;
+  // REM sleep → minutes
+  const rem = secsToMinutes(parseFloat(body.rem ?? body.sleepREM));
+  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem);
 
   if (Object.keys(updates).length === 0) {
     return jsonResponse({
@@ -1274,6 +1282,50 @@ async function exportAll(env, corsHeaders) {
     morning: morning || [],
     habitNotes: habitNotes || [],
     cueLogs: cueLogs || [],
+  }, 200, corsHeaders);
+}
+
+// ===== Migration: Convert sleep stage values from decimal hours to minutes =====
+async function migrateSleepUnits(env, corsHeaders) {
+  const stageFields = ["Sleep Awake", "Sleep Core", "Sleep Deep", "Sleep REM"];
+  const results = { fixed: 0, skipped: 0, details: [] };
+
+  const dailyKeys = await env.HABIT_DATA.list({ prefix: "daily:" });
+  for (const key of dailyKeys.keys) {
+    const data = await env.HABIT_DATA.get(key.name, "json");
+    if (!data) continue;
+
+    const hasStages = stageFields.some(f => data[f] !== undefined);
+    if (!hasStages) { results.skipped++; continue; }
+
+    let changed = false;
+    for (const field of stageFields) {
+      const val = data[field];
+      if (val === undefined) continue;
+      // Values currently stored as decimal hours (e.g. 0.8, 1.2) need to be converted to minutes
+      // Anything <= 24 is assumed to be in hours and needs conversion
+      if (val <= 24) {
+        data[field] = Math.round(val * 60);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      await env.HABIT_DATA.put(key.name, JSON.stringify(data));
+      // Clear carry-forward cache
+      const date = key.name.replace("daily:", "");
+      await env.HABIT_DATA.delete(`cf:${date}`).catch(() => {});
+      results.fixed++;
+      results.details.push({ date: data.Date, stages: stageFields.reduce((acc, f) => { if (data[f] !== undefined) acc[f] = data[f]; return acc; }, {}) });
+    } else {
+      results.skipped++;
+    }
+  }
+
+  return jsonResponse({
+    success: true,
+    message: `Sleep migration complete: ${results.fixed} days fixed, ${results.skipped} skipped`,
+    ...results
   }, 200, corsHeaders);
 }
 
