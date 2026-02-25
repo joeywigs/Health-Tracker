@@ -172,6 +172,11 @@ async function handlePost(request, env, corsHeaders) {
     return await logBody(body, env, corsHeaders);
   }
 
+  // iOS Shortcut endpoint - sync sleep metrics (Withings)
+  if (action === "sleep") {
+    return await logSleep(body, env, corsHeaders);
+  }
+
   if (action === "biomarkers_save") {
     if (!body.date || !body.values) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
@@ -638,6 +643,71 @@ async function logBody(body, env, corsHeaders) {
     values: updates,
     received: body,
     message: `Body data saved for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Log Sleep Metrics (from iOS Shortcut / Withings) =====
+async function logSleep(body, env, corsHeaders) {
+  let normalizedDate;
+  if (body.date) {
+    normalizedDate = normalizeDate(body.date);
+  } else {
+    normalizedDate = normalizeDate(formatDateForKV(new Date()));
+  }
+
+  const existing = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+
+  const updates = {};
+
+  // Sleep hours (duration)
+  const hours = parseFloat(body.hours ?? body.duration ?? body.sleepHours);
+  if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
+
+  // Withings sleep quality score (0-100)
+  const score = parseInt(body.score ?? body.sleepScore ?? body.quality);
+  if (!isNaN(score) && score >= 0) updates["Sleep Score"] = score;
+
+  // Heart rate during sleep
+  const hr = parseInt(body.hr ?? body.heartRate ?? body.sleepHR);
+  if (!isNaN(hr) && hr > 0) updates["Sleep HR"] = hr;
+
+  // HRV during sleep
+  const hrv = parseInt(body.hrv ?? body.sleepHRV);
+  if (!isNaN(hrv) && hrv >= 0) updates["Sleep HRV"] = hrv;
+
+  // Depth rating (Bad/Poor/Fair/Good/Optimal)
+  const depth = body.depth ?? body.sleepDepth ?? "";
+  if (depth) updates["Sleep Depth"] = String(depth);
+
+  // Regularity rating (Bad/Poor/Fair/Good/Optimal)
+  const regularity = body.regularity ?? body.sleepRegularity ?? "";
+  if (regularity) updates["Sleep Regularity"] = String(regularity);
+
+  // Interruptions count
+  const interruptions = parseInt(body.interruptions ?? body.sleepInterruptions);
+  if (!isNaN(interruptions) && interruptions >= 0) updates["Sleep Interruptions"] = interruptions;
+
+  if (Object.keys(updates).length === 0) {
+    return jsonResponse({
+      error: true,
+      message: "No valid sleep data found. Send fields like: hours, score, hr, hrv, depth, regularity, interruptions",
+      received: body
+    }, 400, corsHeaders);
+  }
+
+  const merged = { ...existing, "Date": normalizedDate, ...updates };
+  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(merged));
+
+  // Clear carry-forward cache for this date since we wrote new data
+  await env.HABIT_DATA.delete(`cf:${normalizedDate}`).catch(() => {});
+
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    updated: Object.keys(updates),
+    values: updates,
+    received: body,
+    message: `Sleep data saved for ${normalizedDate}`
   }, 200, corsHeaders);
 }
 
