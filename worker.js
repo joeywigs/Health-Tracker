@@ -681,10 +681,6 @@ async function logSleep(body, env, corsHeaders) {
 
   const updates = {};
 
-  // Total sleep → decimal hours (e.g. 7.2)
-  const hours = secsToHours(parseFloat(body.hours ?? body.duration ?? body.sleepHours));
-  if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
-
   // Awake time → minutes
   const awake = secsToMinutes(parseFloat(body.awake ?? body.sleepAwake));
   if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake);
@@ -700,6 +696,16 @@ async function logSleep(body, env, corsHeaders) {
   // REM sleep → minutes
   const rem = secsToMinutes(parseFloat(body.rem ?? body.sleepREM));
   if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem);
+
+  // Total sleep → derive from stages (Core + Deep + REM) to avoid double-counting
+  const stageMinutes = (updates["Sleep Core"] || 0) + (updates["Sleep Deep"] || 0) + (updates["Sleep REM"] || 0);
+  if (stageMinutes > 0) {
+    updates["Hours of Sleep"] = Math.round(stageMinutes / 60 * 10) / 10;
+  } else {
+    // Fallback: use explicit hours field if no stages provided
+    const hours = secsToHours(parseFloat(body.hours ?? body.duration ?? body.sleepHours));
+    if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
+  }
 
   if (Object.keys(updates).length === 0) {
     return jsonResponse({
@@ -1310,13 +1316,23 @@ async function migrateSleepUnits(env, corsHeaders) {
       }
     }
 
+    // Recompute Hours of Sleep from stages (Core + Deep + REM) to fix double-counting
+    const stageMinutes = (data["Sleep Core"] || 0) + (data["Sleep Deep"] || 0) + (data["Sleep REM"] || 0);
+    if (stageMinutes > 0) {
+      const newHours = Math.round(stageMinutes / 60 * 10) / 10;
+      if (data["Hours of Sleep"] !== newHours) {
+        data["Hours of Sleep"] = newHours;
+        changed = true;
+      }
+    }
+
     if (changed) {
       await env.HABIT_DATA.put(key.name, JSON.stringify(data));
       // Clear carry-forward cache
       const date = key.name.replace("daily:", "");
       await env.HABIT_DATA.delete(`cf:${date}`).catch(() => {});
       results.fixed++;
-      results.details.push({ date: data.Date, stages: stageFields.reduce((acc, f) => { if (data[f] !== undefined) acc[f] = data[f]; return acc; }, {}) });
+      results.details.push({ date: data.Date, hoursOfSleep: data["Hours of Sleep"], stages: stageFields.reduce((acc, f) => { if (data[f] !== undefined) acc[f] = data[f]; return acc; }, {}) });
     } else {
       results.skipped++;
     }
