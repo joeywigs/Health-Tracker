@@ -11,8 +11,6 @@
  * - bedtime:items → [ array of bedtime routine items ]
  * - workouts:{date} → [ array of workouts for that date ]
  * - phases → [ array of phase configurations ]
- * - withings:tokens → { access_token, refresh_token, expires_at, userid }
- * - withings:state → CSRF state for OAuth flow (auto-expires)
  */
 
 export default {
@@ -116,28 +114,6 @@ async function handleGet(request, env, corsHeaders) {
     return await exportAll(env, corsHeaders);
   }
 
-  // ===== Withings Integration Endpoints =====
-  if (action === "withings_auth") {
-    return await withingsAuth(request, env, corsHeaders);
-  }
-
-  if (action === "withings_callback") {
-    return await withingsCallback(url, env, corsHeaders);
-  }
-
-  if (action === "withings_sleep") {
-    return await withingsFetchSleep(url.searchParams.get("date"), env, corsHeaders);
-  }
-
-  if (action === "withings_status") {
-    return await withingsStatus(env, corsHeaders);
-  }
-
-  if (action === "withings_deauth") {
-    await env.HABIT_DATA.delete("withings:tokens");
-    return jsonResponse({ success: true, message: "Withings disconnected" }, 200, corsHeaders);
-  }
-
   // iOS Shortcut may send steps as GET
   if (action === "steps") {
     // Accept steps from ?steps=, ?value=, or ?count= query params
@@ -149,6 +125,16 @@ async function handleGet(request, env, corsHeaders) {
       return jsonResponse({ error: true, message: "Missing steps value. Send as ?action=steps&steps=12345", received: params }, 400, corsHeaders);
     }
     return await updateSteps(steps, url.searchParams.get("date"), env, corsHeaders);
+  }
+
+  // iOS Shortcut: send sleep data via GET query params
+  // e.g. ?action=sleep&hours=7.2&awake=0.5&core=3.5&deep=1.2&rem=2.0
+  if (action === "sleep") {
+    const params = {};
+    for (const [k, v] of url.searchParams.entries()) {
+      if (k !== "action") params[k] = v;
+    }
+    return await logSleep(params, env, corsHeaders);
   }
 
   return jsonResponse({ error: true, message: `Unknown action: ${action}` }, 400, corsHeaders);
@@ -164,17 +150,6 @@ async function handlePost(request, env, corsHeaders) {
 
   if (action === "ping") {
     return jsonResponse({ ok: true, ts: new Date().toISOString(), via: "post" }, 200, corsHeaders);
-  }
-
-  // Withings callback - handle both POST (developer portal verification) and code exchange
-  if (action === "withings_callback") {
-    return await withingsCallback(url, env, corsHeaders);
-  }
-
-  // Withings sleep sync via POST
-  if (action === "withings_sleep") {
-    const dateParam = url.searchParams.get("date") || body.date || null;
-    return await withingsFetchSleep(dateParam, env, corsHeaders);
   }
 
   if (action === "save") {
@@ -207,7 +182,7 @@ async function handlePost(request, env, corsHeaders) {
     return await logBody(body, env, corsHeaders);
   }
 
-  // iOS Shortcut endpoint - sync sleep metrics (Withings)
+  // iOS Shortcut endpoint - sync sleep metrics (Apple Health)
   if (action === "sleep") {
     return await logSleep(body, env, corsHeaders);
   }
@@ -382,12 +357,10 @@ async function saveDay(data, env, corsHeaders) {
     ...existing,
     "Date": normalizedDate,
     "Hours of Sleep": data.sleepHours || "",
-    "Sleep Score": data.sleepScore || "",
-    "Sleep HR": data.sleepHR || "",
-    "Sleep HRV": data.sleepHRV || "",
-    "Sleep Depth": data.sleepDepth || "",
-    "Sleep Regularity": data.sleepRegularity || "",
-    "Sleep Interruptions": data.sleepInterruptions || "",
+    "Sleep Awake": data.sleepAwake || "",
+    "Sleep Core": data.sleepCore || "",
+    "Sleep Deep": data.sleepDeep || "",
+    "Sleep REM": data.sleepREM || "",
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
@@ -681,7 +654,7 @@ async function logBody(body, env, corsHeaders) {
   }, 200, corsHeaders);
 }
 
-// ===== Log Sleep Metrics (from iOS Shortcut / Withings) =====
+// ===== Log Sleep Metrics (from iOS Shortcut via Apple Health) =====
 async function logSleep(body, env, corsHeaders) {
   let normalizedDate;
   if (body.date) {
@@ -694,38 +667,30 @@ async function logSleep(body, env, corsHeaders) {
 
   const updates = {};
 
-  // Sleep hours (duration)
+  // Total sleep hours
   const hours = parseFloat(body.hours ?? body.duration ?? body.sleepHours);
   if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
 
-  // Withings sleep quality score (0-100)
-  const score = parseInt(body.score ?? body.sleepScore ?? body.quality);
-  if (!isNaN(score) && score >= 0) updates["Sleep Score"] = score;
+  // Awake time (hours)
+  const awake = parseFloat(body.awake ?? body.sleepAwake);
+  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake * 10) / 10;
 
-  // Heart rate during sleep
-  const hr = parseInt(body.hr ?? body.heartRate ?? body.sleepHR);
-  if (!isNaN(hr) && hr > 0) updates["Sleep HR"] = hr;
+  // Core sleep (hours)
+  const core = parseFloat(body.core ?? body.sleepCore);
+  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = Math.round(core * 10) / 10;
 
-  // HRV during sleep
-  const hrv = parseInt(body.hrv ?? body.sleepHRV);
-  if (!isNaN(hrv) && hrv >= 0) updates["Sleep HRV"] = hrv;
+  // Deep sleep (hours)
+  const deep = parseFloat(body.deep ?? body.sleepDeep);
+  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = Math.round(deep * 10) / 10;
 
-  // Depth rating (Bad/Poor/Fair/Good/Optimal)
-  const depth = body.depth ?? body.sleepDepth ?? "";
-  if (depth) updates["Sleep Depth"] = String(depth);
-
-  // Regularity rating (Bad/Poor/Fair/Good/Optimal)
-  const regularity = body.regularity ?? body.sleepRegularity ?? "";
-  if (regularity) updates["Sleep Regularity"] = String(regularity);
-
-  // Interruptions count
-  const interruptions = parseInt(body.interruptions ?? body.sleepInterruptions);
-  if (!isNaN(interruptions) && interruptions >= 0) updates["Sleep Interruptions"] = interruptions;
+  // REM sleep (hours)
+  const rem = parseFloat(body.rem ?? body.sleepREM);
+  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem * 10) / 10;
 
   if (Object.keys(updates).length === 0) {
     return jsonResponse({
       error: true,
-      message: "No valid sleep data found. Send fields like: hours, score, hr, hrv, depth, regularity, interruptions",
+      message: "No valid sleep data found. Send fields like: hours, awake, core, deep, rem",
       received: body
     }, 400, corsHeaders);
   }
@@ -1124,309 +1089,6 @@ async function savePhases(phases, env, corsHeaders) {
   return jsonResponse({ success: true, count: phases.length }, 200, corsHeaders);
 }
 
-// ===== Withings OAuth2 Integration =====
-// Requires WITHINGS_CLIENT_ID and WITHINGS_CLIENT_SECRET as Worker secrets.
-// Set via: wrangler secret put WITHINGS_CLIENT_ID / wrangler secret put WITHINGS_CLIENT_SECRET
-// Register your app at https://developer.withings.com with redirect URI:
-//   https://habit-proxy.joeywigs.workers.dev/?action=withings_callback
-
-async function withingsAuth(request, env, corsHeaders) {
-  if (!env.WITHINGS_CLIENT_ID) {
-    return jsonResponse({
-      error: true,
-      message: "WITHINGS_CLIENT_ID not configured. Set it via: wrangler secret put WITHINGS_CLIENT_ID"
-    }, 500, corsHeaders);
-  }
-
-  const redirectUri = `${new URL(request.url).origin}/?action=withings_callback`;
-  const state = crypto.randomUUID();
-
-  // Store state for CSRF validation (10 min TTL)
-  await env.HABIT_DATA.put("withings:state", state, { expirationTtl: 600 });
-
-  const authUrl = new URL("https://account.withings.com/oauth2_user/authorize2");
-  authUrl.searchParams.set("response_type", "code");
-  authUrl.searchParams.set("client_id", env.WITHINGS_CLIENT_ID);
-  authUrl.searchParams.set("scope", "user.activity,user.sleepevents");
-  authUrl.searchParams.set("redirect_uri", redirectUri);
-  authUrl.searchParams.set("state", state);
-
-  return Response.redirect(authUrl.toString(), 302);
-}
-
-async function withingsCallback(url, env, corsHeaders) {
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-
-  if (!code) {
-    // Withings developer portal sends POST to verify the URL is reachable — respond 200
-    return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain", ...corsHeaders } });
-  }
-
-  // Validate CSRF state
-  const savedState = await env.HABIT_DATA.get("withings:state");
-  if (!state || state !== savedState) {
-    return new Response("<html><body><h2>Authorization failed</h2><p>Invalid state parameter (CSRF check).</p></body></html>",
-      { status: 400, headers: { "Content-Type": "text/html", ...corsHeaders } });
-  }
-
-  const redirectUri = `${url.origin}/?action=withings_callback`;
-
-  const tokenRes = await fetch("https://wbsapi.withings.net/v2/oauth2", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      action: "requesttoken",
-      grant_type: "authorization_code",
-      client_id: env.WITHINGS_CLIENT_ID,
-      client_secret: env.WITHINGS_CLIENT_SECRET,
-      code,
-      redirect_uri: redirectUri,
-    }),
-  });
-
-  const tokenData = await tokenRes.json();
-  if (tokenData.status !== 0) {
-    return new Response(`<html><body><h2>Token exchange failed</h2><pre>${JSON.stringify(tokenData, null, 2)}</pre></body></html>`,
-      { status: 400, headers: { "Content-Type": "text/html", ...corsHeaders } });
-  }
-
-  const tokens = {
-    access_token: tokenData.body.access_token,
-    refresh_token: tokenData.body.refresh_token,
-    expires_at: Date.now() + (tokenData.body.expires_in * 1000),
-    userid: tokenData.body.userid,
-    scope: tokenData.body.scope,
-    connected_at: new Date().toISOString(),
-  };
-
-  await env.HABIT_DATA.put("withings:tokens", JSON.stringify(tokens));
-  await env.HABIT_DATA.delete("withings:state");
-
-  return new Response(`<html>
-<body style="font-family:system-ui;text-align:center;padding:60px 20px;background:#111;color:#eee">
-  <h2 style="color:#4ade80">Withings Connected</h2>
-  <p>Your Withings account is now linked. Sleep data will sync via:</p>
-  <code style="display:block;margin:20px auto;padding:12px;background:#222;border-radius:8px;max-width:600px;word-break:break-all;color:#93c5fd">
-    GET ${url.origin}/?action=withings_sleep
-  </code>
-  <p style="color:#999;margin-top:30px">You can close this tab.</p>
-</body></html>`, { headers: { "Content-Type": "text/html", ...corsHeaders } });
-}
-
-async function withingsStatus(env, corsHeaders) {
-  const tokens = await env.HABIT_DATA.get("withings:tokens", "json");
-  if (!tokens) {
-    return jsonResponse({ connected: false, message: "Not connected to Withings" }, 200, corsHeaders);
-  }
-  return jsonResponse({
-    connected: true,
-    userid: tokens.userid,
-    connected_at: tokens.connected_at,
-    token_expires_at: new Date(tokens.expires_at).toISOString(),
-    token_expired: Date.now() > tokens.expires_at,
-  }, 200, corsHeaders);
-}
-
-// Get a valid access token, auto-refreshing if expired
-async function getWithingsAccessToken(env) {
-  let tokens = await env.HABIT_DATA.get("withings:tokens", "json");
-  if (!tokens) return null;
-
-  // Refresh if expired or expiring within 60 seconds
-  if (Date.now() > tokens.expires_at - 60000) {
-    const res = await fetch("https://wbsapi.withings.net/v2/oauth2", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        action: "requesttoken",
-        grant_type: "refresh_token",
-        client_id: env.WITHINGS_CLIENT_ID,
-        client_secret: env.WITHINGS_CLIENT_SECRET,
-        refresh_token: tokens.refresh_token,
-      }),
-    });
-
-    const data = await res.json();
-    if (data.status !== 0) {
-      console.error("Withings token refresh failed:", data);
-      return null;
-    }
-
-    tokens = {
-      access_token: data.body.access_token,
-      refresh_token: data.body.refresh_token,
-      expires_at: Date.now() + (data.body.expires_in * 1000),
-      userid: data.body.userid,
-      scope: data.body.scope,
-      connected_at: tokens.connected_at,
-    };
-    await env.HABIT_DATA.put("withings:tokens", JSON.stringify(tokens));
-  }
-
-  return tokens.access_token;
-}
-
-// Fetch sleep data from Withings and save to daily KV
-async function withingsFetchSleep(dateStr, env, corsHeaders) {
-  const accessToken = await getWithingsAccessToken(env);
-  if (!accessToken) {
-    return jsonResponse({
-      error: true,
-      message: "Not connected to Withings. Visit ?action=withings_auth to connect."
-    }, 401, corsHeaders);
-  }
-
-  // The date parameter is the "wake up" date (daily record to save to).
-  // Default: today in Central time. Withings dates sleep by the night it started,
-  // so we query for the night before.
-  let wakeUpDate;
-  if (dateStr) {
-    wakeUpDate = normalizeDate(dateStr);
-  } else {
-    wakeUpDate = normalizeDate(formatDateForKV(new Date()));
-  }
-
-  const wakeUpParsed = parseDate(wakeUpDate);
-  const sleepNight = new Date(wakeUpParsed);
-  sleepNight.setDate(sleepNight.getDate() - 1);
-
-  // Withings uses YYYY-MM-DD format
-  const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const startYmd = fmt(sleepNight);
-  const endYmd = fmt(wakeUpParsed);
-
-  // Fetch sleep summary from Withings
-  const summaryRes = await fetch("https://wbsapi.withings.net/v2/sleep", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization": `Bearer ${accessToken}`,
-    },
-    body: new URLSearchParams({
-      action: "getsummary",
-      startdateymd: startYmd,
-      enddateymd: endYmd,
-      data_fields: "sleep_score,hr_average,hr_min,hr_max,deepsleepduration,lightsleepduration,remsleepduration,wakeupcount,wakeupduration,durationtosleep,durationtowakeup,breathing_disturbances_intensity,snoring,snoringepisodecount,rr_average,sleep_efficiency,total_sleep_time",
-    }),
-  });
-
-  const summaryData = await summaryRes.json();
-  if (summaryData.status !== 0) {
-    return jsonResponse({
-      error: true,
-      message: "Withings API error",
-      withings_status: summaryData.status,
-      details: summaryData,
-    }, 502, corsHeaders);
-  }
-
-  const series = summaryData.body?.series;
-  if (!series || series.length === 0) {
-    return jsonResponse({
-      success: true,
-      message: `No sleep data found for night of ${startYmd}`,
-      date: wakeUpDate,
-      queried: { startdateymd: startYmd, enddateymd: endYmd },
-    }, 200, corsHeaders);
-  }
-
-  // Use the longest sleep period if multiple (ignore naps)
-  const summary = series.reduce((best, s) => {
-    const dur = (s.enddate || 0) - (s.startdate || 0);
-    const bestDur = (best.enddate || 0) - (best.startdate || 0);
-    return dur > bestDur ? s : best;
-  });
-  const sd = summary.data || {};
-
-  // Fetch HRV intraday data (sdnn_1) from the Sleep v2 Get endpoint
-  let hrvAvg = null;
-  try {
-    if (summary.startdate && summary.enddate) {
-      const hrvRes = await fetch("https://wbsapi.withings.net/v2/sleep", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Authorization": `Bearer ${accessToken}`,
-        },
-        body: new URLSearchParams({
-          action: "get",
-          startdate: String(summary.startdate),
-          enddate: String(summary.enddate),
-          data_fields: "sdnn_1,hr,rr",
-        }),
-      });
-
-      const hrvData = await hrvRes.json();
-      if (hrvData.status === 0 && hrvData.body?.series) {
-        const sdnnValues = [];
-        for (const entry of hrvData.body.series) {
-          if (entry.sdnn_1 !== undefined && entry.sdnn_1 !== null && entry.sdnn_1 > 0) {
-            sdnnValues.push(entry.sdnn_1);
-          }
-        }
-        if (sdnnValues.length > 0) {
-          hrvAvg = Math.round(sdnnValues.reduce((a, b) => a + b, 0) / sdnnValues.length);
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Withings HRV fetch failed (non-fatal):", e);
-  }
-
-  // Calculate total sleep hours
-  const totalSleepSec = sd.total_sleep_time ||
-    ((sd.deepsleepduration || 0) + (sd.lightsleepduration || 0) + (sd.remsleepduration || 0));
-  const totalSleepHours = totalSleepSec > 0 ? Math.round(totalSleepSec / 3600 * 10) / 10 : null;
-
-  // Derive Sleep Depth rating from deep sleep percentage
-  let depthRating = "";
-  if (totalSleepSec > 0 && sd.deepsleepduration) {
-    const deepPct = (sd.deepsleepduration / totalSleepSec) * 100;
-    if (deepPct >= 20) depthRating = "Optimal";
-    else if (deepPct >= 15) depthRating = "Good";
-    else if (deepPct >= 10) depthRating = "Fair";
-    else if (deepPct >= 5) depthRating = "Poor";
-    else depthRating = "Bad";
-  }
-
-  // Build updates for the daily record
-  const updates = {};
-  if (totalSleepHours) updates["Hours of Sleep"] = totalSleepHours;
-  if (sd.sleep_score) updates["Sleep Score"] = sd.sleep_score;
-  if (sd.hr_average) updates["Sleep HR"] = Math.round(sd.hr_average);
-  if (hrvAvg) updates["Sleep HRV"] = hrvAvg;
-  if (depthRating) updates["Sleep Depth"] = depthRating;
-  if (sd.wakeupcount !== undefined) updates["Sleep Interruptions"] = sd.wakeupcount;
-  // Sleep Regularity not available from Withings API — left for manual entry
-
-  if (Object.keys(updates).length === 0) {
-    return jsonResponse({
-      success: true,
-      message: "Withings returned sleep data but no usable metrics",
-      date: wakeUpDate,
-      withings_raw: sd,
-    }, 200, corsHeaders);
-  }
-
-  // Merge into existing daily record
-  const existing = await env.HABIT_DATA.get(`daily:${wakeUpDate}`, "json") || {};
-  const merged = { ...existing, "Date": wakeUpDate, ...updates };
-  await env.HABIT_DATA.put(`daily:${wakeUpDate}`, JSON.stringify(merged));
-  await env.HABIT_DATA.delete(`cf:${wakeUpDate}`).catch(() => {});
-
-  return jsonResponse({
-    success: true,
-    date: wakeUpDate,
-    source: "withings",
-    updated: Object.keys(updates),
-    values: updates,
-    withings_raw: sd,
-    hrv_avg: hrvAvg,
-    message: `Withings sleep data saved for ${wakeUpDate}`,
-  }, 200, corsHeaders);
-}
-
 // ===== Helpers =====
 function jsonResponse(data, status, corsHeaders) {
   return new Response(JSON.stringify(data), {
@@ -1763,12 +1425,10 @@ async function auditData(env, corsHeaders) {
   // Define habits to audit with their expected formats
   const habitsToAudit = [
     { key: 'sleep', field: 'Hours of Sleep', type: 'numeric', description: 'Sleep hours' },
-    { key: 'sleepScore', field: 'Sleep Score', type: 'numeric', description: 'Withings sleep quality score (0-100)' },
-    { key: 'sleepHR', field: 'Sleep HR', type: 'numeric', description: 'Withings sleep heart rate (bpm)' },
-    { key: 'sleepHRV', field: 'Sleep HRV', type: 'numeric', description: 'Withings sleep HRV (ms)' },
-    { key: 'sleepDepth', field: 'Sleep Depth', type: 'string', description: 'Withings sleep depth rating' },
-    { key: 'sleepRegularity', field: 'Sleep Regularity', type: 'string', description: 'Withings sleep regularity rating' },
-    { key: 'sleepInterruptions', field: 'Sleep Interruptions', type: 'numeric', description: 'Withings sleep interruptions count' },
+    { key: 'sleepAwake', field: 'Sleep Awake', type: 'numeric', description: 'Apple Health awake time (hours)' },
+    { key: 'sleepCore', field: 'Sleep Core', type: 'numeric', description: 'Apple Health core sleep (hours)' },
+    { key: 'sleepDeep', field: 'Sleep Deep', type: 'numeric', description: 'Apple Health deep sleep (hours)' },
+    { key: 'sleepREM', field: 'Sleep REM', type: 'numeric', description: 'Apple Health REM sleep (hours)' },
     { key: 'agua', fields: ['agua', 'Water', 'Water (glasses)', 'hydrationGood'], type: 'numeric', description: 'Water glasses' },
     { key: 'steps', field: 'Steps', type: 'numeric', description: 'Daily steps' },
     { key: 'rehit', field: 'REHIT 2x10', type: 'mixed', description: 'REHIT sessions' },
