@@ -1209,6 +1209,34 @@
     .card-unit { font-size: 13px; color: var(--text); margin-left: 4px; }
     .input-row { display: flex; align-items: baseline; }
     .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
+    .sleep-metrics { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px; }
+    .sleep-metrics-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0; }
+    .sleep-metrics-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.05em; }
+    .sleep-metrics-chevron { font-size: 12px; color: rgba(255,255,255,0.35); transition: transform 0.2s; }
+    .sleep-metrics-chevron.open { transform: rotate(90deg); }
+    .sleep-metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .sleep-metric-item { display: flex; flex-direction: column; gap: 3px; }
+    .sleep-metric-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.04em; }
+    .sleep-metric-input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; padding: 6px 8px; width: 100%; box-sizing: border-box; outline: none; }
+    .sleep-metric-input:focus { border-color: var(--accent-purple); }
+    .sleep-metric-input::placeholder { color: rgba(255,255,255,0.2); }
+    .sleep-metric-input-wrap { display: flex; align-items: baseline; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding-right: 6px; }
+    .sleep-metric-input-wrap .sleep-metric-input { border: none; background: none; padding-right: 2px; }
+    .sleep-metric-input-wrap .sleep-metric-input:focus { border: none; }
+    .sleep-metric-input-wrap:focus-within { border-color: var(--accent-purple); }
+    .sleep-metric-unit { font-size: 10px; color: rgba(255,255,255,0.35); white-space: nowrap; }
+    .sleep-metric-select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; padding: 6px 8px; width: 100%; box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; }
+    .sleep-metric-select:focus { border-color: var(--accent-purple); }
+    .sleep-metric-select option { background: #1a1a2e; color: #fff; }
+    body.day-mode .sleep-metric-input { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); color: var(--text); }
+    body.day-mode .sleep-metric-input::placeholder { color: rgba(0,0,0,0.2); }
+    body.day-mode .sleep-metric-input-wrap { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
+    body.day-mode .sleep-metric-select { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); color: var(--text); }
+    body.day-mode .sleep-metrics { border-top-color: rgba(0,0,0,0.08); }
+    body.day-mode .sleep-metrics-label { color: rgba(0,0,0,0.45); }
+    body.day-mode .sleep-metrics-chevron { color: rgba(0,0,0,0.35); }
+    body.day-mode .sleep-metric-label { color: rgba(0,0,0,0.4); }
+    body.day-mode .sleep-metric-unit { color: rgba(0,0,0,0.35); }
     .inline-week-input {
       background: transparent; border: none; border-bottom: 1px dashed rgba(255,255,255,0.25);
       color: inherit; font: inherit; width: 64px; padding: 0 2px; text-align: right;
@@ -4412,6 +4440,38 @@
       <div class="card-head"><div class="card-icon">🌙</div><div class="card-title">Sleep</div></div>
       <div class="input-row"><input type="number" inputmode="decimal" class="big-input" id="sleepHours" step="0.1" placeholder="0"><span class="card-unit">hrs</span></div>
       <div class="card-avg">7-day avg: <span id="avgSleep">--</span></div>
+      <div class="sleep-metrics" id="sleepMetrics">
+        <div class="sleep-metrics-header" id="sleepMetricsToggle">
+          <span class="sleep-metrics-label">Withings Sleep</span>
+          <span class="sleep-metrics-chevron" id="sleepMetricsChevron">▸</span>
+        </div>
+        <div class="sleep-metrics-grid" id="sleepMetricsGrid" style="display:none">
+          <div class="sleep-metric-item">
+            <label class="sleep-metric-label">Score</label>
+            <input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepScore" min="0" max="100" placeholder="--">
+          </div>
+          <div class="sleep-metric-item">
+            <label class="sleep-metric-label">HR</label>
+            <div class="sleep-metric-input-wrap"><input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepHR" min="30" max="200" placeholder="--"><span class="sleep-metric-unit">bpm</span></div>
+          </div>
+          <div class="sleep-metric-item">
+            <label class="sleep-metric-label">HRV</label>
+            <div class="sleep-metric-input-wrap"><input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepHRV" min="0" max="300" placeholder="--"><span class="sleep-metric-unit">ms</span></div>
+          </div>
+          <div class="sleep-metric-item">
+            <label class="sleep-metric-label">Depth</label>
+            <select class="sleep-metric-select" id="sleepDepth"><option value="">--</option><option value="Bad">Bad</option><option value="Poor">Poor</option><option value="Fair">Fair</option><option value="Good">Good</option><option value="Optimal">Optimal</option></select>
+          </div>
+          <div class="sleep-metric-item">
+            <label class="sleep-metric-label">Regularity</label>
+            <select class="sleep-metric-select" id="sleepRegularity"><option value="">--</option><option value="Bad">Bad</option><option value="Poor">Poor</option><option value="Fair">Fair</option><option value="Good">Good</option><option value="Optimal">Optimal</option></select>
+          </div>
+          <div class="sleep-metric-item">
+            <label class="sleep-metric-label">Interruptions</label>
+            <input type="number" inputmode="numeric" class="sleep-metric-input" id="sleepInterruptions" min="0" max="50" placeholder="--">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="card water" id="waterSection">
       <div class="card-head"><div class="card-icon">💧</div><div class="card-title">Water</div></div>
@@ -8756,7 +8816,7 @@
         // ── Daily Data ──
         lines.push('## Daily Tracking Data');
         lines.push('');
-        lines.push('Each day tracks: sleep, hydration, steps, supplements, meals, exercise, body composition, blood pressure, and more.');
+        lines.push('Each day tracks: sleep (hours + Withings quality metrics: score, HR, HRV, depth, regularity, interruptions), hydration, steps, supplements, meals, exercise, body composition, blood pressure, and more.');
         lines.push('Boolean fields: true = completed/taken, false = not done.');
         lines.push('');
 
@@ -8784,6 +8844,19 @@
             if (d['Email Sprints']) metrics.push(`Email Sprints: ${d['Email Sprints']}`);
             if (metrics.length) {
               lines.push('**Metrics:** ' + metrics.join(' | '));
+              lines.push('');
+            }
+
+            // Withings sleep metrics
+            const sleepDetails = [];
+            if (d['Sleep Score']) sleepDetails.push(`Score: ${d['Sleep Score']}/100`);
+            if (d['Sleep HR']) sleepDetails.push(`HR: ${d['Sleep HR']} bpm`);
+            if (d['Sleep HRV']) sleepDetails.push(`HRV: ${d['Sleep HRV']} ms`);
+            if (d['Sleep Depth']) sleepDetails.push(`Depth: ${d['Sleep Depth']}`);
+            if (d['Sleep Regularity']) sleepDetails.push(`Regularity: ${d['Sleep Regularity']}`);
+            if (d['Sleep Interruptions']) sleepDetails.push(`Interruptions: ${d['Sleep Interruptions']}`);
+            if (sleepDetails.length) {
+              lines.push('**Sleep Quality (Withings):** ' + sleepDetails.join(' | '));
               lines.push('');
             }
 
