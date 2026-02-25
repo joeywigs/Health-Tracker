@@ -444,6 +444,7 @@ function changeDate(days) {
   updateDayLock();
   if (typeof applySectionSettings === 'function') applySectionSettings();
   if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
+  if (typeof checkCalendarEvent === 'function') checkCalendarEvent();
 }
 
 // =====================================
@@ -5743,6 +5744,12 @@ async function saveData(payload) {
   // Normalize camelCase payload keys to API column names so chart/summary functions can find the data
   const keyMap = {
     sleepHours: "Hours of Sleep",
+    sleepScore: "Sleep Score",
+    sleepHR: "Sleep HR",
+    sleepHRV: "Sleep HRV",
+    sleepDepth: "Sleep Depth",
+    sleepRegularity: "Sleep Regularity",
+    sleepInterruptions: "Sleep Interruptions",
     steps: "Steps",
     fitnessScore: "Fitness Score",
     calories: "Calories",
@@ -5922,6 +5929,12 @@ function buildPayloadFromUI() {
 
     // Daily numbers
     sleepHours: document.getElementById("sleepHours")?.value || "",
+    sleepScore: document.getElementById("sleepScore")?.value || "",
+    sleepHR: document.getElementById("sleepHR")?.value || "",
+    sleepHRV: document.getElementById("sleepHRV")?.value || "",
+    sleepDepth: document.getElementById("sleepDepth")?.value || "",
+    sleepRegularity: document.getElementById("sleepRegularity")?.value || "",
+    sleepInterruptions: document.getElementById("sleepInterruptions")?.value || "",
     steps: document.getElementById("steps")?.value || "",
     fitnessScore: document.getElementById("fitnessScore")?.value || "",
     calories: document.getElementById("calories")?.value || "",
@@ -6152,6 +6165,11 @@ function setupInputAutosave() {
     } else {
       el.addEventListener("change", triggerSaveSoon);
     }
+  });
+
+  // Sleep metric selects (not caught by input querySelectorAll)
+  document.querySelectorAll(".sleep-metric-select").forEach(el => {
+    el.addEventListener("change", triggerSaveSoon);
   });
 
   // Steps week total: detect user override vs auto-populated
@@ -6450,6 +6468,18 @@ async function populateForm(data) {
 
     document.querySelectorAll(".checkbox-field input[type='checkbox']").forEach(syncCheckboxVisual);
 
+    // Clear sleep metrics
+    ["sleepScore","sleepHR","sleepHRV","sleepInterruptions"].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = "";
+    });
+    ["sleepDepth","sleepRegularity"].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = "";
+    });
+    const smGrid = document.getElementById("sleepMetricsGrid");
+    const smChev = document.getElementById("sleepMetricsChevron");
+    if (smGrid) smGrid.style.display = "none";
+    if (smChev) smChev.classList.remove("open");
+
     // Refresh morning routine (must happen even on the no-daily path)
     if (typeof checkMorningRoutine === 'function') {
       try {
@@ -6465,6 +6495,28 @@ async function populateForm(data) {
   // Numbers (API column names ?? payload key names)
   const sleepEl = document.getElementById("sleepHours");
   if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
+
+  // Withings sleep metrics
+  const sleepScoreEl = document.getElementById("sleepScore");
+  if (sleepScoreEl) sleepScoreEl.value = d["Sleep Score"] ?? d["sleepScore"] ?? "";
+  const sleepHREl = document.getElementById("sleepHR");
+  if (sleepHREl) sleepHREl.value = d["Sleep HR"] ?? d["sleepHR"] ?? "";
+  const sleepHRVEl = document.getElementById("sleepHRV");
+  if (sleepHRVEl) sleepHRVEl.value = d["Sleep HRV"] ?? d["sleepHRV"] ?? "";
+  const sleepDepthEl = document.getElementById("sleepDepth");
+  if (sleepDepthEl) sleepDepthEl.value = d["Sleep Depth"] ?? d["sleepDepth"] ?? "";
+  const sleepRegularityEl = document.getElementById("sleepRegularity");
+  if (sleepRegularityEl) sleepRegularityEl.value = d["Sleep Regularity"] ?? d["sleepRegularity"] ?? "";
+  const sleepInterruptionsEl = document.getElementById("sleepInterruptions");
+  if (sleepInterruptionsEl) sleepInterruptionsEl.value = d["Sleep Interruptions"] ?? d["sleepInterruptions"] ?? "";
+
+  // Auto-expand sleep metrics if any data exists
+  if (d["Sleep Score"] || d["Sleep HR"] || d["Sleep HRV"] || d["Sleep Depth"] || d["Sleep Regularity"] || d["Sleep Interruptions"]) {
+    const grid = document.getElementById("sleepMetricsGrid");
+    const chevron = document.getElementById("sleepMetricsChevron");
+    if (grid) grid.style.display = "";
+    if (chevron) chevron.classList.add("open");
+  }
 
   const stepsEl = document.getElementById("steps");
   if (stepsEl) stepsEl.value = d["Steps"] ?? d["steps"] ?? "";
@@ -6665,6 +6717,20 @@ function setupCollapsibleSections() {
       }
     });
   });
+
+  // Sleep metrics toggle
+  const sleepToggle = document.getElementById("sleepMetricsToggle");
+  if (sleepToggle) {
+    sleepToggle.addEventListener("click", () => {
+      const grid = document.getElementById("sleepMetricsGrid");
+      const chevron = document.getElementById("sleepMetricsChevron");
+      if (grid) {
+        const isHidden = grid.style.display === "none";
+        grid.style.display = isHidden ? "" : "none";
+        chevron?.classList.toggle("open", isHidden);
+      }
+    });
+  }
 
   console.log("✅ Collapsible sections wired");
 }
@@ -7105,15 +7171,15 @@ function updateAverages(averages) {
   currentAverages = averages || null;
 
   const avgSleepEl = document.getElementById("avgSleep");
-  const avgStepsEl = document.getElementById("avgSteps");
   const avgMovementsEl = document.getElementById("avgMovements");
 
   if (!averages) {
     if (avgSleepEl) avgSleepEl.textContent = "--";
-    if (avgStepsEl) avgStepsEl.textContent = "--";
     if (avgMovementsEl) avgMovementsEl.textContent = "--";
     const stepsWeekResetEl = document.getElementById("stepsWeekTotal");
     if (stepsWeekResetEl) { stepsWeekResetEl.value = ""; stepsWeekResetEl.placeholder = "--"; delete stepsWeekResetEl.dataset.override; stepsWeekResetEl.classList.remove("user-override"); }
+    const stepsWeekCompareResetEl = document.getElementById("stepsWeekCompare");
+    if (stepsWeekCompareResetEl) stepsWeekCompareResetEl.innerHTML = "";
     updateReadingWeeklyDisplay();
     return;
   }
@@ -7141,19 +7207,11 @@ function updateAverages(averages) {
     avgSleepEl.innerHTML = display + comparison;
   }
 
-  // Steps: show whole number w/ commas with comparison
-  if (avgStepsEl) {
-    const v = averages.steps;
-    const lastV = averages.lastWeek?.steps;
-    const display = (v === null || v === undefined || v === "") ? "--" : Number(v).toLocaleString();
-    const comparison = formatComparison(v, lastV, 0);
-    avgStepsEl.innerHTML = display + comparison;
-  }
-
   // Steps: weekly total (Sun–Sat) — editable input with auto-populate
   const stepsWeekEl = document.getElementById("stepsWeekTotal");
   if (stepsWeekEl) {
     const v = averages.stepsWeek;
+    const lastV = averages.lastWeek?.stepsWeek;
     // Store the computed value so we can show it as placeholder
     stepsWeekEl._computedWeek = v || 0;
     // Only auto-fill if user hasn't manually overridden
@@ -7161,6 +7219,12 @@ function updateAverages(averages) {
       stepsWeekEl.value = (v === null || v === undefined || !v) ? "" : v;
       stepsWeekEl.placeholder = "--";
       stepsWeekEl.classList.remove("user-override");
+    }
+    // Show comparison vs same days last week
+    const compareEl = document.getElementById("stepsWeekCompare");
+    if (compareEl) {
+      const current = v || 0;
+      compareEl.innerHTML = (current && lastV) ? formatComparison(current, lastV, 0) : "";
     }
   }
 
