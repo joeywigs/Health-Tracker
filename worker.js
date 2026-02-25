@@ -356,11 +356,15 @@ async function saveDay(data, env, corsHeaders) {
   const daily = {
     ...existing,
     "Date": normalizedDate,
-    "Hours of Sleep": data.sleepHours || "",
     "Sleep Awake": data.sleepAwake || "",
     "Sleep Core": data.sleepCore || "",
     "Sleep Deep": data.sleepDeep || "",
     "Sleep REM": data.sleepREM || "",
+    "Hours of Sleep": data.sleepHours || (() => {
+      const c = parseFloat(data.sleepCore) || 0, d2 = parseFloat(data.sleepDeep) || 0, r = parseFloat(data.sleepREM) || 0;
+      const sum = c + d2 + r;
+      return sum > 0 ? Math.round(sum * 10) / 10 : "";
+    })(),
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
