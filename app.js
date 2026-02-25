@@ -6482,7 +6482,12 @@ async function populateForm(data) {
 
   // Numbers (API column names ?? payload key names)
   const sleepEl = document.getElementById("sleepHours");
-  if (sleepEl) sleepEl.value = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
+  let sleepTotal = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
+  if (!sleepTotal && (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"])) {
+    const sum = (parseFloat(d["Sleep Core"]) || 0) + (parseFloat(d["Sleep Deep"]) || 0) + (parseFloat(d["Sleep REM"]) || 0);
+    if (sum > 0) sleepTotal = Math.round(sum * 10) / 10;
+  }
+  if (sleepEl) sleepEl.value = sleepTotal;
 
   // Apple Health sleep stage metrics
   const sleepAwakeEl = document.getElementById("sleepAwake");
