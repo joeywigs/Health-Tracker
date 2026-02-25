@@ -3320,6 +3320,28 @@
     body.day-mode .weekly-review-row { border-bottom-color: rgba(0,0,0,0.06); }
 
     /* Bedtime Routine Section */
+    /* Calendar event banner */
+    .calendar-event-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(220,38,38,0.2), rgba(239,68,68,0.12));
+      border: 1.5px solid rgba(239,68,68,0.5);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      align-items: center;
+      gap: 14px;
+    }
+    .calendar-event-banner.show { display: flex; }
+    .calendar-event-icon { font-size: 32px; flex-shrink: 0; }
+    .calendar-event-body { flex: 1; min-width: 0; }
+    .calendar-event-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(239,68,68,0.8); margin-bottom: 2px; }
+    .calendar-event-title { font-size: 18px; font-weight: 700; color: #fca5a5; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calendar-event-time { font-size: 24px; font-weight: 800; color: #ef4444; margin-top: 2px; font-family: 'Space Grotesk', sans-serif; }
+    body.day-mode .calendar-event-banner { background: linear-gradient(135deg, rgba(220,38,38,0.08), rgba(239,68,68,0.05)); border-color: rgba(220,38,38,0.35); }
+    body.day-mode .calendar-event-label { color: rgba(185,28,28,0.7); }
+    body.day-mode .calendar-event-title { color: #b91c1c; }
+    body.day-mode .calendar-event-time { color: #dc2626; }
+
     .bedtime-routine {
       background: linear-gradient(135deg, rgba(196,113,237,0.15), rgba(109,213,237,0.1));
       border: 1px solid rgba(196,113,237,0.3);
@@ -4207,6 +4229,16 @@
   <!-- Ring Completion Celebration Container -->
   <div id="ringCelebration" class="ring-celebration"></div>
 
+  <!-- Tomorrow's Early Calendar Event (shows after 8 PM) -->
+  <div id="calendarEventBanner" class="calendar-event-banner">
+    <div class="calendar-event-icon">📅</div>
+    <div class="calendar-event-body">
+      <div class="calendar-event-label">Tomorrow morning</div>
+      <div class="calendar-event-title" id="calendarEventTitle">--</div>
+      <div class="calendar-event-time" id="calendarEventTime">--</div>
+    </div>
+  </div>
+
   <!-- Bedtime Routine Section -->
   <div id="bedtimeRoutine" class="bedtime-routine">
     <div class="bedtime-header">
@@ -4921,6 +4953,11 @@
           <div class="settings-card-label">Reading History</div>
           <div class="settings-card-desc">View & export sessions</div>
         </div>
+        <div class="settings-card" data-settings-page="calendar">
+          <div class="settings-card-icon">📅</div>
+          <div class="settings-card-label">Calendar</div>
+          <div class="settings-card-desc">Early morning alerts</div>
+        </div>
       </div>
     </div>
 
@@ -5130,6 +5167,27 @@
           </div>
           <div id="readingHistoryStatus" style="text-align:center;color:var(--text-muted);font-size:13px;padding:8px;display:none"></div>
           <div id="readingHistoryList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subpage: Calendar -->
+    <div class="settings-subpage" id="settingsSub_calendar">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ef4444;--icon-end:#f97316;--icon-glow:rgba(239,68,68,0.4)">📅</div><span class="sec-name">Calendar Integration</span></div></div>
+        <div class="sec-content">
+          <p style="color:var(--text-muted);font-size:12px;margin:0 0 12px 0">Show tomorrow's first event before 9 AM in a red banner after 8 PM. Paste your Google Calendar secret iCal URL below.</p>
+          <p style="color:var(--text-muted);font-size:11px;margin:0 0 16px 0">To find it: Google Calendar Settings → select your calendar → "Secret address in iCal format"</p>
+          <div class="field">
+            <label class="field-label">iCal URL</label>
+            <input type="url" class="input" id="calendarIcalUrl" placeholder="https://calendar.google.com/calendar/ical/..." style="font-size:12px">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button type="button" class="btn btn-primary" id="saveCalendarUrlBtn" style="flex:1">Save</button>
+            <button type="button" class="btn btn-secondary" id="testCalendarBtn" style="flex:1">Test</button>
+          </div>
+          <div id="calendarTestResult" style="margin-top:12px;font-size:13px;display:none"></div>
         </div>
       </div>
     </div>
@@ -7339,6 +7397,7 @@
       if (pageName === 'goals') { renderGoalsList(); initGoalDayOverrides(); }
       if (pageName === 'notes') loadHabitNotes();
       if (pageName === 'dumbbell') initDumbbellSettings();
+      if (pageName === 'calendar') loadCalendarSettings();
       window.scrollTo(0, 0);
     }
 
@@ -9631,6 +9690,114 @@
 
       // Check every minute if bedtime routine should show
       setInterval(checkBedtimeRoutine, 60000);
+
+      // Calendar event: check on load and every 10 minutes
+      checkCalendarEvent();
+      setInterval(checkCalendarEvent, 600000);
+    });
+
+    // ===== Tomorrow's Early Calendar Event =====
+    let _calendarEventCache = null;
+    let _calendarEventFetchedAt = 0;
+
+    async function checkCalendarEvent() {
+      const banner = document.getElementById('calendarEventBanner');
+      if (!banner) return;
+
+      // Only show after 8 PM and when viewing today
+      const now = new Date();
+      if (now.getHours() < 20) {
+        banner.classList.remove('show');
+        return;
+      }
+      if (currentDate.toDateString() !== now.toDateString()) {
+        banner.classList.remove('show');
+        return;
+      }
+
+      // Cache for 30 minutes to avoid hammering the worker
+      const cacheAge = Date.now() - _calendarEventFetchedAt;
+      if (!_calendarEventCache || cacheAge > 1800000) {
+        try {
+          const result = await apiGet('calendar_event');
+          _calendarEventCache = result;
+          _calendarEventFetchedAt = Date.now();
+        } catch (e) {
+          console.warn('Calendar event fetch failed:', e);
+          return;
+        }
+      }
+
+      if (_calendarEventCache?.event) {
+        const ev = _calendarEventCache.event;
+        document.getElementById('calendarEventTitle').textContent = ev.title;
+        document.getElementById('calendarEventTime').textContent = ev.time;
+        banner.classList.add('show');
+      } else {
+        banner.classList.remove('show');
+      }
+    }
+
+    // ===== Calendar Settings =====
+    async function loadCalendarSettings() {
+      try {
+        const result = await apiGet('settings_load');
+        const url = result?.settings?.calendarIcalUrl || '';
+        const input = document.getElementById('calendarIcalUrl');
+        if (input) input.value = url;
+        // Hide previous test result
+        const testResult = document.getElementById('calendarTestResult');
+        if (testResult) testResult.style.display = 'none';
+      } catch (e) { /* silent */ }
+    }
+
+    document.getElementById('saveCalendarUrlBtn')?.addEventListener('click', async () => {
+      const url = document.getElementById('calendarIcalUrl')?.value.trim();
+      // Load current settings, merge in the new URL, save back
+      try {
+        const current = await apiGet('settings_load');
+        const settings = current?.settings || {};
+        settings.calendarIcalUrl = url || "";
+        await apiPost('settings_save', { settings });
+        if (typeof showToast === 'function') showToast('Calendar URL saved', 'success');
+        // Reset cache so next check fetches fresh
+        _calendarEventCache = null;
+        _calendarEventFetchedAt = 0;
+        checkCalendarEvent();
+      } catch (e) {
+        if (typeof showToast === 'function') showToast('Failed to save: ' + e.message, 'error');
+      }
+    });
+
+    document.getElementById('testCalendarBtn')?.addEventListener('click', async () => {
+      const resultEl = document.getElementById('calendarTestResult');
+      if (!resultEl) return;
+      resultEl.style.display = 'block';
+      resultEl.style.color = 'var(--text-muted)';
+      resultEl.textContent = 'Fetching...';
+      try {
+        // Save first so the worker has the URL
+        const url = document.getElementById('calendarIcalUrl')?.value.trim();
+        const current = await apiGet('settings_load');
+        const settings = current?.settings || {};
+        settings.calendarIcalUrl = url || "";
+        await apiPost('settings_save', { settings });
+
+        const result = await apiGet('calendar_event');
+        _calendarEventCache = result;
+        _calendarEventFetchedAt = Date.now();
+
+        if (result?.event) {
+          resultEl.style.color = '#22c55e';
+          resultEl.textContent = `Found: "${result.event.title}" at ${result.event.time}`;
+        } else {
+          resultEl.style.color = 'var(--text-muted)';
+          resultEl.textContent = `No early event found for tomorrow (reason: ${result?.reason || 'unknown'})`;
+        }
+      } catch (e) {
+        resultEl.style.color = '#ef4444';
+        resultEl.textContent = 'Error: ' + e.message;
+      }
     });
 
     // ===== Dumbbell Settings =====

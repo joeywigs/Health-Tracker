@@ -444,6 +444,7 @@ function changeDate(days) {
   updateDayLock();
   if (typeof applySectionSettings === 'function') applySectionSettings();
   if (typeof checkMorningRoutine === 'function') checkMorningRoutine();
+  if (typeof checkCalendarEvent === 'function') checkCalendarEvent();
 }
 
 // =====================================

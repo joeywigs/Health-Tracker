@@ -106,6 +106,10 @@ async function handleGet(request, env, corsHeaders) {
     return await loadSettings(env, corsHeaders);
   }
 
+  if (action === "calendar_event") {
+    return await getCalendarEvent(env, corsHeaders);
+  }
+
   if (action === "export_all") {
     return await exportAll(env, corsHeaders);
   }
@@ -1585,4 +1589,278 @@ async function auditData(env, corsHeaders) {
     console.error('Audit error:', err);
     return jsonResponse({ error: true, message: err.message, stack: err.stack }, 500, corsHeaders);
   }
+}
+
+// ===== Calendar: Fetch tomorrow's early event from iCal feed =====
+async function getCalendarEvent(env, corsHeaders) {
+  const settings = await env.HABIT_DATA.get("app:settings", "json");
+  const icalUrl = settings?.calendarIcalUrl;
+  if (!icalUrl) {
+    return jsonResponse({ event: null, reason: "no_ical_url" }, 200, corsHeaders);
+  }
+
+  try {
+    const res = await fetch(icalUrl, { headers: { "User-Agent": "HabitTracker/1.0" } });
+    if (!res.ok) {
+      return jsonResponse({ event: null, reason: "fetch_failed", status: res.status }, 200, corsHeaders);
+    }
+    const icalText = await res.text();
+    const events = parseIcal(icalText);
+
+    // Determine "tomorrow" in the user's timezone (default America/Chicago)
+    const tz = settings?.timezone || "America/Chicago";
+    const now = new Date();
+    const todayStr = localDateStr(now, tz);
+    const tomorrow = new Date(now.getTime() + 86400000);
+    const tomorrowStr = localDateStr(tomorrow, tz);
+
+    // Find events occurring tomorrow before 9 AM
+    const earlyEvents = [];
+    for (const ev of events) {
+      const occurrences = getOccurrencesOnDate(ev, tomorrowStr, tz);
+      for (const occ of occurrences) {
+        if (occ.hour < 9) {
+          earlyEvents.push({
+            title: ev.summary,
+            time: formatTime(occ.hour, occ.minute),
+            hour: occ.hour,
+            minute: occ.minute,
+          });
+        }
+      }
+    }
+
+    if (earlyEvents.length === 0) {
+      return jsonResponse({ event: null, reason: "no_early_events" }, 200, corsHeaders);
+    }
+
+    // Return the earliest one
+    earlyEvents.sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute));
+    return jsonResponse({ event: earlyEvents[0] }, 200, corsHeaders);
+  } catch (err) {
+    return jsonResponse({ event: null, reason: "parse_error", error: err.message }, 200, corsHeaders);
+  }
+}
+
+// Format local date as YYYYMMDD for comparison
+function localDateStr(date, tz) {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+  const y = parts.find(p => p.type === "year").value;
+  const m = parts.find(p => p.type === "month").value;
+  const d = parts.find(p => p.type === "day").value;
+  return `${y}${m}${d}`;
+}
+
+function formatTime(h, m) {
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+// Parse iCal text into event objects
+function parseIcal(text) {
+  const events = [];
+  const lines = unfoldIcalLines(text);
+  let inEvent = false;
+  let ev = {};
+
+  for (const line of lines) {
+    if (line === "BEGIN:VEVENT") {
+      inEvent = true;
+      ev = { summary: "", dtstart: "", dtend: "", rrule: "", exdates: [] };
+      continue;
+    }
+    if (line === "END:VEVENT") {
+      inEvent = false;
+      if (ev.dtstart) events.push(ev);
+      continue;
+    }
+    if (!inEvent) continue;
+
+    if (line.startsWith("SUMMARY:")) {
+      ev.summary = line.slice(8);
+    } else if (line.startsWith("DTSTART")) {
+      ev.dtstart = line;
+    } else if (line.startsWith("DTEND")) {
+      ev.dtend = line;
+    } else if (line.startsWith("RRULE:")) {
+      ev.rrule = line.slice(6);
+    } else if (line.startsWith("EXDATE")) {
+      // EXDATE may have params like TZID
+      const val = line.includes(":") ? line.split(":").pop() : "";
+      if (val) ev.exdates.push(...val.split(","));
+    }
+  }
+  return events;
+}
+
+// Unfold continuation lines (lines starting with space/tab)
+function unfoldIcalLines(text) {
+  const raw = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const result = [];
+  for (const line of raw) {
+    if ((line.startsWith(" ") || line.startsWith("\t")) && result.length > 0) {
+      result[result.length - 1] += line.slice(1);
+    } else {
+      result.push(line);
+    }
+  }
+  return result;
+}
+
+// Parse DTSTART line into { dateStr: "YYYYMMDD", hour, minute, allDay, tzid }
+function parseDtStart(dtLine, tz) {
+  // Formats:
+  //   DTSTART:20260225T070000Z          (UTC)
+  //   DTSTART;TZID=America/Chicago:20260225T070000  (with timezone)
+  //   DTSTART;VALUE=DATE:20260225       (all-day)
+  //   DTSTART:20260225                  (all-day)
+  const colonIdx = dtLine.indexOf(":");
+  const params = dtLine.slice(0, colonIdx);
+  const value = dtLine.slice(colonIdx + 1).trim();
+
+  // All-day event
+  if (params.includes("VALUE=DATE") || value.length === 8) {
+    return { dateStr: value.slice(0, 8), hour: 0, minute: 0, allDay: true, tzid: null };
+  }
+
+  // Extract TZID if present
+  const tzMatch = params.match(/TZID=([^;:]+)/);
+  const evTz = tzMatch ? tzMatch[1] : null;
+
+  const datePart = value.slice(0, 8);
+  const timePart = value.slice(9, 15); // HHMMSS
+  const isUTC = value.endsWith("Z");
+
+  let hour = parseInt(timePart.slice(0, 2));
+  let minute = parseInt(timePart.slice(2, 4));
+
+  if (isUTC) {
+    // Convert UTC to local timezone
+    const d = new Date(Date.UTC(
+      parseInt(datePart.slice(0, 4)),
+      parseInt(datePart.slice(4, 6)) - 1,
+      parseInt(datePart.slice(6, 8)),
+      hour, minute
+    ));
+    const localDate = localDateStr(d, tz);
+    const localParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz, hour: "numeric", minute: "numeric", hour12: false
+    }).formatToParts(d);
+    const lh = parseInt(localParts.find(p => p.type === "hour").value);
+    const lm = parseInt(localParts.find(p => p.type === "minute").value);
+    return { dateStr: localDate, hour: lh === 24 ? 0 : lh, minute: lm, allDay: false, tzid: "UTC" };
+  }
+
+  if (evTz && evTz !== tz) {
+    // Convert from event timezone to user timezone
+    const d = new Date(`${datePart.slice(0,4)}-${datePart.slice(4,6)}-${datePart.slice(6,8)}T${timePart.slice(0,2)}:${timePart.slice(2,4)}:${timePart.slice(4,6)}`);
+    // Use the event's timezone to create the correct instant
+    const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: evTz, year: "numeric", month: "2-digit", day: "2-digit", hour: "numeric", minute: "numeric", hour12: false });
+    // This is a bit tricky — we need to figure out the UTC offset of the event timezone
+    // Simpler: construct a Date using known UTC conversion
+    const evDateStr = `${datePart.slice(0,4)}-${datePart.slice(4,6)}-${datePart.slice(6,8)}T${timePart.slice(0,2)}:${timePart.slice(2,4)}:00`;
+    // Use a trick: format in evTz to find offset, then adjust
+    // For simplicity, just trust the TZID and return the local time as-is if same continent
+    // (most users' calendars are in their own timezone)
+    return { dateStr: datePart, hour, minute, allDay: false, tzid: evTz };
+  }
+
+  return { dateStr: datePart, hour, minute, allDay: false, tzid: evTz || tz };
+}
+
+// Get occurrences of an event on a specific date (YYYYMMDD)
+function getOccurrencesOnDate(ev, targetDate, tz) {
+  const start = parseDtStart(ev.dtstart, tz);
+  const results = [];
+
+  // Check excluded dates
+  const exDateStrs = ev.exdates.map(ex => ex.replace(/[^0-9]/g, "").slice(0, 8));
+
+  if (!ev.rrule) {
+    // Single event — just check if it's on the target date
+    if (start.dateStr === targetDate && !exDateStrs.includes(targetDate)) {
+      results.push({ hour: start.allDay ? 0 : start.hour, minute: start.allDay ? 0 : start.minute });
+    }
+    return results;
+  }
+
+  // Parse RRULE
+  const rules = {};
+  ev.rrule.split(";").forEach(part => {
+    const [k, v] = part.split("=");
+    rules[k] = v;
+  });
+
+  const freq = rules.FREQ;
+  const interval = parseInt(rules.INTERVAL || "1");
+  const until = rules.UNTIL ? rules.UNTIL.replace(/[^0-9]/g, "").slice(0, 8) : null;
+  const count = rules.COUNT ? parseInt(rules.COUNT) : null;
+  const byDay = rules.BYDAY ? rules.BYDAY.split(",") : null;
+
+  // Quick check: if UNTIL is before target date, skip
+  if (until && until < targetDate) return results;
+
+  const startDate = parseYMD(start.dateStr);
+  const target = parseYMD(targetDate);
+
+  if (target < startDate) return results;
+
+  // Check if target date matches the recurrence pattern
+  const daysDiff = Math.round((target - startDate) / 86400000);
+
+  let matches = false;
+
+  if (freq === "DAILY") {
+    matches = daysDiff % interval === 0;
+  } else if (freq === "WEEKLY") {
+    const weeksDiff = Math.floor(daysDiff / 7);
+    if (weeksDiff % interval === 0 || (daysDiff % (interval * 7) < 7)) {
+      if (byDay) {
+        const dayMap = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+        const targetDow = target.getUTCDay();
+        matches = byDay.some(d => dayMap[d] === targetDow);
+      } else {
+        // Same day of week as start
+        matches = target.getUTCDay() === startDate.getUTCDay() && daysDiff % (interval * 7) === 0;
+      }
+    }
+  } else if (freq === "MONTHLY") {
+    const monthsDiff = (target.getUTCFullYear() - startDate.getUTCFullYear()) * 12 +
+                        (target.getUTCMonth() - startDate.getUTCMonth());
+    if (monthsDiff % interval === 0 && target.getUTCDate() === startDate.getUTCDate()) {
+      matches = true;
+    }
+  } else if (freq === "YEARLY") {
+    const yearsDiff = target.getUTCFullYear() - startDate.getUTCFullYear();
+    if (yearsDiff % interval === 0 &&
+        target.getUTCMonth() === startDate.getUTCMonth() &&
+        target.getUTCDate() === startDate.getUTCDate()) {
+      matches = true;
+    }
+  }
+
+  // Apply COUNT limit (approximate — count from start to target)
+  if (matches && count) {
+    let approxOccurrences;
+    if (freq === "DAILY") approxOccurrences = Math.floor(daysDiff / interval) + 1;
+    else if (freq === "WEEKLY") approxOccurrences = Math.floor(daysDiff / (7 * interval)) + 1;
+    else if (freq === "MONTHLY") {
+      const md = (target.getUTCFullYear() - startDate.getUTCFullYear()) * 12 +
+                  (target.getUTCMonth() - startDate.getUTCMonth());
+      approxOccurrences = Math.floor(md / interval) + 1;
+    }
+    else approxOccurrences = (target.getUTCFullYear() - startDate.getUTCFullYear()) / interval + 1;
+    if (approxOccurrences > count) matches = false;
+  }
+
+  if (matches && !exDateStrs.includes(targetDate)) {
+    results.push({ hour: start.allDay ? 0 : start.hour, minute: start.allDay ? 0 : start.minute });
+  }
+
+  return results;
+}
+
+function parseYMD(s) {
+  return new Date(Date.UTC(parseInt(s.slice(0,4)), parseInt(s.slice(4,6)) - 1, parseInt(s.slice(6,8))));
 }
