@@ -284,6 +284,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (navigator.onLine) {
     flushOfflineQueue().catch(e => console.warn('Offline flush on boot failed:', e));
   }
+
+  // One-time fixup: set weight to 199.9 for Feb 10-24 2026
+  if (!localStorage.getItem("fixup_weight_feb10_24")) {
+    (async () => {
+      try {
+        for (let d = 10; d <= 24; d++) {
+          await apiPost("body", { date: `2/${d}/26`, weight: 199.9 });
+        }
+        localStorage.setItem("fixup_weight_feb10_24", "done");
+        console.log("Weight fixup complete: Feb 10-24 set to 199.9");
+      } catch (e) {
+        console.warn("Weight fixup failed:", e);
+      }
+    })();
+  }
 });
 
 // Re-fetch data when returning from background (e.g. after running an iOS Shortcut)
@@ -3592,6 +3607,7 @@ async function loadAndRenderCharts() {
   // Render each chart
   try {
     renderWeightChart(dataPoints);
+    renderWaistChart(dataPoints);
     renderSleepChart(dataPoints);
     renderStepsChart(dataPoints);
     renderMovementChart(dataPoints);
@@ -3642,7 +3658,7 @@ function updateRangeButtonsAvailability() {
   }
 }
 
-let weightChart, sleepChart, stepsChart, movementChart, rehitChart, bodyCompChart, peakWattsChart;
+let weightChart, waistChart, sleepChart, stepsChart, movementChart, rehitChart, bodyCompChart, peakWattsChart;
 let rehitCalendarMonth = new Date(); // Track current month for calendar
 
 // Helper to get chart colors based on theme
@@ -3658,46 +3674,33 @@ function getChartColors() {
 function renderWeightChart(dataPoints) {
   const canvas = document.getElementById("weightChart");
   if (!canvas) return;
-  
+
   const ctx = canvas.getContext("2d");
   const colors = getChartColors();
-  
-  // Destroy existing chart
+
   if (weightChart) weightChart.destroy();
-  
+
   const labels = dataPoints.map(d => d.date);
   const weights = dataPoints.map(d => parseFloat(d.daily["Weight (lbs)"]) || null);
-  const waists = dataPoints.map(d => parseFloat(d.daily["Waist"]) || null);
-  
+
   weightChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [
-        {
-          label: 'Weight (lbs)',
-          data: weights,
-          borderColor: '#06ffa5',
-          backgroundColor: 'rgba(6, 255, 165, 0.1)',
-          tension: 0.3,
-          spanGaps: true
-        },
-        {
-          label: 'Waist (in)',
-          data: waists,
-          borderColor: '#4d9de0',
-          backgroundColor: 'rgba(77, 157, 224, 0.1)',
-          tension: 0.3,
-          spanGaps: true,
-          yAxisID: 'y1'
-        }
-      ]
+      datasets: [{
+        label: 'Weight (lbs)',
+        data: weights,
+        borderColor: '#06ffa5',
+        backgroundColor: 'rgba(6, 255, 165, 0.1)',
+        tension: 0.3,
+        spanGaps: true
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: true, labels: { color: colors.text } }
+        legend: { display: false }
       },
       scales: {
         x: {
@@ -3705,18 +3708,55 @@ function renderWeightChart(dataPoints) {
           grid: { color: colors.grid }
         },
         y: {
-          type: 'linear',
-          position: 'left',
           ticks: { color: colors.text },
           grid: { color: colors.grid },
-          title: { display: true, text: 'Weight (lbs)', color: colors.text }
+          title: { display: true, text: 'lbs', color: colors.text }
+        }
+      }
+    }
+  });
+}
+
+function renderWaistChart(dataPoints) {
+  const canvas = document.getElementById("waistChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
+
+  if (waistChart) waistChart.destroy();
+
+  const labels = dataPoints.map(d => d.date);
+  const waists = dataPoints.map(d => parseFloat(d.daily["Waist"]) || null);
+
+  waistChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Waist (in)',
+        data: waists,
+        borderColor: '#4d9de0',
+        backgroundColor: 'rgba(77, 157, 224, 0.1)',
+        tension: 0.3,
+        spanGaps: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
         },
-        y1: {
-          type: 'linear',
-          position: 'right',
+        y: {
           ticks: { color: colors.text },
-          grid: { display: false },
-          title: { display: true, text: 'Waist (in)', color: colors.text }
+          grid: { color: colors.grid },
+          title: { display: true, text: 'inches', color: colors.text }
         }
       }
     }
@@ -6483,7 +6523,9 @@ async function populateForm(data) {
   // Numbers (API column names ?? payload key names)
   const sleepEl = document.getElementById("sleepHours");
   let sleepTotal = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
-  if (!sleepTotal && (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"])) {
+  // Always derive total from stages when available — the stored "Hours of Sleep"
+  // may be stale "time in bed" from the old shortcut code
+  if (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"]) {
     const sum = (parseFloat(d["Sleep Core"]) || 0) + (parseFloat(d["Sleep Deep"]) || 0) + (parseFloat(d["Sleep REM"]) || 0);
     if (sum > 0) sleepTotal = Math.round(sum * 10) / 10;
   }

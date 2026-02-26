@@ -360,10 +360,10 @@ async function saveDay(data, env, corsHeaders) {
     "Sleep Core": data.sleepCore || "",
     "Sleep Deep": data.sleepDeep || "",
     "Sleep REM": data.sleepREM || "",
-    "Hours of Sleep": data.sleepHours || (() => {
+    "Hours of Sleep": (() => {
       const c = parseFloat(data.sleepCore) || 0, d2 = parseFloat(data.sleepDeep) || 0, r = parseFloat(data.sleepREM) || 0;
       const sum = c + d2 + r;
-      return sum > 0 ? Math.round(sum * 10) / 10 : "";
+      return sum > 0 ? Math.round(sum * 10) / 10 : (data.sleepHours || "");
     })(),
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
