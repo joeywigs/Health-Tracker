@@ -197,6 +197,7 @@ let dataChanged = false;
 let readings = [];
 let readingWeekBase = 0; // weekly reading mins excluding today (set on load)
 let honeyDos = [];
+let thankYouCards = [];
 let currentMovements = [];
 let currentDumbbell = [];
 window._dumbbellCarriedForward = false;
@@ -2256,16 +2257,19 @@ function calculateGoalStats(data, range, phaseId = null) {
   stats.inhalerPM = { pct: elapsedDays > 0 ? Math.round((inhalerEveningDays / elapsedDays) * 100) : 0, detail: `${inhalerEveningDays}/${elapsedDays} days` };
   stats.math = { pct: elapsedDays > 0 ? Math.round((mathDays / elapsedDays) * 100) : 0, detail: `${mathDays}/${elapsedDays} days` };
 
-  // Writing (reflections, stories, carly)
-  let reflectionsDays = 0, storiesDays = 0, carlyDays = 0;
+  // Writing (reflections, stories, carly, thank you cards)
+  let reflectionsDays = 0, storiesDays = 0, carlyDays = 0, thankYouDays = 0, thankYouTotal = 0;
   data.forEach(d => {
     if (d.daily["Reflections"] && d.daily["Reflections"].trim() !== "") reflectionsDays++;
     if (d.daily["Grey & Sloane Story"] && d.daily["Grey & Sloane Story"].trim() !== "") storiesDays++;
     if (d.daily["Carly"] && d.daily["Carly"].trim() !== "") carlyDays++;
+    const tyCount = parseInt(d.daily["Thank You Cards"]) || 0;
+    if (tyCount > 0) { thankYouDays++; thankYouTotal += tyCount; }
   });
   stats.reflections = { pct: elapsedDays > 0 ? Math.round((reflectionsDays / elapsedDays) * 100) : 0, detail: `${reflectionsDays}/${elapsedDays} days` };
   stats.stories = { pct: elapsedDays > 0 ? Math.round((storiesDays / elapsedDays) * 100) : 0, detail: `${storiesDays}/${elapsedDays} days` };
   stats.carly = { pct: elapsedDays > 0 ? Math.round((carlyDays / elapsedDays) * 100) : 0, detail: `${carlyDays}/${elapsedDays} days` };
+  stats.thankYou = { pct: elapsedDays > 0 ? Math.round((thankYouDays / elapsedDays) * 100) : 0, detail: `${thankYouTotal} cards, ${thankYouDays} days` };
 
   // Custom section goals — evaluate any field with goalEnabled or phase goal
   if (typeof appSettings !== 'undefined' && appSettings.sections) {
@@ -3358,6 +3362,7 @@ function renderWritingStats(stats) {
     ${renderGoalStatCard('Reflections', '✍️', safe(stats.reflections).pct, safe(stats.reflections).detail)}
     ${renderGoalStatCard('Stories', '📝', safe(stats.stories).pct, safe(stats.stories).detail)}
     ${renderGoalStatCard('Carly', '💛', safe(stats.carly).pct, safe(stats.carly).detail)}
+    ${renderGoalStatCard('Thank You', '💌', safe(stats.thankYou).pct, safe(stats.thankYou).detail)}
   `;
 }
 
@@ -5922,6 +5927,7 @@ async function saveData(payload) {
     reflections: payload.reflections || "",
     stories: payload.stories || "",
     carly: payload.carly || "",
+    thankYouCards: payload.thankYouCards || [],
     customSections: payload.customSections || {}
   };
   // Preserve bodyCarryForward so cache-loaded data matches API-loaded data.
@@ -6116,6 +6122,7 @@ function buildPayloadFromUI() {
     reflections: document.getElementById("reflections")?.value || "",
     stories: document.getElementById("stories")?.value || "",
     carly: document.getElementById("carly")?.value || "",
+    thankYouCards,
     
     // Custom sections data - collect from UI first
     customSections: typeof window.collectCustomSectionsData === 'function'
@@ -6453,6 +6460,7 @@ async function populateForm(data) {
   readings = [];
   readingWeekBase = 0;
   honeyDos = [];
+  thankYouCards = [];
   currentMovements = [];
   currentDumbbell = [];
   window._dumbbellCarriedForward = false;
@@ -6540,6 +6548,7 @@ async function populateForm(data) {
     updateAverages(data?.averages);
 
     honeyDos = data?.honeyDos || [];
+    thankYouCards = data?.thankYouCards || [];
 
     const reflectionsEl = document.getElementById("reflections");
     if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
@@ -6547,6 +6556,8 @@ async function populateForm(data) {
     if (storiesEl) storiesEl.value = data?.stories || "";
     const carlyEl = document.getElementById("carly");
     if (carlyEl) carlyEl.value = data?.carly || "";
+
+    renderThankYouCards();
 
     // Apply carried-forward body values (even if no row exists)
     applyBodyFieldsFromDaily(bodySource);
@@ -6750,6 +6761,7 @@ async function populateForm(data) {
   }));
 
   honeyDos = data?.honeyDos || [];
+  thankYouCards = data?.thankYouCards || [];
 
   if (readings.length > 0) {
     lastBookTitle = String(readings[readings.length - 1].book || "");
@@ -6765,6 +6777,8 @@ async function populateForm(data) {
 
   const carlyEl = document.getElementById("carly");
   if (carlyEl) carlyEl.value = data?.carly || "";
+
+  renderThankYouCards();
 
   // Load custom sections data
   if (typeof window.loadCustomSectionsData === 'function') {
@@ -7357,3 +7371,71 @@ function markSleepSaved() {
     el.classList.remove("saved");
   }, 3000);
 }
+
+// ===== Thank You Cards =====
+// thankYouCards is a global array of { name, addedDate, sentDate }
+// pending items (sentDate === null) show as checkboxes on the writing page
+// checking one off sets sentDate to today and removes it from the visible list
+
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renderThankYouCards() {
+  const list = document.getElementById("thankYouList");
+  if (!list) return;
+  const pending = thankYouCards.filter(c => !c.sentDate);
+  if (pending.length === 0) {
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No pending cards — add someone you\'re thinking of!</div>';
+    return;
+  }
+  list.innerHTML = pending.map(c => `
+    <label class="thank-you-item" data-name="${escapeHtml(c.name)}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:opacity 0.3s">
+      <input type="checkbox" class="thank-you-check" style="width:18px;height:18px;accent-color:var(--accent-teal);cursor:pointer;flex-shrink:0">
+      <span style="font-size:14px;color:var(--text)">${escapeHtml(c.name)}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">added ${c.addedDate}</span>
+    </label>
+  `).join("");
+}
+
+function addThankYouCard() {
+  const input = document.getElementById("thankYouNameInput");
+  if (!input) return;
+  const name = input.value.trim();
+  if (!name) return;
+  const today = formatDateForAPI(currentDate);
+  thankYouCards.push({ name, addedDate: today, sentDate: null });
+  input.value = "";
+  renderThankYouCards();
+  saveThankYouCards();
+}
+
+function saveThankYouCards() {
+  if (typeof triggerSaveSoon === "function") triggerSaveSoon();
+}
+
+document.addEventListener("change", (e) => {
+  if (e.target.classList.contains("thank-you-check")) {
+    const item = e.target.closest(".thank-you-item");
+    if (!item) return;
+    const name = item.dataset.name;
+    const card = thankYouCards.find(c => c.name === name && !c.sentDate);
+    if (card) {
+      const today = formatDateForAPI(currentDate);
+      card.sentDate = today;
+      // Animate out then re-render
+      item.style.opacity = "0";
+      item.style.transform = "translateX(20px)";
+      item.style.transition = "opacity 0.3s, transform 0.3s";
+      setTimeout(() => renderThankYouCards(), 300);
+      saveThankYouCards();
+    }
+  }
+});
+
+document.getElementById("addThankYouBtn")?.addEventListener("click", addThankYouCard);
+document.getElementById("thankYouNameInput")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); addThankYouCard(); }
+});
