@@ -285,7 +285,7 @@ async function loadDay(dateStr, env, corsHeaders, lite = false) {
     env.HABIT_DATA.get(`movements:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`readings:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`honeyDos:${normalizedDate}`, "json"),
-    env.HABIT_DATA.get(`thankYouCards:${normalizedDate}`, "json"),
+    env.HABIT_DATA.get("thankYouCards", "json"),
     env.HABIT_DATA.get(`custom:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`workouts:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`dumbbell:${normalizedDate}`, "json"),
@@ -422,7 +422,7 @@ async function saveDay(data, env, corsHeaders) {
     "Reflections": data.reflections || "",
     "Stories": data.stories || "",
     "Carly": data.carly || "",
-    "Thank You Cards": (data.thankYouCards && data.thankYouCards.length) || 0,
+    "Thank You Cards": Array.isArray(data.thankYouCards) ? data.thankYouCards.filter(c => c.sentDate === normalizedDate).length : 0,
     // Grooming (Friday)
     "Grooming Haircut": data.groomingHaircut || false,
     "Grooming Beard Trim": data.groomingBeardTrim || false,
@@ -483,9 +483,9 @@ async function saveDay(data, env, corsHeaders) {
     saves.push(env.HABIT_DATA.put(`honeyDos:${normalizedDate}`, JSON.stringify(data.honeyDos)));
   }
 
-  // Save thankYouCards if provided
+  // Save thankYouCards (global list, not per-date)
   if (data.thankYouCards && Array.isArray(data.thankYouCards)) {
-    saves.push(env.HABIT_DATA.put(`thankYouCards:${normalizedDate}`, JSON.stringify(data.thankYouCards)));
+    saves.push(env.HABIT_DATA.put("thankYouCards", JSON.stringify(data.thankYouCards)));
   }
 
   // Save custom sections if provided

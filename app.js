@@ -7373,18 +7373,30 @@ function markSleepSaved() {
 }
 
 // ===== Thank You Cards =====
+// thankYouCards is a global array of { name, addedDate, sentDate }
+// pending items (sentDate === null) show as checkboxes on the writing page
+// checking one off sets sentDate to today and removes it from the visible list
+
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 function renderThankYouCards() {
   const list = document.getElementById("thankYouList");
   if (!list) return;
-  if (thankYouCards.length === 0) {
-    list.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No cards sent yet today</div>';
+  const pending = thankYouCards.filter(c => !c.sentDate);
+  if (pending.length === 0) {
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No pending cards — add someone you\'re thinking of!</div>';
     return;
   }
-  list.innerHTML = thankYouCards.map((name, i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm)">
-      <span style="font-size:14px;color:var(--text)">💌 ${name}</span>
-      <button type="button" class="thank-you-remove" data-idx="${i}" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">&times;</button>
-    </div>
+  list.innerHTML = pending.map(c => `
+    <label class="thank-you-item" data-name="${escapeHtml(c.name)}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:opacity 0.3s">
+      <input type="checkbox" class="thank-you-check" style="width:18px;height:18px;accent-color:var(--accent-teal);cursor:pointer;flex-shrink:0">
+      <span style="font-size:14px;color:var(--text)">${escapeHtml(c.name)}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">added ${c.addedDate}</span>
+    </label>
   `).join("");
 }
 
@@ -7393,19 +7405,32 @@ function addThankYouCard() {
   if (!input) return;
   const name = input.value.trim();
   if (!name) return;
-  thankYouCards.push(name);
+  const today = formatDateForAPI(currentDate);
+  thankYouCards.push({ name, addedDate: today, sentDate: null });
   input.value = "";
   renderThankYouCards();
+  saveThankYouCards();
+}
+
+function saveThankYouCards() {
   if (typeof triggerSaveSoon === "function") triggerSaveSoon();
 }
 
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("thank-you-remove")) {
-    const idx = parseInt(e.target.dataset.idx, 10);
-    if (!isNaN(idx) && idx >= 0 && idx < thankYouCards.length) {
-      thankYouCards.splice(idx, 1);
-      renderThankYouCards();
-      if (typeof triggerSaveSoon === "function") triggerSaveSoon();
+document.addEventListener("change", (e) => {
+  if (e.target.classList.contains("thank-you-check")) {
+    const item = e.target.closest(".thank-you-item");
+    if (!item) return;
+    const name = item.dataset.name;
+    const card = thankYouCards.find(c => c.name === name && !c.sentDate);
+    if (card) {
+      const today = formatDateForAPI(currentDate);
+      card.sentDate = today;
+      // Animate out then re-render
+      item.style.opacity = "0";
+      item.style.transform = "translateX(20px)";
+      item.style.transition = "opacity 0.3s, transform 0.3s";
+      setTimeout(() => renderThankYouCards(), 300);
+      saveThankYouCards();
     }
   }
 });
