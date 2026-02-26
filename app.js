@@ -3527,7 +3527,8 @@ async function fetchChartData(maxDays = null, silent = false) {
         (daily["Hours of Sleep"] && daily["Hours of Sleep"] !== "") ||
         (daily["Steps"] && daily["Steps"] !== "" && daily["Steps"] !== 0) ||
         (daily["Weight (lbs)"] && daily["Weight (lbs)"] !== "") ||
-        (daily["REHIT 2x10"] && daily["REHIT 2x10"] !== "")
+        (daily["REHIT 2x10"] && daily["REHIT 2x10"] !== "") ||
+        (daily["Active Energy"] && daily["Active Energy"] !== "" && daily["Active Energy"] !== 0)
       );
 
       if (hasData) {
@@ -3606,6 +3607,7 @@ async function loadAndRenderCharts() {
   
   // Render each chart
   try {
+    renderActiveEnergyChart(dataPoints);
     renderWeightChart(dataPoints);
     renderWaistChart(dataPoints);
     renderSleepChart(dataPoints);
@@ -3658,7 +3660,7 @@ function updateRangeButtonsAvailability() {
   }
 }
 
-let weightChart, waistChart, sleepChart, stepsChart, movementChart, rehitChart, bodyCompChart, peakWattsChart;
+let activeEnergyChart, weightChart, waistChart, sleepChart, stepsChart, movementChart, rehitChart, bodyCompChart, peakWattsChart;
 let rehitCalendarMonth = new Date(); // Track current month for calendar
 
 // Helper to get chart colors based on theme
@@ -3669,6 +3671,71 @@ function getChartColors() {
     grid: isDayMode ? '#e5e7eb' : '#3a3a3a',
     background: isDayMode ? 'rgba(0,0,0,0.05)' : '#2a2a2a'
   };
+}
+
+function renderActiveEnergyChart(dataPoints) {
+  const canvas = document.getElementById("activeEnergyChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const colors = getChartColors();
+
+  if (activeEnergyChart) activeEnergyChart.destroy();
+
+  const labels = dataPoints.map(d => d.date);
+  const energy = dataPoints.map(d => parseInt(d.daily["Active Energy"]) || null);
+
+  // Calculate average (excluding nulls)
+  const valid = energy.filter(v => v !== null && !isNaN(v));
+  const avg = valid.length > 0 ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
+  const avgLine = avg ? labels.map(() => avg) : [];
+
+  activeEnergyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Active Energy (cal)',
+          data: energy,
+          backgroundColor: '#ff6b35',
+          borderColor: '#ff6b35',
+          borderWidth: 1,
+          order: 2
+        },
+        {
+          label: `Average (${avg ? Math.round(avg) : '--'} cal)`,
+          data: avgLine,
+          type: 'line',
+          borderColor: '#e0e0e0',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: true, labels: { color: colors.text } }
+      },
+      scales: {
+        x: {
+          ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+          grid: { color: colors.grid }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: colors.text },
+          grid: { color: colors.grid },
+          title: { display: true, text: 'Calories', color: colors.text }
+        }
+      }
+    }
+  });
 }
 
 function renderWeightChart(dataPoints) {

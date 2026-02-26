@@ -187,6 +187,15 @@ async function handlePost(request, env, corsHeaders) {
     return await logSleep(body, env, corsHeaders);
   }
 
+  // iOS Shortcut endpoint - sync active energy (Apple Health)
+  if (action === "active_energy") {
+    const cal = body.activeEnergy ?? body.active_energy ?? body.calories;
+    if (cal === undefined || cal === null) {
+      return jsonResponse({ error: true, message: "Missing activeEnergy value", received: body }, 400, corsHeaders);
+    }
+    return await logActiveEnergy(cal, body.date, env, corsHeaders);
+  }
+
   if (action === "biomarkers_save") {
     if (!body.date || !body.values) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
@@ -507,6 +516,25 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
     date: normalizedDate,
     steps: daily["Steps"],
     message: `Updated steps to ${daily["Steps"]} for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Log Active Energy (from iOS Shortcut via Apple Health) =====
+async function logActiveEnergy(calories, dateStr, env, corsHeaders) {
+  const normalizedDate = dateStr ? normalizeDate(dateStr) : normalizeDate(formatDateForKV(new Date()));
+
+  let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+
+  daily["Date"] = normalizedDate;
+  daily["Active Energy"] = Math.round(parseFloat(calories) || 0);
+
+  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
+
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    activeEnergy: daily["Active Energy"],
+    message: `Updated active energy to ${daily["Active Energy"]} cal for ${normalizedDate}`
   }, 200, corsHeaders);
 }
 
