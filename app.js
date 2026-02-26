@@ -6040,6 +6040,7 @@ function buildPayloadFromUI() {
 
     // Daily numbers
     sleepHours: document.getElementById("sleepHours")?.value || "",
+    sleepOverride: !!document.getElementById("sleepHours")?.dataset.override,
     sleepAwake: document.getElementById("sleepAwake")?.value || "",
     sleepCore: document.getElementById("sleepCore")?.value || "",
     sleepDeep: document.getElementById("sleepDeep")?.value || "",
@@ -6290,6 +6291,14 @@ function setupInputAutosave() {
         swEl.classList.remove("user-override");
         swEl.value = swEl._computedWeek || "";
       }
+    });
+  }
+
+  // Sleep hours: detect user override so manual entry isn't replaced by stage sum
+  const sleepOverrideEl = document.getElementById("sleepHours");
+  if (sleepOverrideEl) {
+    sleepOverrideEl.addEventListener("input", () => {
+      sleepOverrideEl.dataset.override = "1";
     });
   }
 
@@ -6600,14 +6609,18 @@ async function populateForm(data) {
 
   // Numbers (API column names ?? payload key names)
   const sleepEl = document.getElementById("sleepHours");
+  const sleepWasOverridden = d["Sleep Override"] === true || d["Sleep Override"] === "TRUE" || d["sleepOverride"] === true;
   let sleepTotal = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
-  // Always derive total from stages when available — the stored "Hours of Sleep"
-  // may be stale "time in bed" from the old shortcut code
-  if (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"]) {
+  // Derive total from stages when available, unless user manually overrode
+  if (!sleepWasOverridden && (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"])) {
     const sum = (parseFloat(d["Sleep Core"]) || 0) + (parseFloat(d["Sleep Deep"]) || 0) + (parseFloat(d["Sleep REM"]) || 0);
     if (sum > 0) sleepTotal = Math.round(sum * 10) / 10;
   }
-  if (sleepEl) sleepEl.value = sleepTotal;
+  if (sleepEl) {
+    sleepEl.value = sleepTotal;
+    if (sleepWasOverridden) sleepEl.dataset.override = "1";
+    else delete sleepEl.dataset.override;
+  }
 
   // Apple Health sleep stage metrics
   const sleepAwakeEl = document.getElementById("sleepAwake");
@@ -7377,12 +7390,6 @@ function markSleepSaved() {
 // pending items (sentDate === null) show as checkboxes on the writing page
 // checking one off sets sentDate to today and removes it from the visible list
 
-function escapeHtml(str) {
-  const d = document.createElement("div");
-  d.textContent = str;
-  return d.innerHTML;
-}
-
 function renderThankYouCards() {
   const list = document.getElementById("thankYouList");
   if (!list) return;
@@ -7391,13 +7398,47 @@ function renderThankYouCards() {
     list.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No pending cards — add someone you\'re thinking of!</div>';
     return;
   }
-  list.innerHTML = pending.map(c => `
-    <label class="thank-you-item" data-name="${escapeHtml(c.name)}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:opacity 0.3s">
-      <input type="checkbox" class="thank-you-check" style="width:18px;height:18px;accent-color:var(--accent-teal);cursor:pointer;flex-shrink:0">
-      <span style="font-size:14px;color:var(--text)">${escapeHtml(c.name)}</span>
-      <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">added ${c.addedDate}</span>
-    </label>
-  `).join("");
+  // Clear and rebuild with real DOM nodes to attach handlers directly
+  list.innerHTML = "";
+  pending.forEach((card, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:opacity 0.3s,transform 0.3s";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.style.cssText = "width:18px;height:18px;accent-color:var(--accent-teal);cursor:pointer;flex-shrink:0";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.style.cssText = "font-size:14px;color:var(--text)";
+    nameSpan.textContent = card.name;
+
+    const dateSpan = document.createElement("span");
+    dateSpan.style.cssText = "margin-left:auto;font-size:11px;color:var(--text-muted)";
+    dateSpan.textContent = "added " + card.addedDate;
+
+    row.appendChild(cb);
+    row.appendChild(nameSpan);
+    row.appendChild(dateSpan);
+
+    // Check off = sent the card
+    cb.addEventListener("change", () => {
+      card.sentDate = formatDateForAPI(currentDate);
+      row.style.opacity = "0";
+      row.style.transform = "translateX(20px)";
+      setTimeout(() => renderThankYouCards(), 300);
+      triggerSaveSoon();
+    });
+
+    // Clicking anywhere on the row toggles the checkbox
+    row.addEventListener("click", (e) => {
+      if (e.target !== cb) {
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event("change"));
+      }
+    });
+
+    list.appendChild(row);
+  });
 }
 
 function addThankYouCard() {
@@ -7409,31 +7450,8 @@ function addThankYouCard() {
   thankYouCards.push({ name, addedDate: today, sentDate: null });
   input.value = "";
   renderThankYouCards();
-  saveThankYouCards();
+  triggerSaveSoon();
 }
-
-function saveThankYouCards() {
-  if (typeof triggerSaveSoon === "function") triggerSaveSoon();
-}
-
-document.addEventListener("change", (e) => {
-  if (e.target.classList.contains("thank-you-check")) {
-    const item = e.target.closest(".thank-you-item");
-    if (!item) return;
-    const name = item.dataset.name;
-    const card = thankYouCards.find(c => c.name === name && !c.sentDate);
-    if (card) {
-      const today = formatDateForAPI(currentDate);
-      card.sentDate = today;
-      // Animate out then re-render
-      item.style.opacity = "0";
-      item.style.transform = "translateX(20px)";
-      item.style.transition = "opacity 0.3s, transform 0.3s";
-      setTimeout(() => renderThankYouCards(), 300);
-      saveThankYouCards();
-    }
-  }
-});
 
 document.getElementById("addThankYouBtn")?.addEventListener("click", addThankYouCard);
 document.getElementById("thankYouNameInput")?.addEventListener("keydown", (e) => {

@@ -7376,6 +7376,7 @@
       const dateDisp = document.getElementById('writingDateDisplay');
       if (dateDisp) dateDisp.textContent = document.getElementById('dateDisplay')?.textContent || '';
       setActiveNav('writing');
+      if (typeof renderThankYouCards === 'function') renderThankYouCards();
       window.scrollTo(0, 0);
     }
     document.getElementById('writingCloseBtn')?.addEventListener('click', () => navigateTo('home'));

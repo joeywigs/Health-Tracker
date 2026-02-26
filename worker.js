@@ -378,10 +378,13 @@ async function saveDay(data, env, corsHeaders) {
     "Sleep Deep": data.sleepDeep || "",
     "Sleep REM": data.sleepREM || "",
     "Hours of Sleep": (() => {
+      // If user manually overrode sleep hours, respect their value
+      if (data.sleepOverride && data.sleepHours) return parseFloat(data.sleepHours) || "";
       const c = parseFloat(data.sleepCore) || 0, d2 = parseFloat(data.sleepDeep) || 0, r = parseFloat(data.sleepREM) || 0;
       const sum = c + d2 + r;
       return sum > 0 ? Math.round(sum * 10) / 10 : (data.sleepHours || "");
     })(),
+    "Sleep Override": data.sleepOverride || false,
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
@@ -753,6 +756,9 @@ async function logSleep(body, env, corsHeaders) {
     }, 400, corsHeaders);
   }
 
+  // Clear sleep override since Apple Health data is replacing the manual value
+  updates["Sleep Override"] = false;
+
   const merged = { ...existing, "Date": normalizedDate, ...updates };
   await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(merged));
 
@@ -876,6 +882,8 @@ async function importSleepSamples(body, env, corsHeaders) {
     }
 
     if (Object.keys(updates).length > 0) {
+      // Clear sleep override since Apple Health data is replacing the manual value
+      updates["Sleep Override"] = false;
       const merged = { ...existing, "Date": dateKey, ...updates };
       await env.HABIT_DATA.put(`daily:${dateKey}`, JSON.stringify(merged));
       await env.HABIT_DATA.delete(`cf:${dateKey}`).catch(() => {});
