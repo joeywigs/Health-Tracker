@@ -280,12 +280,13 @@ async function loadDay(dateStr, env, corsHeaders, lite = false) {
   const normalizedDate = normalizeDate(dateStr);
 
   // Fetch all data for this day in parallel
-  const [daily, movements, readings, honeyDos, thankYouCards, customSections, workouts, dumbbellData] = await Promise.all([
+  const [daily, movements, readings, honeyDos, thankYouCards, todoItems, customSections, workouts, dumbbellData] = await Promise.all([
     env.HABIT_DATA.get(`daily:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`movements:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`readings:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`honeyDos:${normalizedDate}`, "json"),
     env.HABIT_DATA.get("thankYouCards", "json"),
+    env.HABIT_DATA.get("todoItems", "json"),
     env.HABIT_DATA.get(`custom:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`workouts:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`dumbbell:${normalizedDate}`, "json"),
@@ -300,6 +301,7 @@ async function loadDay(dateStr, env, corsHeaders, lite = false) {
       readings: readings || [],
       honeyDos: honeyDos || [],
       thankYouCards: thankYouCards || [],
+      todoItems: todoItems || [],
       customSections: customSections || {},
       workouts: workouts || [],
       dumbbell: dumbbellData || [],
@@ -340,6 +342,7 @@ async function loadDay(dateStr, env, corsHeaders, lite = false) {
     readings: readings || [],
     honeyDos: honeyDos || [],
     thankYouCards: thankYouCards || [],
+    todoItems: todoItems || [],
     customSections: customSections || {},
     workouts: workouts || [],
     dumbbell: dumbbellData || [],
@@ -489,6 +492,11 @@ async function saveDay(data, env, corsHeaders) {
   // Save thankYouCards (global list, not per-date)
   if (data.thankYouCards && Array.isArray(data.thankYouCards)) {
     saves.push(env.HABIT_DATA.put("thankYouCards", JSON.stringify(data.thankYouCards)));
+  }
+
+  // Save todoItems (global list, not per-date)
+  if (data.todoItems && Array.isArray(data.todoItems)) {
+    saves.push(env.HABIT_DATA.put("todoItems", JSON.stringify(data.todoItems)));
   }
 
   // Save custom sections if provided

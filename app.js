@@ -198,6 +198,7 @@ let readings = [];
 let readingWeekBase = 0; // weekly reading mins excluding today (set on load)
 let honeyDos = [];
 let thankYouCards = [];
+let todoItems = [];
 let currentMovements = [];
 let currentDumbbell = [];
 window._dumbbellCarriedForward = false;
@@ -5928,6 +5929,7 @@ async function saveData(payload) {
     stories: payload.stories || "",
     carly: payload.carly || "",
     thankYouCards: payload.thankYouCards || [],
+    todoItems: payload.todoItems || [],
     customSections: payload.customSections || {}
   };
   // Preserve bodyCarryForward so cache-loaded data matches API-loaded data.
@@ -6124,7 +6126,8 @@ function buildPayloadFromUI() {
     stories: document.getElementById("stories")?.value || "",
     carly: document.getElementById("carly")?.value || "",
     thankYouCards,
-    
+    todoItems,
+
     // Custom sections data - collect from UI first
     customSections: typeof window.collectCustomSectionsData === 'function'
       ? window.collectCustomSectionsData()
@@ -6470,6 +6473,7 @@ async function populateForm(data) {
   readingWeekBase = 0;
   honeyDos = [];
   thankYouCards = [];
+  todoItems = [];
   currentMovements = [];
   currentDumbbell = [];
   window._dumbbellCarriedForward = false;
@@ -6558,6 +6562,7 @@ async function populateForm(data) {
 
     honeyDos = data?.honeyDos || [];
     thankYouCards = data?.thankYouCards || [];
+    todoItems = data?.todoItems || [];
 
     const reflectionsEl = document.getElementById("reflections");
     if (reflectionsEl) reflectionsEl.value = data?.reflections || "";
@@ -6567,6 +6572,7 @@ async function populateForm(data) {
     if (carlyEl) carlyEl.value = data?.carly || "";
 
     renderThankYouCards();
+    renderTodoList();
 
     // Apply carried-forward body values (even if no row exists)
     applyBodyFieldsFromDaily(bodySource);
@@ -6775,6 +6781,7 @@ async function populateForm(data) {
 
   honeyDos = data?.honeyDos || [];
   thankYouCards = data?.thankYouCards || [];
+  todoItems = data?.todoItems || [];
 
   if (readings.length > 0) {
     lastBookTitle = String(readings[readings.length - 1].book || "");
@@ -6792,6 +6799,7 @@ async function populateForm(data) {
   if (carlyEl) carlyEl.value = data?.carly || "";
 
   renderThankYouCards();
+  renderTodoList();
 
   // Load custom sections data
   if (typeof window.loadCustomSectionsData === 'function') {
@@ -7456,4 +7464,74 @@ function addThankYouCard() {
 document.getElementById("addThankYouBtn")?.addEventListener("click", addThankYouCard);
 document.getElementById("thankYouNameInput")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); addThankYouCard(); }
+});
+
+// ===== To-Do List =====
+// todoItems is a global array of { text, addedDate, doneDate }
+// pending items (doneDate === null) show as checkboxes on the home page
+// checking one off sets doneDate to today and removes it from the visible list
+
+function renderTodoList() {
+  const list = document.getElementById("todoList");
+  if (!list) return;
+  const pending = todoItems.filter(t => !t.doneDate);
+  if (pending.length === 0) {
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Nothing to do — nice!</div>';
+    return;
+  }
+  list.innerHTML = "";
+  pending.forEach(item => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:opacity 0.3s,transform 0.3s";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.style.cssText = "width:18px;height:18px;accent-color:var(--accent-teal);cursor:pointer;flex-shrink:0";
+
+    const textSpan = document.createElement("span");
+    textSpan.style.cssText = "font-size:14px;color:var(--text)";
+    textSpan.textContent = item.text;
+
+    const dateSpan = document.createElement("span");
+    dateSpan.style.cssText = "margin-left:auto;font-size:11px;color:var(--text-muted)";
+    dateSpan.textContent = "added " + item.addedDate;
+
+    row.appendChild(cb);
+    row.appendChild(textSpan);
+    row.appendChild(dateSpan);
+
+    cb.addEventListener("change", () => {
+      item.doneDate = formatDateForAPI(currentDate);
+      row.style.opacity = "0";
+      row.style.transform = "translateX(20px)";
+      setTimeout(() => renderTodoList(), 300);
+      triggerSaveSoon();
+    });
+
+    row.addEventListener("click", (e) => {
+      if (e.target !== cb) {
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event("change"));
+      }
+    });
+
+    list.appendChild(row);
+  });
+}
+
+function addTodoItem() {
+  const input = document.getElementById("todoInput");
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const today = formatDateForAPI(currentDate);
+  todoItems.push({ text, addedDate: today, doneDate: null });
+  input.value = "";
+  renderTodoList();
+  triggerSaveSoon();
+}
+
+document.getElementById("addTodoBtn")?.addEventListener("click", addTodoItem);
+document.getElementById("todoInput")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); addTodoItem(); }
 });
