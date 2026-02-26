@@ -280,11 +280,12 @@ async function loadDay(dateStr, env, corsHeaders, lite = false) {
   const normalizedDate = normalizeDate(dateStr);
 
   // Fetch all data for this day in parallel
-  const [daily, movements, readings, honeyDos, customSections, workouts, dumbbellData] = await Promise.all([
+  const [daily, movements, readings, honeyDos, thankYouCards, customSections, workouts, dumbbellData] = await Promise.all([
     env.HABIT_DATA.get(`daily:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`movements:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`readings:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`honeyDos:${normalizedDate}`, "json"),
+    env.HABIT_DATA.get(`thankYouCards:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`custom:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`workouts:${normalizedDate}`, "json"),
     env.HABIT_DATA.get(`dumbbell:${normalizedDate}`, "json"),
@@ -298,6 +299,7 @@ async function loadDay(dateStr, env, corsHeaders, lite = false) {
       movements: movements || [],
       readings: readings || [],
       honeyDos: honeyDos || [],
+      thankYouCards: thankYouCards || [],
       customSections: customSections || {},
       workouts: workouts || [],
       dumbbell: dumbbellData || [],
@@ -337,6 +339,7 @@ async function loadDay(dateStr, env, corsHeaders, lite = false) {
     movements: movements || [],
     readings: readings || [],
     honeyDos: honeyDos || [],
+    thankYouCards: thankYouCards || [],
     customSections: customSections || {},
     workouts: workouts || [],
     dumbbell: dumbbellData || [],
@@ -419,6 +422,7 @@ async function saveDay(data, env, corsHeaders) {
     "Reflections": data.reflections || "",
     "Stories": data.stories || "",
     "Carly": data.carly || "",
+    "Thank You Cards": (data.thankYouCards && data.thankYouCards.length) || 0,
     // Grooming (Friday)
     "Grooming Haircut": data.groomingHaircut || false,
     "Grooming Beard Trim": data.groomingBeardTrim || false,
@@ -477,6 +481,11 @@ async function saveDay(data, env, corsHeaders) {
   // Save honeyDos if provided
   if (data.honeyDos && Array.isArray(data.honeyDos)) {
     saves.push(env.HABIT_DATA.put(`honeyDos:${normalizedDate}`, JSON.stringify(data.honeyDos)));
+  }
+
+  // Save thankYouCards if provided
+  if (data.thankYouCards && Array.isArray(data.thankYouCards)) {
+    saves.push(env.HABIT_DATA.put(`thankYouCards:${normalizedDate}`, JSON.stringify(data.thankYouCards)));
   }
 
   // Save custom sections if provided
