@@ -6040,6 +6040,7 @@ function buildPayloadFromUI() {
 
     // Daily numbers
     sleepHours: document.getElementById("sleepHours")?.value || "",
+    sleepOverride: !!document.getElementById("sleepHours")?.dataset.override,
     sleepAwake: document.getElementById("sleepAwake")?.value || "",
     sleepCore: document.getElementById("sleepCore")?.value || "",
     sleepDeep: document.getElementById("sleepDeep")?.value || "",
@@ -6290,6 +6291,14 @@ function setupInputAutosave() {
         swEl.classList.remove("user-override");
         swEl.value = swEl._computedWeek || "";
       }
+    });
+  }
+
+  // Sleep hours: detect user override so manual entry isn't replaced by stage sum
+  const sleepOverrideEl = document.getElementById("sleepHours");
+  if (sleepOverrideEl) {
+    sleepOverrideEl.addEventListener("input", () => {
+      sleepOverrideEl.dataset.override = "1";
     });
   }
 
@@ -6600,14 +6609,18 @@ async function populateForm(data) {
 
   // Numbers (API column names ?? payload key names)
   const sleepEl = document.getElementById("sleepHours");
+  const sleepWasOverridden = d["Sleep Override"] === true || d["Sleep Override"] === "TRUE" || d["sleepOverride"] === true;
   let sleepTotal = d["Hours of Sleep"] ?? d["sleepHours"] ?? "";
-  // Always derive total from stages when available — the stored "Hours of Sleep"
-  // may be stale "time in bed" from the old shortcut code
-  if (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"]) {
+  // Derive total from stages when available, unless user manually overrode
+  if (!sleepWasOverridden && (d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"])) {
     const sum = (parseFloat(d["Sleep Core"]) || 0) + (parseFloat(d["Sleep Deep"]) || 0) + (parseFloat(d["Sleep REM"]) || 0);
     if (sum > 0) sleepTotal = Math.round(sum * 10) / 10;
   }
-  if (sleepEl) sleepEl.value = sleepTotal;
+  if (sleepEl) {
+    sleepEl.value = sleepTotal;
+    if (sleepWasOverridden) sleepEl.dataset.override = "1";
+    else delete sleepEl.dataset.override;
+  }
 
   // Apple Health sleep stage metrics
   const sleepAwakeEl = document.getElementById("sleepAwake");
