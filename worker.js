@@ -187,6 +187,11 @@ async function handlePost(request, env, corsHeaders) {
     return await logSleep(body, env, corsHeaders);
   }
 
+  // iOS Shortcut endpoint - bulk import raw Sleep Analysis samples from Apple Health
+  if (action === "sleep_import") {
+    return await importSleepSamples(body, env, corsHeaders);
+  }
+
   // iOS Shortcut endpoint - sync active energy (Apple Health)
   if (action === "active_energy") {
     const cal = body.activeEnergy ?? body.active_energy ?? body.calories;
@@ -752,6 +757,129 @@ async function logSleep(body, env, corsHeaders) {
     values: updates,
     received: body,
     message: `Sleep data saved for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Bulk Import Sleep Analysis Samples (from iOS Shortcut) =====
+// Accepts raw Apple Health Sleep Analysis samples and groups them by date.
+// Each sample has a start time, end time, and category (Core, Deep, REM, Awake, In Bed).
+// The wake-up date (end time in Central Time) determines which day the sleep belongs to.
+//
+// Body format: { "samples": "start|end|category\nstart|end|category\n..." }
+// Where start/end are ISO 8601 timestamps and category is the sleep stage.
+async function importSleepSamples(body, env, corsHeaders) {
+  const raw = body.samples;
+  if (!raw || (typeof raw !== 'string' && !Array.isArray(raw))) {
+    return jsonResponse({
+      error: true,
+      message: 'Missing samples. Send as pipe-delimited lines: "start|end|category\\n..." or an array of {start,end,category} objects',
+      received: body
+    }, 400, corsHeaders);
+  }
+
+  // Parse samples from either text lines or array format
+  let samples = [];
+  if (typeof raw === 'string') {
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    for (const line of lines) {
+      const parts = line.split('|');
+      if (parts.length >= 3) {
+        samples.push({ start: parts[0].trim(), end: parts[1].trim(), category: parts[2].trim() });
+      }
+    }
+  } else {
+    samples = raw.map(s => ({
+      start: s.start || s.startDate,
+      end: s.end || s.endDate,
+      category: s.category || s.value || s.type
+    }));
+  }
+
+  if (samples.length === 0) {
+    return jsonResponse({
+      error: true,
+      message: 'No valid samples found after parsing',
+      received: body
+    }, 400, corsHeaders);
+  }
+
+  // Normalize category names from Apple Health to our field names
+  function classifyStage(cat) {
+    if (!cat) return null;
+    const c = cat.toLowerCase().replace(/^asleep\s*[-–—]?\s*/, '');
+    if (c.includes('core')) return 'core';
+    if (c.includes('deep')) return 'deep';
+    if (c.includes('rem')) return 'rem';
+    if (c.includes('awake')) return 'awake';
+    if (c.includes('in bed') || c.includes('inbed')) return 'inbed';
+    // "Asleep" without a stage qualifier counts as core (unspecified sleep)
+    if (c === 'asleep' || c === 'asleep (unspecified)' || c === '') return 'core';
+    return null;
+  }
+
+  // Group durations by date (using wake-up time in Central Time)
+  const dayBuckets = {}; // { "M/D/YY": { core: hours, deep: hours, rem: hours, awake: hours } }
+
+  for (const s of samples) {
+    const startDate = new Date(s.start);
+    const endDate = new Date(s.end);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) continue;
+
+    const stage = classifyStage(s.category);
+    if (!stage || stage === 'inbed') continue; // Skip "In Bed" — we only want actual sleep stages + awake
+
+    const durationHours = (endDate - startDate) / 3600000;
+    if (durationHours <= 0 || durationHours > 24) continue; // Skip invalid durations
+
+    // Attribute to the wake-up date (end time) in Central Time
+    const dateKey = formatDateForKV(endDate);
+
+    if (!dayBuckets[dateKey]) {
+      dayBuckets[dateKey] = { core: 0, deep: 0, rem: 0, awake: 0 };
+    }
+    dayBuckets[dateKey][stage] += durationHours;
+  }
+
+  const dates = Object.keys(dayBuckets);
+  if (dates.length === 0) {
+    return jsonResponse({
+      error: true,
+      message: 'No valid sleep stage samples found. Make sure samples have start/end times and a stage category (Core, Deep, REM, Awake).',
+      sampleCount: samples.length
+    }, 400, corsHeaders);
+  }
+
+  // Save each day's sleep data
+  const results = [];
+  for (const dateKey of dates) {
+    const bucket = dayBuckets[dateKey];
+    const existing = await env.HABIT_DATA.get(`daily:${dateKey}`, "json") || {};
+
+    const updates = {};
+    if (bucket.awake > 0) updates["Sleep Awake"] = Math.round(bucket.awake * 10) / 10;
+    if (bucket.core > 0) updates["Sleep Core"] = Math.round(bucket.core * 10) / 10;
+    if (bucket.deep > 0) updates["Sleep Deep"] = Math.round(bucket.deep * 10) / 10;
+    if (bucket.rem > 0) updates["Sleep REM"] = Math.round(bucket.rem * 10) / 10;
+
+    const totalSleep = (bucket.core + bucket.deep + bucket.rem);
+    if (totalSleep > 0) {
+      updates["Hours of Sleep"] = Math.round(totalSleep * 10) / 10;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      const merged = { ...existing, "Date": dateKey, ...updates };
+      await env.HABIT_DATA.put(`daily:${dateKey}`, JSON.stringify(merged));
+      await env.HABIT_DATA.delete(`cf:${dateKey}`).catch(() => {});
+      results.push({ date: dateKey, ...updates });
+    }
+  }
+
+  return jsonResponse({
+    success: true,
+    message: `Imported sleep data for ${results.length} days from ${samples.length} samples`,
+    daysUpdated: results.length,
+    totalSamples: samples.length,
+    days: results
   }, 200, corsHeaders);
 }
 
