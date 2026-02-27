@@ -5017,7 +5017,7 @@
       <div class="section">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-purple);--icon-end:var(--accent-pink);--icon-glow:var(--glow-purple)">📑</div><span class="sec-name">Manage Sections</span></div></div>
         <div class="sec-content">
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Toggle to show/hide • Reorder sections on the home page</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Toggle to show/hide • Drag to reorder</p>
           <div id="sectionList" class="section-list"></div>
         </div>
       </div>
@@ -6691,7 +6691,8 @@
           ? `<span style="font-size:9px;color:var(--accent-teal);margin-left:4px">paired${sec.size === 2 ? ' · tall' : ''}</span>`
           : '';
         return `
-        <div class="section-item" data-idx="${idx}" data-id="${sec.id}">
+        <div class="section-item" draggable="true" data-idx="${idx}" data-id="${sec.id}">
+          <span class="section-item-drag">⋮⋮</span>
           <span class="section-item-icon">${sec.icon}</span>
           <span class="section-item-name">${sec.name}${daysLabel}${groupLabel}</span>
           <button class="section-item-edit" data-idx="${idx}" title="Edit fields">✏️</button>
@@ -6741,6 +6742,115 @@
             editor.style.display = 'block';
           }
         });
+      });
+
+      // Setup drag and drop for reordering
+      setupSectionDragDrop();
+    }
+
+    function setupSectionDragDrop() {
+      const list = document.getElementById('sectionList');
+      if (!list) return;
+
+      let draggedItem = null;
+      let touchCurrentItem = null;
+
+      list.querySelectorAll('.section-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          draggedItem = item;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          list.querySelectorAll('.section-item').forEach(i => i.classList.remove('drag-over'));
+          draggedItem = null;
+        });
+
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (draggedItem && draggedItem !== item) {
+            item.classList.add('drag-over');
+          }
+        });
+
+        item.addEventListener('dragleave', () => {
+          item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          if (!draggedItem || draggedItem === item) return;
+
+          const fromIdx = parseInt(draggedItem.dataset.idx);
+          const toIdx = parseInt(item.dataset.idx);
+
+          const [moved] = appSettings.sections.splice(fromIdx, 1);
+          appSettings.sections.splice(toIdx, 0, moved);
+          saveSettings(appSettings);
+          applySectionSettings();
+          renderSectionList();
+        });
+
+        // Mobile touch drag on the handle
+        const dragHandle = item.querySelector('.section-item-drag');
+        if (dragHandle) {
+          dragHandle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchCurrentItem = item;
+            item.classList.add('dragging');
+            if (navigator.vibrate) navigator.vibrate(30);
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchmove', (e) => {
+            if (!touchCurrentItem) return;
+            e.preventDefault();
+            const touchY = e.touches[0].clientY;
+            list.querySelectorAll('.section-item').forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              if (touchY > rect.top && touchY < rect.bottom) {
+                otherItem.classList.add('drag-over');
+              } else {
+                otherItem.classList.remove('drag-over');
+              }
+            });
+          }, { passive: false });
+
+          dragHandle.addEventListener('touchend', (e) => {
+            if (!touchCurrentItem) return;
+            const touchY = e.changedTouches[0].clientY;
+            const items = Array.from(list.querySelectorAll('.section-item'));
+
+            let targetItem = null;
+            items.forEach(otherItem => {
+              if (otherItem === touchCurrentItem) return;
+              const rect = otherItem.getBoundingClientRect();
+              if (touchY > rect.top && touchY < rect.bottom) {
+                targetItem = otherItem;
+              }
+            });
+
+            if (targetItem) {
+              const fromIdx = parseInt(touchCurrentItem.dataset.idx);
+              const toIdx = parseInt(targetItem.dataset.idx);
+
+              const [moved] = appSettings.sections.splice(fromIdx, 1);
+              appSettings.sections.splice(toIdx, 0, moved);
+              saveSettings(appSettings);
+              applySectionSettings();
+              renderSectionList();
+
+              if (navigator.vibrate) navigator.vibrate(50);
+            }
+
+            touchCurrentItem.classList.remove('dragging');
+            items.forEach(i => i.classList.remove('drag-over'));
+            touchCurrentItem = null;
+          });
+        }
       });
     }
 
