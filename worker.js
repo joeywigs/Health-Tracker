@@ -127,6 +127,18 @@ async function handleGet(request, env, corsHeaders) {
     return await updateSteps(steps, url.searchParams.get("date"), env, corsHeaders);
   }
 
+  // iOS Shortcut: send active energy via GET query params
+  // e.g. ?action=active_energy&calories=450&date=2/26/26
+  if (action === "active_energy") {
+    const cal = url.searchParams.get("calories") ?? url.searchParams.get("activeEnergy") ?? url.searchParams.get("value");
+    if (cal === null || cal === undefined) {
+      const params = {};
+      for (const [k, v] of url.searchParams.entries()) params[k] = v;
+      return jsonResponse({ error: true, message: "Missing calories value. Send as ?action=active_energy&calories=450", received: params }, 400, corsHeaders);
+    }
+    return await logActiveEnergy(cal, url.searchParams.get("date"), env, corsHeaders);
+  }
+
   // iOS Shortcut: send sleep data via GET query params
   // e.g. ?action=sleep&hours=7.2&awake=0.5&core=3.5&deep=1.2&rem=2.0
   if (action === "sleep") {
