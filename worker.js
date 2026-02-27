@@ -201,6 +201,14 @@ async function handlePost(request, env, corsHeaders) {
     return await logActiveEnergy(cal, body.date, env, corsHeaders);
   }
 
+  // Bulk import active energy data (array of {date, calories} entries)
+  if (action === "bulk_active_energy") {
+    if (!body.entries || !Array.isArray(body.entries)) {
+      return jsonResponse({ error: true, message: "Missing entries array", received: body }, 400, corsHeaders);
+    }
+    return await bulkImportActiveEnergy(body.entries, env, corsHeaders);
+  }
+
   if (action === "biomarkers_save") {
     if (!body.date || !body.values) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
@@ -560,6 +568,35 @@ async function logActiveEnergy(calories, dateStr, env, corsHeaders) {
     date: normalizedDate,
     activeEnergy: daily["Active Energy"],
     message: `Updated active energy to ${daily["Active Energy"]} cal for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Bulk Import Active Energy (from iOS Health export) =====
+async function bulkImportActiveEnergy(entries, env, corsHeaders) {
+  let updated = 0;
+  const errors = [];
+
+  for (const entry of entries) {
+    try {
+      const dateStr = normalizeDate(entry.date);
+      const cal = Math.round(parseFloat(entry.calories) || 0);
+
+      let daily = await env.HABIT_DATA.get(`daily:${dateStr}`, "json") || {};
+      daily["Date"] = dateStr;
+      daily["Active Energy"] = cal;
+      await env.HABIT_DATA.put(`daily:${dateStr}`, JSON.stringify(daily));
+      updated++;
+    } catch (e) {
+      errors.push({ date: entry.date, error: e.message });
+    }
+  }
+
+  return jsonResponse({
+    success: true,
+    updated,
+    total: entries.length,
+    errors: errors.length > 0 ? errors : undefined,
+    message: `Imported active energy for ${updated}/${entries.length} days`
   }, 200, corsHeaders);
 }
 
