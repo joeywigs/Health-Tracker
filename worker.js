@@ -835,8 +835,8 @@ async function importSleepSamples(body, env, corsHeaders) {
     if (c.includes('rem')) return 'rem';
     if (c.includes('awake')) return 'awake';
     if (c.includes('in bed') || c.includes('inbed')) return 'inbed';
-    // "Asleep" without a stage qualifier counts as core (unspecified sleep)
-    if (c === 'asleep' || c === 'asleep (unspecified)' || c === '') return 'core';
+    // Plain "Asleep" (unspecified) overlaps stage-specific samples — skip it
+    // to avoid double-counting when Apple Health provides both
     return null;
   }
 
