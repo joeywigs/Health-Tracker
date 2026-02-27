@@ -2477,6 +2477,11 @@ function renderSummaryPage(data, range) {
     document.getElementById('phaseGoalsSection')?.style.setProperty('display', 'none');
   }
 
+  // Active Energy Chart
+  if (typeof Chart !== 'undefined') {
+    renderActiveEnergyChart(filteredData, "summaryActiveEnergyChart");
+  }
+
   // REHIT Calendar
   renderSummaryRehitCalendar(data, range, phaseId);
 
@@ -3666,7 +3671,7 @@ function updateRangeButtonsAvailability() {
   }
 }
 
-let activeEnergyChart, weightChart, waistChart, sleepChart, stepsChart, movementChart, rehitChart, bodyCompChart, peakWattsChart;
+let activeEnergyChart, summaryActiveEnergyChart, weightChart, waistChart, sleepChart, stepsChart, movementChart, rehitChart, bodyCompChart, peakWattsChart;
 let rehitCalendarMonth = new Date(); // Track current month for calendar
 
 // Helper to get chart colors based on theme
@@ -3679,14 +3684,20 @@ function getChartColors() {
   };
 }
 
-function renderActiveEnergyChart(dataPoints) {
-  const canvas = document.getElementById("activeEnergyChart");
+function renderActiveEnergyChart(dataPoints, canvasId) {
+  const targetId = canvasId || "activeEnergyChart";
+  const canvas = document.getElementById(targetId);
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
   const colors = getChartColors();
 
-  if (activeEnergyChart) activeEnergyChart.destroy();
+  // Destroy the correct chart instance
+  if (targetId === "summaryActiveEnergyChart") {
+    if (summaryActiveEnergyChart) summaryActiveEnergyChart.destroy();
+  } else {
+    if (activeEnergyChart) activeEnergyChart.destroy();
+  }
 
   const labels = dataPoints.map(d => d.date);
   const energy = dataPoints.map(d => parseInt(d.daily["Active Energy"]) || null);
@@ -3696,7 +3707,7 @@ function renderActiveEnergyChart(dataPoints) {
   const avg = valid.length > 0 ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
   const avgLine = avg ? labels.map(() => avg) : [];
 
-  activeEnergyChart = new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: labels,
@@ -3742,6 +3753,13 @@ function renderActiveEnergyChart(dataPoints) {
       }
     }
   });
+
+  // Store reference to the correct variable
+  if (targetId === "summaryActiveEnergyChart") {
+    summaryActiveEnergyChart = chart;
+  } else {
+    activeEnergyChart = chart;
+  }
 }
 
 function renderWeightChart(dataPoints) {
