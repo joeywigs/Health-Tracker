@@ -7535,3 +7535,63 @@ document.getElementById("addTodoBtn")?.addEventListener("click", addTodoItem);
 document.getElementById("todoInput")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); addTodoItem(); }
 });
+
+// ===== Bulk Import Active Energy from iOS Health =====
+async function loadActiveEnergyData() {
+  const entries = [
+    { date: "1/18/26", calories: 24.477 },
+    { date: "1/19/26", calories: 136.516 },
+    { date: "1/20/26", calories: 51.747 },
+    { date: "1/21/26", calories: 171.309 },
+    { date: "1/22/26", calories: 182.144 },
+    { date: "1/23/26", calories: 82.748 },
+    { date: "1/24/26", calories: 17.848 },
+    { date: "1/25/26", calories: 87.642 },
+    { date: "1/26/26", calories: 45.681 },
+    { date: "1/27/26", calories: 64.531 },
+    { date: "1/28/26", calories: 182.677 },
+    { date: "1/29/26", calories: 62.78 },
+    { date: "1/30/26", calories: 84.377 },
+    { date: "1/31/26", calories: 284.304 },
+    { date: "2/1/26", calories: 166.839 },
+    { date: "2/2/26", calories: 181.94 },
+    { date: "2/3/26", calories: 144.704 },
+    { date: "2/4/26", calories: 465.901 },
+    { date: "2/5/26", calories: 148.337 },
+    { date: "2/6/26", calories: 214.128 },
+    { date: "2/7/26", calories: 200.185 },
+    { date: "2/8/26", calories: 49.06 },
+    { date: "2/9/26", calories: 260.611 },
+    { date: "2/10/26", calories: 240.249 },
+    { date: "2/11/26", calories: 218.25 },
+    { date: "2/12/26", calories: 262.913 },
+    { date: "2/13/26", calories: 205.274 },
+    { date: "2/14/26", calories: 113.664 },
+    { date: "2/15/26", calories: 158.888 },
+    { date: "2/16/26", calories: 146.76 },
+    { date: "2/17/26", calories: 132.344 },
+    { date: "2/18/26", calories: 57.456 },
+    { date: "2/19/26", calories: 266.05 },
+    { date: "2/20/26", calories: 129.645 },
+    { date: "2/21/26", calories: 201.048 },
+    { date: "2/22/26", calories: 303.818 },
+    { date: "2/23/26", calories: 384.072 },
+    { date: "2/24/26", calories: 321.281 },
+    { date: "2/25/26", calories: 439.171 },
+    { date: "2/26/26", calories: 200.425 },
+  ];
+
+  try {
+    const resp = await fetch(`${API_URL}?action=bulk_active_energy`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entries }),
+    });
+    const result = await resp.json();
+    console.log("Bulk active energy import:", result);
+    return result;
+  } catch (e) {
+    console.error("Failed to import active energy data:", e);
+    throw e;
+  }
+}
