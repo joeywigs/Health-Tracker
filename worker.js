@@ -149,7 +149,13 @@ async function handleGet(request, env, corsHeaders) {
       date = raw.substring(0, commaIdx).trim();
       cal = raw.substring(commaIdx + 1).trim();
     }
-    return await logActiveEnergy(cal, date, env, corsHeaders, raw);
+    // Also check for date as a separate query parameter
+    if (!date) {
+      date = url.searchParams.get("date") ?? null;
+    }
+    const allParams = {};
+    for (const [k, v] of url.searchParams.entries()) allParams[k] = v;
+    return await logActiveEnergy(cal, date, env, corsHeaders, { raw, allParams, fullUrl: url.toString() });
   }
 
   // iOS Shortcut: send sleep data via GET query params
