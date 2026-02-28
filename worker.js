@@ -115,16 +115,41 @@ async function handleGet(request, env, corsHeaders) {
   }
 
   // iOS Shortcut may send steps as GET
+  // Shortcut sends ?action=steps&value=mm/d/yyyy, 12345
   if (action === "steps") {
-    // Accept steps from ?steps=, ?value=, or ?count= query params
-    const steps = url.searchParams.get("steps") ?? url.searchParams.get("value") ?? url.searchParams.get("count");
-    if (steps === null || steps === undefined) {
-      // Show all params received so user can debug their Shortcut
+    const raw = url.searchParams.get("value") ?? url.searchParams.get("steps") ?? url.searchParams.get("count");
+    if (raw === null || raw === undefined) {
       const params = {};
       for (const [k, v] of url.searchParams.entries()) params[k] = v;
-      return jsonResponse({ error: true, message: "Missing steps value. Send as ?action=steps&steps=12345", received: params }, 400, corsHeaders);
+      return jsonResponse({ error: true, message: "Missing value. Send as ?action=steps&value=mm/d/yyyy, 12345", received: params }, 400, corsHeaders);
     }
-    return await updateSteps(steps, url.searchParams.get("date"), env, corsHeaders);
+    // Parse "mm/d/yyyy, value" format
+    const commaIdx = raw.lastIndexOf(",");
+    let date = null, steps = raw;
+    if (commaIdx !== -1) {
+      date = raw.substring(0, commaIdx).trim();
+      steps = raw.substring(commaIdx + 1).trim();
+    }
+    return await updateSteps(steps, date, env, corsHeaders);
+  }
+
+  // iOS Shortcut: send active energy via GET
+  // Shortcut sends ?action=active_energy&value=mm/d/yyyy, 450
+  if (action === "active_energy") {
+    const raw = url.searchParams.get("value") ?? url.searchParams.get("calories") ?? url.searchParams.get("activeEnergy");
+    if (raw === null || raw === undefined) {
+      const params = {};
+      for (const [k, v] of url.searchParams.entries()) params[k] = v;
+      return jsonResponse({ error: true, message: "Missing value. Send as ?action=active_energy&value=mm/d/yyyy, 450", received: params }, 400, corsHeaders);
+    }
+    // Parse "mm/d/yyyy, value" format
+    const commaIdx = raw.lastIndexOf(",");
+    let date = null, cal = raw;
+    if (commaIdx !== -1) {
+      date = raw.substring(0, commaIdx).trim();
+      cal = raw.substring(commaIdx + 1).trim();
+    }
+    return await logActiveEnergy(cal, date, env, corsHeaders);
   }
 
   // iOS Shortcut: send sleep data via GET query params
