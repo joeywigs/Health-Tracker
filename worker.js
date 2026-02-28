@@ -149,7 +149,7 @@ async function handleGet(request, env, corsHeaders) {
       date = raw.substring(0, commaIdx).trim();
       cal = raw.substring(commaIdx + 1).trim();
     }
-    return await logActiveEnergy(cal, date, env, corsHeaders);
+    return await logActiveEnergy(cal, date, env, corsHeaders, raw);
   }
 
   // iOS Shortcut: send sleep data via GET query params
@@ -578,7 +578,7 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
 }
 
 // ===== Log Active Energy (from iOS Shortcut via Apple Health) =====
-async function logActiveEnergy(calories, dateStr, env, corsHeaders) {
+async function logActiveEnergy(calories, dateStr, env, corsHeaders, rawDebug) {
   const normalizedDate = dateStr ? normalizeDate(dateStr) : normalizeDate(formatDateForKV(new Date()));
 
   let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
@@ -592,7 +592,8 @@ async function logActiveEnergy(calories, dateStr, env, corsHeaders) {
     success: true,
     date: normalizedDate,
     activeEnergy: daily["Active Energy"],
-    message: `Updated active energy to ${daily["Active Energy"]} cal for ${normalizedDate}`
+    message: `Updated active energy to ${daily["Active Energy"]} cal for ${normalizedDate}`,
+    debug: { raw: rawDebug, parsedDate: dateStr, parsedCal: calories }
   }, 200, corsHeaders);
 }
 
