@@ -404,6 +404,30 @@ function formatDateForAPI(date = currentDate) {
   return `${m}/${d}/${y}`;
 }
 
+// Format decimal hours as "Xh Ym" (e.g., 7.5 → "7h 30m")
+function formatHoursMinutes(decimalHours) {
+  const val = parseFloat(decimalHours);
+  if (!val || isNaN(val) || val <= 0) return '';
+  const h = Math.floor(val);
+  const m = Math.round((val - h) * 60);
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+// Update the sleep total card-unit to show formatted "Xh Ym"
+function updateSleepDisplay() {
+  const sleepEl = document.getElementById("sleepHours");
+  const unitEl = document.getElementById("sleepUnit");
+  if (!sleepEl || !unitEl) return;
+  const val = parseFloat(sleepEl.value);
+  if (!isNaN(val) && val > 0) {
+    unitEl.textContent = formatHoursMinutes(val);
+  } else {
+    unitEl.textContent = "hrs";
+  }
+}
+
 function updateDateDisplay() {
   const el = document.getElementById("dateDisplay");
   if (!el) return;
@@ -1055,7 +1079,7 @@ function renderPhaseGoals(phaseId = null) {
   if (section) section.style.display = 'block';
 
   const goalConfig = [
-    { key: 'sleep', name: 'Sleep', icon: '🌙', format: (t) => `${t}+ hrs/night` },
+    { key: 'sleep', name: 'Sleep', icon: '🌙', format: (t) => `${formatHoursMinutes(t) || t + 'h'}+/night` },
     { key: 'agua', name: 'Water', icon: '💧', format: (t) => `${t}+ glasses/day` },
     { key: 'steps', name: 'Steps', icon: '👟', format: (t) => `${t.toLocaleString()}+/day` },
     { key: 'rehit', name: 'REHIT', icon: '🚴', format: (t) => `${t}x/week` },
@@ -1496,7 +1520,7 @@ async function openNewPhaseModal(fromPhaseId = null) {
         <div class="phase-stat-details">
           <span class="stat-highlight">${stats.sleep.daysMet}/${stats.sleep.totalDays}</span> days achieved goal
           <span class="stat-pct">(${stats.sleep.pct}%)</span>
-          <br><span class="stat-avg">Avg: ${stats.sleep.avg} hrs/night</span>
+          <br><span class="stat-avg">Avg: ${formatHoursMinutes(stats.sleep.avg) || stats.sleep.avg + ' hrs'}/night</span>
         </div>
       </div>`;
   }
@@ -1923,7 +1947,7 @@ function countMovementBreaks(d) {
 }
 
 const GOALS = {
-  sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "hrs", type: "daily-avg" },
+  sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "h", type: "daily-avg" },
   agua: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
   supps: { name: "Supplements", icon: "💊", target: 6, unit: "of 6", type: "daily-all" },
   rehit: { name: "REHIT", icon: "🚴", target: 3, unit: "sessions", type: "weekly" },
@@ -2037,7 +2061,7 @@ function calculateGoalStats(data, range, phaseId = null) {
     daysMet: sleepDaysMet,
     totalDays: elapsedDays,
     avg: sleepValues.length > 0 ? (sleepValues.reduce((a,b) => a+b, 0) / sleepValues.length).toFixed(1) : 0,
-    detail: `${sleepDaysMet}/${elapsedDays} days ${sleepTarget}+ hrs`,
+    detail: `${sleepDaysMet}/${elapsedDays} days ${formatHoursMinutes(sleepTarget) || sleepTarget + 'h'}+`,
     target: sleepTarget
   };
 
@@ -3889,7 +3913,7 @@ function renderSleepChart(dataPoints) {
           order: 2
         },
         {
-          label: `Average (${avgSleep ? avgSleep.toFixed(1) : '--'}h)`,
+          label: `Average (${avgSleep ? formatHoursMinutes(avgSleep) || avgSleep.toFixed(1) + 'h' : '--'})`,
           data: avgLine,
           type: 'line',
           borderColor: '#e0e0e0',
@@ -6061,10 +6085,10 @@ function buildPayloadFromUI() {
     // Daily numbers
     sleepHours: document.getElementById("sleepHours")?.value || "",
     sleepOverride: !!document.getElementById("sleepHours")?.dataset.override,
-    sleepAwake: document.getElementById("sleepAwake")?.value || "",
-    sleepCore: document.getElementById("sleepCore")?.value || "",
-    sleepDeep: document.getElementById("sleepDeep")?.value || "",
-    sleepREM: document.getElementById("sleepREM")?.value || "",
+    sleepAwake: (() => { const v = parseFloat(document.getElementById("sleepAwake")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
+    sleepCore: (() => { const v = parseFloat(document.getElementById("sleepCore")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
+    sleepDeep: (() => { const v = parseFloat(document.getElementById("sleepDeep")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
+    sleepREM: (() => { const v = parseFloat(document.getElementById("sleepREM")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
     steps: document.getElementById("steps")?.value || "",
     fitnessScore: document.getElementById("fitnessScore")?.value || "",
     calories: document.getElementById("calories")?.value || "",
@@ -6320,6 +6344,7 @@ function setupInputAutosave() {
   if (sleepOverrideEl) {
     sleepOverrideEl.addEventListener("input", () => {
       sleepOverrideEl.dataset.override = "1";
+      updateSleepDisplay();
     });
   }
 
@@ -6645,16 +6670,18 @@ async function populateForm(data) {
     if (sleepWasOverridden) sleepEl.dataset.override = "1";
     else delete sleepEl.dataset.override;
   }
+  updateSleepDisplay();
 
-  // Apple Health sleep stage metrics
+  // Apple Health sleep stage metrics (stored in hours, displayed in minutes)
+  const stageToMin = (v) => { const n = parseFloat(v); return (!isNaN(n) && n > 0) ? Math.round(n * 60) : ""; };
   const sleepAwakeEl = document.getElementById("sleepAwake");
-  if (sleepAwakeEl) sleepAwakeEl.value = d["Sleep Awake"] ?? d["sleepAwake"] ?? "";
+  if (sleepAwakeEl) sleepAwakeEl.value = stageToMin(d["Sleep Awake"] ?? d["sleepAwake"] ?? "");
   const sleepCoreEl = document.getElementById("sleepCore");
-  if (sleepCoreEl) sleepCoreEl.value = d["Sleep Core"] ?? d["sleepCore"] ?? "";
+  if (sleepCoreEl) sleepCoreEl.value = stageToMin(d["Sleep Core"] ?? d["sleepCore"] ?? "");
   const sleepDeepEl = document.getElementById("sleepDeep");
-  if (sleepDeepEl) sleepDeepEl.value = d["Sleep Deep"] ?? d["sleepDeep"] ?? "";
+  if (sleepDeepEl) sleepDeepEl.value = stageToMin(d["Sleep Deep"] ?? d["sleepDeep"] ?? "");
   const sleepREMEl = document.getElementById("sleepREM");
-  if (sleepREMEl) sleepREMEl.value = d["Sleep REM"] ?? d["sleepREM"] ?? "";
+  if (sleepREMEl) sleepREMEl.value = stageToMin(d["Sleep REM"] ?? d["sleepREM"] ?? "");
 
   // Auto-expand sleep metrics if any data exists
   if (d["Sleep Awake"] || d["Sleep Core"] || d["Sleep Deep"] || d["Sleep REM"]) {
@@ -7349,11 +7376,11 @@ function updateAverages(averages) {
     return ` <span style="color: ${color}">${sign} ${Math.abs(formatted)}</span>`;
   };
 
-  // Sleep: show 2 decimals with comparison
+  // Sleep: show as Xh Ym with comparison
   if (avgSleepEl) {
     const v = averages.sleep;
     const lastV = averages.lastWeek?.sleep;
-    const display = (v === null || v === undefined || v === "") ? "--" : Number(v).toFixed(2);
+    const display = (v === null || v === undefined || v === "") ? "--" : formatHoursMinutes(v) || "--";
     const comparison = formatComparison(v, lastV, 2);
     avgSleepEl.innerHTML = display + comparison;
   }
