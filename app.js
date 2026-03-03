@@ -404,6 +404,32 @@ function formatDateForAPI(date = currentDate) {
   return `${m}/${d}/${y}`;
 }
 
+// Parse sleep input: supports "h.mm" notation (e.g., 7.53 = 7h 53m)
+// If the fractional part looks like minutes (>= 60 would be impossible, but
+// we treat any fractional part as minutes when it has exactly 2 digits and > 0.59),
+// e.g., 1.53 → 1h 53m = 1.8833h, 7.30 → 7h 30m = 7.5h
+// Regular decimals like 7.5 still work (7h 30m).
+function parseSleepInput(raw) {
+  if (raw === '' || raw === null || raw === undefined) return NaN;
+  const str = String(raw).trim();
+  const val = parseFloat(str);
+  if (isNaN(val) || val <= 0) return NaN;
+  // Check if fractional part looks like minutes (e.g., ".53" in "1.53")
+  const dotIdx = str.indexOf('.');
+  if (dotIdx >= 0) {
+    const fracStr = str.slice(dotIdx + 1);
+    const fracNum = parseInt(fracStr, 10);
+    // If 2+ digits and the value > 59 as fraction of 100, it's clearly h.mm notation
+    // e.g., 7.53 → fracStr="53", fracNum=53 → 53 minutes
+    // But 7.5 → fracStr="5", fracNum=5 → treat as decimal (0.5 hours = 30 min)
+    if (fracStr.length >= 2 && fracNum > 0) {
+      const hours = Math.floor(val);
+      return hours + fracNum / 60;
+    }
+  }
+  return val;
+}
+
 // Format decimal hours as "Xh Ym" (e.g., 7.5 → "7h 30m")
 function formatHoursMinutes(decimalHours) {
   const val = parseFloat(decimalHours);
@@ -420,11 +446,23 @@ function updateSleepDisplay() {
   const sleepEl = document.getElementById("sleepHours");
   const unitEl = document.getElementById("sleepUnit");
   if (!sleepEl || !unitEl) return;
-  const val = parseFloat(sleepEl.value);
+  const val = parseSleepInput(sleepEl.value);
   if (!isNaN(val) && val > 0) {
     unitEl.textContent = formatHoursMinutes(val);
   } else {
     unitEl.textContent = "hrs";
+  }
+}
+
+// Normalize sleep input on blur: convert h.mm to decimal hours
+function normalizeSleepInput() {
+  const sleepEl = document.getElementById("sleepHours");
+  if (!sleepEl || !sleepEl.value) return;
+  const parsed = parseSleepInput(sleepEl.value);
+  if (!isNaN(parsed) && parsed > 0) {
+    // Round to 1 decimal place for clean display
+    sleepEl.value = Math.round(parsed * 10) / 10;
+    updateSleepDisplay();
   }
 }
 
@@ -6083,7 +6121,7 @@ function buildPayloadFromUI() {
     date: formatDateForAPI(currentDate),
 
     // Daily numbers
-    sleepHours: document.getElementById("sleepHours")?.value || "",
+    sleepHours: (() => { const v = parseSleepInput(document.getElementById("sleepHours")?.value); return !isNaN(v) && v > 0 ? Math.round(v * 10) / 10 : ""; })(),
     sleepOverride: !!document.getElementById("sleepHours")?.dataset.override,
     sleepAwake: (() => { const v = parseFloat(document.getElementById("sleepAwake")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
     sleepCore: (() => { const v = parseFloat(document.getElementById("sleepCore")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
@@ -6340,12 +6378,14 @@ function setupInputAutosave() {
   }
 
   // Sleep hours: detect user override so manual entry isn't replaced by stage sum
+  // Supports h.mm notation (e.g., 7.53 = 7h 53m) — normalized on blur
   const sleepOverrideEl = document.getElementById("sleepHours");
   if (sleepOverrideEl) {
     sleepOverrideEl.addEventListener("input", () => {
       sleepOverrideEl.dataset.override = "1";
       updateSleepDisplay();
     });
+    sleepOverrideEl.addEventListener("change", normalizeSleepInput);
   }
 
   console.log("✅ Input autosave wired");
