@@ -454,6 +454,27 @@ function updateSleepDisplay() {
   }
 }
 
+// Parse sleep stage input (minutes field): supports h.mm notation
+// e.g., "1.53" in a minutes field = 1h 53m = 113 minutes
+// Plain numbers like "113" stay as 113 minutes
+function parseSleepStageMinutes(raw) {
+  if (raw === '' || raw === null || raw === undefined) return NaN;
+  const str = String(raw).trim();
+  const val = parseFloat(str);
+  if (isNaN(val) || val < 0) return NaN;
+  const dotIdx = str.indexOf('.');
+  if (dotIdx >= 0) {
+    const fracStr = str.slice(dotIdx + 1);
+    const fracNum = parseInt(fracStr, 10);
+    // 2+ digit fractional → h.mm notation (e.g., 1.53 = 1h 53m = 113 min)
+    if (fracStr.length >= 2 && fracNum > 0) {
+      const hours = Math.floor(val);
+      return hours * 60 + fracNum;
+    }
+  }
+  return val;
+}
+
 // Normalize sleep input on blur: convert h.mm to decimal hours
 function normalizeSleepInput() {
   const sleepEl = document.getElementById("sleepHours");
@@ -6123,10 +6144,10 @@ function buildPayloadFromUI() {
     // Daily numbers
     sleepHours: (() => { const v = parseSleepInput(document.getElementById("sleepHours")?.value); return !isNaN(v) && v > 0 ? Math.round(v * 10) / 10 : ""; })(),
     sleepOverride: !!document.getElementById("sleepHours")?.dataset.override,
-    sleepAwake: (() => { const v = parseFloat(document.getElementById("sleepAwake")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
-    sleepCore: (() => { const v = parseFloat(document.getElementById("sleepCore")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
-    sleepDeep: (() => { const v = parseFloat(document.getElementById("sleepDeep")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
-    sleepREM: (() => { const v = parseFloat(document.getElementById("sleepREM")?.value); return !isNaN(v) && v > 0 ? +(v / 60).toFixed(4) : ""; })(),
+    sleepAwake: (() => { const m = parseSleepStageMinutes(document.getElementById("sleepAwake")?.value); return !isNaN(m) && m > 0 ? +(m / 60).toFixed(4) : ""; })(),
+    sleepCore: (() => { const m = parseSleepStageMinutes(document.getElementById("sleepCore")?.value); return !isNaN(m) && m > 0 ? +(m / 60).toFixed(4) : ""; })(),
+    sleepDeep: (() => { const m = parseSleepStageMinutes(document.getElementById("sleepDeep")?.value); return !isNaN(m) && m > 0 ? +(m / 60).toFixed(4) : ""; })(),
+    sleepREM: (() => { const m = parseSleepStageMinutes(document.getElementById("sleepREM")?.value); return !isNaN(m) && m > 0 ? +(m / 60).toFixed(4) : ""; })(),
     steps: document.getElementById("steps")?.value || "",
     fitnessScore: document.getElementById("fitnessScore")?.value || "",
     calories: document.getElementById("calories")?.value || "",
@@ -6387,6 +6408,19 @@ function setupInputAutosave() {
     });
     sleepOverrideEl.addEventListener("change", normalizeSleepInput);
   }
+
+  // Sleep stage inputs: normalize h.mm notation on blur (e.g., 1.53 → 113 min)
+  ["sleepAwake", "sleepCore", "sleepDeep", "sleepREM"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", () => {
+        const mins = parseSleepStageMinutes(el.value);
+        if (!isNaN(mins) && mins > 0) {
+          el.value = Math.round(mins);
+        }
+      });
+    }
+  });
 
   console.log("✅ Input autosave wired");
 }
