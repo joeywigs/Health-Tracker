@@ -6068,6 +6068,24 @@ async function saveData(payload) {
       markSleepSaved();
     }
 
+    // Update weekly totals from server-recalculated averages if available,
+    // otherwise fall back to client-side incremental delta update
+    if (saveResult?.averages) {
+      updateAverages(saveResult.averages);
+      // Sync the loaded-steps baseline so future deltas are correct
+      const stepsEl = document.getElementById("steps");
+      if (stepsEl) stepsEl._loadedSteps = parseInt(stepsEl.value) || 0;
+      // Update local cache with fresh averages so nav away/back stays accurate
+      const dateKey = formatDateForAPI(currentDate);
+      const cachedDay = cacheGet(dateKey);
+      if (cachedDay) {
+        cachedDay.averages = saveResult.averages;
+        cacheSet(dateKey, cachedDay);
+      }
+    } else {
+      updateWeeklyStepsAfterSave();
+    }
+
     // Don't force-reload after save — the UI already has the correct state.
     // Reloading would re-read API data with potentially different column names
     // and overwrite the UI, zeroing out fields like agua.
@@ -6077,6 +6095,40 @@ async function saveData(payload) {
     await queueOfflineSave(payload);
     if (typeof showToast === 'function') showToast('Saved offline — will sync later', 'info');
     dataChanged = false;
+  }
+}
+
+// After saving, update the weekly step total by applying the delta between
+// the loaded steps value and the current input value.  This avoids a full
+// re-fetch while keeping the weekly total accurate.
+function updateWeeklyStepsAfterSave() {
+  const stepsEl = document.getElementById("steps");
+  const swEl = document.getElementById("stepsWeekTotal");
+  if (!stepsEl || !swEl || swEl.dataset.override) return;
+
+  const newSteps = parseInt(stepsEl.value) || 0;
+  const oldSteps = stepsEl._loadedSteps || 0;
+  const delta = newSteps - oldSteps;
+  if (delta === 0) return;
+
+  const currentWeek = parseInt(swEl.value) || swEl._computedWeek || 0;
+  const updatedWeek = currentWeek + delta;
+  swEl.value = updatedWeek > 0 ? updatedWeek : "";
+  swEl._computedWeek = updatedWeek;
+  stepsEl._loadedSteps = newSteps; // reset baseline for next delta
+
+  // Update comparison display
+  const compareEl = document.getElementById("stepsWeekCompare");
+  if (compareEl && currentAverages?.lastWeek?.stepsWeek != null) {
+    const lastV = currentAverages.lastWeek.stepsWeek;
+    const diff = updatedWeek - lastV;
+    if (Math.abs(diff) < 0.01) {
+      compareEl.innerHTML = " (same)";
+    } else {
+      const sign = diff > 0 ? "↑" : "↓";
+      const color = diff > 0 ? "#52b788" : "#e63946";
+      compareEl.innerHTML = ` <span style="color: ${color}">${sign} ${Math.abs(Math.round(diff))}</span>`;
+    }
   }
 }
 
@@ -6766,7 +6818,10 @@ async function populateForm(data) {
   }
 
   const stepsEl = document.getElementById("steps");
-  if (stepsEl) stepsEl.value = d["Steps"] ?? d["steps"] ?? "";
+  if (stepsEl) {
+    stepsEl.value = d["Steps"] ?? d["steps"] ?? "";
+    stepsEl._loadedSteps = parseInt(stepsEl.value) || 0;
+  }
 
   // Restore steps week override if saved
   const swOverride = d["Steps Week Override"] ?? d["stepsWeekOverride"] ?? "";
