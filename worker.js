@@ -557,7 +557,10 @@ async function saveDay(data, env, corsHeaders) {
 
   await Promise.all(saves);
 
-  return jsonResponse({ success: true, date: normalizedDate }, 200, corsHeaders);
+  // Recalculate averages so the frontend can update weekly totals without a reload
+  const averages = await calculate7DayAverages(normalizedDate, env);
+
+  return jsonResponse({ success: true, date: normalizedDate, averages }, 200, corsHeaders);
 }
 
 // ===== Update Steps (for iOS Shortcut) =====
