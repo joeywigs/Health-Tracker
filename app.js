@@ -404,28 +404,20 @@ function formatDateForAPI(date = currentDate) {
   return `${m}/${d}/${y}`;
 }
 
-// Parse sleep input: supports "h.mm" notation (e.g., 7.53 = 7h 53m)
-// If the fractional part looks like minutes (>= 60 would be impossible, but
-// we treat any fractional part as minutes when it has exactly 2 digits and > 0.59),
-// e.g., 1.53 → 1h 53m = 1.8833h, 7.30 → 7h 30m = 7.5h
-// Regular decimals like 7.5 still work (7h 30m).
+// Parse sleep input: supports "h.m" / "h.mm" notation (e.g., 7.53 = 7h 53m, 1.5 = 1h 5m)
+// Any decimal is treated as h.m(m) — fractional hours are never used.
+// e.g., 1.5 → 1h 5m = 1.0833h, 7.30 → 7h 30m = 7.5h, 7.0 → 7h 0m = 7h
 function parseSleepInput(raw) {
   if (raw === '' || raw === null || raw === undefined) return NaN;
   const str = String(raw).trim();
   const val = parseFloat(str);
   if (isNaN(val) || val <= 0) return NaN;
-  // Check if fractional part looks like minutes (e.g., ".53" in "1.53")
   const dotIdx = str.indexOf('.');
   if (dotIdx >= 0) {
     const fracStr = str.slice(dotIdx + 1);
     const fracNum = parseInt(fracStr, 10);
-    // If 2+ digits and the value > 59 as fraction of 100, it's clearly h.mm notation
-    // e.g., 7.53 → fracStr="53", fracNum=53 → 53 minutes
-    // But 7.5 → fracStr="5", fracNum=5 → treat as decimal (0.5 hours = 30 min)
-    if (fracStr.length >= 2 && fracNum > 0) {
-      const hours = Math.floor(val);
-      return hours + fracNum / 60;
-    }
+    const hours = Math.floor(val);
+    return hours + fracNum / 60;
   }
   return val;
 }
@@ -454,9 +446,9 @@ function updateSleepDisplay() {
   }
 }
 
-// Parse sleep stage input (minutes field): supports h.mm notation
-// e.g., "1.53" in a minutes field = 1h 53m = 113 minutes
-// Plain numbers like "113" stay as 113 minutes
+// Parse sleep stage input (minutes field): supports h.m / h.mm notation
+// Any decimal is treated as h.m(m) — fractional minutes are never used.
+// e.g., "1.5" = 1h 5m = 65 min, "1.53" = 1h 53m = 113 min, "113" = 113 min
 function parseSleepStageMinutes(raw) {
   if (raw === '' || raw === null || raw === undefined) return NaN;
   const str = String(raw).trim();
@@ -466,11 +458,8 @@ function parseSleepStageMinutes(raw) {
   if (dotIdx >= 0) {
     const fracStr = str.slice(dotIdx + 1);
     const fracNum = parseInt(fracStr, 10);
-    // 2+ digit fractional → h.mm notation (e.g., 1.53 = 1h 53m = 113 min)
-    if (fracStr.length >= 2 && fracNum > 0) {
-      const hours = Math.floor(val);
-      return hours * 60 + fracNum;
-    }
+    const hours = Math.floor(val);
+    return hours * 60 + fracNum;
   }
   return val;
 }
