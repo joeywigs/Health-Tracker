@@ -6914,6 +6914,7 @@ async function populateForm(data) {
     currentMovements = movementsArr.map(m => ({
       type: m.type || '',
       duration: m.duration || 0,
+      ...(m.miles ? { miles: m.miles } : {}),
       ...(m.steps ? { steps: m.steps } : {}),
       ...(m.startTime ? { startTime: m.startTime } : {})
     }));
@@ -7104,10 +7105,10 @@ function renderMovementList() {
 
   listEl.innerHTML = currentMovements.map((m, i) => {
     const dur = m.duration ? ` — ${m.duration} min` : '';
-    const steps = m.steps ? ` — ${m.steps.toLocaleString()} steps` : '';
+    const miles = m.miles ? ` — ${m.miles} mi` : (m.steps ? ` — ${m.steps.toLocaleString()} steps` : '');
     const time = m.startTime ? ` (${new Date(m.startTime).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})})` : '';
     return `<div class="movement-item">
-      <span>${m.type}${dur}${steps}${time}</span>
+      <span>${m.type}${dur}${miles}${time}</span>
       <button type="button" class="movement-item-remove" data-idx="${i}">&times;</button>
     </div>`;
   }).join('');
@@ -7128,16 +7129,16 @@ function renderMovementList() {
 function addMovementFromUI() {
   const typeEl = document.getElementById('movementAddType');
   const durEl = document.getElementById('movementAddDuration');
-  const stepsEl = document.getElementById('movementAddSteps');
+  const milesEl = document.getElementById('movementAddMiles');
   if (!typeEl) return;
 
   const type = typeEl.value;
   const duration = parseInt(durEl?.value) || 0;
-  const steps = parseInt(stepsEl?.value) || 0;
+  const miles = parseFloat(milesEl?.value) || 0;
   if (!type) return;
 
   const entry = { type, duration };
-  if (steps > 0) entry.steps = steps;
+  if (miles > 0) entry.miles = miles;
   currentMovements.push(entry);
   renderMovementList();
   triggerSaveSoon();
@@ -7146,7 +7147,7 @@ function addMovementFromUI() {
 
   // Reset inputs
   if (durEl) durEl.value = '';
-  if (stepsEl) stepsEl.value = '';
+  if (milesEl) milesEl.value = '';
 }
 
 function setupMovementUI() {
