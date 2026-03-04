@@ -404,12 +404,21 @@ function formatDateForAPI(date = currentDate) {
   return `${m}/${d}/${y}`;
 }
 
-// Parse sleep input: supports "h.m" / "h.mm" notation (e.g., 7.53 = 7h 53m, 1.5 = 1h 5m)
+// Parse sleep input: supports "h.m" / "h.mm" notation and "Xh Ym" display format.
 // Any decimal is treated as h.m(m) — fractional hours are never used.
-// e.g., 1.5 → 1h 5m = 1.0833h, 7.30 → 7h 30m = 7.5h, 7.0 → 7h 0m = 7h
+// e.g., 1.5 → 1h 5m, 7.30 → 7h 30m, "7h 30m" → 7.5h, "8" → 8h
 function parseSleepInput(raw) {
   if (raw === '' || raw === null || raw === undefined) return NaN;
   const str = String(raw).trim();
+  // Handle "Xh Ym" display format (e.g., "7h 30m", "7h", "30m")
+  const hmMatch = str.match(/^(\d+)h\s*(?:(\d+)m?)?$/i);
+  if (hmMatch) {
+    const h = parseInt(hmMatch[1], 10) || 0;
+    const m = parseInt(hmMatch[2], 10) || 0;
+    return h + m / 60;
+  }
+  const mOnly = str.match(/^(\d+)m$/i);
+  if (mOnly) return (parseInt(mOnly[1], 10) || 0) / 60;
   const val = parseFloat(str);
   if (isNaN(val) || val <= 0) return NaN;
   const dotIdx = str.indexOf('.');
@@ -433,17 +442,10 @@ function formatHoursMinutes(decimalHours) {
   return `${h}h ${m}m`;
 }
 
-// Update the sleep total card-unit to show formatted "Xh Ym"
+// Update the sleep total card-unit (now mostly unused since input shows "Xh Ym")
 function updateSleepDisplay() {
-  const sleepEl = document.getElementById("sleepHours");
   const unitEl = document.getElementById("sleepUnit");
-  if (!sleepEl || !unitEl) return;
-  const val = parseSleepInput(sleepEl.value);
-  if (!isNaN(val) && val > 0) {
-    unitEl.textContent = formatHoursMinutes(val);
-  } else {
-    unitEl.textContent = "hrs";
-  }
+  if (unitEl) unitEl.textContent = "";
 }
 
 // Parse sleep stage input (minutes field): supports h.m / h.mm notation
@@ -464,14 +466,13 @@ function parseSleepStageMinutes(raw) {
   return val;
 }
 
-// Normalize sleep input on blur: convert h.mm to decimal hours
+// Normalize sleep input on blur: format as "Xh Ym"
 function normalizeSleepInput() {
   const sleepEl = document.getElementById("sleepHours");
   if (!sleepEl || !sleepEl.value) return;
   const parsed = parseSleepInput(sleepEl.value);
   if (!isNaN(parsed) && parsed > 0) {
-    // Round to 1 decimal place for clean display
-    sleepEl.value = Math.round(parsed * 10) / 10;
+    sleepEl.value = formatHoursMinutes(parsed);
     updateSleepDisplay();
   }
 }
@@ -6445,9 +6446,8 @@ function setupInputAutosave() {
   if (sleepOverrideEl) {
     sleepOverrideEl.addEventListener("input", () => {
       sleepOverrideEl.dataset.override = "1";
-      updateSleepDisplay();
     });
-    sleepOverrideEl.addEventListener("change", normalizeSleepInput);
+    sleepOverrideEl.addEventListener("blur", normalizeSleepInput);
   }
 
   // Sleep stage inputs: normalize h.mm notation on blur (e.g., 1.53 → 113 min)
@@ -6781,7 +6781,8 @@ async function populateForm(data) {
     if (sum > 0) sleepTotal = Math.round(sum * 10) / 10;
   }
   if (sleepEl) {
-    sleepEl.value = sleepTotal;
+    const sleepNum = parseFloat(sleepTotal);
+    sleepEl.value = (!isNaN(sleepNum) && sleepNum > 0) ? formatHoursMinutes(sleepNum) : "";
     if (sleepWasOverridden) sleepEl.dataset.override = "1";
     else delete sleepEl.dataset.override;
   }
