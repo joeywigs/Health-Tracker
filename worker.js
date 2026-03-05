@@ -430,7 +430,14 @@ async function saveDay(data, env, corsHeaders) {
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
-    "Steps": data.steps || "",
+    "Steps": (() => {
+      // Keep the higher of the app value vs existing (shortcut-set) value.
+      // The shortcut sends the real total from HealthKit; the app UI may
+      // hold a stale value if it hasn't reloaded since the last shortcut run.
+      const fromApp = parseInt(data.steps, 10) || 0;
+      const fromKV = parseInt(existing["Steps"], 10) || 0;
+      return Math.max(fromApp, fromKV) || "";
+    })(),
     "REHIT 2x10": data.rehit || "",
     "Fitness Score": data.fitnessScore || "",
     "Peak Watts": data.peakWatts || "",
@@ -571,13 +578,9 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
   // Get existing daily data
   let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
 
-  // Replace steps only if the new total is greater than the existing total
+  // Always replace with the shortcut's reported total
   daily["Date"] = normalizedDate;
-  const existingSteps = parseInt(daily["Steps"], 10) || 0;
-  const newSteps = parseInt(steps, 10) || 0;
-  if (newSteps > existingSteps) {
-    daily["Steps"] = newSteps;
-  }
+  daily["Steps"] = parseInt(steps, 10) || 0;
 
   // Save back
   await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
