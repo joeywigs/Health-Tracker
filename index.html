@@ -8739,8 +8739,16 @@
           } else if (t === 'toggle') {
             const input = document.getElementById(`${fieldId}_input`);
             window.customSectionData[sec.id][f.id] = { value: input?.checked || false };
+          } else if (t === 'counter') {
+            const valEl = document.getElementById(`${fieldId}_value`);
+            const val = parseInt(valEl?.textContent) || 0;
+            window.customSectionData[sec.id][f.id] = { ...(window.customSectionData[sec.id][f.id] || {}), value: val };
+          } else if (t === 'rating') {
+            const input = document.getElementById(`${fieldId}_input`);
+            const val = parseInt(input?.value) || 0;
+            window.customSectionData[sec.id][f.id] = { ...(window.customSectionData[sec.id][f.id] || {}), value: val };
           }
-          // counter, rating, and log already update customSectionData directly via wireUpField
+          // log entries update customSectionData directly via wireUpField
         });
       });
 

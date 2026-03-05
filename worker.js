@@ -571,9 +571,13 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
   // Get existing daily data
   let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
 
-  // Update just the steps field
+  // Replace steps only if the new total is greater than the existing total
   daily["Date"] = normalizedDate;
-  daily["Steps"] = parseInt(steps, 10) || 0;
+  const existingSteps = parseInt(daily["Steps"], 10) || 0;
+  const newSteps = parseInt(steps, 10) || 0;
+  if (newSteps > existingSteps) {
+    daily["Steps"] = newSteps;
+  }
 
   // Save back
   await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
