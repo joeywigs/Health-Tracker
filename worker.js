@@ -430,9 +430,9 @@ async function saveDay(data, env, corsHeaders) {
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
-    // Steps are set by the iOS shortcut via updateSteps — preserve that value.
-    // The app UI may hold a stale number, so never let saveDay overwrite it.
-    "Steps": existing["Steps"] || data.steps || "",
+    // Steps are ONLY set by the iOS shortcut via updateSteps.
+    // Preserve whatever the shortcut wrote; the app never overwrites this.
+    "Steps": existing["Steps"] ?? "",
     "REHIT 2x10": data.rehit || "",
     "Fitness Score": data.fitnessScore || "",
     "Peak Watts": data.peakWatts || "",
@@ -575,6 +575,7 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
 
   // Always replace with the shortcut's reported total
   daily["Date"] = normalizedDate;
+  const previousSteps = daily["Steps"];
   daily["Steps"] = parseInt(steps, 10) || 0;
 
   // Save back
@@ -584,6 +585,8 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
     success: true,
     date: normalizedDate,
     steps: daily["Steps"],
+    previousSteps,
+    rawInput: steps,
     message: `Updated steps to ${daily["Steps"]} for ${normalizedDate}`
   }, 200, corsHeaders);
 }
