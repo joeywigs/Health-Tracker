@@ -430,14 +430,9 @@ async function saveDay(data, env, corsHeaders) {
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
-    "Steps": (() => {
-      // Keep the higher of the app value vs existing (shortcut-set) value.
-      // The shortcut sends the real total from HealthKit; the app UI may
-      // hold a stale value if it hasn't reloaded since the last shortcut run.
-      const fromApp = parseInt(data.steps, 10) || 0;
-      const fromKV = parseInt(existing["Steps"], 10) || 0;
-      return Math.max(fromApp, fromKV) || "";
-    })(),
+    // Steps are set by the iOS shortcut via updateSteps — preserve that value.
+    // The app UI may hold a stale number, so never let saveDay overwrite it.
+    "Steps": existing["Steps"] || data.steps || "",
     "REHIT 2x10": data.rehit || "",
     "Fitness Score": data.fitnessScore || "",
     "Peak Watts": data.peakWatts || "",
