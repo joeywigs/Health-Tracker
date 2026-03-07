@@ -208,6 +208,15 @@ async function handlePost(request, env, corsHeaders) {
   }
 
 
+  // Bulk fix/overwrite steps for multiple dates
+  if (action === "fix_steps") {
+    const entries = body.entries;
+    if (!entries || !Array.isArray(entries) || entries.length === 0) {
+      return jsonResponse({ error: true, message: "Missing entries array. Send [{date, steps}, ...]" }, 400, corsHeaders);
+    }
+    return await bulkFixSteps(entries, env, corsHeaders);
+  }
+
   // iOS Shortcut endpoint - sync body composition data
   if (action === "body") {
     return await logBody(body, env, corsHeaders);
@@ -586,6 +595,30 @@ async function updateSteps(steps, dateStr, env, corsHeaders) {
     previousSteps,
     rawInput: steps,
     message: `Updated steps to ${daily["Steps"]} for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Bulk Fix Steps =====
+async function bulkFixSteps(entries, env, corsHeaders) {
+  const results = [];
+  for (const entry of entries) {
+    try {
+      const normalizedDate = normalizeDate(entry.date);
+      const daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+      const previous = daily["Steps"];
+      daily["Date"] = normalizedDate;
+      daily["Steps"] = parseInt(entry.steps, 10) || 0;
+      await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
+      results.push({ date: normalizedDate, previous, updated: daily["Steps"], ok: true });
+    } catch (e) {
+      results.push({ date: entry.date, error: e.message, ok: false });
+    }
+  }
+  const fixed = results.filter(r => r.ok).length;
+  return jsonResponse({
+    success: true,
+    message: `Fixed ${fixed}/${entries.length} dates`,
+    results
   }, 200, corsHeaders);
 }
 
