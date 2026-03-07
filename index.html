@@ -4976,6 +4976,11 @@
           <div class="settings-card-label">Calendar</div>
           <div class="settings-card-desc">Early morning alerts</div>
         </div>
+        <div class="settings-card" data-settings-page="fixSteps">
+          <div class="settings-card-icon">👟</div>
+          <div class="settings-card-label">Fix Steps</div>
+          <div class="settings-card-desc">Correct step counts</div>
+        </div>
       </div>
     </div>
 
@@ -5206,6 +5211,23 @@
             <button type="button" class="btn btn-secondary" id="testCalendarBtn" style="flex:1">Test</button>
           </div>
           <div id="calendarTestResult" style="margin-top:12px;font-size:13px;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subpage: Fix Steps -->
+    <div class="settings-subpage" id="settingsSub_fixSteps">
+      <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#52b788;--icon-end:#40916c;--icon-glow:rgba(82,183,136,0.4)">👟</div><span class="sec-name">Fix Step Counts</span></div></div>
+        <div class="sec-content">
+          <p style="color:var(--text-muted);font-size:12px;margin:0 0 12px 0">Paste one entry per line: <code>date, steps</code>. Dates can be M/D/YY or any standard format. This will overwrite the step count for each date.</p>
+          <textarea id="fixStepsInput" class="input" rows="10" placeholder="3/1/26, 8432&#10;3/2/26, 6210&#10;3/3/26, 11503" style="font-family:monospace;font-size:13px;width:100%;resize:vertical"></textarea>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button type="button" class="btn btn-secondary" id="fixStepsPreviewBtn" style="flex:1">Preview</button>
+            <button type="button" class="btn btn-primary" id="fixStepsApplyBtn" style="flex:1">Apply Fixes</button>
+          </div>
+          <div id="fixStepsResult" style="margin-top:12px;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:300px;overflow-y:auto;display:none"></div>
         </div>
       </div>
     </div>
@@ -9819,6 +9841,71 @@
         } else {
           resultEl.style.color = 'var(--text-muted)';
           resultEl.textContent = `No early event found for tomorrow (reason: ${result?.reason || 'unknown'})`;
+        }
+      } catch (e) {
+        resultEl.style.color = '#ef4444';
+        resultEl.textContent = 'Error: ' + e.message;
+      }
+    });
+
+    // ===== Fix Steps =====
+    function parseFixStepsInput() {
+      const raw = document.getElementById('fixStepsInput')?.value || '';
+      const entries = [];
+      for (const line of raw.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const commaIdx = trimmed.lastIndexOf(',');
+        if (commaIdx < 0) continue;
+        const date = trimmed.substring(0, commaIdx).trim();
+        const steps = trimmed.substring(commaIdx + 1).trim();
+        if (date && steps && !isNaN(parseInt(steps))) {
+          entries.push({ date, steps: parseInt(steps) });
+        }
+      }
+      return entries;
+    }
+
+    document.getElementById('fixStepsPreviewBtn')?.addEventListener('click', () => {
+      const resultEl = document.getElementById('fixStepsResult');
+      if (!resultEl) return;
+      const entries = parseFixStepsInput();
+      if (entries.length === 0) {
+        resultEl.style.display = 'block';
+        resultEl.style.color = '#ef4444';
+        resultEl.textContent = 'No valid entries found. Use format: date, steps';
+        return;
+      }
+      resultEl.style.display = 'block';
+      resultEl.style.color = 'var(--text-muted)';
+      resultEl.textContent = `${entries.length} entries to fix:\n` +
+        entries.map(e => `  ${e.date} → ${e.steps.toLocaleString()} steps`).join('\n');
+    });
+
+    document.getElementById('fixStepsApplyBtn')?.addEventListener('click', async () => {
+      const resultEl = document.getElementById('fixStepsResult');
+      if (!resultEl) return;
+      const entries = parseFixStepsInput();
+      if (entries.length === 0) {
+        resultEl.style.display = 'block';
+        resultEl.style.color = '#ef4444';
+        resultEl.textContent = 'No valid entries found. Use format: date, steps';
+        return;
+      }
+      resultEl.style.display = 'block';
+      resultEl.style.color = 'var(--text-muted)';
+      resultEl.textContent = `Fixing ${entries.length} dates...`;
+      try {
+        const result = await apiPost('fix_steps', { entries });
+        if (result?.success) {
+          const lines = result.results.map(r =>
+            r.ok ? `${r.date}: ${r.previous ?? '(empty)'} → ${r.updated}` : `${r.date}: ERROR ${r.error}`
+          );
+          resultEl.style.color = '#22c55e';
+          resultEl.textContent = `${result.message}\n\n` + lines.join('\n');
+        } else {
+          resultEl.style.color = '#ef4444';
+          resultEl.textContent = 'Error: ' + (result?.message || 'Unknown error');
         }
       } catch (e) {
         resultEl.style.color = '#ef4444';
