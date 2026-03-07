@@ -8925,7 +8925,7 @@
         // ── Daily Data ──
         lines.push('## Daily Tracking Data');
         lines.push('');
-        lines.push('Each day tracks: sleep (total hours + Apple Health stages: awake, core, deep, REM), hydration, steps, supplements, meals, exercise, body composition, blood pressure, and more.');
+        lines.push('Each day tracks: sleep (total hours + Apple Health stages: awake, core, deep, REM), hydration, steps, active energy (calories burned), protein intake, supplements, meals, exercise, body composition, blood pressure, and more.');
         lines.push('Boolean fields: true = completed/taken, false = not done.');
         lines.push('');
 
@@ -8949,7 +8949,9 @@
             if (d['Hours of Sleep']) metrics.push(`Sleep: ${d['Hours of Sleep']} hrs`);
             if (d['Water'] || d['Water (glasses)']) metrics.push(`Water: ${d['Water'] || d['Water (glasses)']} glasses`);
             if (d['Steps']) metrics.push(`Steps: ${d['Steps']}`);
+            if (d['Active Energy']) metrics.push(`Active Energy: ${d['Active Energy']} cal`);
             if (d['Calories']) metrics.push(`Calories: ${d['Calories']}`);
+            if (d['Protein']) metrics.push(`Protein: ${d['Protein']}g`);
             if (d['Email Sprints']) metrics.push(`Email Sprints: ${d['Email Sprints']}`);
             if (metrics.length) {
               lines.push('**Metrics:** ' + metrics.join(' | '));
