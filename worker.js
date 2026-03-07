@@ -444,6 +444,7 @@ async function saveDay(data, env, corsHeaders) {
     "Fitness Score": data.fitnessScore || "",
     "Peak Watts": data.peakWatts || "",
     "Watt Seconds": data.wattSeconds || "",
+    "Dumbbell Duration": data.dumbbellDuration || "",
     "Calories": data.calories || "",
     "Water": data.agua ?? data.hydrationGood ?? data.water ?? 0,
     "Weight (lbs)": ("weight" in data) ? (data.weight || "") : "",
