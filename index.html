@@ -1196,6 +1196,93 @@
     .card.sleep { --accent-start: var(--accent-purple); --accent-end: var(--accent-pink); --card-glow: var(--glow-purple); }
     .card.water { --accent-start: var(--accent-teal); --accent-end: var(--accent-purple); --card-glow: var(--glow-teal); }
     .card.movement { --accent-start: var(--accent-pink); --accent-end: var(--accent-orange); --card-glow: var(--glow-pink); }
+    .card.energy { --accent-start: var(--accent-orange); --accent-end: var(--accent-yellow); --card-glow: var(--glow-orange); }
+    .card.bike { --accent-start: var(--accent-teal); --accent-end: var(--accent-purple); --card-glow: var(--glow-teal); }
+    .card.dumbbell { --accent-start: var(--accent-pink); --accent-end: var(--accent-orange); --card-glow: var(--glow-pink); }
+
+    /* Movement Energy Ring */
+    .energy-ring-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 8px 0;
+    }
+    .energy-ring-svg { flex-shrink: 0; }
+    .energy-ring-info { flex: 1; min-width: 0; }
+    .energy-ring-info .energy-burned {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent-orange);
+      line-height: 1;
+    }
+    .energy-ring-info .energy-target {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .energy-ring-info .energy-breakdown {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .energy-breakdown span {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    /* Steps to go display */
+    .steps-to-go {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .steps-to-go .steps-remaining {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      color: var(--accent-pink);
+    }
+
+    /* Carol bike inline inputs */
+    .bike-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .bike-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .bike-input-group label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .bike-input-group input {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .bike-input-group input:focus {
+      border-color: var(--accent-teal);
+    }
+    .bike-cals-display {
+      font-size: 12px;
+      color: var(--accent-orange);
+      margin-top: 6px;
+    }
     
     .card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
     .card-icon { 
@@ -4516,54 +4603,63 @@
         <div class="mini-supp" title="Prebiotic"><input type="checkbox" id="prebiotic"><span>Prebiotic</span></div>
       </div>
     </div>
+    <!-- Card 1: Movement Energy Overview -->
+    <div class="card energy" id="movementEnergyCard">
+      <div class="card-head"><div class="card-icon">🔥</div><div class="card-title">Movement Energy</div></div>
+      <div class="energy-ring-wrap">
+        <svg class="energy-ring-svg" width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+          <circle id="energyRingProgress" cx="40" cy="40" r="34" fill="none" stroke="var(--accent-orange)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)" style="transition: stroke-dashoffset 0.5s ease"/>
+        </svg>
+        <div class="energy-ring-info">
+          <div class="energy-burned" id="energyBurnedDisplay">0</div>
+          <div class="energy-target">of <span id="energyTargetDisplay">500</span> kcal</div>
+          <div class="energy-breakdown" id="energyBreakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Steps -->
     <div class="card movement" id="stepsCard">
       <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
       <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
       <div class="progress-bar-h">
         <div class="progress-bar-h-fill" id="stepsBarFill"></div>
       </div>
-      <div id="activeCalSummary" style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.6"></div>
+      <div class="steps-to-go" id="stepsToGoDisplay"></div>
       <div class="card-avg">Week total: <input type="number" inputmode="numeric" id="stepsWeekTotal" class="inline-week-input" placeholder="--"> <span id="stepsWeekCompare"></span></div>
     </div>
 
-    <div class="card movement rehit-full" id="rehitCard" style="position:relative">
-      <div id="rehitFreezeOverlay" class="rehit-freeze-overlay" style="display:none">
-        <div class="rehit-freeze-icon">❄️</div>
-        <div class="rehit-freeze-text">REHIT & Movement Paused</div>
-        <div class="rehit-freeze-sub">Phase is frozen — enjoy your vacation!</div>
-      </div>
-      <div class="card-head" style="margin-bottom:0">
-        <div class="card-icon">🚴</div>
-        <div class="card-title">REHIT</div>
-      </div>
-      <div class="rehit-layout">
-        <div class="rehit-left">
-          <div class="chips rehit-chips">
-            <div class="chip rehit-chip" id="rehit2Chip"><input type="checkbox" id="rehit2"><div class="chip-dot">✓</div><span class="chip-text">2×10</span></div>
-            <div class="chip rehit-chip" id="rehit3Chip"><input type="checkbox" id="rehit3"><div class="chip-dot">✓</div><span class="chip-text">3×10</span></div>
-          </div>
+    <!-- Card 3: Carol Bike -->
+    <div class="card bike" id="carolBikeCard">
+      <div class="card-head"><div class="card-icon">🚴</div><div class="card-title">Carol Bike</div></div>
+      <div class="bike-inputs">
+        <div class="bike-input-group">
+          <label>Duration</label>
+          <input type="number" inputmode="numeric" id="carolBikeDuration" placeholder="0" min="0" max="120">
         </div>
-        <div class="rehit-right">
-          <div class="rehit-stats-grid">
-            <div class="rehit-stat">
-              <span class="rehit-stat-label">Score</span>
-              <input type="number" id="fitnessScore" class="rehit-stat-input" inputmode="decimal" step="0.1" placeholder="--" style="color:var(--accent-teal)">
-            </div>
-            <div class="rehit-stat">
-              <span class="rehit-stat-label">Cals</span>
-              <input type="number" id="calories" class="rehit-stat-input" inputmode="numeric" placeholder="--" style="color:var(--accent-orange)">
-            </div>
-            <div class="rehit-stat">
-              <span class="rehit-stat-label">Watts</span>
-              <input type="number" id="peakWatts" class="rehit-stat-input" inputmode="numeric" placeholder="--" style="color:var(--accent-pink)">
-            </div>
-            <div class="rehit-stat">
-              <span class="rehit-stat-label">W-Sec</span>
-              <input type="number" id="wattSeconds" class="rehit-stat-input" inputmode="numeric" placeholder="--" style="color:var(--accent-purple)">
-            </div>
-          </div>
+        <div class="bike-input-group">
+          <label>Calories</label>
+          <input type="number" inputmode="numeric" id="carolBikeCalories" placeholder="0" min="0" max="2000">
         </div>
       </div>
+      <div class="bike-cals-display" id="carolBikeCalsDisplay"></div>
+    </div>
+
+    <!-- Card 4: Dumbbell Session -->
+    <div class="card dumbbell" id="dumbbellCard">
+      <div class="card-head"><div class="card-icon">🏋️</div><div class="card-title">Dumbbell Session</div></div>
+      <div class="bike-inputs">
+        <div class="bike-input-group">
+          <label>Duration</label>
+          <input type="number" inputmode="numeric" id="dumbbellDuration" placeholder="0" min="0" max="180">
+        </div>
+        <div class="bike-input-group">
+          <label>Calories</label>
+          <input type="number" id="dumbbellCalsBurned" placeholder="0" readonly style="color:var(--accent-orange);opacity:0.8;cursor:default">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">4.5 cal/min</div>
     </div>
 
     <div class="section" id="greysHabitsSection">
@@ -4601,41 +4697,7 @@
       </div>
     </div>
 
-    <div class="section" id="movementSection" style="position:relative">
-      <div id="movementFreezeOverlay" class="rehit-freeze-overlay" style="display:none">
-        <div class="rehit-freeze-icon">❄️</div>
-        <div class="rehit-freeze-text">Movement Paused</div>
-        <div class="rehit-freeze-sub">Phase is frozen — breaks won't count toward goals</div>
-      </div>
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">🚶</div><span class="sec-name">Movement Breaks</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div id="movementList" class="movement-list"></div>
-        <div class="movement-add-row">
-          <select id="movementAddType">
-            <option value="Walk">Walk</option>
-            <option value="Carol Bike">Carol Bike</option>
-            <option value="Other">Other</option>
-          </select>
-          <input type="number" id="movementAddDuration" placeholder="min" min="1" max="120" inputmode="numeric">
-          <input type="number" id="movementAddMiles" placeholder="miles" min="0" step="0.01" inputmode="decimal">
-          <button type="button" class="movement-add-btn" id="movementAddBtn">+</button>
-        </div>
-        <div class="card-avg" style="margin-top:10px">Daily avg: <span id="avgMovements">--</span> min</div>
-      </div>
-    </div>
-
-    <div class="section" id="dumbbellSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">🏋️</div><span class="sec-name">Dumbbell Session</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <span style="font-size:13px;color:var(--text-muted)">Duration</span>
-          <input type="number" inputmode="numeric" class="big-input" id="dumbbellDuration" placeholder="0" min="0" max="180" style="width:70px;font-size:16px;padding:6px 8px;text-align:center">
-          <span style="font-size:13px;color:var(--text-muted)">min</span>
-          <span id="dumbbellCalsBurned" style="font-size:12px;color:var(--accent-orange);margin-left:auto"></span>
-        </div>
-        <div id="dumbbellExercises" class="dumbbell-exercises"></div>
-      </div>
-    </div>
+    <!-- Old movement/dumbbell sections removed - replaced by movement energy cards above -->
 
     <div class="section" id="mentalHabitsSection">
       <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#c471ed;--icon-end:#6dd5ed;--icon-glow:var(--glow-purple)">📖</div><span class="sec-name">Reading</span></div><span class="sec-toggle">▼</span></div>
@@ -5002,7 +5064,7 @@
           <div class="goal-setting-row" data-ring-key="sleep"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_sleep" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🌙</span><span class="goal-setting-name">Sleep</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12"><span class="goal-unit">hrs</span><select class="goal-freq" id="sleepFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="agua"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_agua" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">💧</span><span class="goal-setting-name">Water</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20"><span class="goal-unit">glasses</span><select class="goal-freq" id="aguaFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="steps"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_steps" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">👟</span><span class="goal-setting-name">Steps</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="stepsGoal" value="5000" min="1000" max="50000" step="500"><span class="goal-unit">steps</span><select class="goal-freq" id="stepsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row"><div class="goal-setting-info" style="margin-left:36px"><span class="goal-setting-icon">🔥</span><span class="goal-setting-name">Active Calories</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="activeCalorieGoal" value="500" min="100" max="2000" step="50"><span class="goal-unit">kcal/day</span></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info" style="margin-left:36px"><span class="goal-setting-icon">🔥</span><span class="goal-setting-name">Movement Calories</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="activeCalorieGoal" value="500" min="100" max="2000" step="50"><span class="goal-unit">kcal/day</span></div></div>
           <div class="goal-setting-row" data-ring-key="movement" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_movement"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚶</span><span class="goal-setting-name">Movement</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10"><span class="goal-unit">sessions</span><select class="goal-freq" id="movementFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="meals"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_meals" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍽️</span><span class="goal-setting-name">Meals</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3"><span class="goal-unit">meals</span><select class="goal-freq" id="mealsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="snacks"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_snacks" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🥗</span><span class="goal-setting-name">Healthy Snacks</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2"><span class="goal-unit">checks</span><select class="goal-freq" id="snacksFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
@@ -5440,19 +5502,11 @@
         if ((aguaEl ? parseInt(aguaEl.textContent) || 0 : 0) >= getGoal('aguaGoal', 6)) checked++;
       }
 
-      // Steps (uses adjusted goal from active calorie budget)
+      // Movement Energy (replaces old steps + movement checks)
       if (on('steps')) {
         total++;
-        const stepsVal = parseInt(document.getElementById('steps')?.value) || 0;
-        const adjGoal = (typeof getAdjustedStepGoal === 'function') ? getAdjustedStepGoal().adjustedSteps : getGoal('stepsGoal', 7500);
-        if (stepsVal >= (adjGoal || getGoal('stepsGoal', 7500))) checked++;
-      }
-
-      // Movement
-      if (on('movement')) {
-        total++;
-        const movementCount = (typeof currentMovements !== 'undefined' && Array.isArray(currentMovements)) ? currentMovements.length : 0;
-        if (movementCount >= getGoal('movementGoal', 2)) checked++;
+        const info = (typeof getMovementEnergyInfo === 'function') ? getMovementEnergyInfo() : { totalBurned: 0, target: 500 };
+        if (info.totalBurned >= info.target) checked++;
       }
 
       // Meals
@@ -6018,74 +6072,129 @@
       fill.style.width = pct + '%';
     }
 
-    // Watt-seconds to kcal conversion (CAROL Bike)
-    // CAROL documentation: approx 1 watt-second = 0.001 kcal (i.e. divide by 1000)
-    function wattSecondsToKcal(ws) {
-      return (parseFloat(ws) || 0) / 1000;
-    }
+    // ===== MOVEMENT ENERGY SYSTEM =====
+    const KCAL_PER_STEP = 0.0295;
+    const DUMBBELL_KCAL_PER_MIN = 4.5;
 
-    // Dumbbell duration to kcal (4 cal/min)
+    // Dumbbell duration to kcal (4.5 cal/min)
     function dumbbellDurationToKcal(minutes) {
-      return (parseFloat(minutes) || 0) * 4;
+      return (parseFloat(minutes) || 0) * DUMBBELL_KCAL_PER_MIN;
     }
 
-    // Update dumbbell calories display
+    // Get the movement calorie target (from settings)
+    function getMovementCalorieTarget() {
+      return (typeof appSettings !== 'undefined' && appSettings.activeCalorieGoal) ? appSettings.activeCalorieGoal : 500;
+    }
+
+    // Calculate all movement energy values from current UI state
+    function getMovementEnergyInfo() {
+      const target = getMovementCalorieTarget();
+      const steps = parseInt(document.getElementById('steps')?.value) || 0;
+      const stepsCals = steps * KCAL_PER_STEP;
+
+      const carolCals = parseFloat(document.getElementById('carolBikeCalories')?.value) || 0;
+      const carolDuration = parseFloat(document.getElementById('carolBikeDuration')?.value) || 0;
+
+      const dbMin = parseFloat(document.getElementById('dumbbellDuration')?.value) || 0;
+      const dbCals = dumbbellDurationToKcal(dbMin);
+
+      const totalBurned = stepsCals + carolCals + dbCals;
+      const remaining = Math.max(0, target - carolCals - dbCals - stepsCals);
+      const stepsToGo = Math.max(0, Math.round(remaining / KCAL_PER_STEP));
+
+      return { target, steps, stepsCals, carolCals, carolDuration, dbMin, dbCals, totalBurned, stepsToGo };
+    }
+    window.getMovementEnergyInfo = getMovementEnergyInfo;
+
+    // Keep backward-compatible alias
+    function getAdjustedStepGoal() {
+      const info = getMovementEnergyInfo();
+      return { calGoal: info.target, carolCals: info.carolCals, dbCals: info.dbCals, exerciseCals: info.carolCals + info.dbCals, remainingCals: Math.max(0, info.target - info.carolCals - info.dbCals - info.stepsCals), adjustedSteps: info.stepsToGo };
+    }
+    window.getAdjustedStepGoal = getAdjustedStepGoal;
+
+    // Update dumbbell calories display (readonly input)
     function updateDumbbellCalsBurned() {
       const el = document.getElementById('dumbbellCalsBurned');
       const dur = parseFloat(document.getElementById('dumbbellDuration')?.value) || 0;
       if (el) {
-        el.textContent = dur > 0 ? `~${Math.round(dumbbellDurationToKcal(dur))} cal` : '';
+        el.value = dur > 0 ? Math.round(dumbbellDurationToKcal(dur)) : '';
       }
     }
     window.updateDumbbellCalsBurned = updateDumbbellCalsBurned;
 
-    // Calculate adjusted step goal based on active calorie budget
-    function getAdjustedStepGoal() {
-      const calGoal = (typeof appSettings !== 'undefined' && appSettings.activeCalorieGoal) ? appSettings.activeCalorieGoal : 500;
-      const KCAL_PER_STEP = 0.0295;
+    // Master update: refresh all 4 movement energy cards
+    function updateMovementEnergy() {
+      const info = getMovementEnergyInfo();
 
-      // CAROL Bike calories from watt-seconds
-      const ws = parseFloat(document.getElementById('wattSeconds')?.value) || 0;
-      const carolCals = wattSecondsToKcal(ws);
+      // Card 1: Movement Energy ring + display
+      const burnedEl = document.getElementById('energyBurnedDisplay');
+      const targetEl = document.getElementById('energyTargetDisplay');
+      const breakdownEl = document.getElementById('energyBreakdown');
+      const ringEl = document.getElementById('energyRingProgress');
 
-      // Dumbbell calories from duration
-      const dbMin = parseFloat(document.getElementById('dumbbellDuration')?.value) || 0;
-      const dbCals = dumbbellDurationToKcal(dbMin);
+      if (burnedEl) burnedEl.textContent = Math.round(info.totalBurned);
+      if (targetEl) targetEl.textContent = info.target;
 
-      const exerciseCals = carolCals + dbCals;
-      const remainingCals = Math.max(0, calGoal - exerciseCals);
-      const adjustedSteps = Math.round(remainingCals / KCAL_PER_STEP);
+      if (breakdownEl) {
+        const parts = [];
+        if (info.stepsCals > 0) parts.push(`<span>Steps ${Math.round(info.stepsCals)}</span>`);
+        if (info.carolCals > 0) parts.push(`<span>Bike ${Math.round(info.carolCals)}</span>`);
+        if (info.dbCals > 0) parts.push(`<span>Weights ${Math.round(info.dbCals)}</span>`);
+        breakdownEl.innerHTML = parts.join('');
+      }
 
-      return { calGoal, carolCals, dbCals, exerciseCals, remainingCals, adjustedSteps };
-    }
-    window.getAdjustedStepGoal = getAdjustedStepGoal;
+      if (ringEl) {
+        const circumference = 2 * Math.PI * 34; // r=34 → ~213.6
+        const pct = Math.min(1, info.totalBurned / info.target);
+        ringEl.style.strokeDashoffset = circumference - pct * circumference;
+        // Color shift: orange → green as approaching/exceeding goal
+        if (pct >= 1) {
+          ringEl.style.stroke = 'var(--success)';
+        } else {
+          ringEl.style.stroke = 'var(--accent-orange)';
+        }
+      }
 
-    // Steps progress bar (uses adjusted step goal from active calorie budget)
-    function updateStepsBar(){
+      // Card 2: Steps bar + steps to go
       const stepsInput = document.getElementById('steps');
       const fill = document.getElementById('stepsBarFill');
-      if(!stepsInput || !fill) return;
-      const steps = parseInt(stepsInput.value) || 0;
-
-      const info = getAdjustedStepGoal();
-      const goal = info.adjustedSteps || ((typeof getGoalForToday === 'function') ? getGoalForToday('stepsGoal', 7500) : 7500);
-      const pct = Math.min(100, (steps / goal) * 100);
-      fill.style.width = pct + '%';
-
-      // Update active calorie summary
-      const summaryEl = document.getElementById('activeCalSummary');
-      if (summaryEl) {
-        const stepCals = Math.round(steps * 0.0295);
-        const totalCals = Math.round(info.exerciseCals + stepCals);
-        const parts = [];
-        if (info.carolCals > 0) parts.push(`CAROL ${Math.round(info.carolCals)}`);
-        if (info.dbCals > 0) parts.push(`Weights ${Math.round(info.dbCals)}`);
-        parts.push(`Steps ${stepCals}`);
-        summaryEl.innerHTML = `🔥 ${totalCals}/${info.calGoal} kcal` +
-          (parts.length > 1 ? ` <span style="opacity:0.7">(${parts.join(' + ')})</span>` : '') +
-          `<br>Step goal: ${goal.toLocaleString()} steps` +
-          (info.exerciseCals > 0 ? ` <span style="opacity:0.7">(adjusted)</span>` : '');
+      if (stepsInput && fill) {
+        const stepsGoal = info.stepsToGo + info.steps; // total steps needed = already taken + remaining
+        const pct = stepsGoal > 0 ? Math.min(100, (info.steps / stepsGoal) * 100) : 100;
+        fill.style.width = pct + '%';
       }
+
+      const stepsToGoEl = document.getElementById('stepsToGoDisplay');
+      if (stepsToGoEl) {
+        if (info.stepsToGo > 0) {
+          stepsToGoEl.innerHTML = `<span class="steps-remaining">${info.stepsToGo.toLocaleString()}</span> steps to go`;
+        } else if (info.steps > 0) {
+          stepsToGoEl.innerHTML = `<span style="color:var(--success)">Goal reached!</span>`;
+        } else {
+          stepsToGoEl.innerHTML = `<span class="steps-remaining">${Math.round(info.target / KCAL_PER_STEP).toLocaleString()}</span> steps to go`;
+        }
+      }
+
+      // Card 3: Carol Bike calories display
+      const bikeCalsDisplay = document.getElementById('carolBikeCalsDisplay');
+      if (bikeCalsDisplay) {
+        const carolCals = info.carolCals;
+        if (carolCals > 0) {
+          bikeCalsDisplay.textContent = `${Math.round(carolCals)} cal burned`;
+        } else {
+          bikeCalsDisplay.textContent = '';
+        }
+      }
+
+      // Update completion ring
+      if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+    }
+    window.updateMovementEnergy = updateMovementEnergy;
+
+    // Steps progress bar - now delegates to updateMovementEnergy
+    function updateStepsBar() {
+      updateMovementEnergy();
     }
     
     // Hook populateForm - wait for app.js to define it first
@@ -6099,8 +6208,8 @@
           // Sync our UI after the form is fully populated
           syncAllChips();
           updateAguaBar();
-          updateRehitDisplay();
-          updateStepsBar();
+          updateDumbbellCalsBurned();
+          updateMovementEnergy();
           updateCompletionRingAurora();
         };
         window._populateFormHooked = true;
@@ -6183,22 +6292,27 @@
       // Steps input listener
       const stepsInput = document.getElementById('steps');
       if (stepsInput) {
-        stepsInput.addEventListener('input', () => { updateStepsBar(); updateCompletionRingAurora(); });
-        stepsInput.addEventListener('change', () => { updateStepsBar(); updateCompletionRingAurora(); });
+        stepsInput.addEventListener('input', () => updateMovementEnergy());
+        stepsInput.addEventListener('change', () => updateMovementEnergy());
       }
 
-      // Watt-seconds input → recalculate step goal
-      const wsInput = document.getElementById('wattSeconds');
-      if (wsInput) {
-        wsInput.addEventListener('input', () => updateStepsBar());
-        wsInput.addEventListener('change', () => updateStepsBar());
+      // Carol Bike inputs → recalculate movement energy
+      const carolCalInput = document.getElementById('carolBikeCalories');
+      const carolDurInput = document.getElementById('carolBikeDuration');
+      if (carolCalInput) {
+        carolCalInput.addEventListener('input', () => { updateMovementEnergy(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        carolCalInput.addEventListener('change', () => { updateMovementEnergy(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+      }
+      if (carolDurInput) {
+        carolDurInput.addEventListener('input', () => { if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        carolDurInput.addEventListener('change', () => { if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
       }
 
-      // Dumbbell duration input → recalculate step goal + show cals
+      // Dumbbell duration input → recalculate calories + movement energy
       const dbDurInput = document.getElementById('dumbbellDuration');
       if (dbDurInput) {
-        dbDurInput.addEventListener('input', () => { updateDumbbellCalsBurned(); updateStepsBar(); });
-        dbDurInput.addEventListener('change', () => { updateDumbbellCalsBurned(); updateStepsBar(); });
+        dbDurInput.addEventListener('input', () => { updateDumbbellCalsBurned(); updateMovementEnergy(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
+        dbDurInput.addEventListener('change', () => { updateDumbbellCalsBurned(); updateMovementEnergy(); if (typeof triggerSaveSoon === 'function') triggerSaveSoon(); });
       }
 
       // Sleep input listener (for completion ring)
@@ -6208,20 +6322,11 @@
         sleepInput.addEventListener('change', updateCompletionRingAurora);
       }
 
-      // Movement list updates trigger completion ring via renderMovementList -> updateCompletionRing
-      
-      // REHIT checkbox change listeners (chip click→toggle is handled by generic chip handler)
-      const rehit2 = document.getElementById('rehit2');
-      const rehit3 = document.getElementById('rehit3');
-      if (rehit2) rehit2.addEventListener('change', () => { syncAllChips(); updateRehitDisplay(); });
-      if (rehit3) rehit3.addEventListener('change', () => { syncAllChips(); updateRehitDisplay(); });
-
       // Initial update after app.js loads data
       setTimeout(() => {
         syncAllChips();
         updateAguaBar();
-        updateStepsBar();
-        updateRehitDisplay();
+        updateMovementEnergy();
         updateCompletionRingAurora();
         updatePhaseInfoFixed();
       }, 1500);
@@ -6511,12 +6616,12 @@
         { id: 'sleepSection', name: 'Sleep', icon: '🌙', visible: true, custom: false, group: 1 },
         { id: 'waterSection', name: 'Water', icon: '💧', visible: true, custom: false, group: 1 },
         { id: 'supplementsCard', name: 'Supplements', icon: '💊', visible: true, custom: false, group: 2 },
+        { id: 'movementEnergyCard', name: 'Movement Energy', icon: '🔥', visible: true, custom: false, group: 2 },
         { id: 'stepsCard', name: 'Steps', icon: '👟', visible: true, custom: false, group: 2 },
-        { id: 'rehitCard', name: 'REHIT', icon: '🚴', visible: false, custom: false },
+        { id: 'carolBikeCard', name: 'Carol Bike', icon: '🚴', visible: true, custom: false, group: 2 },
+        { id: 'dumbbellCard', name: 'Dumbbell Session', icon: '🏋️', visible: true, custom: false, group: 2 },
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'mealsSection', name: 'Meals', icon: '🍽️', visible: true, custom: false },
-        { id: 'movementSection', name: 'Movement Breaks', icon: '🚶', visible: false, custom: false },
-        { id: 'dumbbellSection', name: 'Dumbbell Session', icon: '🏋️', visible: true, custom: false, days: [1, 3, 6] },
         { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
         { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: false, custom: false },
         { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
@@ -10183,7 +10288,7 @@
               appSettings.dumbbellDays = selectedDays;
 
               // Update the dumbbell section's days in sections array
-              const sec = appSettings.sections.find(s => s.id === 'dumbbellSection');
+              const sec = appSettings.sections.find(s => s.id === 'dumbbellCard');
               if (sec) sec.days = selectedDays.length < 7 ? selectedDays : undefined;
 
               saveSettings(appSettings);

@@ -5983,6 +5983,12 @@ async function saveData(payload) {
     heartRate: "Heart Rate",
     emailSprints: "Email Sprints",
     stepsWeekOverride: "Steps Week Override",
+    carolBikeDuration: "Carol Bike Duration",
+    carolBikeCalories: "Carol Bike Calories",
+    movementCalorieTarget: "Movement Calorie Target",
+    movementCalorieTotal: "Movement Calorie Total",
+    stepsCalories: "Steps Calories",
+    dumbbellCalories: "Dumbbell Calories",
     // movements handled separately as array, not in daily normalization
   };
   const normalizedDaily = {};
@@ -6192,6 +6198,14 @@ function buildPayloadFromUI() {
     peakWatts: document.getElementById("peakWatts")?.value || "",
     wattSeconds: document.getElementById("wattSeconds")?.value || "",
     dumbbellDuration: document.getElementById("dumbbellDuration")?.value || "",
+
+    // Movement Energy fields
+    carolBikeDuration: document.getElementById("carolBikeDuration")?.value || "",
+    carolBikeCalories: document.getElementById("carolBikeCalories")?.value || "",
+    movementCalorieTarget: (typeof getMovementEnergyInfo === 'function') ? getMovementEnergyInfo().target : ((typeof appSettings !== 'undefined' && appSettings.activeCalorieGoal) || 500),
+    movementCalorieTotal: (typeof getMovementEnergyInfo === 'function') ? Math.round(getMovementEnergyInfo().totalBurned) : 0,
+    stepsCalories: (typeof getMovementEnergyInfo === 'function') ? Math.round(getMovementEnergyInfo().stepsCals) : 0,
+    dumbbellCalories: (typeof getMovementEnergyInfo === 'function') ? Math.round(getMovementEnergyInfo().dbCals) : 0,
 
     // Checkboxes
     inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
@@ -6682,6 +6696,12 @@ async function populateForm(data) {
     emailSprintCount = 0;
     updateEmailSprintDisplay();
 
+    // Clear Carol Bike fields
+    const carolBikeDurEl = document.getElementById("carolBikeDuration");
+    if (carolBikeDurEl) carolBikeDurEl.value = "";
+    const carolBikeCalEl = document.getElementById("carolBikeCalories");
+    if (carolBikeCalEl) carolBikeCalEl.value = "";
+
     // Load movements from API even if no daily data (Shortcuts may have logged them)
     const movArr = data?.movements;
     if (movArr && Array.isArray(movArr) && movArr.length > 0) {
@@ -6839,8 +6859,14 @@ async function populateForm(data) {
   const dumbbellDurationEl = document.getElementById("dumbbellDuration");
   if (dumbbellDurationEl) {
     dumbbellDurationEl.value = d["Dumbbell Duration"] ?? d["dumbbellDuration"] ?? "";
-    updateDumbbellCalsBurned();
+    if (typeof updateDumbbellCalsBurned === 'function') updateDumbbellCalsBurned();
   }
+
+  // Carol Bike fields
+  const carolBikeDurEl = document.getElementById("carolBikeDuration");
+  if (carolBikeDurEl) carolBikeDurEl.value = d["Carol Bike Duration"] ?? d["carolBikeDuration"] ?? "";
+  const carolBikeCalEl = document.getElementById("carolBikeCalories");
+  if (carolBikeCalEl) carolBikeCalEl.value = d["Carol Bike Calories"] ?? d["carolBikeCalories"] ?? "";
 
   // Checkboxes (API column names ?? payload key names)
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"] ?? d["inhalerMorning"]);
