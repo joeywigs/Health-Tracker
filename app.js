@@ -1999,9 +1999,7 @@ const GOALS = {
   sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "h", type: "daily-avg" },
   agua: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
   supps: { name: "Supplements", icon: "💊", target: 6, unit: "of 6", type: "daily-all" },
-  rehit: { name: "REHIT", icon: "🚴", target: 3, unit: "sessions", type: "weekly" },
   steps: { name: "Steps", icon: "👟", target: 5000, unit: "steps", type: "daily-avg" },
-  movement: { name: "Movement", icon: "🚶", target: 2, unit: "breaks", type: "daily-avg" },
   reading: { name: "Reading", icon: "📖", target: 60, unit: "min", type: "weekly" }
 };
 
@@ -3380,9 +3378,7 @@ function renderHealthGoals(stats) {
     ${renderGoalStatCard('Sleep', '🌙', safe(stats.sleep).pct, safe(stats.sleep).detail)}
     ${renderGoalStatCard('Water', '💧', safe(stats.agua).pct, safe(stats.agua).detail)}
     ${renderGoalStatCard('Supps', '💊', safe(stats.supps).pct, safe(stats.supps).detail)}
-    ${frozen ? '<div class="goal-stat-card" style="opacity:0.4;text-align:center;padding:12px"><span>🚴</span> REHIT paused</div>' : renderGoalStatCard('REHIT', '🚴', safe(stats.rehit).pct, safe(stats.rehit).detail)}
     ${renderGoalStatCard('Steps', '👟', safe(stats.steps).pct, safe(stats.steps).detail)}
-    ${frozen ? '<div class="goal-stat-card" style="opacity:0.4;text-align:center;padding:12px"><span>🚶</span> Movement paused</div>' : renderGoalStatCard('Movement', '🚶', safe(stats.movement).pct, safe(stats.movement).detail)}
     ${renderGoalStatCard('Reading', '📖', safe(stats.reading).pct, safe(stats.reading).detail)}
     ${customCards}
   `;
@@ -6195,6 +6191,7 @@ function buildPayloadFromUI() {
     calories: document.getElementById("calories")?.value || "",
     peakWatts: document.getElementById("peakWatts")?.value || "",
     wattSeconds: document.getElementById("wattSeconds")?.value || "",
+    dumbbellDuration: document.getElementById("dumbbellDuration")?.value || "",
 
     // Checkboxes
     inhalerMorning: !!document.getElementById("inhalerMorning")?.checked,
@@ -6838,6 +6835,12 @@ async function populateForm(data) {
 
   const wattSecondsEl = document.getElementById("wattSeconds");
   if (wattSecondsEl) wattSecondsEl.value = d["Watt Seconds"] ?? d["Watt-Seconds"] ?? d["wattSeconds"] ?? "";
+
+  const dumbbellDurationEl = document.getElementById("dumbbellDuration");
+  if (dumbbellDurationEl) {
+    dumbbellDurationEl.value = d["Dumbbell Duration"] ?? d["dumbbellDuration"] ?? "";
+    updateDumbbellCalsBurned();
+  }
 
   // Checkboxes (API column names ?? payload key names)
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"] ?? d["inhalerMorning"]);

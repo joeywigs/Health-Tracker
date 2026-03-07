@@ -4263,8 +4263,8 @@
     </div>
   </div>
 
-  <!-- Morning Habit Stack (outside form, matching bedtime pattern) -->
-  <div id="morningRoutine" class="morning-routine">
+  <!-- Morning Habit Stack (hidden) -->
+  <div id="morningRoutine" class="morning-routine" style="display:none!important">
     <div id="morningPrompt">
       <div class="morning-header">
         <div class="morning-title">
@@ -4308,10 +4308,11 @@
     </div>
   </div>
 
-  <!-- Standalone morning routine init: separate script so errors in the main script can't block it -->
+  <!-- Standalone morning routine init (disabled) -->
   <script>
   (function() {
     try {
+      return; // Morning routine hidden
       var key = 'morningState-' + new Date().toISOString().slice(0, 10);
       var state = localStorage.getItem(key);
       if (state === 'dismissed') return;
@@ -4521,6 +4522,7 @@
       <div class="progress-bar-h">
         <div class="progress-bar-h-fill" id="stepsBarFill"></div>
       </div>
+      <div id="activeCalSummary" style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.6"></div>
       <div class="card-avg">Week total: <input type="number" inputmode="numeric" id="stepsWeekTotal" class="inline-week-input" placeholder="--"> <span id="stepsWeekCompare"></span></div>
     </div>
 
@@ -4625,6 +4627,12 @@
     <div class="section" id="dumbbellSection">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#ffa552;--icon-glow:var(--glow-pink)">🏋️</div><span class="sec-name">Dumbbell Session</span></div><span class="sec-toggle">▼</span></div>
       <div class="sec-content">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:13px;color:var(--text-muted)">Duration</span>
+          <input type="number" inputmode="numeric" class="big-input" id="dumbbellDuration" placeholder="0" min="0" max="180" style="width:70px;font-size:16px;padding:6px 8px;text-align:center">
+          <span style="font-size:13px;color:var(--text-muted)">min</span>
+          <span id="dumbbellCalsBurned" style="font-size:12px;color:var(--accent-orange);margin-left:auto"></span>
+        </div>
         <div id="dumbbellExercises" class="dumbbell-exercises"></div>
       </div>
     </div>
@@ -4731,9 +4739,9 @@
     <div class="section"><div class="sec-name">Waist</div><canvas id="waistChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Sleep</div><canvas id="sleepChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Steps</div><canvas id="stepsChart" style="max-height:220px"></canvas></div>
-    <div class="section"><div class="sec-name">Movement Breaks</div><canvas id="movementChart" style="max-height:220px"></canvas></div>
-    <div class="section"><div class="sec-name">REHIT Calendar</div><div id="rehitCalendar" class="rehit-calendar"></div></div>
-    <div class="section"><div class="sec-name">Peak Watts</div><canvas id="peakWattsChart" style="max-height:220px"></canvas></div>
+    <div class="section" style="display:none"><div class="sec-name">Movement Breaks</div><canvas id="movementChart" style="max-height:220px"></canvas></div>
+    <div class="section" style="display:none"><div class="sec-name">REHIT Calendar</div><div id="rehitCalendar" class="rehit-calendar"></div></div>
+    <div class="section" style="display:none"><div class="sec-name">Peak Watts</div><canvas id="peakWattsChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Lean Mass %</div><canvas id="bodyCompChart" style="max-height:220px"></canvas></div>
     <div class="section"><div class="sec-name">Blood Pressure and Pulse</div><canvas id="bpChart" style="max-height:220px"></canvas></div>
   </div>
@@ -4864,8 +4872,8 @@
       </div>
     </div>
 
-    <!-- REHIT Calendar -->
-    <div class="section">
+    <!-- REHIT Calendar (hidden) -->
+    <div class="section" style="display:none">
       <div class="sec-name" style="margin-bottom:12px">REHIT Sessions</div>
       <div id="summaryRehitCalendar" class="rehit-calendar"></div>
     </div>
@@ -4898,7 +4906,7 @@
       <div id="nutritionStats" class="goal-stats-grid"></div>
     </div>
     
-    <div class="section">
+    <div class="section" style="display:none">
       <div class="sec-name" style="margin-bottom:12px">Mindfulness</div>
       <div id="mindfulnessStats" class="goal-stats-grid"></div>
     </div>
@@ -4994,16 +5002,17 @@
           <div class="goal-setting-row" data-ring-key="sleep"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_sleep" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🌙</span><span class="goal-setting-name">Sleep</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="sleepGoal" value="7" min="4" max="12"><span class="goal-unit">hrs</span><select class="goal-freq" id="sleepFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="agua"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_agua" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">💧</span><span class="goal-setting-name">Water</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="aguaGoal" value="6" min="1" max="20"><span class="goal-unit">glasses</span><select class="goal-freq" id="aguaFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="steps"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_steps" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">👟</span><span class="goal-setting-name">Steps</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="stepsGoal" value="5000" min="1000" max="50000" step="500"><span class="goal-unit">steps</span><select class="goal-freq" id="stepsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row" data-ring-key="movement"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_movement" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚶</span><span class="goal-setting-name">Movement</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10"><span class="goal-unit">sessions</span><select class="goal-freq" id="movementFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+          <div class="goal-setting-row"><div class="goal-setting-info" style="margin-left:36px"><span class="goal-setting-icon">🔥</span><span class="goal-setting-name">Active Calories</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="activeCalorieGoal" value="500" min="100" max="2000" step="50"><span class="goal-unit">kcal/day</span></div></div>
+          <div class="goal-setting-row" data-ring-key="movement" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_movement"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚶</span><span class="goal-setting-name">Movement</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10"><span class="goal-unit">sessions</span><select class="goal-freq" id="movementFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="meals"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_meals" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍽️</span><span class="goal-setting-name">Meals</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3"><span class="goal-unit">meals</span><select class="goal-freq" id="mealsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="snacks"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_snacks" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🥗</span><span class="goal-setting-name">Healthy Snacks</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2"><span class="goal-unit">checks</span><select class="goal-freq" id="snacksFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="noAlcohol"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_noAlcohol" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍺</span><span class="goal-setting-name">No Alcohol</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7"><span class="goal-unit">days</span><select class="goal-freq" id="noAlcoholFreq"><option value="weekly" selected>Weekly</option><option value="daily">Daily</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="supplements"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_supplements" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">💊</span><span class="goal-setting-name">Supplements</span></div><div class="goal-setting-controls"><span class="goal-unit" style="color:var(--text-muted);font-size:12px">All 6 daily</span></div></div>
-          <div class="goal-setting-row" data-ring-key="rehit2x10"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit2x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 2x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit2x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
-          <div class="goal-setting-row" data-ring-key="rehit3x10"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit3x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 3x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit3x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="rehit2x10" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit2x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 2x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit2x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="rehit3x10" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit3x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 3x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit3x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="reading"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_reading"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">📖</span><span class="goal-setting-name">Reading</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="readingGoal" value="60" min="5" max="500" step="5"><span class="goal-unit">min</span><select class="goal-freq" id="readingFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
-          <div class="goal-setting-row" data-ring-key="meditation"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_meditation"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🧘</span><span class="goal-setting-name">Meditation</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="meditationGoal" value="3" min="1" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="meditationFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
-          <div class="goal-setting-row" data-ring-key="emailSprints"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_emailSprints" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">📧</span><span class="goal-setting-name">Email Sprints</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10"><span class="goal-unit">sprints</span><select class="goal-freq" id="emailSprintFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select><span class="goal-unit" style="margin-left:6px;border-left:1px solid var(--border);padding-left:8px">@</span><input type="number" class="goal-input" id="emailSprintDuration" value="2" min="1" max="30" style="width:45px"><span class="goal-unit">min</span></div></div>
+          <div class="goal-setting-row" data-ring-key="meditation" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_meditation"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🧘</span><span class="goal-setting-name">Meditation</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="meditationGoal" value="3" min="1" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="meditationFreq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="emailSprints" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_emailSprints"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">📧</span><span class="goal-setting-name">Email Sprints</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="emailSprintGoal" value="3" min="1" max="10"><span class="goal-unit">sprints</span><select class="goal-freq" id="emailSprintFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select><span class="goal-unit" style="margin-left:6px;border-left:1px solid var(--border);padding-left:8px">@</span><input type="number" class="goal-input" id="emailSprintDuration" value="2" min="1" max="30" style="width:45px"><span class="goal-unit">min</span></div></div>
         </div>
       </div>
       <div class="section">
@@ -5079,13 +5088,13 @@
           <div style="display:flex;gap:8px;margin-top:12px"><input type="text" class="input" id="newBedtimeItem" placeholder="New item name..." style="flex:1"><button type="button" class="btn btn-primary" id="addBedtimeItemBtn" style="padding:8px 16px">Add</button></div>
         </div>
       </div>
-      <div class="section">
+      <div class="section" style="display:none">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffb74d;--icon-end:#ff8a65;--icon-glow:rgba(255,183,77,0.4)">☀️</div><span class="sec-name">Morning Habit Stack</span></div></div>
         <div class="sec-content">
           <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Shows when you choose to start your morning routine. Drag to reorder.</p>
           <div id="morningItemsList" class="section-list"></div>
           <div style="display:flex;gap:8px;margin-top:12px"><input type="text" class="input" id="newMorningItem" placeholder="New item name..." style="flex:1"><button type="button" class="btn btn-primary" id="addMorningItemBtn" style="padding:8px 16px">Add</button></div>
-          <button type="button" id="showMorningRoutineBtn" class="btn" onclick="resetMorningRoutine()" style="margin-top:16px;width:100%;padding:10px;background:rgba(255,183,77,0.15);border:1px solid rgba(255,183,77,0.3);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer">☀️ Show Morning Routine Again</button>
+          <button type="button" id="showMorningRoutineBtn" class="btn" onclick="resetMorningRoutine()" style="display:none;margin-top:16px;width:100%;padding:10px;background:rgba(255,183,77,0.15);border:1px solid rgba(255,183,77,0.3);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer">☀️ Show Morning Routine Again</button>
         </div>
       </div>
     </div>
@@ -5431,11 +5440,12 @@
         if ((aguaEl ? parseInt(aguaEl.textContent) || 0 : 0) >= getGoal('aguaGoal', 6)) checked++;
       }
 
-      // Steps
+      // Steps (uses adjusted goal from active calorie budget)
       if (on('steps')) {
         total++;
         const stepsVal = parseInt(document.getElementById('steps')?.value) || 0;
-        if (stepsVal >= getGoal('stepsGoal', 7500)) checked++;
+        const adjGoal = (typeof getAdjustedStepGoal === 'function') ? getAdjustedStepGoal().adjustedSteps : getGoal('stepsGoal', 7500);
+        if (stepsVal >= (adjGoal || getGoal('stepsGoal', 7500))) checked++;
       }
 
       // Movement
@@ -6008,15 +6018,74 @@
       fill.style.width = pct + '%';
     }
 
-    // Steps progress bar
+    // Watt-seconds to kcal conversion (CAROL Bike)
+    // CAROL documentation: approx 1 watt-second = 0.001 kcal (i.e. divide by 1000)
+    function wattSecondsToKcal(ws) {
+      return (parseFloat(ws) || 0) / 1000;
+    }
+
+    // Dumbbell duration to kcal (4 cal/min)
+    function dumbbellDurationToKcal(minutes) {
+      return (parseFloat(minutes) || 0) * 4;
+    }
+
+    // Update dumbbell calories display
+    function updateDumbbellCalsBurned() {
+      const el = document.getElementById('dumbbellCalsBurned');
+      const dur = parseFloat(document.getElementById('dumbbellDuration')?.value) || 0;
+      if (el) {
+        el.textContent = dur > 0 ? `~${Math.round(dumbbellDurationToKcal(dur))} cal` : '';
+      }
+    }
+    window.updateDumbbellCalsBurned = updateDumbbellCalsBurned;
+
+    // Calculate adjusted step goal based on active calorie budget
+    function getAdjustedStepGoal() {
+      const calGoal = (typeof appSettings !== 'undefined' && appSettings.activeCalorieGoal) ? appSettings.activeCalorieGoal : 500;
+      const KCAL_PER_STEP = 0.0295;
+
+      // CAROL Bike calories from watt-seconds
+      const ws = parseFloat(document.getElementById('wattSeconds')?.value) || 0;
+      const carolCals = wattSecondsToKcal(ws);
+
+      // Dumbbell calories from duration
+      const dbMin = parseFloat(document.getElementById('dumbbellDuration')?.value) || 0;
+      const dbCals = dumbbellDurationToKcal(dbMin);
+
+      const exerciseCals = carolCals + dbCals;
+      const remainingCals = Math.max(0, calGoal - exerciseCals);
+      const adjustedSteps = Math.round(remainingCals / KCAL_PER_STEP);
+
+      return { calGoal, carolCals, dbCals, exerciseCals, remainingCals, adjustedSteps };
+    }
+    window.getAdjustedStepGoal = getAdjustedStepGoal;
+
+    // Steps progress bar (uses adjusted step goal from active calorie budget)
     function updateStepsBar(){
       const stepsInput = document.getElementById('steps');
       const fill = document.getElementById('stepsBarFill');
       if(!stepsInput || !fill) return;
       const steps = parseInt(stepsInput.value) || 0;
-      const goal = typeof getGoalForToday === 'function' ? getGoalForToday('stepsGoal', 7500) : ((typeof appSettings !== 'undefined' && appSettings.stepsGoal) ? appSettings.stepsGoal : 7500);
+
+      const info = getAdjustedStepGoal();
+      const goal = info.adjustedSteps || ((typeof getGoalForToday === 'function') ? getGoalForToday('stepsGoal', 7500) : 7500);
       const pct = Math.min(100, (steps / goal) * 100);
       fill.style.width = pct + '%';
+
+      // Update active calorie summary
+      const summaryEl = document.getElementById('activeCalSummary');
+      if (summaryEl) {
+        const stepCals = Math.round(steps * 0.0295);
+        const totalCals = Math.round(info.exerciseCals + stepCals);
+        const parts = [];
+        if (info.carolCals > 0) parts.push(`CAROL ${Math.round(info.carolCals)}`);
+        if (info.dbCals > 0) parts.push(`Weights ${Math.round(info.dbCals)}`);
+        parts.push(`Steps ${stepCals}`);
+        summaryEl.innerHTML = `🔥 ${totalCals}/${info.calGoal} kcal` +
+          (parts.length > 1 ? ` <span style="opacity:0.7">(${parts.join(' + ')})</span>` : '') +
+          `<br>Step goal: ${goal.toLocaleString()} steps` +
+          (info.exerciseCals > 0 ? ` <span style="opacity:0.7">(adjusted)</span>` : '');
+      }
     }
     
     // Hook populateForm - wait for app.js to define it first
@@ -6116,6 +6185,20 @@
       if (stepsInput) {
         stepsInput.addEventListener('input', () => { updateStepsBar(); updateCompletionRingAurora(); });
         stepsInput.addEventListener('change', () => { updateStepsBar(); updateCompletionRingAurora(); });
+      }
+
+      // Watt-seconds input → recalculate step goal
+      const wsInput = document.getElementById('wattSeconds');
+      if (wsInput) {
+        wsInput.addEventListener('input', () => updateStepsBar());
+        wsInput.addEventListener('change', () => updateStepsBar());
+      }
+
+      // Dumbbell duration input → recalculate step goal + show cals
+      const dbDurInput = document.getElementById('dumbbellDuration');
+      if (dbDurInput) {
+        dbDurInput.addEventListener('input', () => { updateDumbbellCalsBurned(); updateStepsBar(); });
+        dbDurInput.addEventListener('change', () => { updateDumbbellCalsBurned(); updateStepsBar(); });
       }
 
       // Sleep input listener (for completion ring)
@@ -6374,6 +6457,7 @@
       sleepGoal: 7,
       aguaGoal: 6,
       stepsGoal: 5000,
+      activeCalorieGoal: 500,
       movementGoal: 2,
       mealsGoal: 2,
       snacksGoal: 2,
@@ -6393,7 +6477,7 @@
       ],
       dumbbellGoal: 3, // sessions per week
       dumbbellFreq: 'weekly',
-      dumbbellDays: [0, 1, 2, 3, 4, 5, 6], // all days by default
+      dumbbellDays: [1, 3, 6], // Mon, Wed, Sat
       // Goal frequencies
       sleepFreq: 'daily',
       aguaFreq: 'daily',
@@ -6412,12 +6496,12 @@
         sleep: true,
         agua: true,
         steps: true,
-        movement: true,
+        movement: false,
         meals: true,
         snacks: true,
         noAlcohol: true,
         supplements: true,
-        emailSprints: true,
+        emailSprints: false,
         rehit2x10: false,
         rehit3x10: false,
         reading: false,
@@ -6428,16 +6512,16 @@
         { id: 'waterSection', name: 'Water', icon: '💧', visible: true, custom: false, group: 1 },
         { id: 'supplementsCard', name: 'Supplements', icon: '💊', visible: true, custom: false, group: 2 },
         { id: 'stepsCard', name: 'Steps', icon: '👟', visible: true, custom: false, group: 2 },
-        { id: 'rehitCard', name: 'REHIT', icon: '🚴', visible: true, custom: false },
+        { id: 'rehitCard', name: 'REHIT', icon: '🚴', visible: false, custom: false },
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'mealsSection', name: 'Meals', icon: '🍽️', visible: true, custom: false },
-        { id: 'movementSection', name: 'Movement Breaks', icon: '🚶', visible: true, custom: false },
-        { id: 'dumbbellSection', name: 'Dumbbell Session', icon: '🏋️', visible: true, custom: false },
+        { id: 'movementSection', name: 'Movement Breaks', icon: '🚶', visible: false, custom: false },
+        { id: 'dumbbellSection', name: 'Dumbbell Session', icon: '🏋️', visible: true, custom: false, days: [1, 3, 6] },
         { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
-        { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: true, custom: false },
+        { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: false, custom: false },
         { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
         { id: 'bloodPressureSection', name: 'Blood Pressure', icon: '❤️', visible: true, custom: false },
-        { id: 'emailSprintSection', name: 'Email Sprints', icon: '📧', visible: true, custom: false },
+        { id: 'emailSprintSection', name: 'Email Sprints', icon: '📧', visible: false, custom: false },
         { id: 'todoSection', name: 'To-Do', icon: '📋', visible: true, custom: false },
       ]
     };
@@ -6595,6 +6679,7 @@
       document.getElementById('sleepGoal').value = appSettings.sleepGoal ?? 7;
       document.getElementById('aguaGoal').value = appSettings.aguaGoal ?? 6;
       document.getElementById('stepsGoal').value = appSettings.stepsGoal ?? 5000;
+      document.getElementById('activeCalorieGoal').value = appSettings.activeCalorieGoal ?? 500;
       document.getElementById('movementGoal').value = appSettings.movementGoal ?? 2;
       document.getElementById('mealsGoal').value = appSettings.mealsGoal ?? 2;
       document.getElementById('snacksGoal').value = appSettings.snacksGoal ?? 2;
@@ -7489,6 +7574,7 @@
       { id: 'sleepGoal', key: 'sleepGoal', default: 7, name: 'Sleep', updateRing: true },
       { id: 'aguaGoal', key: 'aguaGoal', default: 6, name: 'Water', updateRing: true, updateAguaBar: true },
       { id: 'stepsGoal', key: 'stepsGoal', default: 5000, name: 'Steps', updateRing: true, updateStepsBar: true },
+      { id: 'activeCalorieGoal', key: 'activeCalorieGoal', default: 500, name: 'Active Calories', updateStepsBar: true },
       { id: 'movementGoal', key: 'movementGoal', default: 2, name: 'Movement', updateRing: true },
       { id: 'mealsGoal', key: 'mealsGoal', default: 2, name: 'Meals', updateRing: true },
       { id: 'snacksGoal', key: 'snacksGoal', default: 2, name: 'Snacks', updateRing: true },
