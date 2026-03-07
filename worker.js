@@ -430,9 +430,7 @@ async function saveDay(data, env, corsHeaders) {
     "Grey's Inhaler Morning": data.inhalerMorning || false,
     "Grey's Inhaler Evening": data.inhalerEvening || false,
     "5 min Multiplication": data.multiplication || false,
-    // Steps are ONLY set by the iOS shortcut via updateSteps.
-    // Preserve whatever the shortcut wrote; the app never overwrites this.
-    "Steps": existing["Steps"] ?? "",
+    "Steps": data.steps || "",
     "REHIT 2x10": data.rehit || "",
     "Fitness Score": data.fitnessScore || "",
     "Peak Watts": data.peakWatts || "",
