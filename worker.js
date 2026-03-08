@@ -1110,8 +1110,11 @@ async function importSleepSamples(body, env, corsHeaders) {
     return null;
   }
 
-  // Parse, validate, and classify all samples
-  const parsed = [];
+  // Group durations by date (using wake-up time in Central Time)
+  // Sleep samples are not deduplicated — unlike active energy, sleep phases
+  // are typically recorded by a single device (Apple Watch) and don't overlap.
+  const dayBuckets = {}; // { "M/D/YY": { core: hours, deep: hours, rem: hours, awake: hours } }
+
   for (const s of samples) {
     const startDate = new Date(s.start);
     const endDate = new Date(s.end);
@@ -1123,52 +1126,13 @@ async function importSleepSamples(body, env, corsHeaders) {
     const durationHours = (endDate - startDate) / 3600000;
     if (durationHours <= 0 || durationHours > 24) continue; // Skip invalid durations
 
-    parsed.push({ startMs: startDate.getTime(), endMs: endDate.getTime(), stage });
-  }
-
-  // Deduplicate overlapping samples within the same stage using interval merging.
-  // Sources are often blank, so we can't filter by source — instead merge
-  // overlapping time ranges within each stage into a union, then sum durations.
-  const byStage = {};
-  for (const p of parsed) {
-    if (!byStage[p.stage]) byStage[p.stage] = [];
-    byStage[p.stage].push(p);
-  }
-
-  const deduped = [];
-  for (const stage of Object.keys(byStage)) {
-    const items = byStage[stage];
-    items.sort((a, b) => a.startMs - b.startMs);
-
-    // Merge overlapping intervals
-    let current = { ...items[0] };
-    for (let i = 1; i < items.length; i++) {
-      if (items[i].startMs <= current.endMs) {
-        // Overlapping or adjacent — extend the end if needed
-        current.endMs = Math.max(current.endMs, items[i].endMs);
-      } else {
-        // No overlap — push merged interval, start new one
-        deduped.push(current);
-        current = { ...items[i] };
-      }
-    }
-    deduped.push(current);
-  }
-
-  // Group durations by date (using wake-up time in Central Time)
-  const dayBuckets = {}; // { "M/D/YY": { core: hours, deep: hours, rem: hours, awake: hours } }
-
-  for (const s of deduped) {
-    const endDate = new Date(s.endMs);
-    const durationHours = (s.endMs - s.startMs) / 3600000;
-
     // Attribute to the wake-up date (end time) in Central Time
     const dateKey = formatDateForKV(endDate);
 
     if (!dayBuckets[dateKey]) {
       dayBuckets[dateKey] = { core: 0, deep: 0, rem: 0, awake: 0 };
     }
-    dayBuckets[dateKey][s.stage] += durationHours;
+    dayBuckets[dateKey][stage] += durationHours;
   }
 
   const dates = Object.keys(dayBuckets);
@@ -1209,11 +1173,9 @@ async function importSleepSamples(body, env, corsHeaders) {
 
   return jsonResponse({
     success: true,
-    message: `Imported sleep data for ${results.length} days from ${samples.length} samples (${deduped.length} after dedup)`,
+    message: `Imported sleep data for ${results.length} days from ${samples.length} samples`,
     daysUpdated: results.length,
     totalSamples: samples.length,
-    dedupedSamples: deduped.length,
-    duplicatesRemoved: parsed.length - deduped.length,
     days: results
   }, 200, corsHeaders);
 }
