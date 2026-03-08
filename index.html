@@ -6862,10 +6862,10 @@
         meditation: false,
       },
       sections: [
-        { id: 'sleepSection', name: 'Sleep', icon: '🌙', visible: true, custom: false, group: 1 },
+        { id: 'sleepSection', name: 'Sleep', icon: '🌙', visible: true, custom: false, group: 1, size: 2 },
         { id: 'waterSection', name: 'Water', icon: '💧', visible: true, custom: false, group: 1 },
-        { id: 'supplementsCard', name: 'Supplements', icon: '💊', visible: true, custom: false, group: 2 },
-        { id: 'movementEnergyCard', name: 'Movement', icon: '~', visible: true, custom: false, group: 2 },
+        { id: 'supplementsCard', name: 'Supplements', icon: '💊', visible: true, custom: false, group: 1 },
+        { id: 'movementEnergyCard', name: 'Movement', icon: '~', visible: true, custom: false },
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'mealsSection', name: 'Meals', icon: '🍽️', visible: true, custom: false },
         { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
@@ -6894,7 +6894,7 @@
         const result = await settingsApiGet('settings_load');
         if (result.settings) {
           // Merge KV settings with defaults
-          const kvSettings = { ...defaultSettings, ...result.settings };
+          const kvSettings = migrateSectionLayout({ ...defaultSettings, ...result.settings });
           // Update localStorage cache
           localStorage.setItem('elevateSettings', JSON.stringify(kvSettings));
           return kvSettings;
@@ -6905,9 +6905,25 @@
       return null;
     }
 
+    // Migrate sections: group sleep + water + supplements together, sleep size 2
+    function migrateSectionLayout(settings) {
+      if (!settings.sections) return settings;
+      const sleepWaterSuppsGroup = settings.sections.find(s => s.id === 'sleepSection')?.group;
+      const sleep = settings.sections.find(s => s.id === 'sleepSection');
+      const water = settings.sections.find(s => s.id === 'waterSection');
+      const supps = settings.sections.find(s => s.id === 'supplementsCard');
+      if (sleep && water && supps && sleep.size !== 2) {
+        const groupId = sleep.group || Math.max(0, ...settings.sections.map(s => s.group || 0)) + 1;
+        sleep.group = groupId; sleep.size = 2;
+        water.group = groupId; delete water.size;
+        supps.group = groupId; delete supps.size;
+      }
+      return settings;
+    }
+
     // Sync wrapper for initial load
     function loadSettings() {
-      return loadSettingsFromLocal();
+      return migrateSectionLayout(loadSettingsFromLocal());
     }
 
     // Save settings to both KV and localStorage
