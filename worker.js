@@ -1126,9 +1126,9 @@ async function importSleepSamples(body, env, corsHeaders) {
     parsed.push({ startMs: startDate.getTime(), endMs: endDate.getTime(), stage });
   }
 
-  // Deduplicate overlapping samples within the same stage.
-  // Sources are often blank, so we can't filter by source — instead remove
-  // samples whose time range is fully contained within another same-stage sample.
+  // Deduplicate overlapping samples within the same stage using interval merging.
+  // Sources are often blank, so we can't filter by source — instead merge
+  // overlapping time ranges within each stage into a union, then sum durations.
   const byStage = {};
   for (const p of parsed) {
     if (!byStage[p.stage]) byStage[p.stage] = [];
@@ -1138,29 +1138,21 @@ async function importSleepSamples(body, env, corsHeaders) {
   const deduped = [];
   for (const stage of Object.keys(byStage)) {
     const items = byStage[stage];
-    // Sort by start time, then longer duration first
-    items.sort((a, b) => a.startMs - b.startMs || (b.endMs - b.startMs) - (a.endMs - a.startMs));
+    items.sort((a, b) => a.startMs - b.startMs);
 
-    for (const item of items) {
-      let dominated = false;
-      for (const kept of deduped) {
-        if (kept.stage !== stage) continue;
-        // If this sample is fully contained within a kept sample, skip it
-        if (item.startMs >= kept.startMs && item.endMs <= kept.endMs) {
-          dominated = true;
-          break;
-        }
-      }
-      if (!dominated) {
-        // Remove any previously kept same-stage samples fully contained within this one
-        for (let i = deduped.length - 1; i >= 0; i--) {
-          if (deduped[i].stage === stage && deduped[i].startMs >= item.startMs && deduped[i].endMs <= item.endMs) {
-            deduped.splice(i, 1);
-          }
-        }
-        deduped.push(item);
+    // Merge overlapping intervals
+    let current = { ...items[0] };
+    for (let i = 1; i < items.length; i++) {
+      if (items[i].startMs <= current.endMs) {
+        // Overlapping or adjacent — extend the end if needed
+        current.endMs = Math.max(current.endMs, items[i].endMs);
+      } else {
+        // No overlap — push merged interval, start new one
+        deduped.push(current);
+        current = { ...items[i] };
       }
     }
+    deduped.push(current);
   }
 
   // Group durations by date (using wake-up time in Central Time)
