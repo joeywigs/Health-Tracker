@@ -844,33 +844,34 @@ async function logSleep(body, env, corsHeaders) {
     if (isNaN(val)) return NaN;
     return val > 24 ? val / 3600 : val;
   };
+  const round1 = (v) => parseFloat(v.toFixed(1));
 
   const updates = {};
 
   // Awake time (hours)
   const awake = toHours(parseFloat(body.awake ?? body.sleepAwake));
-  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake * 10) / 10;
+  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = round1(awake);
 
   // Core sleep (hours)
   const core = toHours(parseFloat(body.core ?? body.sleepCore));
-  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = Math.round(core * 10) / 10;
+  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = round1(core);
 
   // Deep sleep (hours)
   const deep = toHours(parseFloat(body.deep ?? body.sleepDeep));
-  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = Math.round(deep * 10) / 10;
+  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = round1(deep);
 
   // REM sleep (hours)
   const rem = toHours(parseFloat(body.rem ?? body.sleepREM));
-  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem * 10) / 10;
+  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = round1(rem);
 
   // Total sleep: prefer sum of stages (actual sleep) over the hours field
   // (which may represent "time in bed" including awake time)
   const stageSum = (updates["Sleep Core"] || 0) + (updates["Sleep Deep"] || 0) + (updates["Sleep REM"] || 0);
   if (stageSum > 0) {
-    updates["Hours of Sleep"] = Math.round(stageSum * 10) / 10;
+    updates["Hours of Sleep"] = round1(stageSum);
   } else {
     const hours = toHours(parseFloat(body.hours ?? body.duration ?? body.sleepHours));
-    if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
+    if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = round1(hours);
   }
 
   if (Object.keys(updates).length === 0) {
