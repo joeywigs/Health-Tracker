@@ -320,6 +320,13 @@ async function handlePost(request, env, corsHeaders) {
     return await saveSettings(body.settings, env, corsHeaders);
   }
 
+  if (action === "analyze_meal") {
+    if (!body.text) {
+      return jsonResponse({ error: true, message: "Missing text" }, 400, corsHeaders);
+    }
+    return await analyzeMeal(body.text, env, corsHeaders);
+  }
+
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
 }
 
@@ -471,6 +478,7 @@ async function saveDay(data, env, corsHeaders) {
     "Healthy Night Snacks": data.nightSnacks || data.healthyNightSnacks || false,
     "No Alcohol": data.noAlcohol || false,
     "Protein": parseInt(data.protein) || 0,
+    "Meal Entries": data.mealEntries || existing["Meal Entries"] || "[]",
     // Other
     "Meditation": data.meditation || false,
     "Email Sprints": parseInt(data.emailSprints) || 0,
@@ -836,33 +844,34 @@ async function logSleep(body, env, corsHeaders) {
     if (isNaN(val)) return NaN;
     return val > 24 ? val / 3600 : val;
   };
+  const round1 = (v) => parseFloat(v.toFixed(2));
 
   const updates = {};
 
   // Awake time (hours)
   const awake = toHours(parseFloat(body.awake ?? body.sleepAwake));
-  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = Math.round(awake * 10) / 10;
+  if (!isNaN(awake) && awake >= 0) updates["Sleep Awake"] = round1(awake);
 
   // Core sleep (hours)
   const core = toHours(parseFloat(body.core ?? body.sleepCore));
-  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = Math.round(core * 10) / 10;
+  if (!isNaN(core) && core >= 0) updates["Sleep Core"] = round1(core);
 
   // Deep sleep (hours)
   const deep = toHours(parseFloat(body.deep ?? body.sleepDeep));
-  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = Math.round(deep * 10) / 10;
+  if (!isNaN(deep) && deep >= 0) updates["Sleep Deep"] = round1(deep);
 
   // REM sleep (hours)
   const rem = toHours(parseFloat(body.rem ?? body.sleepREM));
-  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = Math.round(rem * 10) / 10;
+  if (!isNaN(rem) && rem >= 0) updates["Sleep REM"] = round1(rem);
 
   // Total sleep: prefer sum of stages (actual sleep) over the hours field
   // (which may represent "time in bed" including awake time)
   const stageSum = (updates["Sleep Core"] || 0) + (updates["Sleep Deep"] || 0) + (updates["Sleep REM"] || 0);
   if (stageSum > 0) {
-    updates["Hours of Sleep"] = Math.round(stageSum * 10) / 10;
+    updates["Hours of Sleep"] = round1(stageSum);
   } else {
     const hours = toHours(parseFloat(body.hours ?? body.duration ?? body.sleepHours));
-    if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = Math.round(hours * 10) / 10;
+    if (!isNaN(hours) && hours > 0) updates["Hours of Sleep"] = round1(hours);
   }
 
   if (Object.keys(updates).length === 0) {
@@ -988,14 +997,14 @@ async function importSleepSamples(body, env, corsHeaders) {
     const existing = await env.HABIT_DATA.get(`daily:${dateKey}`, "json") || {};
 
     const updates = {};
-    if (bucket.awake > 0) updates["Sleep Awake"] = Math.round(bucket.awake * 10) / 10;
-    if (bucket.core > 0) updates["Sleep Core"] = Math.round(bucket.core * 10) / 10;
-    if (bucket.deep > 0) updates["Sleep Deep"] = Math.round(bucket.deep * 10) / 10;
-    if (bucket.rem > 0) updates["Sleep REM"] = Math.round(bucket.rem * 10) / 10;
+    if (bucket.awake > 0) updates["Sleep Awake"] = Math.round(bucket.awake * 100) / 100;
+    if (bucket.core > 0) updates["Sleep Core"] = Math.round(bucket.core * 100) / 100;
+    if (bucket.deep > 0) updates["Sleep Deep"] = Math.round(bucket.deep * 100) / 100;
+    if (bucket.rem > 0) updates["Sleep REM"] = Math.round(bucket.rem * 100) / 100;
 
     const totalSleep = (bucket.core + bucket.deep + bucket.rem);
     if (totalSleep > 0) {
-      updates["Hours of Sleep"] = Math.round(totalSleep * 10) / 10;
+      updates["Hours of Sleep"] = Math.round(totalSleep * 100) / 100;
     }
 
     if (Object.keys(updates).length > 0) {
@@ -2237,4 +2246,53 @@ function getOccurrencesOnDate(ev, targetDate, tz) {
 
 function parseYMD(s) {
   return new Date(Date.UTC(parseInt(s.slice(0,4)), parseInt(s.slice(4,6)) - 1, parseInt(s.slice(6,8))));
+}
+
+// ===== AI Meal Analyzer =====
+async function analyzeMeal(text, env, corsHeaders) {
+  const apiKey = env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return jsonResponse({ error: true, message: "ANTHROPIC_API_KEY not configured" }, 500, corsHeaders);
+  }
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 256,
+        messages: [{
+          role: "user",
+          content: `Estimate the total calories and protein for this meal. Return ONLY a JSON object with "calories" (number) and "protein" (number, in grams). No explanation, no markdown, just the JSON object.\n\nMeal: ${text}`
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return jsonResponse({ error: true, message: `Claude API error: ${response.status} ${errText.slice(0, 200)}` }, 502, corsHeaders);
+    }
+
+    const result = await response.json();
+    const content = result.content?.[0]?.text || "";
+
+    // Parse the JSON from Claude's response
+    const match = content.match(/\{[\s\S]*?\}/);
+    if (!match) {
+      return jsonResponse({ error: true, message: "Could not parse response", raw: content }, 502, corsHeaders);
+    }
+
+    const parsed = JSON.parse(match[0]);
+    return jsonResponse({
+      calories: Math.round(parsed.calories || 0),
+      protein: Math.round(parsed.protein || 0)
+    }, 200, corsHeaders);
+  } catch (err) {
+    return jsonResponse({ error: true, message: `Meal analysis failed: ${err.message}` }, 500, corsHeaders);
+  }
 }
