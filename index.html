@@ -1247,10 +1247,17 @@
     }
 
     /* Steps to go display */
+    .steps-ring-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .steps-ring-svg { flex-shrink: 0; }
+    .steps-ring-info { flex: 1; min-width: 0; }
     .steps-to-go {
       font-size: 12px;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 2px;
     }
     .steps-to-go .steps-remaining {
       font-family: 'Inter', sans-serif;
@@ -2153,6 +2160,118 @@
     .protein-add-btn:active { transform: scale(0.9); }
     .protein-total { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; color: var(--accent-teal); white-space: nowrap; margin-left: auto; }
     .protein-unit { font-size: 14px; font-weight: 500; color: var(--text-dim); margin-left: 2px; }
+
+    /* Meal / Nutrition Card */
+    .card.nutrition { --accent-start: var(--accent-teal); }
+    .meal-totals-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .meal-total-item { display: flex; flex-direction: column; }
+    .meal-total-value {
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .meal-total-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 2px;
+    }
+    .meal-log {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .meal-entry {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      position: relative;
+    }
+    .meal-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .meal-entry-desc {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      flex: 1;
+      line-height: 1.3;
+    }
+    .meal-entry-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 4px;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+    }
+    .meal-entry-delete:hover { opacity: 1; color: var(--accent-pink); }
+    .meal-entry-macros {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .meal-entry-macros span { font-weight: 600; color: var(--text-dim); }
+    .meal-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .meal-textarea {
+      flex: 1;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      resize: none;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .meal-textarea:focus { border-color: var(--accent-teal); }
+    .meal-textarea::placeholder { color: var(--text-muted); }
+    .meal-analyze-btn {
+      background: var(--accent-teal);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      min-height: 36px;
+    }
+    .meal-analyze-btn:hover { opacity: 0.85; }
+    .meal-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .meal-btn-spinner {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    body.day-mode .meal-textarea { background: #f3f4f6; border-color: rgba(0,0,0,0.15); }
+    body.day-mode .meal-entry { background: #f3f4f6; border-color: rgba(0,0,0,0.1); }
 
     /* Sections */
     .section {
@@ -4621,11 +4740,16 @@
       <!-- Steps sub-section -->
       <div class="movement-subsection" id="stepsCard">
         <div class="movement-subsection-label">Steps</div>
-        <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0" style="font-size:22px"><span class="card-unit">steps</span></div>
-        <div class="progress-bar-h">
-          <div class="progress-bar-h-fill" id="stepsBarFill"></div>
+        <div class="steps-ring-row">
+          <svg class="steps-ring-svg" width="44" height="44" viewBox="0 0 44 44">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="3"/>
+            <circle id="stepsRingProgress" cx="22" cy="22" r="18" fill="none" stroke="var(--accent-pink)" stroke-width="3" stroke-linecap="round" stroke-dasharray="113.1" stroke-dashoffset="113.1" transform="rotate(-90 22 22)" style="transition: stroke-dashoffset 0.4s ease"/>
+          </svg>
+          <div class="steps-ring-info">
+            <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0" style="font-size:22px"><span class="card-unit">steps</span></div>
+            <div class="steps-to-go" id="stepsToGoDisplay"></div>
+          </div>
         </div>
-        <div class="steps-to-go" id="stepsToGoDisplay"></div>
         <div class="card-avg">Week total: <input type="number" inputmode="numeric" id="stepsWeekTotal" class="inline-week-input" placeholder="--"> <span id="stepsWeekCompare"></span></div>
       </div>
 
@@ -4671,28 +4795,28 @@
       </div>
     </div>
 
-    <div class="section" id="mealsSection">
-      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">🍽️</div><span class="sec-name">Meals</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content">
-        <div class="mini-supps-grid three-col" style="margin-bottom:10px">
-          <div class="mini-supp"><input type="checkbox" id="breakfast"><span>Breakfast</span></div>
-          <div class="mini-supp"><input type="checkbox" id="lunch"><span>Lunch</span></div>
-          <div class="mini-supp"><input type="checkbox" id="dinner"><span>Dinner</span></div>
-        </div>
-        <div class="mini-supps-grid three-col">
-          <div class="mini-supp"><input type="checkbox" id="daySnacks"><span>Day Snacks</span></div>
-          <div class="mini-supp"><input type="checkbox" id="nightSnacks"><span>Night Snacks</span></div>
-          <div class="mini-supp"><input type="checkbox" id="noAlcohol"><span>No Alcohol</span></div>
-        </div>
-        <div class="protein-row">
-          <span class="protein-label">Protein</span>
-          <div class="protein-input-wrap">
-            <input type="number" inputmode="numeric" class="protein-input" id="proteinInput" placeholder="g" min="0">
-            <button type="button" class="protein-add-btn" onclick="window.addProtein()">+</button>
-          </div>
-          <div class="protein-total"><span id="proteinTotal">0</span><span class="protein-unit">g</span></div>
-        </div>
+    <div class="card nutrition" id="mealsSection" style="--accent-start:var(--accent-teal)">
+      <div class="card-head"><div class="card-icon">🍽️</div><div class="card-title">Nutrition</div></div>
+      <div class="meal-totals-row">
+        <div class="meal-total-item"><span class="meal-total-value" id="mealCalorieTotal">0</span><span class="meal-total-label">kcal</span></div>
+        <div class="meal-total-item"><span class="meal-total-value" id="mealProteinTotal">0</span><span class="meal-total-label">g protein</span></div>
+        <div class="meal-total-item"><span class="meal-total-value" id="mealEntryCount">0</span><span class="meal-total-label">entries</span></div>
       </div>
+      <div class="meal-log" id="mealLog"></div>
+      <div class="meal-input-row">
+        <textarea class="meal-textarea" id="mealInput" placeholder="What did you eat? e.g. 2 eggs, toast with butter, coffee with milk" rows="2"></textarea>
+        <button type="button" class="meal-analyze-btn" id="mealAnalyzeBtn" onclick="window.analyzeMeal()">
+          <span class="meal-btn-text">Analyze</span>
+          <span class="meal-btn-spinner" style="display:none">⟳</span>
+        </button>
+      </div>
+      <div class="mini-supps-grid" style="margin-top:10px">
+        <div class="mini-supp"><input type="checkbox" id="noAlcohol"><span>No Alcohol</span></div>
+      </div>
+      <!-- Hidden elements for backward-compat with save/load -->
+      <span id="proteinTotal" style="display:none">0</span>
+      <input type="hidden" id="breakfast"><input type="hidden" id="lunch"><input type="hidden" id="dinner">
+      <input type="hidden" id="daySnacks"><input type="hidden" id="nightSnacks">
     </div>
 
     <!-- Old movement/dumbbell sections removed - replaced by movement energy cards above -->
@@ -5520,15 +5644,14 @@
         if (info.totalBurned >= info.target) checked++;
       }
 
-      // Meals
+      // Meals (now based on meal log entries)
       if (on('meals')) {
         total++;
-        const mealsChecked = ['breakfast', 'lunch', 'dinner']
-          .filter(id => document.getElementById(id)?.checked).length;
-        if (mealsChecked >= getGoal('mealsGoal', 2)) checked++;
+        const mealCount = typeof getMealEntries === 'function' ? getMealEntries().length : 0;
+        if (mealCount >= getGoal('mealsGoal', 2)) checked++;
       }
 
-      // Snacks (day + night)
+      // Snacks (day + night) - deprecated but kept for backward compat
       if (on('snacks')) {
         total++;
         const dayOk = document.getElementById('daySnacks')?.checked;
@@ -6167,13 +6290,14 @@
         }
       }
 
-      // Card 2: Steps bar + steps to go
-      const stepsInput = document.getElementById('steps');
-      const fill = document.getElementById('stepsBarFill');
-      if (stepsInput && fill) {
-        const stepsGoal = info.stepsToGo + info.steps; // total steps needed = already taken + remaining
-        const pct = stepsGoal > 0 ? Math.min(100, (info.steps / stepsGoal) * 100) : 100;
-        fill.style.width = pct + '%';
+      // Card 2: Steps ring + steps to go
+      const stepsRingEl = document.getElementById('stepsRingProgress');
+      if (stepsRingEl) {
+        const stepsGoal = info.stepsToGo + info.steps;
+        const circumference = 2 * Math.PI * 18; // r=18 → ~113.1
+        const pct = stepsGoal > 0 ? Math.min(1, info.steps / stepsGoal) : (info.steps > 0 ? 1 : 0);
+        stepsRingEl.style.strokeDashoffset = circumference - pct * circumference;
+        stepsRingEl.style.stroke = pct >= 1 ? 'var(--success)' : 'var(--accent-pink)';
       }
 
       const stepsToGoEl = document.getElementById('stepsToGoDisplay');
@@ -6231,11 +6355,125 @@
     }
     
     // =============================================
+    // AI MEAL ANALYZER
+    // =============================================
+    // Meal entries stored in memory, saved/loaded via daily data
+    let mealEntries = [];
+
+    function renderMealLog() {
+      const logEl = document.getElementById('mealLog');
+      if (!logEl) return;
+      if (mealEntries.length === 0) {
+        logEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0">No meals logged yet</div>';
+      } else {
+        logEl.innerHTML = mealEntries.map((entry, i) => `
+          <div class="meal-entry">
+            <div class="meal-entry-header">
+              <div class="meal-entry-desc">${escapeHtml(entry.description)}</div>
+              <button class="meal-entry-delete" onclick="window.deleteMealEntry(${i})" title="Remove">&times;</button>
+            </div>
+            <div class="meal-entry-macros">
+              <span>${entry.calories}</span> kcal &middot;
+              <span>${entry.protein}g</span> protein
+            </div>
+          </div>
+        `).join('');
+      }
+      updateMealTotals();
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function updateMealTotals() {
+      const calEl = document.getElementById('mealCalorieTotal');
+      const proEl = document.getElementById('mealProteinTotal');
+      const countEl = document.getElementById('mealEntryCount');
+      const totalCal = mealEntries.reduce((s, e) => s + (e.calories || 0), 0);
+      const totalPro = mealEntries.reduce((s, e) => s + (e.protein || 0), 0);
+      if (calEl) calEl.textContent = totalCal;
+      if (proEl) proEl.textContent = totalPro;
+      if (countEl) countEl.textContent = mealEntries.length;
+      // Keep protein total element in sync for backward compat with save
+      const proteinTotalEl = document.getElementById('proteinTotal');
+      if (proteinTotalEl) proteinTotalEl.textContent = totalPro;
+    }
+
+    window.deleteMealEntry = function(index) {
+      mealEntries.splice(index, 1);
+      renderMealLog();
+      if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+    };
+
+    window.analyzeMeal = async function() {
+      const input = document.getElementById('mealInput');
+      const btn = document.getElementById('mealAnalyzeBtn');
+      const text = input?.value?.trim();
+      if (!text) return;
+
+      // Show spinner
+      btn.disabled = true;
+      btn.querySelector('.meal-btn-text').style.display = 'none';
+      btn.querySelector('.meal-btn-spinner').style.display = 'inline-block';
+
+      try {
+        const res = await fetch(typeof API_URL !== 'undefined' ? API_URL : 'https://habit-proxy.joeywigs.workers.dev/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'analyze_meal', text })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.message || 'Analysis failed');
+
+        mealEntries.push({
+          description: text,
+          calories: Math.round(data.calories || 0),
+          protein: Math.round(data.protein || 0),
+          timestamp: new Date().toISOString()
+        });
+        input.value = '';
+        renderMealLog();
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+      } catch (err) {
+        console.error('Meal analysis error:', err);
+        // Fallback: show a manual entry prompt
+        const cal = prompt(`Could not auto-analyze. Enter estimated calories for "${text}":`, '');
+        const pro = cal !== null ? prompt('Enter estimated protein (g):', '') : null;
+        if (cal !== null && pro !== null) {
+          mealEntries.push({
+            description: text,
+            calories: parseInt(cal) || 0,
+            protein: parseInt(pro) || 0,
+            timestamp: new Date().toISOString()
+          });
+          input.value = '';
+          renderMealLog();
+          if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        }
+      } finally {
+        btn.disabled = false;
+        btn.querySelector('.meal-btn-text').style.display = 'inline';
+        btn.querySelector('.meal-btn-spinner').style.display = 'none';
+      }
+    };
+
+    // Get/set meal entries for save/load
+    window.getMealEntries = function() { return mealEntries; };
+    window.setMealEntries = function(entries) {
+      mealEntries = Array.isArray(entries) ? entries : [];
+      renderMealLog();
+    };
+
+    // =============================================
     // MAIN DOM READY SETUP
     // =============================================
     document.addEventListener('DOMContentLoaded', () => {
       // Setup populateForm hook (must happen before app.js calls loadDataForCurrentDate)
       setupPopulateFormHook();
+      renderMealLog();
 
       // Sync settings from KV (async - will update UI when complete)
       if (typeof syncSettingsFromKV === 'function') syncSettingsFromKV();

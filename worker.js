@@ -320,6 +320,13 @@ async function handlePost(request, env, corsHeaders) {
     return await saveSettings(body.settings, env, corsHeaders);
   }
 
+  if (action === "analyze_meal") {
+    if (!body.text) {
+      return jsonResponse({ error: true, message: "Missing text" }, 400, corsHeaders);
+    }
+    return await analyzeMeal(body.text, env, corsHeaders);
+  }
+
   return jsonResponse({ error: true, message: `Unknown action: ${action}`, received: body }, 400, corsHeaders);
 }
 
@@ -471,6 +478,7 @@ async function saveDay(data, env, corsHeaders) {
     "Healthy Night Snacks": data.nightSnacks || data.healthyNightSnacks || false,
     "No Alcohol": data.noAlcohol || false,
     "Protein": parseInt(data.protein) || 0,
+    "Meal Entries": data.mealEntries || existing["Meal Entries"] || "[]",
     // Other
     "Meditation": data.meditation || false,
     "Email Sprints": parseInt(data.emailSprints) || 0,
@@ -2237,4 +2245,53 @@ function getOccurrencesOnDate(ev, targetDate, tz) {
 
 function parseYMD(s) {
   return new Date(Date.UTC(parseInt(s.slice(0,4)), parseInt(s.slice(4,6)) - 1, parseInt(s.slice(6,8))));
+}
+
+// ===== AI Meal Analyzer =====
+async function analyzeMeal(text, env, corsHeaders) {
+  const apiKey = env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return jsonResponse({ error: true, message: "ANTHROPIC_API_KEY not configured" }, 500, corsHeaders);
+  }
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 256,
+        messages: [{
+          role: "user",
+          content: `Estimate the total calories and protein for this meal. Return ONLY a JSON object with "calories" (number) and "protein" (number, in grams). No explanation, no markdown, just the JSON object.\n\nMeal: ${text}`
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return jsonResponse({ error: true, message: `Claude API error: ${response.status} ${errText.slice(0, 200)}` }, 502, corsHeaders);
+    }
+
+    const result = await response.json();
+    const content = result.content?.[0]?.text || "";
+
+    // Parse the JSON from Claude's response
+    const match = content.match(/\{[\s\S]*?\}/);
+    if (!match) {
+      return jsonResponse({ error: true, message: "Could not parse response", raw: content }, 502, corsHeaders);
+    }
+
+    const parsed = JSON.parse(match[0]);
+    return jsonResponse({
+      calories: Math.round(parsed.calories || 0),
+      protein: Math.round(parsed.protein || 0)
+    }, 200, corsHeaders);
+  } catch (err) {
+    return jsonResponse({ error: true, message: `Meal analysis failed: ${err.message}` }, 500, corsHeaders);
+  }
 }

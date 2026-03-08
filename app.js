@@ -5968,6 +5968,7 @@ async function saveData(payload) {
     daySnacks: "Day Snacks",
     nightSnacks: "Night Snacks",
     noAlcohol: "No Alcohol",
+    mealEntries: "Meal Entries",
     meditation: "Meditation",
     groomingHaircut: "Grooming Haircut",
     groomingBeardTrim: "Grooming Beard Trim",
@@ -6230,6 +6231,9 @@ function buildPayloadFromUI() {
     daySnacks: !!document.getElementById("daySnacks")?.checked,
     nightSnacks: !!document.getElementById("nightSnacks")?.checked,
     noAlcohol: !!document.getElementById("noAlcohol")?.checked,
+
+    // AI Meal log entries
+    mealEntries: typeof getMealEntries === 'function' ? JSON.stringify(getMealEntries()) : "[]",
 
     meditation: !!document.getElementById("meditation")?.checked,
 
@@ -6701,6 +6705,7 @@ async function populateForm(data) {
     if (carolBikeDurEl) carolBikeDurEl.value = "";
     const carolBikeCalEl = document.getElementById("carolBikeCalories");
     if (carolBikeCalEl) carolBikeCalEl.value = "";
+    if (typeof setMealEntries === 'function') setMealEntries([]);
 
     // Load movements from API even if no daily data (Shortcuts may have logged them)
     const movArr = data?.movements;
@@ -6899,6 +6904,16 @@ async function populateForm(data) {
   setCheckbox("daySnacks", d["Healthy Day Snacks"] ?? d["Day Snacks"] ?? d["daySnacks"]);
   setCheckbox("nightSnacks", d["Healthy Night Snacks"] ?? d["Night Snacks"] ?? d["nightSnacks"]);
   setCheckbox("noAlcohol", d["No Alcohol"] ?? d["noAlcohol"]);
+
+  // Load AI meal entries
+  const mealEntriesRaw = d["Meal Entries"] ?? d["mealEntries"] ?? "[]";
+  try {
+    const entries = typeof mealEntriesRaw === 'string' ? JSON.parse(mealEntriesRaw) : mealEntriesRaw;
+    if (typeof setMealEntries === 'function') setMealEntries(entries);
+  } catch (e) {
+    console.warn("Could not parse meal entries:", e);
+    if (typeof setMealEntries === 'function') setMealEntries([]);
+  }
 
   setCheckbox("meditation", d["Meditation"] ?? d["meditation"]);
 
