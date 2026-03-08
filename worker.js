@@ -1110,9 +1110,8 @@ async function importSleepSamples(body, env, corsHeaders) {
     return null;
   }
 
-  // Group durations by date (using wake-up time in Central Time)
-  const dayBuckets = {}; // { "M/D/YY": { core: hours, deep: hours, rem: hours, awake: hours } }
-
+  // Parse, validate, and classify all samples
+  const parsed = [];
   for (const s of samples) {
     const startDate = new Date(s.start);
     const endDate = new Date(s.end);
@@ -1124,13 +1123,60 @@ async function importSleepSamples(body, env, corsHeaders) {
     const durationHours = (endDate - startDate) / 3600000;
     if (durationHours <= 0 || durationHours > 24) continue; // Skip invalid durations
 
+    parsed.push({ startMs: startDate.getTime(), endMs: endDate.getTime(), stage });
+  }
+
+  // Deduplicate overlapping samples within the same stage.
+  // Sources are often blank, so we can't filter by source — instead remove
+  // samples whose time range is fully contained within another same-stage sample.
+  const byStage = {};
+  for (const p of parsed) {
+    if (!byStage[p.stage]) byStage[p.stage] = [];
+    byStage[p.stage].push(p);
+  }
+
+  const deduped = [];
+  for (const stage of Object.keys(byStage)) {
+    const items = byStage[stage];
+    // Sort by start time, then longer duration first
+    items.sort((a, b) => a.startMs - b.startMs || (b.endMs - b.startMs) - (a.endMs - a.startMs));
+
+    for (const item of items) {
+      let dominated = false;
+      for (const kept of deduped) {
+        if (kept.stage !== stage) continue;
+        // If this sample is fully contained within a kept sample, skip it
+        if (item.startMs >= kept.startMs && item.endMs <= kept.endMs) {
+          dominated = true;
+          break;
+        }
+      }
+      if (!dominated) {
+        // Remove any previously kept same-stage samples fully contained within this one
+        for (let i = deduped.length - 1; i >= 0; i--) {
+          if (deduped[i].stage === stage && deduped[i].startMs >= item.startMs && deduped[i].endMs <= item.endMs) {
+            deduped.splice(i, 1);
+          }
+        }
+        deduped.push(item);
+      }
+    }
+  }
+
+  // Group durations by date (using wake-up time in Central Time)
+  const dayBuckets = {}; // { "M/D/YY": { core: hours, deep: hours, rem: hours, awake: hours } }
+
+  for (const s of deduped) {
+    const endDate = new Date(s.endMs);
+    const durationHours = (s.endMs - s.startMs) / 3600000;
+
     // Attribute to the wake-up date (end time) in Central Time
     const dateKey = formatDateForKV(endDate);
 
     if (!dayBuckets[dateKey]) {
       dayBuckets[dateKey] = { core: 0, deep: 0, rem: 0, awake: 0 };
     }
-    dayBuckets[dateKey][stage] += durationHours;
+    dayBuckets[dateKey][s.stage] += durationHours;
   }
 
   const dates = Object.keys(dayBuckets);
@@ -1171,9 +1217,11 @@ async function importSleepSamples(body, env, corsHeaders) {
 
   return jsonResponse({
     success: true,
-    message: `Imported sleep data for ${results.length} days from ${samples.length} samples`,
+    message: `Imported sleep data for ${results.length} days from ${samples.length} samples (${deduped.length} after dedup)`,
     daysUpdated: results.length,
     totalSamples: samples.length,
+    dedupedSamples: deduped.length,
+    duplicatesRemoved: parsed.length - deduped.length,
     days: results
   }, 200, corsHeaders);
 }
