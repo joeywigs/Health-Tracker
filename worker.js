@@ -1110,29 +1110,55 @@ async function importSleepSamples(body, env, corsHeaders) {
     return null;
   }
 
-  // Group durations by date (using wake-up time in Central Time)
-  // Sleep samples are not deduplicated — unlike active energy, sleep phases
-  // are typically recorded by a single device (Apple Watch) and don't overlap.
-  const dayBuckets = {}; // { "M/D/YY": { core: hours, deep: hours, rem: hours, awake: hours } }
-
+  // Parse and validate all samples
+  const parsed = [];
   for (const s of samples) {
     const startDate = new Date(s.start);
     const endDate = new Date(s.end);
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) continue;
 
     const stage = classifyStage(s.category);
-    if (!stage || stage === 'inbed') continue; // Skip "In Bed" — we only want actual sleep stages + awake
+    if (!stage || stage === 'inbed') continue;
 
     const durationHours = (endDate - startDate) / 3600000;
-    if (durationHours <= 0 || durationHours > 24) continue; // Skip invalid durations
+    if (durationHours <= 0 || durationHours > 24) continue;
 
-    // Attribute to the wake-up date (end time) in Central Time
-    const dateKey = formatDateForKV(endDate);
+    parsed.push({ startMs: startDate.getTime(), endMs: endDate.getTime(), stage, durationHours });
+  }
+
+  // Group samples into sleep sessions. A new session starts when there's a
+  // gap > 2 hours between consecutive samples. This ensures pre-midnight
+  // phases (e.g. 10:45 PM Core) are attributed to the same day as the rest
+  // of the sleep session (wake-up date).
+  parsed.sort((a, b) => a.startMs - b.startMs);
+
+  const sessions = [];
+  let currentSession = [];
+  for (const sample of parsed) {
+    if (currentSession.length > 0) {
+      const lastEnd = Math.max(...currentSession.map(s => s.endMs));
+      if (sample.startMs - lastEnd > 2 * 3600000) {
+        sessions.push(currentSession);
+        currentSession = [];
+      }
+    }
+    currentSession.push(sample);
+  }
+  if (currentSession.length > 0) sessions.push(currentSession);
+
+  // For each session, attribute all samples to the wake-up date (latest end time)
+  const dayBuckets = {}; // { "M/D/YY": { core: hours, deep: hours, rem: hours, awake: hours } }
+
+  for (const session of sessions) {
+    const wakeUpMs = Math.max(...session.map(s => s.endMs));
+    const dateKey = formatDateForKV(new Date(wakeUpMs));
 
     if (!dayBuckets[dateKey]) {
       dayBuckets[dateKey] = { core: 0, deep: 0, rem: 0, awake: 0 };
     }
-    dayBuckets[dateKey][stage] += durationHours;
+    for (const s of session) {
+      dayBuckets[dateKey][s.stage] += s.durationHours;
+    }
   }
 
   const dates = Object.keys(dayBuckets);
@@ -1150,15 +1176,16 @@ async function importSleepSamples(body, env, corsHeaders) {
     const bucket = dayBuckets[dateKey];
     const existing = await env.HABIT_DATA.get(`daily:${dateKey}`, "json") || {};
 
+    const r2 = (v) => parseFloat(v.toFixed(2));
     const updates = {};
-    if (bucket.awake > 0) updates["Sleep Awake"] = Math.round(bucket.awake * 100) / 100;
-    if (bucket.core > 0) updates["Sleep Core"] = Math.round(bucket.core * 100) / 100;
-    if (bucket.deep > 0) updates["Sleep Deep"] = Math.round(bucket.deep * 100) / 100;
-    if (bucket.rem > 0) updates["Sleep REM"] = Math.round(bucket.rem * 100) / 100;
+    if (bucket.awake > 0) updates["Sleep Awake"] = r2(bucket.awake);
+    if (bucket.core > 0) updates["Sleep Core"] = r2(bucket.core);
+    if (bucket.deep > 0) updates["Sleep Deep"] = r2(bucket.deep);
+    if (bucket.rem > 0) updates["Sleep REM"] = r2(bucket.rem);
 
-    const totalSleep = (bucket.core + bucket.deep + bucket.rem);
+    const totalSleep = bucket.core + bucket.deep + bucket.rem;
     if (totalSleep > 0) {
-      updates["Hours of Sleep"] = Math.round(totalSleep * 100) / 100;
+      updates["Hours of Sleep"] = r2(totalSleep);
     }
 
     if (Object.keys(updates).length > 0) {
