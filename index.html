@@ -57,14 +57,14 @@
     
     /* === DAY MODE - Corporate Light === */
     body.day-mode {
-      --bg-deep: #f8f9fb;
-      --bg-mid: #ffffff;
-      --bg-card: rgba(0,0,0,0.03);
-      --bg-card-hover: rgba(0,0,0,0.05);
+      --bg-deep: #eef0f4;
+      --bg-mid: #f5f6f8;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8f9fb;
 
       --text: #1a1d23;
       --text-dim: rgba(26,29,35,0.7);
-      --text-muted: rgba(26,29,35,0.45);
+      --text-muted: rgba(26,29,35,0.5);
 
       --accent-pink: #e11d48;
       --accent-orange: #ea580c;
@@ -85,9 +85,9 @@
       --movement: #e11d48;
       --nutrition: #059669;
 
-      --border: rgba(0,0,0,0.08);
+      --border: rgba(0,0,0,0.12);
 
-      background: #f8f9fb !important;
+      background: #eef0f4 !important;
     }
     
     body.day-mode::before {
@@ -158,8 +158,9 @@
       -webkit-text-fill-color: transparent;
     }
     body.day-mode .card {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.13);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     body.day-mode .card-title {
       color: var(--text-muted);
@@ -168,19 +169,21 @@
       color: var(--text-muted);
     }
     body.day-mode .section {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.13);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     body.day-mode .sec-name {
       color: var(--text);
     }
     body.day-mode .nav-link {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.1);
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.13);
       color: var(--text-dim);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     body.day-mode .nav-link:hover {
-      background: rgba(255,255,255,0.8);
+      background: #f8f9fb;
       color: var(--accent-orange);
       border-color: var(--accent-orange);
     }
@@ -1182,6 +1185,9 @@
     .card:hover {
       border-color: rgba(255,255,255,0.12);
     }
+    body.day-mode .card:hover {
+      border-color: rgba(0,0,0,0.2);
+    }
     .card.sleep { --accent-start: var(--accent-purple); }
     .card.water { --accent-start: var(--accent-teal); }
     .card.movement { --accent-start: var(--accent-pink); }
@@ -1225,17 +1231,15 @@
 
     /* Movement sub-sections inside unified card */
     .movement-subsection {
-      padding-top: 12px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
     }
     .movement-subsection:last-child {
-      border-bottom: none;
       padding-bottom: 0;
     }
     .movement-subsection-label {
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -1272,7 +1276,7 @@
       letter-spacing: 0.04em;
     }
     .bike-input-group input {
-      background: transparent;
+      background: var(--bg-deep);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 6px 8px;
@@ -1286,6 +1290,10 @@
     }
     .bike-input-group input:focus {
       border-color: var(--accent-teal);
+    }
+    body.day-mode .bike-input-group input {
+      background: #f3f4f6;
+      border-color: rgba(0,0,0,0.15);
     }
     
     .card-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
@@ -3367,7 +3375,7 @@
     .settings-card-icon { font-size: 20px; margin-bottom: 6px; }
     .settings-card-label { font-size: 12px; font-weight: 500; color: var(--text); }
     .settings-card-desc { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
-    body.day-mode .settings-card { background: rgba(255,255,255,0.8); }
+    body.day-mode .settings-card { background: #ffffff; border-color: rgba(0,0,0,0.13); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .settings-subpage { display: none; }
     .settings-subpage.active { display: block; }
     .settings-back-btn { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-teal); background: none; border: none; }
