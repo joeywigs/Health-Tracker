@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Habits - Daily Rituals</title>
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#0f1117">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" type="image/png" href="apple-touch-icon.png">
@@ -16,117 +16,111 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* === NIGHT MODE (Default - Aurora/Twilight) === */
-      --bg-deep: #1a1a2e;
-      --bg-mid: #16213e;
-      --bg-card: rgba(255,255,255,0.08);
-      --bg-card-hover: rgba(255,255,255,0.12);
-      
-      --text: #ffffff;
-      --text-dim: rgba(255,255,255,0.85);
-      --text-muted: rgba(255,255,255,0.6);
-      
-      --accent-pink: #ff6b9d;
-      --accent-orange: #ffa552;
-      --accent-yellow: #ffd93d;
-      --accent-teal: #6dd5ed;
-      --accent-purple: #c471ed;
-      
-      --glow-pink: rgba(255,107,157,0.4);
-      --glow-orange: rgba(255,165,82,0.4);
-      --glow-teal: rgba(109,213,237,0.4);
-      --glow-purple: rgba(196,113,237,0.4);
-      
-      --success: #6dd5ed;
-      --success-soft: rgba(109,213,237,0.2);
-      
-      --sleep: #c471ed;
-      --water: #6dd5ed;
-      --movement: #ff6b9d;
-      --nutrition: #6dd5ed;
-      
-      --border: rgba(255,255,255,0.2);
-      --radius: 20px;
-      --radius-sm: 12px;
+      /* === NIGHT MODE (Corporate Tech Dark) === */
+      --bg-deep: #0f1117;
+      --bg-mid: #161920;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.07);
+
+      --text: #e8eaed;
+      --text-dim: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.4);
+
+      --accent-pink: #f472b6;
+      --accent-orange: #fb923c;
+      --accent-yellow: #facc15;
+      --accent-teal: #22d3ee;
+      --accent-purple: #a78bfa;
+
+      --glow-pink: rgba(244,114,182,0.2);
+      --glow-orange: rgba(251,146,60,0.2);
+      --glow-teal: rgba(34,211,238,0.2);
+      --glow-purple: rgba(167,139,250,0.2);
+
+      --success: #34d399;
+      --success-soft: rgba(52,211,153,0.15);
+
+      --sleep: #a78bfa;
+      --water: #22d3ee;
+      --movement: #f472b6;
+      --nutrition: #34d399;
+
+      --border: rgba(255,255,255,0.08);
+      --radius: 12px;
+      --radius-sm: 8px;
       --radius-pill: 100px;
-      
-      /* Gradient backgrounds */
-      --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #1a1a2e 50%, #2d1b4e 75%, #1a1a2e 100%);
-      --bg-aurora: 
-        radial-gradient(ellipse at 20% 20%, rgba(196,113,237,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.1) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(109,213,237,0.08) 0%, transparent 60%);
+
+      /* Flat dark background */
+      --bg-gradient: linear-gradient(180deg, #0f1117 0%, #161920 100%);
+      --bg-aurora: none;
     }
     
-    /* === DAY MODE - Soft Cantaloupe === */
+    /* === DAY MODE - Corporate Light === */
     body.day-mode {
-      --bg-deep: #ffeaa7;
-      --bg-mid: #fdcb6e;
-      --bg-card: rgba(255,255,255,0.6);
-      --bg-card-hover: rgba(255,255,255,0.8);
-      
-      /* Dark text for contrast on light background */
-      --text: #1a1a2e;
-      --text-dim: rgba(26,26,46,0.8);
-      --text-muted: rgba(26,26,46,0.6);
-      
-      /* Vibrant accents to pop against yellow-orange background */
+      --bg-deep: #f8f9fb;
+      --bg-mid: #ffffff;
+      --bg-card: rgba(0,0,0,0.03);
+      --bg-card-hover: rgba(0,0,0,0.05);
+
+      --text: #1a1d23;
+      --text-dim: rgba(26,29,35,0.7);
+      --text-muted: rgba(26,29,35,0.45);
+
       --accent-pink: #e11d48;
       --accent-orange: #ea580c;
       --accent-yellow: #ca8a04;
-      --accent-teal: #0d9488;
-      --accent-purple: #6366f1;
-      
-      --glow-pink: rgba(225,29,72,0.3);
-      --glow-orange: rgba(234,88,12,0.3);
-      --glow-teal: rgba(13,148,136,0.3);
-      --glow-purple: rgba(99,102,241,0.4);
-      
+      --accent-teal: #0891b2;
+      --accent-purple: #7c3aed;
+
+      --glow-pink: rgba(225,29,72,0.12);
+      --glow-orange: rgba(234,88,12,0.12);
+      --glow-teal: rgba(8,145,178,0.12);
+      --glow-purple: rgba(124,58,237,0.12);
+
       --success: #059669;
-      --success-soft: rgba(5,150,105,0.15);
-      
-      --sleep: #6366f1;
-      --water: #0d9488;
+      --success-soft: rgba(5,150,105,0.1);
+
+      --sleep: #7c3aed;
+      --water: #0891b2;
       --movement: #e11d48;
       --nutrition: #059669;
-      
-      --border: rgba(0,0,0,0.1);
-      
-      /* Soft Cantaloupe gradient */
-      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 30%, #f9a825 70%, #fdcb6e 100%) !important;
+
+      --border: rgba(0,0,0,0.08);
+
+      background: #f8f9fb !important;
     }
     
     body.day-mode::before {
-      background: radial-gradient(ellipse at 30% 20%, rgba(255,234,167,0.5) 0%, transparent 50%) !important;
+      background: none !important;
     }
     
-    /* Day mode specific overrides - indigo/purple buttons on cantaloupe background */
+    /* Day mode specific overrides */
     body.day-mode .logo {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      box-shadow: 0 0 20px var(--glow-purple);
+      background: #1a1d23;
+      box-shadow: none;
     }
     body.day-mode .date-btn {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      box-shadow: 0 4px 15px var(--glow-purple);
+      background: #1a1d23;
+      box-shadow: none;
       color: white;
     }
     body.day-mode .phase-fill {
-      background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+      background: #1a1d23;
     }
     body.day-mode .fab {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      box-shadow: 0 8px 25px var(--glow-purple);
+      background: #1a1d23;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       color: white;
     }
     body.day-mode .btn-primary {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: #1a1d23;
       color: white;
     }
     body.day-mode .ring-progress {
-      stroke: #6366f1;
+      stroke: #0891b2;
     }
     body.day-mode .ring-text {
-      color: #6366f1;
+      color: #0891b2;
     }
     body.day-mode .chip.on {
       background: rgba(251, 146, 60, 0.25);
@@ -237,20 +231,17 @@
     
     /* === SUNSET TRANSITION MODE === */
     body.sunset-mode {
-      --bg-deep: #2d1b4e;
-      --bg-mid: #1a1a2e;
-      --bg-card: rgba(255,255,255,0.06);
-      --bg-card-hover: rgba(255,255,255,0.1);
-      
+      --bg-deep: #1a1520;
+      --bg-mid: #1e1828;
+      --bg-card: rgba(255,255,255,0.05);
+      --bg-card-hover: rgba(255,255,255,0.08);
+
       --text: #f0f0f0;
       --text-dim: rgba(255,255,255,0.7);
-      --text-muted: rgba(255,255,255,0.5);
-      
-      --bg-gradient: linear-gradient(135deg, #2d1b4e 0%, #4a1942 30%, #1a1a2e 70%, #16213e 100%);
-      --bg-aurora: 
-        radial-gradient(ellipse at 50% 0%, rgba(255,107,157,0.2) 0%, transparent 50%),
-        radial-gradient(ellipse at 30% 50%, rgba(255,165,82,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 80%, rgba(196,113,237,0.15) 0%, transparent 50%);
+      --text-muted: rgba(255,255,255,0.4);
+
+      --bg-gradient: linear-gradient(180deg, #1a1520 0%, #1e1828 100%);
+      --bg-aurora: none;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -267,7 +258,7 @@
       background: var(--bg-gradient);
       background-attachment: fixed;
       position: relative;
-      transition: background 1s ease, color 0.5s ease;
+      transition: background 0.3s ease, color 0.3s ease;
       overscroll-behavior-y: contain;
     }
     
@@ -470,37 +461,37 @@
     
     body > * { position: relative; z-index: 1; }
     
-    /* Header */
-    .header { 
-      padding: 20px; 
-      margin-bottom: 20px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: var(--radius);
-      backdrop-filter: blur(20px);
+    /* Header - Compact */
+    .header {
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      border-bottom: 1px solid var(--border);
     }
     body.day-mode .header {
-      background: rgba(255,255,255,0.6);
-      border-color: rgba(0,0,0,0.08);
+      background: transparent;
+      border-color: var(--border);
     }
-    .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-    .brand { display: flex; align-items: center; gap: 12px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; }
+    .brand { display: flex; align-items: center; gap: 8px; }
     .logo {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      display: flex; align-items: center; justify-content: center; font-size: 22px;
-      box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple);
-      animation: pulse-glow 3s ease-in-out infinite;
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--accent-teal);
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+      box-shadow: none;
+      animation: none;
     }
     @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 20px var(--glow-pink), 0 0 40px var(--glow-purple); }
-      50% { box-shadow: 0 0 30px var(--glow-pink), 0 0 60px var(--glow-purple); }
+      0%, 100% { box-shadow: none; }
+      50% { box-shadow: none; }
     }
-    .brand h1 { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: white; margin: 0; }
-    .brand h1 .version { font-size: 12px; font-weight: 500; color: var(--text-muted); vertical-align: super; margin-left: 4px; }
-    body.day-mode .brand h1 { color: #1f2937; }
-    .brand .tagline { font-size: 16px; font-weight: 600; color: var(--accent-pink); margin-top: 2px; }
-    .phase-day { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .brand h1 { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); margin: 0; }
+    .brand h1 .version { font-size: 10px; font-weight: 400; color: var(--text-muted); vertical-align: super; margin-left: 2px; }
+    body.day-mode .brand h1 { color: var(--text); }
+    .brand .tagline { display: none; }
+    .phase-day { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .nav-links { display: flex; gap: 8px; }
     .nav-link {
       width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
@@ -515,35 +506,36 @@
       box-shadow: 0 0 20px var(--glow-teal);
     }
     
-    /* Date Nav - Glassmorphism */
+    /* Date Nav - Clean */
     .date-nav {
-      display: grid; 
+      display: grid;
       grid-template-columns: auto 1fr auto auto;
-      align-items: center; 
-      gap: 12px; 
-      padding: 16px;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); backdrop-filter: blur(20px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      margin-top: 8px;
+      background: transparent; border: none;
+      border-radius: 0;
+      box-shadow: none;
     }
     .date-nav .phase {
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-top: 8px;
+      padding-top: 8px;
       border-top: 1px solid var(--border);
     }
     .date-btn {
-      width: 44px; height: 44px; border-radius: 50%; border: none;
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
-      color: white; font-size: 18px; font-weight: 600;
-      cursor: pointer; transition: all 0.3s;
-      box-shadow: 0 4px 15px var(--glow-purple);
+      width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+      box-shadow: none;
     }
-    .date-btn:hover { transform: scale(1.1); box-shadow: 0 6px 25px var(--glow-pink); }
+    .date-btn:hover { background: var(--bg-card-hover); color: var(--text); border-color: var(--text-muted); }
     .date-btn:active { transform: scale(0.95); }
     .date-center { flex: 1; text-align: center; }
-    .date-phase-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent-green); margin-bottom: 2px; }
-    .date-main { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: white; }
-    .date-phase-day { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .date-phase-title { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; color: var(--text-muted); margin-bottom: 1px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .date-main { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: var(--text); }
+    .date-phase-day { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
     .freeze-indicator {
       font-size: 10px; color: #6dd5ed; margin-top: 2px;
       font-family: 'JetBrains Mono', monospace;
@@ -615,19 +607,19 @@
     }
     .unlock-day-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px var(--glow-orange); }
     
-    /* Progress Ring - Glowing */
-    .ring-wrap { position: relative; width: 72px; height: 72px; }
-    .ring { transform: rotate(-90deg); }
-    .ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 5; }
-    .ring-progress { 
-      fill: none; 
-      stroke: url(#auroraGrad); 
-      stroke-width: 5; 
-      stroke-linecap: round; 
-      transition: stroke-dashoffset 0.6s;
-      filter: drop-shadow(0 0 6px var(--glow-teal));
+    /* Progress Ring - Clean */
+    .ring-wrap { position: relative; width: 48px; height: 48px; }
+    .ring { transform: rotate(-90deg); width: 48px; height: 48px; }
+    .ring-bg { fill: none; stroke: var(--border); stroke-width: 3; }
+    .ring-progress {
+      fill: none;
+      stroke: var(--accent-teal);
+      stroke-width: 3;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.4s;
+      filter: none;
     }
-    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent-teal); }
+    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--accent-teal); }
     .ring-text.celebrating { animation: ringTextPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes ringTextPop {
       0% { transform: translate(-50%, -50%) scale(1); }
@@ -997,11 +989,11 @@
     /* Phase Bar */
     .phase { margin-top: 0; }
     .phase-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
-    .phase-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: var(--radius-pill); overflow: hidden; }
+    .phase-track { height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
     .phase-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange));
-      border-radius: var(--radius-pill);
+      background: var(--accent-teal);
+      border-radius: 1px;
       box-shadow: 0 0 20px var(--glow-pink);
       transition: width 0.6s;
     }
@@ -1168,88 +1160,105 @@
     }
     
     .card {
-      background: rgba(255,255,255,0.06); 
-      border: 1px solid rgba(255,255,255,0.15); 
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 18px; 
-      position: relative; 
-      overflow: hidden; 
-      backdrop-filter: blur(20px);
-      transition: all 0.3s;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.15s;
       display: flex;
       flex-direction: column;
-      min-height: 140px;
+      min-height: 0;
     }
-    .card::before { 
-      content: ''; 
-      position: absolute; 
-      top: 0; left: 0; right: 0; 
-      height: 3px; 
-      background: linear-gradient(90deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink))); 
-      opacity: 0.8; 
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--accent-start, var(--accent-teal));
+      opacity: 0.6;
     }
-    .card:hover { 
-      border-color: rgba(255,255,255,0.25);
-      box-shadow: 0 0 30px var(--card-glow, var(--glow-purple));
-      transform: translateY(-2px);
+    .card:hover {
+      border-color: rgba(255,255,255,0.12);
     }
-    .card.sleep { --accent-start: var(--accent-purple); --accent-end: var(--accent-pink); --card-glow: var(--glow-purple); }
-    .card.water { --accent-start: var(--accent-teal); --accent-end: var(--accent-purple); --card-glow: var(--glow-teal); }
-    .card.movement { --accent-start: var(--accent-pink); --accent-end: var(--accent-orange); --card-glow: var(--glow-pink); }
-    .card.energy { --accent-start: var(--accent-orange); --accent-end: var(--accent-yellow); --card-glow: var(--glow-orange); }
-    .card.bike { --accent-start: var(--accent-teal); --accent-end: var(--accent-purple); --card-glow: var(--glow-teal); }
-    .card.dumbbell { --accent-start: var(--accent-pink); --accent-end: var(--accent-orange); --card-glow: var(--glow-pink); }
+    .card.sleep { --accent-start: var(--accent-purple); }
+    .card.water { --accent-start: var(--accent-teal); }
+    .card.movement { --accent-start: var(--accent-pink); }
+    .card.energy { --accent-start: var(--accent-orange); }
+    .card.bike { --accent-start: var(--accent-teal); }
+    .card.dumbbell { --accent-start: var(--accent-pink); }
 
     /* Movement Energy Ring */
     .energy-ring-wrap {
       display: flex;
       align-items: center;
-      gap: 16px;
-      margin: 8px 0;
+      gap: 14px;
+      margin: 4px 0 0 0;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
     }
     .energy-ring-svg { flex-shrink: 0; }
     .energy-ring-info { flex: 1; min-width: 0; }
     .energy-ring-info .energy-burned {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 28px;
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
       font-weight: 700;
-      color: var(--accent-orange);
+      color: var(--text);
       line-height: 1;
     }
     .energy-ring-info .energy-target {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
     }
     .energy-ring-info .energy-breakdown {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 6px;
-      line-height: 1.5;
+      margin-top: 4px;
+      line-height: 1.4;
     }
     .energy-breakdown span {
       display: inline-block;
-      margin-right: 10px;
+      margin-right: 8px;
+    }
+
+    /* Movement sub-sections inside unified card */
+    .movement-subsection {
+      padding-top: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .movement-subsection:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .movement-subsection-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
     }
 
     /* Steps to go display */
     .steps-to-go {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .steps-to-go .steps-remaining {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: 'Inter', sans-serif;
       font-weight: 600;
       color: var(--accent-pink);
     }
 
-    /* Carol bike inline inputs */
+    /* Inline inputs (bike/dumbbell) */
     .bike-inputs {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 4px;
+      gap: 8px;
     }
     .bike-input-group {
       display: flex;
@@ -1265,10 +1274,10 @@
     .bike-input-group input {
       background: transparent;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 18px;
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
       font-weight: 600;
       color: var(--text);
       outline: none;
@@ -1278,24 +1287,19 @@
     .bike-input-group input:focus {
       border-color: var(--accent-teal);
     }
-    .bike-cals-display {
-      font-size: 12px;
-      color: var(--accent-orange);
-      margin-top: 6px;
-    }
     
-    .card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .card-icon { 
-      width: 32px; height: 32px; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center; font-size: 15px; 
-      background: linear-gradient(135deg, var(--accent-start, var(--accent-purple)), var(--accent-end, var(--accent-pink)));
-      box-shadow: 0 0 15px var(--card-glow, var(--glow-purple));
+    .card-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .card-icon {
+      width: 20px; height: 20px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center; font-size: 11px;
+      background: transparent;
+      box-shadow: none;
     }
-    .card-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.05em; }
-    .card-value { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; color: #ffffff; }
-    .card-unit { font-size: 13px; color: var(--text); margin-left: 4px; }
+    .card-title { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .card-value { font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 700; line-height: 1; color: var(--text); }
+    .card-unit { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
     .input-row { display: flex; align-items: baseline; }
-    .card-avg { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: auto; padding-top: 8px; }
+    .card-avg { font-size: 11px; color: var(--text-muted); margin-top: auto; padding-top: 6px; }
     .sleep-metrics { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px; }
     .sleep-metrics-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 4px 0; }
     .sleep-metrics-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -1422,7 +1426,7 @@
       top: 0;
       left: 0;
       right: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--accent-teal);
       color: white;
       padding: 12px 16px;
       z-index: 1000;
@@ -1483,7 +1487,7 @@
     .modal-header h2 {
       margin: 0;
       font-size: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--accent-teal);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -1522,7 +1526,7 @@
       border: 1px solid var(--border) !important;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--accent-teal);
       color: white;
     }
 
@@ -1778,12 +1782,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 10px 6px;
+      padding: 8px 6px;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      background: transparent;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
     .mini-supp input {
       display: none;
@@ -1796,7 +1800,7 @@
     .mini-supp:has(input:checked) {
       background: var(--success-soft);
       border-color: var(--success);
-      box-shadow: 0 0 10px var(--glow-teal);
+      box-shadow: none;
     }
     .mini-supp:has(input:checked) span {
       color: white;
@@ -1823,22 +1827,22 @@
     
     /* Horizontal Progress Bars (same style as phase bar) */
     .progress-bar-h {
-      height: 6px;
-      background: rgba(255,255,255,0.1);
-      border-radius: var(--radius-pill);
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
       overflow: hidden;
-      margin-top: 10px;
+      margin-top: 8px;
     }
     .progress-bar-h-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink), var(--accent-orange));
-      border-radius: var(--radius-pill);
-      box-shadow: 0 0 10px var(--glow-pink);
-      transition: width 0.5s ease;
+      background: var(--accent-teal);
+      border-radius: 2px;
+      box-shadow: none;
+      transition: width 0.3s ease;
       width: 0%;
     }
     body.day-mode .progress-bar-h {
-      background: rgba(0,0,0,0.1);
+      background: rgba(0,0,0,0.08);
     }
     
     /* Movement Modal */
@@ -2098,24 +2102,24 @@
       font-size: 18px;
     }
 
-    .big-input { width: auto; flex: 1; min-width: 0; background: transparent; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: white; outline: none; transition: color 0.3s; }
+    .big-input { width: auto; flex: 1; min-width: 0; background: transparent; border: none; font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 700; color: var(--text); outline: none; transition: color 0.15s; }
     .big-input::placeholder { color: var(--text-muted); }
     .big-input:focus { color: var(--accent-teal); }
     
     /* Water */
     .water-row { display: flex; align-items: center; gap: 12px; justify-content: center; }
     .water-btn { 
-      width: 44px; height: 44px; border-radius: 50%; 
-      border: 2px solid var(--accent-teal); background: transparent; 
-      color: var(--accent-teal); font-size: 18px; cursor: pointer; transition: all 0.3s; 
+      width: 32px; height: 32px; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-muted); font-size: 16px; cursor: pointer; transition: all 0.15s;
     }
-    .water-btn:hover { 
-      background: var(--accent-teal); 
-      color: var(--bg-deep); 
-      box-shadow: 0 0 20px var(--glow-teal);
+    .water-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text);
+      border-color: var(--text-muted);
     }
-    .water-btn:active { transform: scale(0.9); }
-    .water-num { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: white; }
+    .water-btn:active { transform: scale(0.95); }
+    .water-num { font-family: 'Inter', sans-serif; font-size: 28px; font-weight: 700; min-width: 36px; text-align: center; color: var(--text); }
 
     /* Protein */
     .protein-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
@@ -2144,25 +2148,24 @@
 
     /* Sections */
     .section {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 18px;
-      margin-bottom: 12px;
-      backdrop-filter: blur(20px);
-      transition: all 0.3s;
+      padding: 16px;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
       position: relative;
       overflow: hidden;
     }
     .section::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--icon-start, var(--accent-purple)), var(--icon-end, var(--accent-pink)));
-      opacity: 0.8;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--icon-start, var(--accent-teal));
+      opacity: 0.5;
     }
-    .section:hover { border-color: rgba(255,255,255,0.2); }
+    .section:hover { border-color: rgba(255,255,255,0.1); }
 
     .reminder-card {
       background: rgba(249, 115, 22, 0.35);
@@ -2184,15 +2187,14 @@
     }
     /* Friday Grooming Section */
     .grooming-card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 18px;
-      margin-bottom: 12px;
-      backdrop-filter: blur(20px);
-      transition: all 0.3s;
+      padding: 16px;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
     }
-    .grooming-card:hover { border-color: rgba(255,255,255,0.2); }
+    .grooming-card:hover { border-color: rgba(255,255,255,0.1); }
     .grooming-header {
       display: flex;
       align-items: center;
@@ -2538,15 +2540,15 @@
     body.day-mode .bio-card { border-bottom-color: rgba(0,0,0,0.06); }
     body.day-mode .bio-input { background: rgba(255,255,255,0.8); color: #1f2937; }
 
-    .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
-    .sec-title { display: flex; align-items: center; gap: 10px; }
-    .sec-icon { 
-      width: 28px; height: 28px; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center; font-size: 13px; 
-      background: linear-gradient(135deg, var(--icon-start, var(--accent-purple)), var(--icon-end, var(--accent-pink)));
-      box-shadow: 0 0 12px var(--icon-glow, var(--glow-purple));
+    .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; cursor: pointer; }
+    .sec-title { display: flex; align-items: center; gap: 8px; }
+    .sec-icon {
+      width: 20px; height: 20px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center; font-size: 11px;
+      background: transparent;
+      box-shadow: none;
     }
-    .sec-name { font-size: 14px; font-weight: 600; color: #ffffff; }
+    .sec-name { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
     .streak-badge {
       font-size: 11px;
       font-weight: 500;
@@ -2566,30 +2568,30 @@
     /* Chips - Glowing when active */
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
-      display: flex; align-items: center; gap: 6px; padding: 8px 14px;
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-pill);
-      cursor: pointer; transition: all 0.3s; user-select: none;
+      display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+      background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      cursor: pointer; transition: all 0.15s; user-select: none;
     }
-    .chip:hover { background: rgba(255,255,255,0.1); }
+    .chip:hover { background: var(--bg-card-hover); }
     .chip:active { transform: scale(0.97); }
-    .chip.on { 
-      background: var(--success-soft); 
-      border-color: var(--success); 
-      box-shadow: 0 0 15px var(--glow-teal);
+    .chip.on {
+      background: var(--success-soft);
+      border-color: var(--success);
+      box-shadow: none;
     }
-    .chip-dot { 
-      width: 18px; height: 18px; border-radius: 50%; 
-      border: 2px solid var(--text-muted); 
-      display: flex; align-items: center; justify-content: center; 
-      font-size: 10px; transition: all 0.3s; 
+    .chip-dot {
+      width: 16px; height: 16px; border-radius: 4px;
+      border: 1px solid var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; transition: all 0.15s;
     }
-    .chip.on .chip-dot { 
-      background: var(--success); 
-      border-color: var(--success); 
-      color: white; 
-      box-shadow: 0 0 10px var(--glow-teal);
+    .chip.on .chip-dot {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+      box-shadow: none;
     }
-    .chip-text { font-size: 13px; font-weight: 500; color: var(--text-dim); transition: color 0.3s; }
+    .chip-text { font-size: 12px; font-weight: 500; color: var(--text-dim); transition: color 0.15s; }
     .chip.on .chip-text { color: var(--text); }
     .chip input { display: none; }
     
@@ -3298,14 +3300,14 @@
     body.day-mode .email-sprint-btn { background: rgba(77, 157, 224, 0.1); }
 
     /* FAB - Glowing */
-    .fab { 
-      position: fixed; bottom: 24px; right: 24px; 
-      width: 60px; height: 60px; border-radius: 50%; 
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink)); 
-      border: none; color: white; font-size: 24px; cursor: pointer; 
-      box-shadow: 0 8px 30px var(--glow-purple);
-      z-index: 100; transition: all 0.3s; 
-      animation: fab-pulse 2s ease-in-out infinite;
+    .fab {
+      position: fixed; bottom: 24px; right: 24px;
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--accent-teal);
+      border: none; color: #0f1117; font-size: 20px; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 100; transition: all 0.15s;
+      animation: none;
     }
     @keyframes fab-pulse {
       0%, 100% { box-shadow: 0 8px 30px var(--glow-purple); }
@@ -3327,7 +3329,7 @@
     .fab-label { font-size: 14px; font-weight: 600; color: var(--text); }
     
     /* Sticky */
-    .sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(26,26,46,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 10px 16px; padding-top: max(60px, calc(14px + env(safe-area-inset-top, 44px))); display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.3s; }
+    .sticky { position: fixed; top: 0; left: 0; right: 0; background: rgba(15,17,23,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 8px 16px; padding-top: max(50px, calc(12px + env(safe-area-inset-top, 44px))); display: flex; justify-content: space-between; align-items: center; z-index: 1000; transform: translateY(-100%); transition: transform 0.2s; }
     body.day-mode .sticky { background: rgba(255,255,255,0.92); border-bottom-color: #e5e7eb; }
     body.day-mode .sticky-date { color: #6b7280; }
     .sticky.visible { transform: translateY(0); }
@@ -3336,35 +3338,35 @@
     .sticky-btns button { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-dim); font-size: 13px; cursor: pointer; }
 
     /* Hamburger Menu */
-    .hamburger-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-dim); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
-    .hamburger-btn:hover { background: var(--bg-card-hover); color: var(--accent-teal); border-color: var(--accent-teal); }
-    body.day-mode .hamburger-btn { background: rgba(255,255,255,0.6); border-color: rgba(0,0,0,0.1); color: var(--text-dim); }
-    .nav-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 280px; background: var(--bg-deep); border-left: 1px solid var(--border); z-index: 2001; transform: translateX(100%); transition: transform 0.3s ease; box-shadow: -4px 0 30px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+    .hamburger-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .hamburger-btn:hover { background: var(--bg-card-hover); color: var(--text); }
+    body.day-mode .hamburger-btn { background: transparent; border-color: var(--border); color: var(--text-muted); }
+    .nav-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 260px; background: var(--bg-deep); border-left: 1px solid var(--border); z-index: 2001; transform: translateX(100%); transition: transform 0.2s ease; box-shadow: -2px 0 12px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
     .nav-drawer.open { transform: translateX(0); }
-    .nav-drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .nav-drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     .nav-drawer-backdrop.open { opacity: 1; pointer-events: auto; }
-    .nav-drawer-header { padding: 20px; padding-top: max(60px, calc(20px + env(safe-area-inset-top, 44px))); border-bottom: 1px solid var(--border); }
-    .nav-drawer-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; margin: 0; }
-    .nav-drawer-header .tagline { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-    .nav-drawer-items { flex: 1; padding: 12px; overflow-y: auto; }
-    .nav-drawer-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; color: var(--text); text-decoration: none; }
-    .nav-drawer-item:hover, .nav-drawer-item.active { background: rgba(255,255,255,0.05); }
-    .nav-drawer-item.active { color: var(--accent-teal); }
-    .nav-drawer-item .nav-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    .nav-drawer-item.active .nav-icon { background: rgba(109,213,237,0.15); }
-    .nav-drawer-item span { font-size: 15px; font-weight: 600; }
-    body.day-mode .nav-drawer { background: #fff; border-left-color: #e5e7eb; }
+    .nav-drawer-header { padding: 16px; padding-top: max(50px, calc(16px + env(safe-area-inset-top, 44px))); border-bottom: 1px solid var(--border); }
+    .nav-drawer-header h2 { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; margin: 0; }
+    .nav-drawer-header .tagline { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .nav-drawer-items { flex: 1; padding: 8px; overflow-y: auto; }
+    .nav-drawer-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; color: var(--text-dim); text-decoration: none; }
+    .nav-drawer-item:hover, .nav-drawer-item.active { background: var(--bg-card-hover); }
+    .nav-drawer-item.active { color: var(--text); }
+    .nav-drawer-item .nav-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .nav-drawer-item.active .nav-icon { background: rgba(34,211,238,0.1); color: var(--accent-teal); }
+    .nav-drawer-item span { font-size: 13px; font-weight: 500; }
+    body.day-mode .nav-drawer { background: #fff; border-left-color: var(--border); }
     body.day-mode .nav-drawer-item:hover, body.day-mode .nav-drawer-item.active { background: rgba(0,0,0,0.04); }
     body.day-mode .nav-drawer-item.active .nav-icon { background: rgba(249,115,22,0.1); }
     body.day-mode .nav-drawer-item.active { color: var(--accent-orange); }
 
     /* Settings Card Grid */
-    .settings-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 16px; }
-    .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 16px; cursor: pointer; transition: all 0.3s; text-align: center; }
-    .settings-card:hover { background: var(--bg-card-hover); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-    .settings-card-icon { font-size: 28px; margin-bottom: 8px; }
-    .settings-card-label { font-size: 13px; font-weight: 600; color: var(--text); }
-    .settings-card-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .settings-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 16px; }
+    .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 12px; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .settings-card:hover { background: var(--bg-card-hover); }
+    .settings-card-icon { font-size: 20px; margin-bottom: 6px; }
+    .settings-card-label { font-size: 12px; font-weight: 500; color: var(--text); }
+    .settings-card-desc { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
     body.day-mode .settings-card { background: rgba(255,255,255,0.8); }
     .settings-subpage { display: none; }
     .settings-subpage.active { display: block; }
@@ -4227,6 +4229,7 @@
       <a class="nav-drawer-item" data-page="writing"><div class="nav-icon">✍️</div><span>Writing</span></a>
       <a class="nav-drawer-item" data-page="summary"><div class="nav-icon">📈</div><span>Phase Summary</span></a>
       <a class="nav-drawer-item" data-page="charts"><div class="nav-icon">📊</div><span>Charts</span></a>
+      <a class="nav-drawer-item" data-page="body"><div class="nav-icon">B</div><span>Body Data</span></a>
       <a class="nav-drawer-item" data-page="biomarkers"><div class="nav-icon">🧬</div><span>Biomarkers</span></a>
       <a class="nav-drawer-item" data-page="settings"><div class="nav-icon">⚙️</div><span>Settings</span></a>
     </div>
@@ -4280,29 +4283,28 @@
   <header class="header">
     <div class="header-top">
       <div class="brand">
-        <div>
-          <h1>Habits</h1>
-          <div class="tagline">v2.11</div>
-        </div>
+        <div class="logo">H</div>
+        <h1>Habits</h1>
       </div>
-      <button class="hamburger-btn" id="headerMenuBtn">☰</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 48 48">
+            <circle class="ring-bg" cx="24" cy="24" r="20"/>
+            <circle class="ring-progress" id="completionProgress" cx="24" cy="24" r="20" stroke-dasharray="125.7" stroke-dashoffset="125.7"/>
+          </svg>
+          <div class="ring-text" id="completionNumber">0</div>
+        </div>
+        <button class="hamburger-btn" id="headerMenuBtn">☰</button>
+      </div>
     </div>
     <div class="date-nav">
-      <button class="date-btn" id="prevBtn">←</button>
+      <button class="date-btn" id="prevBtn">&lsaquo;</button>
       <div class="date-center">
-        <div class="date-phase-title" id="phaseTitle">Phase 1</div>
         <div class="date-main" id="dateDisplay"></div>
-        <div class="date-phase-day" id="phaseDayCount">Day -- of 21</div>
-        <div class="freeze-indicator" id="freezeIndicator" style="display:none">❄️ Phase Frozen</div>
+        <div class="date-phase-day"><span id="phaseTitle">Phase 1</span> &middot; <span id="phaseDayCount">Day --</span></div>
+        <div class="freeze-indicator" id="freezeIndicator" style="display:none">Frozen</div>
       </div>
-      <button class="date-btn" id="nextBtn">→</button>
-      <div class="ring-wrap">
-        <svg class="ring" width="72" height="72" viewBox="0 0 72 72">
-          <circle class="ring-bg" cx="36" cy="36" r="32"/>
-          <circle class="ring-progress" id="completionProgress" cx="36" cy="36" r="32" stroke-dasharray="201" stroke-dashoffset="201"/>
-        </svg>
-        <div class="ring-text" id="completionNumber">0</div>
-      </div>
+      <button class="date-btn" id="nextBtn">&rsaquo;</button>
       <div class="phase" style="grid-column: 1 / -1;">
         <div class="phase-track"><div class="phase-fill" id="phaseProgressBar" style="width:0%"></div></div>
       </div>
@@ -4480,17 +4482,6 @@
       <button type="button" class="unlock-day-btn" onclick="unlockDay()">Unlock</button>
     </div>
 
-    <!-- Cue & Habit Buttons -->
-    <div class="awareness-section">
-      <div class="awareness-buttons">
-        <button type="button" class="cue-detected-btn" onclick="openCueModal()">
-          <span>Cue Detected</span>
-        </button>
-        <button type="button" class="cue-detected-btn habit-spotted-btn" onclick="openHabitSpottedModal()">
-          <span>Habit Spotted</span>
-        </button>
-      </div>
-    </div>
 
     <!-- Friday Grooming Section -->
     <div id="groomingCard" class="grooming-card" style="display:none">
@@ -4603,13 +4594,14 @@
         <div class="mini-supp" title="Prebiotic"><input type="checkbox" id="prebiotic"><span>Prebiotic</span></div>
       </div>
     </div>
-    <!-- Card 1: Movement Energy Overview -->
-    <div class="card energy" id="movementEnergyCard">
-      <div class="card-head"><div class="card-icon">🔥</div><div class="card-title">Movement Energy</div></div>
+    <!-- Unified Movement Card -->
+    <div class="card energy" id="movementEnergyCard" style="--accent-start:var(--accent-orange)">
+      <!-- Total Movement Energy header -->
+      <div class="card-head"><div class="card-icon">~</div><div class="card-title">Total Movement Energy</div></div>
       <div class="energy-ring-wrap">
-        <svg class="energy-ring-svg" width="80" height="80" viewBox="0 0 80 80">
-          <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
-          <circle id="energyRingProgress" cx="40" cy="40" r="34" fill="none" stroke="var(--accent-orange)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)" style="transition: stroke-dashoffset 0.5s ease"/>
+        <svg class="energy-ring-svg" width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="23" fill="none" stroke="var(--border)" stroke-width="4"/>
+          <circle id="energyRingProgress" cx="28" cy="28" r="23" fill="none" stroke="var(--accent-orange)" stroke-width="4" stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="144.5" transform="rotate(-90 28 28)" style="transition: stroke-dashoffset 0.4s ease"/>
         </svg>
         <div class="energy-ring-info">
           <div class="energy-burned" id="energyBurnedDisplay">0</div>
@@ -4617,49 +4609,47 @@
           <div class="energy-breakdown" id="energyBreakdown"></div>
         </div>
       </div>
-    </div>
 
-    <!-- Card 2: Steps -->
-    <div class="card movement" id="stepsCard">
-      <div class="card-head"><div class="card-icon">👟</div><div class="card-title">Steps</div></div>
-      <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0"><span class="card-unit">steps</span></div>
-      <div class="progress-bar-h">
-        <div class="progress-bar-h-fill" id="stepsBarFill"></div>
+      <!-- Steps sub-section -->
+      <div class="movement-subsection" id="stepsCard">
+        <div class="movement-subsection-label">Steps</div>
+        <div class="input-row"><input type="number" inputmode="numeric" class="big-input" id="steps" placeholder="0" style="font-size:22px"><span class="card-unit">steps</span></div>
+        <div class="progress-bar-h">
+          <div class="progress-bar-h-fill" id="stepsBarFill"></div>
+        </div>
+        <div class="steps-to-go" id="stepsToGoDisplay"></div>
+        <div class="card-avg">Week total: <input type="number" inputmode="numeric" id="stepsWeekTotal" class="inline-week-input" placeholder="--"> <span id="stepsWeekCompare"></span></div>
       </div>
-      <div class="steps-to-go" id="stepsToGoDisplay"></div>
-      <div class="card-avg">Week total: <input type="number" inputmode="numeric" id="stepsWeekTotal" class="inline-week-input" placeholder="--"> <span id="stepsWeekCompare"></span></div>
-    </div>
 
-    <!-- Card 3: Carol Bike -->
-    <div class="card bike" id="carolBikeCard">
-      <div class="card-head"><div class="card-icon">🚴</div><div class="card-title">Carol Bike</div></div>
-      <div class="bike-inputs">
-        <div class="bike-input-group">
-          <label>Duration</label>
-          <input type="number" inputmode="numeric" id="carolBikeDuration" placeholder="0" min="0" max="120">
-        </div>
-        <div class="bike-input-group">
-          <label>Calories</label>
-          <input type="number" inputmode="numeric" id="carolBikeCalories" placeholder="0" min="0" max="2000">
-        </div>
-      </div>
-      <div class="bike-cals-display" id="carolBikeCalsDisplay"></div>
-    </div>
-
-    <!-- Card 4: Dumbbell Session -->
-    <div class="card dumbbell" id="dumbbellCard">
-      <div class="card-head"><div class="card-icon">🏋️</div><div class="card-title">Dumbbell Session</div></div>
-      <div class="bike-inputs">
-        <div class="bike-input-group">
-          <label>Duration</label>
-          <input type="number" inputmode="numeric" id="dumbbellDuration" placeholder="0" min="0" max="180">
-        </div>
-        <div class="bike-input-group">
-          <label>Calories</label>
-          <input type="number" id="dumbbellCalsBurned" placeholder="0" readonly style="color:var(--accent-orange);opacity:0.8;cursor:default">
+      <!-- Carol Bike sub-section -->
+      <div class="movement-subsection" id="carolBikeCard">
+        <div class="movement-subsection-label">Carol Bike</div>
+        <div class="bike-inputs">
+          <div class="bike-input-group">
+            <label>Duration</label>
+            <input type="number" inputmode="numeric" id="carolBikeDuration" placeholder="--" min="0" max="120">
+          </div>
+          <div class="bike-input-group">
+            <label>Calories</label>
+            <input type="number" inputmode="numeric" id="carolBikeCalories" placeholder="--" min="0" max="2000">
+          </div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">4.5 cal/min</div>
+
+      <!-- Dumbbell sub-section -->
+      <div class="movement-subsection" id="dumbbellCard">
+        <div class="movement-subsection-label">Dumbbell</div>
+        <div class="bike-inputs">
+          <div class="bike-input-group">
+            <label>Duration</label>
+            <input type="number" inputmode="numeric" id="dumbbellDuration" placeholder="--" min="0" max="180">
+          </div>
+          <div class="bike-input-group">
+            <label>Calories <span style="font-weight:400;opacity:0.6">(4.5/min)</span></label>
+            <input type="number" id="dumbbellCalsBurned" placeholder="--" readonly style="opacity:0.6;cursor:default">
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="section" id="greysHabitsSection">
@@ -4742,35 +4732,7 @@
 
     <!-- Reflections, Grey & Sloane, Carly moved to Writing page -->
 
-    <div class="section" id="bodyDataSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#c471ed;--icon-glow:var(--glow-teal)">⚖️</div><span class="sec-name">Body</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed">
-        <div class="body-grid">
-          <div class="body-cell"><div class="body-label">Weight</div><input type="number" inputmode="decimal" class="body-input" id="weight" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Waist</div><input type="number" inputmode="decimal" class="body-input" id="waist" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Lean Mass</div><input type="number" inputmode="decimal" class="body-input" id="leanMass" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Lean %</div><div class="body-pct" id="leanMassPercent">--</div></div>
-          <div class="body-cell"><div class="body-label">Body Fat</div><input type="number" inputmode="decimal" class="body-input" id="bodyFat" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Fat %</div><div class="body-pct" id="bodyFatPercent">--</div></div>
-          <div class="body-cell"><div class="body-label">Bone Mass</div><input type="number" inputmode="decimal" class="body-input" id="boneMass" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Bone %</div><div class="body-pct" id="boneMassPercent">--</div></div>
-          <div class="body-cell"><div class="body-label">Water (lbs)</div><input type="number" inputmode="decimal" class="body-input" id="bodywater" step="0.1"></div>
-          <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="bodywaterPercent">--</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section" id="bloodPressureSection">
-      <div class="sec-head collapsed"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ff6b9d;--icon-end:#c471ed;--icon-glow:var(--glow-pink)">❤️</div><span class="sec-name">Blood Pressure</span></div><span class="sec-toggle">▼</span></div>
-      <div class="sec-content collapsed">
-        <div class="body-grid">
-          <div class="body-cell"><div class="body-label">Systolic</div><input type="number" inputmode="numeric" class="body-input" id="systolic"></div>
-          <div class="body-cell"><div class="body-label">Diastolic</div><input type="number" inputmode="numeric" class="body-input" id="diastolic"></div>
-          <div class="body-cell"><div class="body-label">Heart Rate</div><input type="number" inputmode="numeric" class="body-input" id="heartRate"></div>
-          <div class="body-cell"><div class="body-label">Status</div><div class="body-pct" id="bpStatus">--</div></div>
-        </div>
-      </div>
-    </div>
+    <!-- Body Data and Blood Pressure moved to separate Body Data page -->
 
     <div class="section" id="todoSection">
       <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#ffa552;--icon-end:#ff6b9d;--icon-glow:var(--glow-orange)">📋</div><span class="sec-name">To-Do</span></div></div>
@@ -4783,6 +4745,47 @@
       </div>
     </div>
   </form>
+
+  <!-- Body Data Page -->
+  <div id="bodyDataPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">B</div><h1>Body Data</h1></div>
+        <button type="button" id="bodyDataCloseBtn" class="nav-link" style="font-size:18px">&times;</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px" id="bodyDataDateDisplay"></div>
+    </header>
+
+    <div class="section" id="bodyDataSection" style="--icon-start:var(--accent-teal)">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon">~</div><span class="sec-name">Composition</span></div></div>
+      <div class="sec-content">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Weight</div><input type="number" inputmode="decimal" class="body-input" id="weight" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Waist</div><input type="number" inputmode="decimal" class="body-input" id="waist" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Lean Mass</div><input type="number" inputmode="decimal" class="body-input" id="leanMass" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Lean %</div><div class="body-pct" id="leanMassPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Body Fat</div><input type="number" inputmode="decimal" class="body-input" id="bodyFat" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Fat %</div><div class="body-pct" id="bodyFatPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Bone Mass</div><input type="number" inputmode="decimal" class="body-input" id="boneMass" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Bone %</div><div class="body-pct" id="boneMassPercent">--</div></div>
+          <div class="body-cell"><div class="body-label">Water</div><input type="number" inputmode="decimal" class="body-input" id="bodywater" step="0.1"></div>
+          <div class="body-cell"><div class="body-label">Water %</div><div class="body-pct" id="bodywaterPercent">--</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="bloodPressureSection" style="--icon-start:var(--accent-pink)">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon">~</div><span class="sec-name">Blood Pressure</span></div></div>
+      <div class="sec-content">
+        <div class="body-grid">
+          <div class="body-cell"><div class="body-label">Systolic</div><input type="number" inputmode="numeric" class="body-input" id="systolic"></div>
+          <div class="body-cell"><div class="body-label">Diastolic</div><input type="number" inputmode="numeric" class="body-input" id="diastolic"></div>
+          <div class="body-cell"><div class="body-label">Heart Rate</div><input type="number" inputmode="numeric" class="body-input" id="heartRate"></div>
+          <div class="body-cell"><div class="body-label">Status</div><div class="body-pct" id="bpStatus">--</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="chartsPage" style="display:none">
     <header class="header">
@@ -5575,7 +5578,7 @@
       const number = document.getElementById('completionNumber');
 
       if (progress && number) {
-        const circumference = 2 * Math.PI * 32; // r=32 = ~201
+        const circumference = 2 * Math.PI * 20; // r=20 = ~125.7
         let offset;
         if (total === 0) {
           offset = circumference; // Empty ring
@@ -6145,7 +6148,7 @@
       }
 
       if (ringEl) {
-        const circumference = 2 * Math.PI * 34; // r=34 → ~213.6
+        const circumference = 2 * Math.PI * 23; // r=23 → ~144.5
         const pct = Math.min(1, info.totalBurned / info.target);
         ringEl.style.strokeDashoffset = circumference - pct * circumference;
         // Color shift: orange → green as approaching/exceeding goal
@@ -6616,16 +6619,11 @@
         { id: 'sleepSection', name: 'Sleep', icon: '🌙', visible: true, custom: false, group: 1 },
         { id: 'waterSection', name: 'Water', icon: '💧', visible: true, custom: false, group: 1 },
         { id: 'supplementsCard', name: 'Supplements', icon: '💊', visible: true, custom: false, group: 2 },
-        { id: 'movementEnergyCard', name: 'Movement Energy', icon: '🔥', visible: true, custom: false, group: 2 },
-        { id: 'stepsCard', name: 'Steps', icon: '👟', visible: true, custom: false, group: 2 },
-        { id: 'carolBikeCard', name: 'Carol Bike', icon: '🚴', visible: true, custom: false, group: 2 },
-        { id: 'dumbbellCard', name: 'Dumbbell Session', icon: '🏋️', visible: true, custom: false, group: 2 },
+        { id: 'movementEnergyCard', name: 'Movement', icon: '~', visible: true, custom: false, group: 2 },
         { id: 'greysHabitsSection', name: "Grey's Habits", icon: '👶', visible: true, custom: false },
         { id: 'mealsSection', name: 'Meals', icon: '🍽️', visible: true, custom: false },
         { id: 'mentalHabitsSection', name: 'Reading', icon: '📖', visible: true, custom: false },
         { id: 'meditationSection', name: 'Mindfulness', icon: '🧘', visible: false, custom: false },
-        { id: 'bodyDataSection', name: 'Body', icon: '⚖️', visible: true, custom: false },
-        { id: 'bloodPressureSection', name: 'Blood Pressure', icon: '❤️', visible: true, custom: false },
         { id: 'emailSprintSection', name: 'Email Sprints', icon: '📧', visible: false, custom: false },
         { id: 'todoSection', name: 'To-Do', icon: '📋', visible: true, custom: false },
       ]
@@ -7553,7 +7551,7 @@
     }
 
     window.hideAllPages = function() {
-      ['healthForm', 'settingsPage', 'chartsPage', 'biomarkersPage', 'weeklySummaryPage', 'writingPage'].forEach(id => {
+      ['healthForm', 'settingsPage', 'chartsPage', 'biomarkersPage', 'weeklySummaryPage', 'writingPage', 'bodyDataPage'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -7589,6 +7587,8 @@
         showWeeklySummaryPage();
       } else if (page === 'charts') {
         showChartsPage();
+      } else if (page === 'body') {
+        showBodyDataPage();
       } else if (page === 'biomarkers') {
         showBiomarkersPage();
       } else if (page === 'settings') {
@@ -7610,6 +7610,19 @@
       window.scrollTo(0, 0);
     }
     document.getElementById('writingCloseBtn')?.addEventListener('click', () => navigateTo('home'));
+
+    // Body Data page
+    function showBodyDataPage() {
+      hideAllPages();
+      const bp = document.getElementById('bodyDataPage');
+      if (bp) bp.style.display = 'block';
+      // Show current date context
+      const dateDisp = document.getElementById('bodyDataDateDisplay');
+      if (dateDisp) dateDisp.textContent = document.getElementById('dateDisplay')?.textContent || '';
+      setActiveNav('body');
+      window.scrollTo(0, 0);
+    }
+    document.getElementById('bodyDataCloseBtn')?.addEventListener('click', () => navigateTo('home'));
 
     // Settings subpage navigation
     window.showSettingsMain = function() {
