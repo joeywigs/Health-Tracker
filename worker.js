@@ -249,6 +249,11 @@ async function handlePost(request, env, corsHeaders) {
     return await bulkImportActiveEnergy(body.entries, env, corsHeaders);
   }
 
+  // iOS Shortcut endpoint - bulk import raw Active Energy samples from Apple Health
+  if (action === "active_energy_import") {
+    return await importActiveEnergySamples(body, env, corsHeaders);
+  }
+
   if (action === "biomarkers_save") {
     if (!body.date || !body.values) {
       return jsonResponse({ error: true, message: "Missing date or values" }, 400, corsHeaders);
@@ -677,6 +682,153 @@ async function bulkImportActiveEnergy(entries, env, corsHeaders) {
     total: entries.length,
     errors: errors.length > 0 ? errors : undefined,
     message: `Imported active energy for ${updated}/${entries.length} days`
+  }, 200, corsHeaders);
+}
+
+// ===== Bulk Import Raw Active Energy Samples (from iOS Shortcut) =====
+// Accepts raw Apple Health Active Energy samples and groups them by date.
+// Deduplicates overlapping time ranges (e.g., Watch + iPhone both reporting).
+// Body format: { "samples": "start|end|calories\nstart|end|calories\n..." }
+// Or: { "samples": [{start, end, calories}, ...] }
+async function importActiveEnergySamples(body, env, corsHeaders) {
+  const raw = body.samples;
+  if (!raw || (typeof raw !== 'string' && !Array.isArray(raw))) {
+    return jsonResponse({
+      error: true,
+      message: 'Missing samples. Send as pipe-delimited lines: "start|end|calories\\n..." or an array of {start,end,calories} objects',
+      received: body
+    }, 400, corsHeaders);
+  }
+
+  // Parse samples from either text lines or array format
+  let samples = [];
+  if (typeof raw === 'string') {
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    for (const line of lines) {
+      const parts = line.split('|');
+      if (parts.length >= 3) {
+        samples.push({ start: parts[0].trim(), end: parts[1].trim(), calories: parseFloat(parts[2].trim()) });
+      }
+    }
+  } else {
+    samples = raw.map(s => ({
+      start: s.start || s.startDate,
+      end: s.end || s.endDate,
+      calories: parseFloat(s.calories ?? s.value ?? s.activeEnergy ?? 0)
+    }));
+  }
+
+  if (samples.length === 0) {
+    return jsonResponse({
+      error: true,
+      message: 'No valid samples found after parsing',
+      received: body
+    }, 400, corsHeaders);
+  }
+
+  // Parse and validate all samples, converting to {startMs, endMs, calories}
+  const parsed = [];
+  for (const s of samples) {
+    const startDate = new Date(s.start);
+    const endDate = new Date(s.end);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) continue;
+    if (isNaN(s.calories) || s.calories <= 0) continue;
+    if (endDate <= startDate) continue;
+    parsed.push({ startMs: startDate.getTime(), endMs: endDate.getTime(), calories: s.calories });
+  }
+
+  if (parsed.length === 0) {
+    return jsonResponse({
+      error: true,
+      message: 'No valid samples found. Each sample needs valid start/end times and positive calories.',
+      sampleCount: samples.length
+    }, 400, corsHeaders);
+  }
+
+  // Sort by start time, then by duration descending (longer intervals first)
+  parsed.sort((a, b) => a.startMs - b.startMs || (b.endMs - b.startMs) - (a.endMs - a.startMs));
+
+  // Deduplicate overlapping samples:
+  // If a sample is fully contained within another, keep the longer (more aggregated) one.
+  // If samples partially overlap, keep both (they likely cover different periods).
+  const deduped = [];
+  for (const sample of parsed) {
+    let dominated = false;
+    for (const kept of deduped) {
+      // Check if sample is fully contained within a kept sample
+      if (sample.startMs >= kept.startMs && sample.endMs <= kept.endMs) {
+        dominated = true;
+        break;
+      }
+    }
+    if (!dominated) {
+      // Remove any previously kept samples that are fully contained within this one
+      for (let i = deduped.length - 1; i >= 0; i--) {
+        if (deduped[i].startMs >= sample.startMs && deduped[i].endMs <= sample.endMs) {
+          deduped.splice(i, 1);
+        }
+      }
+      deduped.push(sample);
+    }
+  }
+
+  // Group by date using Central Time (same as sleep)
+  // For samples spanning midnight, split calories proportionally
+  const dayBuckets = {}; // { "M/D/YY": totalCalories }
+
+  for (const s of deduped) {
+    const startDate = new Date(s.startMs);
+    const endDate = new Date(s.endMs);
+    const startKey = formatDateForKV(startDate);
+    const endKey = formatDateForKV(endDate);
+
+    if (startKey === endKey) {
+      // Same day — attribute all calories to that day
+      dayBuckets[startKey] = (dayBuckets[startKey] || 0) + s.calories;
+    } else {
+      // Spans midnight — split proportionally
+      const totalMs = s.endMs - s.startMs;
+      // Find midnight in Central Time for the end date
+      const endLocalStr = endDate.toLocaleString('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: 'numeric', day: 'numeric' });
+      const midnightCentral = new Date(new Date(endLocalStr).toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+      // Approximate: use the proportion of time before/after midnight
+      const msBeforeMidnight = midnightCentral.getTime() - s.startMs;
+      const fractionBefore = Math.max(0, Math.min(1, msBeforeMidnight / totalMs));
+      dayBuckets[startKey] = (dayBuckets[startKey] || 0) + (s.calories * fractionBefore);
+      dayBuckets[endKey] = (dayBuckets[endKey] || 0) + (s.calories * (1 - fractionBefore));
+    }
+  }
+
+  const dates = Object.keys(dayBuckets);
+  if (dates.length === 0) {
+    return jsonResponse({
+      error: true,
+      message: 'No valid date buckets after processing',
+      sampleCount: samples.length,
+      dedupedCount: deduped.length
+    }, 400, corsHeaders);
+  }
+
+  // Save each day's active energy total
+  const results = [];
+  for (const dateKey of dates) {
+    const totalCal = Math.round(dayBuckets[dateKey]);
+    if (totalCal <= 0) continue;
+
+    const existing = await env.HABIT_DATA.get(`daily:${dateKey}`, "json") || {};
+    existing["Date"] = dateKey;
+    existing["Active Energy"] = totalCal;
+    await env.HABIT_DATA.put(`daily:${dateKey}`, JSON.stringify(existing));
+    results.push({ date: dateKey, activeEnergy: totalCal });
+  }
+
+  return jsonResponse({
+    success: true,
+    message: `Imported active energy for ${results.length} days from ${samples.length} samples (${deduped.length} after dedup)`,
+    daysUpdated: results.length,
+    totalSamples: samples.length,
+    dedupedSamples: deduped.length,
+    days: results
   }, 200, corsHeaders);
 }
 
