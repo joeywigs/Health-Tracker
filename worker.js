@@ -844,7 +844,7 @@ async function logSleep(body, env, corsHeaders) {
     if (isNaN(val)) return NaN;
     return val > 24 ? val / 3600 : val;
   };
-  const round1 = (v) => parseFloat(v.toFixed(1));
+  const round1 = (v) => parseFloat(v.toFixed(2));
 
   const updates = {};
 
@@ -997,14 +997,14 @@ async function importSleepSamples(body, env, corsHeaders) {
     const existing = await env.HABIT_DATA.get(`daily:${dateKey}`, "json") || {};
 
     const updates = {};
-    if (bucket.awake > 0) updates["Sleep Awake"] = Math.round(bucket.awake * 10) / 10;
-    if (bucket.core > 0) updates["Sleep Core"] = Math.round(bucket.core * 10) / 10;
-    if (bucket.deep > 0) updates["Sleep Deep"] = Math.round(bucket.deep * 10) / 10;
-    if (bucket.rem > 0) updates["Sleep REM"] = Math.round(bucket.rem * 10) / 10;
+    if (bucket.awake > 0) updates["Sleep Awake"] = Math.round(bucket.awake * 100) / 100;
+    if (bucket.core > 0) updates["Sleep Core"] = Math.round(bucket.core * 100) / 100;
+    if (bucket.deep > 0) updates["Sleep Deep"] = Math.round(bucket.deep * 100) / 100;
+    if (bucket.rem > 0) updates["Sleep REM"] = Math.round(bucket.rem * 100) / 100;
 
     const totalSleep = (bucket.core + bucket.deep + bucket.rem);
     if (totalSleep > 0) {
-      updates["Hours of Sleep"] = Math.round(totalSleep * 10) / 10;
+      updates["Hours of Sleep"] = Math.round(totalSleep * 100) / 100;
     }
 
     if (Object.keys(updates).length > 0) {
