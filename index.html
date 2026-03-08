@@ -2165,11 +2165,13 @@
     .card.nutrition { --accent-start: var(--accent-teal); }
     .meal-totals-row {
       display: flex;
+      align-items: center;
       gap: 16px;
       margin-bottom: 12px;
       padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
     }
+    .protein-ring-svg { flex-shrink: 0; }
     .meal-total-item { display: flex; flex-direction: column; }
     .meal-total-value {
       font-family: 'Inter', sans-serif;
@@ -4798,6 +4800,12 @@
     <div class="card nutrition" id="mealsSection" style="--accent-start:var(--accent-teal)">
       <div class="card-head"><div class="card-icon">🍽️</div><div class="card-title">Nutrition</div></div>
       <div class="meal-totals-row">
+        <svg class="protein-ring-svg" width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="21" fill="none" stroke="var(--border)" stroke-width="3.5"/>
+          <circle id="proteinRingProgress" cx="26" cy="26" r="21" fill="none" stroke="var(--accent-teal)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="131.95" stroke-dashoffset="131.95" transform="rotate(-90 26 26)" style="transition: stroke-dashoffset 0.4s ease"/>
+          <text x="26" y="24" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="700" font-family="Inter, sans-serif"><tspan id="proteinRingPct">0</tspan><tspan font-size="7">%</tspan></text>
+          <text x="26" y="35" text-anchor="middle" fill="var(--text-muted)" font-size="7" font-family="Inter, sans-serif">protein</text>
+        </svg>
         <div class="meal-total-item"><span class="meal-total-value" id="mealCalorieTotal">0</span><span class="meal-total-label">kcal</span></div>
         <div class="meal-total-item"><span class="meal-total-value" id="mealProteinTotal">0</span><span class="meal-total-label">g protein</span></div>
         <div class="meal-total-item"><span class="meal-total-value" id="mealEntryCount">0</span><span class="meal-total-label">entries</span></div>
@@ -6400,6 +6408,14 @@
       // Keep protein total element in sync for backward compat with save
       const proteinTotalEl = document.getElementById('proteinTotal');
       if (proteinTotalEl) proteinTotalEl.textContent = totalPro;
+      // Update protein completion ring (goal: 150g)
+      const proteinGoal = 150;
+      const pct = Math.min(totalPro / proteinGoal, 1);
+      const circumference = 2 * Math.PI * 21; // r=21
+      const ringEl = document.getElementById('proteinRingProgress');
+      const pctEl = document.getElementById('proteinRingPct');
+      if (ringEl) ringEl.setAttribute('stroke-dashoffset', circumference * (1 - pct));
+      if (pctEl) pctEl.textContent = Math.round(pct * 100);
     }
 
     window.deleteMealEntry = function(index) {
