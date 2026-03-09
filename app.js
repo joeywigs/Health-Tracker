@@ -6872,6 +6872,7 @@ async function populateForm(data) {
   if (carolBikeDurEl) carolBikeDurEl.value = d["Carol Bike Duration"] ?? d["carolBikeDuration"] ?? "";
   const carolBikeCalEl = document.getElementById("carolBikeCalories");
   if (carolBikeCalEl) carolBikeCalEl.value = d["Carol Bike Calories"] ?? d["carolBikeCalories"] ?? "";
+  if (typeof updateMovementEnergy === 'function') updateMovementEnergy();
 
   // Checkboxes (API column names ?? payload key names)
   setCheckbox("inhalerMorning", d["Grey's Inhaler Morning"] ?? d["Inhaler Morning"] ?? d["inhalerMorning"]);
