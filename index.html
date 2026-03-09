@@ -2272,6 +2272,12 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .meal-quick-adds { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .meal-quick-add-btn {
+      font-size: 11px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--card-bg); color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+    }
+    .meal-quick-add-btn:hover { border-color: var(--accent-teal); color: var(--accent-teal); }
     body.day-mode .meal-textarea { background: #f3f4f6; border-color: rgba(0,0,0,0.15); }
     body.day-mode .meal-entry { background: #f3f4f6; border-color: rgba(0,0,0,0.1); }
 
@@ -4811,6 +4817,10 @@
         <div class="meal-total-item"><span class="meal-total-value" id="mealEntryCount">0</span><span class="meal-total-label">entries</span></div>
       </div>
       <div class="meal-log" id="mealLog"></div>
+      <div class="meal-quick-adds">
+        <button type="button" class="meal-quick-add-btn" onclick="window.quickAddMeal('Coffee with Splenda')">☕ Coffee + Splenda</button>
+        <button type="button" class="meal-quick-add-btn" onclick="window.quickAddMeal('1/2 cup whey protein, 1/2 cup milk')">🥛 Whey + Milk</button>
+      </div>
       <div class="meal-input-row">
         <textarea class="meal-textarea" id="mealInput" placeholder="What did you eat? e.g. 2 eggs, toast with butter, coffee with milk" rows="2"></textarea>
         <button type="button" class="meal-analyze-btn" id="mealAnalyzeBtn" onclick="window.analyzeMeal()">
@@ -6422,6 +6432,12 @@
       mealEntries.splice(index, 1);
       renderMealLog();
       if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+    };
+
+    window.quickAddMeal = function(text) {
+      const input = document.getElementById('mealInput');
+      if (input) input.value = text;
+      window.analyzeMeal();
     };
 
     window.analyzeMeal = async function() {
