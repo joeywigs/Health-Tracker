@@ -1058,7 +1058,7 @@ function renderPhaseComparison() {
     { key: 'reading', name: 'Reading', icon: '📖' },
     { key: 'meals', name: 'Meals', icon: '🍽️' },
     { key: 'supps', name: 'Supplements', icon: '💊' },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺' }
+    { key: 'noAlcohol', name: 'Alcohol-Free', icon: '🍺' }
   ];
 
   let html = `
@@ -1136,7 +1136,7 @@ function renderPhaseGoals(phaseId = null) {
     { key: 'reading', name: 'Reading', icon: '📖', format: (t) => `${t}+ min/week` },
     { key: 'meals', name: 'Meals', icon: '🍽️', format: (t) => `${t}+ healthy/day` },
     { key: 'supps', name: 'Supplements', icon: '💊', format: (t) => `All ${t} daily` },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', format: (t) => t ? 'Daily' : 'Not tracked' },
+    { key: 'noAlcohol', name: 'Alcohol-Free', icon: '🍺', format: (t) => t ? 'Daily' : 'Not tracked' },
     { key: 'meditation', name: 'Meditation', icon: '🧘', format: (t) => t ? 'Daily' : 'Not tracked' },
     { key: 'snacks', name: 'Healthy Snacks', icon: '🥗', format: (t) => `${t}x/day` }
   ];
@@ -1266,7 +1266,7 @@ const DEFAULT_PHASE_1 = {
     movement: { target: 2, unit: "breaks", type: "daily", description: "Movement breaks" },
     meals: { target: 2, unit: "meals", type: "daily", description: "Healthy meals" },
     supps: { target: 6, unit: "supps", type: "daily", description: "All 6 supplements" },
-    noAlcohol: { target: true, unit: "bool", type: "daily", description: "No alcohol" },
+    noAlcohol: { target: true, unit: "bool", type: "daily", description: "Alcohol-free day" },
     meditation: { target: true, unit: "bool", type: "daily", description: "Daily meditation" },
     snacks: { target: 2, unit: "checks", type: "daily", description: "Healthy snacks (day + night)" }
   }
@@ -2717,7 +2717,7 @@ function renderHabitGrid(allData) {
         return mins > 0;
       }
     },
-    { key: 'noAlcohol', icon: '🚫', name: 'No Alcohol',
+    { key: 'noAlcohol', icon: '🚫', name: 'Alcohol-Free',
       hasAny: (d) => { const v = d.daily["No Alcohol"]; return v === true || v === "TRUE" || v === "true"; },
       metGoal: (d) => { const v = d.daily["No Alcohol"]; return v === true || v === "TRUE" || v === "true"; }
     },
@@ -3312,7 +3312,7 @@ function renderGoalPerformance(stats) {
     { key: 'reading', ...GOALS.reading, ...stats.reading },
     { key: 'meals', name: 'Meals', icon: '🍽️', ...stats.meals },
     { key: 'snacks', name: 'Snacks', icon: '🥗', ...stats.snacks },
-    { key: 'noAlcohol', name: 'No Alcohol', icon: '🍺', ...stats.noAlcohol },
+    { key: 'noAlcohol', name: 'Alcohol-Free', icon: '🍺', ...stats.noAlcohol },
     // Custom section goals
     ...Object.keys(stats)
       .filter(k => stats[k]?.customField)
@@ -3393,7 +3393,7 @@ function renderNutritionStats(stats) {
   container.innerHTML = `
     ${renderGoalStatCard('Meals', '🍽️', safe(stats.meals).pct, safe(stats.meals).detail)}
     ${renderGoalStatCard('Snacks', '🥗', safe(stats.snacks).pct, safe(stats.snacks).detail)}
-    ${renderGoalStatCard('No Alcohol', '🍺', safe(stats.noAlcohol).pct, safe(stats.noAlcohol).detail)}
+    ${renderGoalStatCard('Alcohol-Free', '🍺', safe(stats.noAlcohol).pct, safe(stats.noAlcohol).detail)}
   `;
 }
 
@@ -4895,7 +4895,7 @@ function checkMealsGoal() {
 function checkCleanEatingGoal() {
   const daySnacks = document.getElementById('daySnacks')?.checked || false;
   const nightSnacks = document.getElementById('nightSnacks')?.checked || false;
-  const noAlcohol = document.getElementById('noAlcohol')?.checked || false;
+  const noAlcohol = !document.getElementById('noAlcohol')?.checked; // unchecked = no alcohol = good
 
   if (daySnacks && nightSnacks && noAlcohol && !dailyGoalsAchieved.cleanEating) {
     celebrateGoalAchievement('cleanEating');
@@ -4914,20 +4914,23 @@ function setupDopamineBoosts() {
   // Add confetti to all checkboxes (including mini-supp checkboxes for meals/snacks/alcohol)
   document.querySelectorAll('.checkbox-field input[type="checkbox"], .mini-supp input[type="checkbox"]').forEach(checkbox => {
     checkbox.addEventListener('change', (e) => {
+      const id = e.target.id;
       if (e.target.checked) {
-        createConfetti(e.target);
+        // Don't celebrate checking "Alcohol" (that means they drank)
+        if (id !== 'noAlcohol') createConfetti(e.target);
         updateCompletionRing();
         checkForMilestones();
 
         // Check for daily goal achievements based on which checkbox changed
-        const id = e.target.id;
         if (id === 'breakfast' || id === 'lunch' || id === 'dinner') {
           checkMealsGoal();
-        } else if (id === 'daySnacks' || id === 'nightSnacks' || id === 'noAlcohol') {
+        } else if (id === 'daySnacks' || id === 'nightSnacks') {
           checkCleanEatingGoal();
         }
       } else {
         updateCompletionRing();
+        // Unchecking alcohol means no alcohol — check clean eating goal
+        if (id === 'noAlcohol') checkCleanEatingGoal();
       }
     });
   });
@@ -6230,7 +6233,7 @@ function buildPayloadFromUI() {
 
     daySnacks: !!document.getElementById("daySnacks")?.checked,
     nightSnacks: !!document.getElementById("nightSnacks")?.checked,
-    noAlcohol: !!document.getElementById("noAlcohol")?.checked,
+    noAlcohol: !document.getElementById("noAlcohol")?.checked,
 
     // AI Meal log entries
     mealEntries: typeof getMealEntries === 'function' ? JSON.stringify(getMealEntries()) : "[]",
@@ -6904,7 +6907,9 @@ async function populateForm(data) {
 
   setCheckbox("daySnacks", d["Healthy Day Snacks"] ?? d["Day Snacks"] ?? d["daySnacks"]);
   setCheckbox("nightSnacks", d["Healthy Night Snacks"] ?? d["Night Snacks"] ?? d["nightSnacks"]);
-  setCheckbox("noAlcohol", d["No Alcohol"] ?? d["noAlcohol"]);
+  // Alcohol checkbox is inverted: data "No Alcohol"=true means checkbox unchecked
+  const noAlcRaw = d["No Alcohol"] ?? d["noAlcohol"];
+  if (noAlcRaw != null) setCheckbox("noAlcohol", !toBool(noAlcRaw));
 
   // Load AI meal entries
   const mealEntriesRaw = d["Meal Entries"] ?? d["mealEntries"] ?? "[]";
