@@ -4601,7 +4601,7 @@
         <button type="button" class="habit-spotted-item" data-habit="reading">📖 Read</button>
         <button type="button" class="habit-spotted-item" data-habit="meditation">🧘 Meditated</button>
         <button type="button" class="habit-spotted-item" data-habit="meals">🍽️ Healthy Meal</button>
-        <button type="button" class="habit-spotted-item" data-habit="noAlcohol">🚫🍺 Skipped Drink</button>
+        <button type="button" class="habit-spotted-item" data-habit="noAlcohol">🍺 Had a Drink</button>
         <button type="button" class="habit-spotted-item" data-habit="supps">💊 Took Supps</button>
       </div>
       <textarea class="cue-note-input" id="habitSpottedNote" placeholder="Any notes? (optional)"></textarea>
@@ -4829,7 +4829,7 @@
         </button>
       </div>
       <div class="mini-supps-grid" style="margin-top:10px">
-        <div class="mini-supp"><input type="checkbox" id="noAlcohol"><span>No Alcohol</span></div>
+        <div class="mini-supp"><input type="checkbox" id="noAlcohol"><span>Alcohol</span></div>
       </div>
       <!-- Hidden elements for backward-compat with save/load -->
       <span id="proteinTotal" style="display:none">0</span>
@@ -5221,7 +5221,7 @@
           <div class="goal-setting-row" data-ring-key="movement" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_movement"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚶</span><span class="goal-setting-name">Movement</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="movementGoal" value="2" min="1" max="10"><span class="goal-unit">sessions</span><select class="goal-freq" id="movementFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="meals"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_meals" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍽️</span><span class="goal-setting-name">Meals</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="mealsGoal" value="2" min="1" max="3"><span class="goal-unit">meals</span><select class="goal-freq" id="mealsFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="snacks"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_snacks" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🥗</span><span class="goal-setting-name">Healthy Snacks</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="snacksGoal" value="2" min="1" max="2"><span class="goal-unit">checks</span><select class="goal-freq" id="snacksFreq"><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
-          <div class="goal-setting-row" data-ring-key="noAlcohol"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_noAlcohol" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍺</span><span class="goal-setting-name">No Alcohol</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7"><span class="goal-unit">days</span><select class="goal-freq" id="noAlcoholFreq"><option value="weekly" selected>Weekly</option><option value="daily">Daily</option></select></div></div>
+          <div class="goal-setting-row" data-ring-key="noAlcohol"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_noAlcohol" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🍺</span><span class="goal-setting-name">Alcohol-Free</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="noAlcoholGoal" value="7" min="1" max="7"><span class="goal-unit">days</span><select class="goal-freq" id="noAlcoholFreq"><option value="weekly" selected>Weekly</option><option value="daily">Daily</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="supplements"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_supplements" checked><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">💊</span><span class="goal-setting-name">Supplements</span></div><div class="goal-setting-controls"><span class="goal-unit" style="color:var(--text-muted);font-size:12px">All 6 daily</span></div></div>
           <div class="goal-setting-row" data-ring-key="rehit2x10" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit2x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 2x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit2x10Goal" value="2" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit2x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
           <div class="goal-setting-row" data-ring-key="rehit3x10" style="display:none"><label class="ring-toggle" title="Count toward completion ring"><input type="checkbox" class="ring-toggle-cb" id="ringToggle_rehit3x10"><span class="ring-toggle-icon"></span></label><div class="goal-setting-info"><span class="goal-setting-icon">🚴</span><span class="goal-setting-name">REHIT 3x10</span></div><div class="goal-setting-controls"><input type="number" class="goal-input" id="rehit3x10Goal" value="3" min="0" max="7"><span class="goal-unit">sessions</span><select class="goal-freq" id="rehit3x10Freq"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option></select></div></div>
@@ -5677,10 +5677,10 @@
         if (dayOk && nightOk) checked++;
       }
 
-      // No Alcohol
+      // Alcohol (unchecked = no alcohol = goal met)
       if (on('noAlcohol')) {
         total++;
-        if (document.getElementById('noAlcohol')?.checked) checked++;
+        if (!document.getElementById('noAlcohol')?.checked) checked++;
       }
 
       // Supplements
@@ -6039,7 +6039,7 @@
         const habitNames = {
           sleep: '🌙 Sleep Routine', water: '💧 Water', steps: '👟 Walking',
           movement: '🚶 Movement', reading: '📖 Reading', meditation: '🧘 Meditation',
-          meals: '🍽️ Healthy Meal', noAlcohol: '🚫🍺 No Alcohol', supps: '💊 Supplements'
+          meals: '🍽️ Healthy Meal', noAlcohol: '🍺 Had a Drink', supps: '💊 Supplements'
         };
         const celebrationEl = document.getElementById('cueCelebration');
         document.getElementById('cueCelebrationEmoji').textContent = '👀';
