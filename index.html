@@ -6457,6 +6457,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'analyze_meal', text })
         });
+        if (!res.ok) throw new Error(`Server error (HTTP ${res.status})`);
         const data = await res.json();
         if (data.error) throw new Error(data.message || 'Analysis failed');
 
@@ -6472,7 +6473,7 @@
       } catch (err) {
         console.error('Meal analysis error:', err);
         // Fallback: show a manual entry prompt
-        const cal = prompt(`Could not auto-analyze. Enter estimated calories for "${text}":`, '');
+        const cal = prompt(`Could not auto-analyze "${text}": ${err.message}.\n\nEnter estimated calories manually:`, '');
         const pro = cal !== null ? prompt('Enter estimated protein (g):', '') : null;
         if (cal !== null && pro !== null) {
           mealEntries.push({
