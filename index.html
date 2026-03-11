@@ -6457,9 +6457,11 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'analyze_meal', text })
         });
-        if (!res.ok) throw new Error(`Server error (HTTP ${res.status})`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.message || 'Analysis failed');
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.message || `Server error (HTTP ${res.status})`);
+        }
+        if (data?.error) throw new Error(data.message || 'Analysis failed');
 
         mealEntries.push({
           description: text,
