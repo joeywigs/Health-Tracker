@@ -7220,9 +7220,9 @@ function getDumbbellExercises() {
     return appSettings.dumbbellExercises;
   }
   return [
-    { id: 1, name: 'Chest Press', order: 0 },
-    { id: 2, name: 'Shrugs', order: 1 },
-    { id: 3, name: 'Bent Over Row', order: 2 },
+    { id: 1, name: 'Chest Press', order: 0, sets: 3, reps: 10 },
+    { id: 2, name: 'Shrugs', order: 1, sets: 3, reps: 12 },
+    { id: 3, name: 'Bent Over Row', order: 2, sets: 3, reps: 10 },
   ];
 }
 
@@ -7250,16 +7250,18 @@ function renderDumbbellExercises() {
   container.innerHTML = exercises.map(ex => {
     // Find existing data for this exercise
     const exData = currentDumbbell.find(d => d.name === ex.name) || {};
+    const targetSets = ex.sets || 3;
+    const targetReps = ex.reps || 10;
     return `<div class="dumbbell-exercise" data-exercise="${ex.name}">
-      <div class="dumbbell-exercise-name">${ex.name}</div>
+      <div class="dumbbell-exercise-name">${ex.name} <span style="font-weight:400;opacity:0.5;font-size:11px">${targetSets}×${targetReps}</span></div>
       <div class="dumbbell-inputs">
         <div class="dumbbell-field">
           <span class="dumbbell-label">Sets</span>
-          <input type="number" class="dumbbell-input" data-field="sets" inputmode="numeric" placeholder="--" value="${exData.sets || ''}" min="0" max="20">
+          <input type="number" class="dumbbell-input" data-field="sets" inputmode="numeric" placeholder="${targetSets}" value="${exData.sets || ''}" min="0" max="20">
         </div>
         <div class="dumbbell-field">
           <span class="dumbbell-label">Reps</span>
-          <input type="number" class="dumbbell-input" data-field="reps" inputmode="numeric" placeholder="--" value="${exData.reps || ''}" min="0" max="100">
+          <input type="number" class="dumbbell-input" data-field="reps" inputmode="numeric" placeholder="${targetReps}" value="${exData.reps || ''}" min="0" max="100">
         </div>
         <div class="dumbbell-field">
           <span class="dumbbell-label">Weight</span>
