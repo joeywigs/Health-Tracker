@@ -6994,6 +6994,10 @@
         if (typeof updateAguaBar === 'function') updateAguaBar();
         if (typeof updateStepsBar === 'function') updateStepsBar();
         if (typeof updateCompletionRingAurora === 'function') updateCompletionRingAurora();
+        // Re-apply section visibility so sections hidden on another device
+        // get hidden in the DOM after the KV merge overwrites the stale
+        // visible flags loaded from localStorage.
+        if (typeof applySectionSettings === 'function') applySectionSettings();
         console.log('✅ Settings synced from KV');
       }
     }
