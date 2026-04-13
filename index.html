@@ -3505,6 +3505,79 @@
     body.day-mode .settings-card { background: #ffffff; border-color: rgba(0,0,0,0.13); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .settings-subpage { display: none; }
     .settings-subpage.active { display: block; }
+
+    /* ===== Phase: Deficit page ===== */
+    #deficitPage { padding: 12px; max-width: 720px; margin: 0 auto; }
+    .deficit-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .deficit-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .deficit-tile {
+      background: var(--bg-card, rgba(255,255,255,0.04));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .deficit-tile .tile-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); }
+    .deficit-tile .tile-big { font-size: 28px; font-weight: 700; margin: 4px 0 2px; color: var(--text); }
+    .deficit-tile .tile-sign { color: var(--accent-teal); margin-right: 1px; }
+    .deficit-tile .tile-unit { font-size: 14px; color: var(--text-muted); margin-left: 2px; font-weight: 500; }
+    .deficit-tile .tile-sub { font-size: 11px; color: var(--text-muted); }
+    .deficit-tile.on-track { border-color: rgba(34,197,94,0.5); box-shadow: 0 0 12px rgba(34,197,94,0.15); }
+    .deficit-tile.warn { border-color: rgba(234,179,8,0.5); box-shadow: 0 0 12px rgba(234,179,8,0.15); }
+    .deficit-tile.off-track { border-color: rgba(239,68,68,0.5); box-shadow: 0 0 12px rgba(239,68,68,0.15); }
+
+    .rec-strip {
+      display: flex; align-items: center; gap: 10px;
+      margin: 14px 0;
+      padding: 12px 14px;
+      background: var(--bg-card, rgba(255,255,255,0.04));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+    .rec-strip.green .rec-dot { background: #22c55e; color: #22c55e; }
+    .rec-strip.yellow .rec-dot { background: #eab308; color: #eab308; }
+    .rec-strip.red .rec-dot { background: #ef4444; color: #ef4444; }
+    .rec-text { font-size: 13px; line-height: 1.4; color: var(--text); }
+
+    .deficit-breakdown { margin-top: 14px; }
+    .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
+    .breakdown-row:last-child { border-bottom: none; }
+    .breakdown-row.breakdown-total { font-weight: 700; font-size: 15px; padding-top: 12px; margin-top: 4px; border-top: 1px solid var(--border); }
+    .deficit-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 0 4px 80px; }
+    .deficit-sync-btn {
+      background: var(--bg-card, rgba(255,255,255,0.04));
+      border: 1px solid var(--border); color: var(--text);
+      padding: 8px 14px; border-radius: var(--radius-sm);
+      font-size: 13px; cursor: pointer;
+    }
+    .deficit-sync-btn:active { opacity: 0.7; }
+    .deficit-sync-stamp { font-size: 11px; color: var(--text-muted); }
+
+    /* ===== Close-the-Day modal ===== */
+    .ctd-content { max-width: 360px; padding: 20px; }
+    .ctd-header { text-align: center; margin-bottom: 16px; }
+    .ctd-header h2 { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 700; margin: 0; color: var(--text); }
+    .ctd-date { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .ctd-summary { background: var(--bg-card, rgba(255,255,255,0.04)); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px; }
+    .ctd-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
+    .ctd-row:last-child { border-bottom: none; }
+    .ctd-val { font-weight: 700; color: var(--text); }
+    .ctd-streak { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 16px; min-height: 16px; }
+    .ctd-actions { display: flex; gap: 8px; }
+    .ctd-snooze, .ctd-confirm {
+      flex: 1; padding: 10px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: 1px solid var(--border);
+    }
+    .ctd-snooze { background: transparent; color: var(--text-muted); }
+    .ctd-confirm { background: var(--accent-teal, #14b8a6); color: #000; border-color: transparent; }
+    .ctd-confirm:active { opacity: 0.85; }
+
+    @media (min-width: 720px) {
+      .deficit-tiles { grid-template-columns: repeat(4, 1fr); }
+    }
     .settings-back-btn { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-teal); background: none; border: none; }
     body.day-mode .settings-back-btn { color: var(--accent-orange); }
     
@@ -4360,7 +4433,8 @@
       <div class="tagline">v2.11</div>
     </div>
     <div class="nav-drawer-items">
-      <a class="nav-drawer-item active" data-page="home"><div class="nav-icon">🏠</div><span>Home</span></a>
+      <a class="nav-drawer-item active" data-page="deficit"><div class="nav-icon">🎯</div><span>Phase: Deficit</span></a>
+      <a class="nav-drawer-item" data-page="home" id="navItemHome"><div class="nav-icon">🏠</div><span>Log</span></a>
       <a class="nav-drawer-item" data-page="writing"><div class="nav-icon">✍️</div><span>Writing</span></a>
       <a class="nav-drawer-item" data-page="summary"><div class="nav-icon">📈</div><span>Phase Summary</span></a>
       <a class="nav-drawer-item" data-page="charts"><div class="nav-icon">📊</div><span>Charts</span></a>
@@ -4898,6 +4972,82 @@
     </div>
   </form>
 
+  <!-- Phase: Deficit Page -->
+  <div id="deficitPage" style="display:none">
+    <header class="header">
+      <div class="header-top">
+        <div class="brand"><div class="logo">🎯</div><h1>Phase: Deficit</h1></div>
+        <button type="button" id="deficitMenuBtn" class="nav-link" style="font-size:20px">&#9776;</button>
+      </div>
+      <div class="deficit-sub" id="deficitSubHeader">Day — of 21 · —</div>
+    </header>
+
+    <div class="deficit-tiles">
+      <div class="deficit-tile" id="tileDeficit">
+        <div class="tile-label">TODAY</div>
+        <div class="tile-big"><span class="tile-sign" id="tileDeficitSign">−</span><span id="tileDeficitVal">0</span></div>
+        <div class="tile-sub"><span id="tileDeficitIn">0</span> in · <span id="tileDeficitOut">0</span> out</div>
+      </div>
+      <div class="deficit-tile" id="tileProtein">
+        <div class="tile-label">PROTEIN</div>
+        <div class="tile-big"><span id="tileProteinVal">0</span><span class="tile-unit">g</span></div>
+        <div class="tile-sub">of <span id="tileProteinGoal">150</span>g goal</div>
+      </div>
+      <div class="deficit-tile" id="tileWeek">
+        <div class="tile-label">WEEK</div>
+        <div class="tile-big"><span class="tile-sign" id="tileWeekSign">−</span><span id="tileWeekVal">0</span></div>
+        <div class="tile-sub">of −<span id="tileWeekTarget">7000</span> target</div>
+      </div>
+      <div class="deficit-tile" id="tileWeight">
+        <div class="tile-label">WEIGHT</div>
+        <div class="tile-big"><span id="tileWeightVal">—</span><span class="tile-unit">lb</span></div>
+        <div class="tile-sub"><span id="tileWeightDelta">—</span> vs 7d ago</div>
+      </div>
+    </div>
+
+    <div class="rec-strip" id="recStrip">
+      <div class="rec-dot" id="recDot"></div>
+      <div class="rec-text" id="recText">Loading today's data…</div>
+    </div>
+
+    <div class="section deficit-breakdown">
+      <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal)">📊</div><span class="sec-name">Today's Breakdown</span></div></div>
+      <div class="sec-content">
+        <div class="breakdown-row"><span>🍽️ Food (in)</span><span id="bdFood">0 kcal</span></div>
+        <div class="breakdown-row"><span>⚡ Active burn</span><span id="bdActive">0 kcal</span></div>
+        <div class="breakdown-row"><span>💤 Resting burn</span><span id="bdBasal">0 kcal</span></div>
+        <div class="breakdown-row"><span>👟 Steps</span><span id="bdSteps">0</span></div>
+        <div class="breakdown-row breakdown-total"><span>Net deficit</span><span id="bdDeficit">−0 kcal</span></div>
+      </div>
+    </div>
+
+    <div class="deficit-actions">
+      <button type="button" class="deficit-sync-btn" id="deficitRefreshBtn">↻ Refresh</button>
+      <span class="deficit-sync-stamp" id="deficitSyncStamp"></span>
+    </div>
+  </div>
+
+  <!-- Close-the-Day Modal -->
+  <div class="modal-overlay" id="closeTheDayModal" style="display:none">
+    <div class="modal-content ctd-content">
+      <div class="ctd-header">
+        <h2>Close the Day</h2>
+        <div class="ctd-date" id="ctdDate">—</div>
+      </div>
+      <div class="ctd-summary">
+        <div class="ctd-row"><span>Net deficit</span><span class="ctd-val" id="ctdDeficit">−0</span></div>
+        <div class="ctd-row"><span>Protein</span><span class="ctd-val" id="ctdProtein">0g</span></div>
+        <div class="ctd-row"><span>Supplements</span><span class="ctd-val" id="ctdSupps">0/7</span></div>
+        <div class="ctd-row"><span>Sleep target</span><span class="ctd-val" id="ctdSleep">—</span></div>
+      </div>
+      <div class="ctd-streak" id="ctdStreak"></div>
+      <div class="ctd-actions">
+        <button type="button" class="ctd-snooze" onclick="window.snoozeCloseTheDay()">Remind me later</button>
+        <button type="button" class="ctd-confirm" onclick="window.confirmCloseTheDay()">Close the Day ✓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Body Data Page -->
   <div id="bodyDataPage" style="display:none">
     <header class="header">
@@ -5177,9 +5327,9 @@
           <div class="settings-card-desc">Theme & schedule</div>
         </div>
         <div class="settings-card" data-settings-page="phase">
-          <div class="settings-card-icon">❄️</div>
-          <div class="settings-card-label">Phase Freeze</div>
-          <div class="settings-card-desc">Pause tracking</div>
+          <div class="settings-card-icon">🎯</div>
+          <div class="settings-card-label">Phase: Deficit</div>
+          <div class="settings-card-desc">Target, bedtime, default page, freeze</div>
         </div>
         <div class="settings-card" data-settings-page="notes">
           <div class="settings-card-icon">📝</div>
@@ -5357,6 +5507,36 @@
     <!-- Subpage: Phase Freeze -->
     <div class="settings-subpage" id="settingsSub_phase">
       <button type="button" class="settings-back-btn" onclick="showSettingsMain()">← Back to Settings</button>
+
+      <div class="section">
+        <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:var(--accent-teal)">🎯</div><span class="sec-name">Phase: Deficit</span></div></div>
+        <div class="sec-content">
+          <div class="setting-row">
+            <div class="setting-label"><span class="setting-title">Weekly deficit target</span><span class="setting-desc">kcal per 7-day rolling window</span></div>
+            <input type="number" id="deficitWeeklyTarget" value="7000" style="width:90px">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label"><span class="setting-title">Close the Day time</span><span class="setting-desc">when the nightly summary modal pops up</span></div>
+            <input type="time" id="closeTheDayTime" value="22:00" style="width:110px">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label"><span class="setting-title">Body weight</span><span class="setting-desc">used for protein goal (0.8g/lb)</span></div>
+            <input type="number" id="bodyWeight" step="0.1" style="width:90px">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label"><span class="setting-title">Default page</span><span class="setting-desc">which page opens when the app launches</span></div>
+            <select id="defaultPageSetting" style="width:140px">
+              <option value="deficit">Phase: Deficit</option>
+              <option value="home">Log (original home)</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label"><span class="setting-title">Show Log in menu</span><span class="setting-desc">toggle the old home page in the nav drawer</span></div>
+            <input type="checkbox" id="showLogNav">
+          </div>
+        </div>
+      </div>
+
       <div class="section">
         <div class="sec-head"><div class="sec-title"><div class="sec-icon" style="--icon-start:#6dd5ed;--icon-end:#2193b0;--icon-glow:rgba(109,213,237,0.4)">❄️</div><span class="sec-name">Phase Freeze</span></div></div>
         <div class="sec-content">
@@ -7859,7 +8039,7 @@
     }
 
     window.hideAllPages = function() {
-      ['healthForm', 'settingsPage', 'chartsPage', 'biomarkersPage', 'weeklySummaryPage', 'writingPage', 'bodyDataPage'].forEach(id => {
+      ['healthForm', 'deficitPage', 'settingsPage', 'chartsPage', 'biomarkersPage', 'weeklySummaryPage', 'writingPage', 'bodyDataPage'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -7881,7 +8061,10 @@
 
     function navigateTo(page) {
       closeNavDrawer();
-      if (page === 'home') {
+      if (page === 'deficit') {
+        hideAllPages();
+        showDeficitPage();
+      } else if (page === 'home') {
         hideAllPages();
         document.getElementById('healthForm').style.display = '';
         document.getElementById('quickLogFab').style.display = 'block';
@@ -7931,6 +8114,373 @@
       window.scrollTo(0, 0);
     }
     document.getElementById('bodyDataCloseBtn')?.addEventListener('click', () => navigateTo('home'));
+
+    // =============================================
+    // PHASE: DEFICIT PAGE
+    // =============================================
+    // Defaults for phase settings (overridable via Settings > Phase: Deficit)
+    function getDeficitSettings() {
+      return {
+        weeklyTarget: Number(appSettings.deficitWeeklyTarget) || 7000,
+        closeTime: appSettings.closeTheDayTime || '22:00',
+        bodyWeight: Number(appSettings.bodyWeight) || 0,
+        defaultPage: appSettings.defaultPage || 'deficit',
+        showLogNav: appSettings.showLogNav !== false,
+        start: appSettings.deficitPhaseStart || '2026-04-13',
+        length: Number(appSettings.deficitPhaseLength) || 21
+      };
+    }
+
+    function fmtDateShort(d) {
+      return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    // Pull the six Apple-Health-backed fields off a daily record
+    function readDeficitFields(d) {
+      d = d || {};
+      return {
+        dietary: Number(d['Dietary Energy']) || 0,
+        active: Number(d['Active Energy']) || Number(d['Calories']) || 0,
+        basal: Number(d['Basal Energy']) || 0,
+        protein: Number(d['Protein']) || 0,
+        steps: Number(d['Steps']) || 0,
+        weight: Number(d['Weight (lbs)']) || Number(d['Weight']) || null
+      };
+    }
+
+    async function fetchDailyFor(dateObj, force = false) {
+      if (typeof fetchDay === 'function') {
+        try {
+          const r = await fetchDay(dateObj, force, true);
+          return r?.daily || r || {};
+        } catch(e) { console.warn('fetchDailyFor failed', e); return {}; }
+      }
+      return {};
+    }
+
+    function computeDeficit(f) {
+      // Today's deficit = (basal + active) − dietary. Positive = deficit.
+      return Math.round((f.basal + f.active) - f.dietary);
+    }
+
+    function proteinGoalFromWeight(lbs) {
+      // 0.8 g/lb floor; round to nearest 5
+      if (!lbs) return 150;
+      return Math.round(lbs * 0.8 / 5) * 5;
+    }
+
+    function setTileClass(el, state) {
+      if (!el) return;
+      el.classList.remove('on-track', 'warn', 'off-track');
+      if (state) el.classList.add(state);
+    }
+
+    function buildRecommendation(f, deficit, weekDeficit, settings) {
+      const now = new Date();
+      const hour = now.getHours() + now.getMinutes() / 60;
+      // Fraction of day elapsed from 7am to 10pm (15-hour eating window)
+      const dayFrac = Math.min(1, Math.max(0, (hour - 7) / 15));
+      const projectedFood = dayFrac > 0 ? f.dietary / dayFrac : f.dietary;
+      const projectedOut = dayFrac > 0 ? (f.active / dayFrac) + f.basal : f.basal; // basal is a full-day number
+      const projectedDeficit = Math.round(projectedOut - projectedFood);
+      const dailyTarget = Math.round(settings.weeklyTarget / 7);
+
+      const gap = dailyTarget - projectedDeficit;
+      let state, text;
+      if (gap <= 0) {
+        state = 'green';
+        text = `On track — projected −${projectedDeficit.toLocaleString()} kcal by day's end.`;
+      } else if (gap < 300) {
+        state = 'yellow';
+        text = `Short by ~${gap} kcal — a Carol Bike session (~50) + a 20-min walk closes the gap.`;
+      } else if (gap < 700) {
+        state = 'yellow';
+        text = `Short by ~${gap} kcal — add a Carol session, skip dessert, or walk 45 min tonight.`;
+      } else {
+        state = 'red';
+        text = `Short by ~${gap} kcal — skip evening snacks AND add a walk + Carol Bike session.`;
+      }
+      return { state, text, projectedDeficit };
+    }
+
+    // Rolling 7-day deficit
+    async function computeWeekDeficit(endDate) {
+      let sum = 0, days = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(endDate);
+        d.setDate(d.getDate() - i);
+        const daily = await fetchDailyFor(d);
+        const f = readDeficitFields(daily);
+        if (f.dietary > 0 || f.active > 0 || f.basal > 0) {
+          sum += computeDeficit(f);
+          days++;
+        }
+      }
+      return { sum, days };
+    }
+
+    // Weight from 7 days ago (if present) for delta
+    async function fetchWeightWeekAgo(today) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - 7);
+      const daily = await fetchDailyFor(d);
+      return readDeficitFields(daily).weight;
+    }
+
+    window.showDeficitPage = async function(opts = {}) {
+      const page = document.getElementById('deficitPage');
+      if (!page) return;
+      page.style.display = '';
+      setActiveNav('deficit');
+      window.scrollTo(0, 0);
+      const force = !!opts.force;
+
+      const settings = getDeficitSettings();
+      const today = (typeof currentDate !== 'undefined' && currentDate instanceof Date) ? new Date(currentDate) : new Date();
+
+      // Phase day-of header
+      const startDate = new Date(settings.start + 'T00:00:00');
+      const dayOfPhase = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+      const subEl = document.getElementById('deficitSubHeader');
+      if (subEl) subEl.textContent = `Day ${Math.max(1, dayOfPhase)} of ${settings.length} · ${fmtDateShort(today)}`;
+
+      // Today's numbers
+      const todayDaily = await fetchDailyFor(today, force);
+      const f = readDeficitFields(todayDaily);
+      const deficit = computeDeficit(f);
+      const dailyTarget = Math.round(settings.weeklyTarget / 7);
+
+      // Tiles
+      const tDef = document.getElementById('tileDeficitVal');
+      const tDefSign = document.getElementById('tileDeficitSign');
+      const tIn = document.getElementById('tileDeficitIn');
+      const tOut = document.getElementById('tileDeficitOut');
+      if (tDef) tDef.textContent = Math.abs(deficit).toLocaleString();
+      if (tDefSign) tDefSign.textContent = deficit < 0 ? '+' : '−';
+      if (tIn) tIn.textContent = f.dietary.toLocaleString();
+      if (tOut) tOut.textContent = (f.basal + f.active).toLocaleString();
+      setTileClass(document.getElementById('tileDeficit'),
+        deficit >= dailyTarget ? 'on-track' : deficit >= dailyTarget * 0.5 ? 'warn' : 'off-track');
+
+      const pGoal = proteinGoalFromWeight(settings.bodyWeight);
+      const tProt = document.getElementById('tileProteinVal');
+      const tProtGoal = document.getElementById('tileProteinGoal');
+      if (tProt) tProt.textContent = f.protein;
+      if (tProtGoal) tProtGoal.textContent = pGoal;
+      setTileClass(document.getElementById('tileProtein'),
+        f.protein >= pGoal ? 'on-track' : f.protein >= pGoal * 0.7 ? 'warn' : 'off-track');
+
+      // Week tile (async)
+      const { sum: weekSum } = await computeWeekDeficit(today);
+      const tWeek = document.getElementById('tileWeekVal');
+      const tWeekSign = document.getElementById('tileWeekSign');
+      const tWeekTarget = document.getElementById('tileWeekTarget');
+      if (tWeek) tWeek.textContent = Math.abs(weekSum).toLocaleString();
+      if (tWeekSign) tWeekSign.textContent = weekSum < 0 ? '+' : '−';
+      if (tWeekTarget) tWeekTarget.textContent = settings.weeklyTarget.toLocaleString();
+      setTileClass(document.getElementById('tileWeek'),
+        weekSum >= settings.weeklyTarget ? 'on-track'
+        : weekSum >= settings.weeklyTarget * 0.6 ? 'warn' : 'off-track');
+
+      // Weight + delta
+      const weightWeekAgo = await fetchWeightWeekAgo(today);
+      const tW = document.getElementById('tileWeightVal');
+      const tWD = document.getElementById('tileWeightDelta');
+      if (f.weight) {
+        if (tW) tW.textContent = f.weight.toFixed(1);
+        if (weightWeekAgo && tWD) {
+          const delta = f.weight - weightWeekAgo;
+          tWD.textContent = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} lb`;
+        } else if (tWD) {
+          tWD.textContent = 'no prior reading';
+        }
+      } else {
+        if (tW) tW.textContent = '—';
+        if (tWD) tWD.textContent = 'no weight today';
+      }
+
+      // Recommendation (or empty state if Apple Health hasn't synced anything yet)
+      const recStrip = document.getElementById('recStrip');
+      const recText = document.getElementById('recText');
+      const noData = f.dietary === 0 && f.basal === 0 && f.active === 0;
+      if (noData) {
+        if (recStrip) { recStrip.classList.remove('green','yellow','red'); }
+        if (recText) recText.textContent = 'Waiting for Apple Health sync — run the Shortcut to populate today.';
+      } else {
+        const rec = buildRecommendation(f, deficit, weekSum, settings);
+        if (recStrip) { recStrip.classList.remove('green','yellow','red'); recStrip.classList.add(rec.state); }
+        if (recText) recText.textContent = rec.text;
+      }
+
+      // Breakdown
+      const bdFood = document.getElementById('bdFood');
+      const bdActive = document.getElementById('bdActive');
+      const bdBasal = document.getElementById('bdBasal');
+      const bdSteps = document.getElementById('bdSteps');
+      const bdDeficit = document.getElementById('bdDeficit');
+      if (bdFood) bdFood.textContent = `${f.dietary.toLocaleString()} kcal`;
+      if (bdActive) bdActive.textContent = `${f.active.toLocaleString()} kcal`;
+      if (bdBasal) bdBasal.textContent = `${f.basal.toLocaleString()} kcal`;
+      if (bdSteps) bdSteps.textContent = f.steps.toLocaleString();
+      if (bdDeficit) bdDeficit.textContent = `${deficit >= 0 ? '−' : '+'}${Math.abs(deficit).toLocaleString()} kcal`;
+
+      const stamp = document.getElementById('deficitSyncStamp');
+      if (stamp) stamp.textContent = `updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    };
+
+    document.getElementById('deficitRefreshBtn')?.addEventListener('click', () => {
+      showDeficitPage({ force: true });
+    });
+    document.getElementById('deficitMenuBtn')?.addEventListener('click', openNavDrawer);
+
+    // =============================================
+    // CLOSE THE DAY MODAL
+    // =============================================
+    let closeDayTimer = null;
+
+    function isDayClosed(dateStr) {
+      try { return localStorage.getItem('closeDay-' + dateStr) === '1'; }
+      catch(e) { return false; }
+    }
+    function markDayClosed(dateStr) {
+      try { localStorage.setItem('closeDay-' + dateStr, '1'); } catch(e) {}
+    }
+
+    function todayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    async function maybeShowCloseTheDay(force = false) {
+      const settings = getDeficitSettings();
+      const now = new Date();
+      const [h, m] = (settings.closeTime || '22:00').split(':').map(Number);
+      const trigger = h * 60 + m;
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const key = todayKey();
+
+      if (!force) {
+        if (nowMin < trigger) return;
+        if (isDayClosed(key)) return;
+        // Don't interrupt if the modal is already open or a snooze is active
+        if (document.getElementById('closeTheDayModal').style.display === 'flex') return;
+        const snoozeUntil = Number(localStorage.getItem('closeDaySnooze-' + key) || 0);
+        if (snoozeUntil && Date.now() < snoozeUntil) return;
+      }
+
+      const daily = await fetchDailyFor(now);
+      const f = readDeficitFields(daily);
+      const deficit = computeDeficit(f);
+      const suppAliases = [
+        ['Creatine Chews', 'Creatine'],
+        ['Vitamin D'],
+        ['NO2'],
+        ['Psyllium Husk', 'Psyllium'],
+        ['Zinc'],
+        ['Prebiotic'],
+        ['NAC']
+      ];
+      const isTrue = v => v === true || v === 'TRUE' || v === 'true';
+      const suppsTaken = suppAliases.filter(keys => keys.some(k => isTrue(daily[k]))).length;
+
+      document.getElementById('ctdDate').textContent = fmtDateShort(now);
+      document.getElementById('ctdDeficit').textContent = `${deficit >= 0 ? '−' : '+'}${Math.abs(deficit).toLocaleString()}`;
+      document.getElementById('ctdProtein').textContent = `${f.protein}g`;
+      document.getElementById('ctdSupps').textContent = `${suppsTaken}/7`;
+      const sleepHrs = Number(daily['Sleep'] || daily['Sleep Hours'] || 0);
+      document.getElementById('ctdSleep').textContent = sleepHrs ? `${sleepHrs.toFixed(1)}h` : '—';
+
+      // Simple streak: count consecutive prior days where deficit met daily target
+      const dailyTarget = Math.round(getDeficitSettings().weeklyTarget / 7);
+      let streak = deficit >= dailyTarget ? 1 : 0;
+      for (let i = 1; i <= 14 && streak > 0; i++) {
+        const d = new Date(now); d.setDate(d.getDate() - i);
+        const p = await fetchDailyFor(d);
+        const pf = readDeficitFields(p);
+        if (computeDeficit(pf) >= dailyTarget) streak++; else break;
+      }
+      document.getElementById('ctdStreak').textContent = streak > 0 ? `🔥 ${streak}-day deficit streak` : '';
+
+      document.getElementById('closeTheDayModal').style.display = 'flex';
+    }
+
+    window.confirmCloseTheDay = function() {
+      markDayClosed(todayKey());
+      document.getElementById('closeTheDayModal').style.display = 'none';
+    };
+    window.snoozeCloseTheDay = function() {
+      try { localStorage.setItem('closeDaySnooze-' + todayKey(), String(Date.now() + 30 * 60 * 1000)); } catch(e) {}
+      document.getElementById('closeTheDayModal').style.display = 'none';
+    };
+
+    // Check every 2 minutes whether it's time to fire
+    function startCloseDayTimer() {
+      if (closeDayTimer) clearInterval(closeDayTimer);
+      closeDayTimer = setInterval(() => { maybeShowCloseTheDay().catch(() => {}); }, 2 * 60 * 1000);
+      // Also check once on startup after a short delay (let settings load)
+      setTimeout(() => maybeShowCloseTheDay().catch(() => {}), 5000);
+    }
+
+    // =============================================
+    // PHASE: DEFICIT SETTINGS HANDLERS
+    // =============================================
+    function applyLogNavVisibility() {
+      const navItem = document.getElementById('navItemHome');
+      if (!navItem) return;
+      navItem.style.display = appSettings.showLogNav === false ? 'none' : '';
+    }
+
+    function wirePhaseSettings() {
+      const tgtEl = document.getElementById('deficitWeeklyTarget');
+      const timeEl = document.getElementById('closeTheDayTime');
+      const bwEl = document.getElementById('bodyWeight');
+      const defEl = document.getElementById('defaultPageSetting');
+      const logNavEl = document.getElementById('showLogNav');
+
+      // Populate from current settings
+      if (tgtEl) tgtEl.value = appSettings.deficitWeeklyTarget ?? 7000;
+      if (timeEl) timeEl.value = appSettings.closeTheDayTime || '22:00';
+      if (bwEl && appSettings.bodyWeight) bwEl.value = appSettings.bodyWeight;
+      if (defEl) defEl.value = appSettings.defaultPage || 'deficit';
+      if (logNavEl) logNavEl.checked = appSettings.showLogNav !== false;
+
+      tgtEl?.addEventListener('change', e => {
+        appSettings.deficitWeeklyTarget = Number(e.target.value) || 7000;
+        saveSettings(appSettings);
+      });
+      timeEl?.addEventListener('change', e => {
+        appSettings.closeTheDayTime = e.target.value || '22:00';
+        saveSettings(appSettings);
+      });
+      bwEl?.addEventListener('change', e => {
+        appSettings.bodyWeight = Number(e.target.value) || 0;
+        saveSettings(appSettings);
+      });
+      defEl?.addEventListener('change', e => {
+        appSettings.defaultPage = e.target.value;
+        saveSettings(appSettings);
+      });
+      logNavEl?.addEventListener('change', e => {
+        appSettings.showLogNav = !!e.target.checked;
+        saveSettings(appSettings);
+        applyLogNavVisibility();
+      });
+    }
+
+    // Wire + apply once DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      wirePhaseSettings();
+      applyLogNavVisibility();
+      startCloseDayTimer();
+
+      // Default page flip: if the user prefers Phase: Deficit as the home route,
+      // navigate there after everything else finishes loading. Run on a microtask
+      // so applySectionSettings / loadDataForCurrentDate can finish first.
+      setTimeout(() => {
+        const pref = appSettings.defaultPage || 'deficit';
+        if (pref === 'deficit') navigateTo('deficit');
+      }, 200);
+    });
 
     // Settings subpage navigation
     window.showSettingsMain = function() {
