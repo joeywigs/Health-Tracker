@@ -1265,7 +1265,7 @@ const DEFAULT_PHASE_1 = {
     reading: { target: 60, unit: "min", type: "weekly", description: "Reading minutes per week" },
     movement: { target: 2, unit: "breaks", type: "daily", description: "Movement breaks" },
     meals: { target: 2, unit: "meals", type: "daily", description: "Healthy meals" },
-    supps: { target: 6, unit: "supps", type: "daily", description: "All 6 supplements" },
+    supps: { target: 7, unit: "supps", type: "daily", description: "All 7 supplements" },
     noAlcohol: { target: true, unit: "bool", type: "daily", description: "Alcohol-free day" },
     meditation: { target: true, unit: "bool", type: "daily", description: "Daily meditation" },
     snacks: { target: 2, unit: "checks", type: "daily", description: "Healthy snacks (day + night)" }
@@ -1998,7 +1998,7 @@ function countMovementBreaks(d) {
 const GOALS = {
   sleep: { name: "Sleep", icon: "🌙", target: 7, unit: "h", type: "daily-avg" },
   agua: { name: "Water", icon: "💧", target: 6, unit: "glasses", type: "daily" },
-  supps: { name: "Supplements", icon: "💊", target: 6, unit: "of 6", type: "daily-all" },
+  supps: { name: "Supplements", icon: "💊", target: 7, unit: "of 7", type: "daily-all" },
   steps: { name: "Steps", icon: "👟", target: 5000, unit: "steps", type: "daily-avg" },
   reading: { name: "Reading", icon: "📖", target: 60, unit: "min", type: "weekly" }
 };
@@ -2125,7 +2125,7 @@ function calculateGoalStats(data, range, phaseId = null) {
     target: aguaTarget
   };
 
-  // Supps: all 6 each day
+  // Supps: all 7 each day
   let suppsDaysMet = 0;
   data.forEach(d => {
     const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
@@ -2134,12 +2134,13 @@ function calculateGoalStats(data, range, phaseId = null) {
     const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
     const zinc = d.daily["Zinc"];
     const prebiotic = d.daily["Prebiotic"];
-    const allSupps = [creatine, vitD, no2, psyllium, zinc, prebiotic].filter(v => v === true || v === "TRUE" || v === "true").length;
-    if (allSupps === 6) suppsDaysMet++;
+    const nac = d.daily["NAC"];
+    const allSupps = [creatine, vitD, no2, psyllium, zinc, prebiotic, nac].filter(v => v === true || v === "TRUE" || v === "true").length;
+    if (allSupps === 7) suppsDaysMet++;
   });
   stats.supps = {
     pct: elapsedDays > 0 ? Math.round((suppsDaysMet / elapsedDays) * 100) : 0,
-    detail: `${suppsDaysMet}/${elapsedDays} days all 4`
+    detail: `${suppsDaysMet}/${elapsedDays} days all 7`
   };
 
   // REHIT: split into 2x10 and 3x10 sessions per week
@@ -2673,7 +2674,8 @@ function renderHabitGrid(allData) {
         const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
         const zinc = d.daily["Zinc"];
         const prebiotic = d.daily["Prebiotic"];
-        return [creatine, vitD, no2, psyllium, zinc, prebiotic].some(v => v === true || v === "TRUE" || v === "true");
+        const nac = d.daily["NAC"];
+        return [creatine, vitD, no2, psyllium, zinc, prebiotic, nac].some(v => v === true || v === "TRUE" || v === "true");
       },
       metGoal: (d) => {
         const creatine = d.daily["Creatine Chews"] || d.daily["Creatine"];
@@ -2682,7 +2684,8 @@ function renderHabitGrid(allData) {
         const psyllium = d.daily["Psyllium Husk"] || d.daily["Psyllium"];
         const zinc = d.daily["Zinc"];
         const prebiotic = d.daily["Prebiotic"];
-        return [creatine, vitD, no2, psyllium, zinc, prebiotic].filter(v => v === true || v === "TRUE" || v === "true").length === 6;
+        const nac = d.daily["NAC"];
+        return [creatine, vitD, no2, psyllium, zinc, prebiotic, nac].filter(v => v === true || v === "TRUE" || v === "true").length === 7;
       }
     },
     { key: 'meals', icon: '🍽️', name: 'Meals',
@@ -5965,6 +5968,7 @@ async function saveData(payload) {
     psyllium: "Psyllium Husk",
     zinc: "Zinc",
     prebiotic: "Prebiotic",
+    nac: "NAC",
     breakfast: "Breakfast",
     lunch: "Lunch",
     dinner: "Dinner",
@@ -6226,6 +6230,7 @@ function buildPayloadFromUI() {
     psyllium: !!document.getElementById("psyllium")?.checked,
     zinc: !!document.getElementById("zinc")?.checked,
     prebiotic: !!document.getElementById("prebiotic")?.checked,
+    nac: !!document.getElementById("nac")?.checked,
 
     breakfast: !!document.getElementById("breakfast")?.checked,
     lunch: !!document.getElementById("lunch")?.checked,
@@ -6900,6 +6905,7 @@ async function populateForm(data) {
   setCheckbox("psyllium", d["Psyllium Husk"] ?? d["Psyllium"] ?? d["psyllium"]);
   setCheckbox("zinc", d["Zinc"] ?? d["zinc"]);
   setCheckbox("prebiotic", d["Prebiotic"] ?? d["prebiotic"]);
+  setCheckbox("nac", d["NAC"] ?? d["nac"]);
 
   setCheckbox("breakfast", d["Breakfast"] ?? d["breakfast"]);
   setCheckbox("lunch", d["Lunch"] ?? d["lunch"]);

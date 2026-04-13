@@ -158,6 +158,63 @@ async function handleGet(request, env, corsHeaders) {
     return await logActiveEnergy(cal, date, env, corsHeaders, { raw, allParams, fullUrl: url.toString() });
   }
 
+  // iOS Shortcut: send Apple Health basal energy (resting calories) via GET
+  // Shortcut sends ?action=basal_energy&value=mm/d/yyyy, 1750
+  if (action === "basal_energy") {
+    const raw = url.searchParams.get("value") ?? url.searchParams.get("calories") ?? url.searchParams.get("basalEnergy");
+    if (raw === null || raw === undefined) {
+      const params = {};
+      for (const [k, v] of url.searchParams.entries()) params[k] = v;
+      return jsonResponse({ error: true, message: "Missing value. Send as ?action=basal_energy&value=mm/d/yyyy, 1750", received: params }, 400, corsHeaders);
+    }
+    const commaIdx = raw.lastIndexOf(",");
+    let date = null, cal = raw;
+    if (commaIdx !== -1) {
+      date = raw.substring(0, commaIdx).trim();
+      cal = raw.substring(commaIdx + 1).trim();
+    }
+    if (!date) date = url.searchParams.get("date") ?? null;
+    return await logBasalEnergy(cal, date, env, corsHeaders);
+  }
+
+  // iOS Shortcut: send Apple Health dietary energy (calories in from food) via GET
+  // Shortcut sends ?action=dietary_energy&value=mm/d/yyyy, 1800
+  if (action === "dietary_energy") {
+    const raw = url.searchParams.get("value") ?? url.searchParams.get("calories") ?? url.searchParams.get("dietaryEnergy");
+    if (raw === null || raw === undefined) {
+      const params = {};
+      for (const [k, v] of url.searchParams.entries()) params[k] = v;
+      return jsonResponse({ error: true, message: "Missing value. Send as ?action=dietary_energy&value=mm/d/yyyy, 1800", received: params }, 400, corsHeaders);
+    }
+    const commaIdx = raw.lastIndexOf(",");
+    let date = null, cal = raw;
+    if (commaIdx !== -1) {
+      date = raw.substring(0, commaIdx).trim();
+      cal = raw.substring(commaIdx + 1).trim();
+    }
+    if (!date) date = url.searchParams.get("date") ?? null;
+    return await logDietaryEnergy(cal, date, env, corsHeaders);
+  }
+
+  // iOS Shortcut: send Apple Health dietary protein (grams) via GET
+  // Shortcut sends ?action=protein&value=mm/d/yyyy, 150
+  if (action === "protein") {
+    const raw = url.searchParams.get("value") ?? url.searchParams.get("grams") ?? url.searchParams.get("protein");
+    if (raw === null || raw === undefined) {
+      const params = {};
+      for (const [k, v] of url.searchParams.entries()) params[k] = v;
+      return jsonResponse({ error: true, message: "Missing value. Send as ?action=protein&value=mm/d/yyyy, 150", received: params }, 400, corsHeaders);
+    }
+    const commaIdx = raw.lastIndexOf(",");
+    let date = null, grams = raw;
+    if (commaIdx !== -1) {
+      date = raw.substring(0, commaIdx).trim();
+      grams = raw.substring(commaIdx + 1).trim();
+    }
+    if (!date) date = url.searchParams.get("date") ?? null;
+    return await logProtein(grams, date, env, corsHeaders);
+  }
+
   // iOS Shortcut: send sleep data via GET query params
   // e.g. ?action=sleep&hours=7.2&awake=0.5&core=3.5&deep=1.2&rem=2.0
   if (action === "sleep") {
@@ -252,6 +309,33 @@ async function handlePost(request, env, corsHeaders) {
   // iOS Shortcut endpoint - bulk import raw Active Energy samples from Apple Health
   if (action === "active_energy_import") {
     return await importActiveEnergySamples(body, env, corsHeaders);
+  }
+
+  // iOS Shortcut endpoint - sync basal energy (Apple Health resting calories)
+  if (action === "basal_energy") {
+    const cal = body.basalEnergy ?? body.basal_energy ?? body.calories;
+    if (cal === undefined || cal === null) {
+      return jsonResponse({ error: true, message: "Missing basalEnergy value", received: body }, 400, corsHeaders);
+    }
+    return await logBasalEnergy(cal, body.date, env, corsHeaders);
+  }
+
+  // iOS Shortcut endpoint - sync dietary energy (Apple Health calories in)
+  if (action === "dietary_energy") {
+    const cal = body.dietaryEnergy ?? body.dietary_energy ?? body.calories;
+    if (cal === undefined || cal === null) {
+      return jsonResponse({ error: true, message: "Missing dietaryEnergy value", received: body }, 400, corsHeaders);
+    }
+    return await logDietaryEnergy(cal, body.date, env, corsHeaders);
+  }
+
+  // iOS Shortcut endpoint - sync dietary protein (Apple Health protein grams)
+  if (action === "protein") {
+    const grams = body.protein ?? body.grams ?? body.value;
+    if (grams === undefined || grams === null) {
+      return jsonResponse({ error: true, message: "Missing protein value", received: body }, 400, corsHeaders);
+    }
+    return await logProtein(grams, body.date, env, corsHeaders);
   }
 
   if (action === "biomarkers_save") {
@@ -477,6 +561,7 @@ async function saveDay(data, env, corsHeaders) {
     "Psyllium Husk": data.psyllium || data.psylliumHusk || false,
     "Zinc": data.zinc || false,
     "Prebiotic": data.prebiotic || false,
+    "NAC": data.nac || false,
     // Nutrition
     "Breakfast": data.breakfast || false,
     "Lunch": data.lunch || false,
@@ -655,6 +740,55 @@ async function logActiveEnergy(calories, dateStr, env, corsHeaders, rawDebug) {
     activeEnergy: daily["Active Energy"],
     message: `Updated active energy to ${daily["Active Energy"]} cal for ${normalizedDate}`,
     debug: { raw: rawDebug, parsedDate: dateStr, parsedCal: calories }
+  }, 200, corsHeaders);
+}
+
+// ===== Log Basal Energy (from iOS Shortcut via Apple Health) =====
+// Resting metabolic rate for the day, as measured by Apple Health.
+async function logBasalEnergy(calories, dateStr, env, corsHeaders) {
+  const normalizedDate = dateStr ? normalizeDate(dateStr) : normalizeDate(formatDateForKV(new Date()));
+  let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+  daily["Date"] = normalizedDate;
+  daily["Basal Energy"] = Math.round(parseFloat(calories) || 0);
+  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    basalEnergy: daily["Basal Energy"],
+    message: `Updated basal energy to ${daily["Basal Energy"]} cal for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Log Dietary Energy (from iOS Shortcut via Apple Health) =====
+// Calories in from food. Written by MacroFactor / Cronometer / etc. to Apple Health.
+async function logDietaryEnergy(calories, dateStr, env, corsHeaders) {
+  const normalizedDate = dateStr ? normalizeDate(dateStr) : normalizeDate(formatDateForKV(new Date()));
+  let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+  daily["Date"] = normalizedDate;
+  daily["Dietary Energy"] = Math.round(parseFloat(calories) || 0);
+  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    dietaryEnergy: daily["Dietary Energy"],
+    message: `Updated dietary energy to ${daily["Dietary Energy"]} cal for ${normalizedDate}`
+  }, 200, corsHeaders);
+}
+
+// ===== Log Protein (from iOS Shortcut via Apple Health) =====
+// Protein grams consumed today, written by food trackers to Apple Health.
+// Overwrites the existing "Protein" field; authoritative for the day once Health syncs.
+async function logProtein(grams, dateStr, env, corsHeaders) {
+  const normalizedDate = dateStr ? normalizeDate(dateStr) : normalizeDate(formatDateForKV(new Date()));
+  let daily = await env.HABIT_DATA.get(`daily:${normalizedDate}`, "json") || {};
+  daily["Date"] = normalizedDate;
+  daily["Protein"] = Math.round(parseFloat(grams) || 0);
+  await env.HABIT_DATA.put(`daily:${normalizedDate}`, JSON.stringify(daily));
+  return jsonResponse({
+    success: true,
+    date: normalizedDate,
+    protein: daily["Protein"],
+    message: `Updated protein to ${daily["Protein"]} g for ${normalizedDate}`
   }, 200, corsHeaders);
 }
 
@@ -1941,6 +2075,7 @@ async function auditData(env, corsHeaders) {
     { key: 'psyllium', fields: ['Psyllium Husk', 'Psyllium'], type: 'boolean', description: 'Psyllium supplement' },
     { key: 'zinc', field: 'Zinc', type: 'boolean', description: 'Zinc supplement' },
     { key: 'prebiotic', field: 'Prebiotic', type: 'boolean', description: 'Prebiotic supplement' },
+    { key: 'nac', field: 'NAC', type: 'boolean', description: 'NAC supplement' },
     { key: 'breakfast', field: 'Breakfast', type: 'boolean', description: 'Healthy breakfast' },
     { key: 'lunch', field: 'Lunch', type: 'boolean', description: 'Healthy lunch' },
     { key: 'dinner', field: 'Dinner', type: 'boolean', description: 'Healthy dinner' },
