@@ -8206,12 +8206,15 @@
       return { state, text, projectedDeficit };
     }
 
-    // Rolling 7-day deficit
-    async function computeWeekDeficit(endDate) {
+    // Deficit sum for the current phase week — looks back up to 7 days, but
+    // never earlier than the phase start (so pre-phase Apple Health crumbs
+    // don't leak into the week total). Days with no synced data are skipped.
+    async function computeWeekDeficit(endDate, phaseStart) {
       let sum = 0, days = 0;
       for (let i = 0; i < 7; i++) {
         const d = new Date(endDate);
         d.setDate(d.getDate() - i);
+        if (phaseStart && d < phaseStart) break;
         const daily = await fetchDailyFor(d);
         const f = readDeficitFields(daily);
         if (f.dietary > 0 || f.active > 0 || f.basal > 0) {
@@ -8273,8 +8276,10 @@
       setTileClass(document.getElementById('tileProtein'),
         f.protein >= pGoal ? 'on-track' : f.protein >= pGoal * 0.7 ? 'warn' : 'off-track');
 
-      // Week tile (async)
-      const { sum: weekSum } = await computeWeekDeficit(today);
+      // Week tile — sum deficits from phase start forward, capped at 7 days back
+      const phaseStartDate = new Date(settings.start + 'T00:00:00');
+      phaseStartDate.setHours(0, 0, 0, 0);
+      const { sum: weekSum } = await computeWeekDeficit(today, phaseStartDate);
       const tWeek = document.getElementById('tileWeekVal');
       const tWeekSign = document.getElementById('tileWeekSign');
       const tWeekTarget = document.getElementById('tileWeekTarget');
