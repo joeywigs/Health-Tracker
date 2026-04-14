@@ -8395,7 +8395,7 @@
       document.getElementById('ctdDeficit').textContent = `${deficit >= 0 ? '−' : '+'}${Math.abs(deficit).toLocaleString()}`;
       document.getElementById('ctdProtein').textContent = `${f.protein}g`;
       document.getElementById('ctdSupps').textContent = `${suppsTaken}/7`;
-      const sleepHrs = Number(daily['Sleep'] || daily['Sleep Hours'] || 0);
+      const sleepHrs = Number(daily['Hours of Sleep'] || daily['Sleep'] || daily['Sleep Hours'] || 0);
       document.getElementById('ctdSleep').textContent = sleepHrs ? `${sleepHrs.toFixed(1)}h` : '—';
 
       // Simple streak: count consecutive prior days where deficit met daily target
