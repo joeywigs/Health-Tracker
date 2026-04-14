@@ -3541,6 +3541,55 @@
     .rec-strip.red .rec-dot { background: #ef4444; color: #ef4444; }
     .rec-text { font-size: 13px; line-height: 1.4; color: var(--text); }
 
+    .pillar-strip {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      margin: 10px 0 4px;
+    }
+    .pillar {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: var(--bg-card, rgba(255,255,255,0.04));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+    }
+    .pillar-icon { font-size: 15px; }
+    .pillar-val { font-size: 13px; font-weight: 600; color: var(--text); }
+    .pillar.on-track { border-color: rgba(34,197,94,0.4); }
+    .pillar.warn { border-color: rgba(234,179,8,0.4); }
+    .pillar.off-track { border-color: rgba(239,68,68,0.4); }
+
+    .phase-quicklog {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: var(--bg-card, rgba(255,255,255,0.04));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .ql-row { display: flex; align-items: center; gap: 10px; }
+    .ql-label { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+    .ql-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg-card, rgba(255,255,255,0.06));
+      border: 1px solid var(--border); color: var(--text);
+      font-size: 18px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ql-btn:active { opacity: 0.7; }
+    .ql-count { font-size: 14px; font-weight: 600; color: var(--text); min-width: 44px; text-align: center; }
+    .ql-supps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .ql-chip {
+      padding: 6px 10px; border-radius: 16px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .ql-chip.active {
+      background: rgba(34,197,94,0.15);
+      border-color: rgba(34,197,94,0.5);
+      color: var(--text);
+    }
+    .ql-chip:active { transform: scale(0.95); }
+
     .deficit-breakdown { margin-top: 14px; }
     .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
     .breakdown-row:last-child { border-bottom: none; }
@@ -5008,6 +5057,30 @@
     <div class="rec-strip" id="recStrip">
       <div class="rec-dot" id="recDot"></div>
       <div class="rec-text" id="recText">Loading today's data…</div>
+    </div>
+
+    <div class="pillar-strip" id="pillarStrip">
+      <div class="pillar" id="pillarSleep"><span class="pillar-icon">💤</span><span class="pillar-val" id="pillarSleepVal">—</span></div>
+      <div class="pillar" id="pillarWater"><span class="pillar-icon">💧</span><span class="pillar-val" id="pillarWaterVal">—</span></div>
+      <div class="pillar" id="pillarSupps"><span class="pillar-icon">💊</span><span class="pillar-val" id="pillarSuppsVal">—</span></div>
+    </div>
+
+    <div class="phase-quicklog">
+      <div class="ql-row">
+        <span class="ql-label">💧 Water</span>
+        <button type="button" class="ql-btn" id="phaseWaterMinus">−</button>
+        <span class="ql-count"><span id="phaseWaterNow">0</span>/<span id="phaseWaterGoal">8</span></span>
+        <button type="button" class="ql-btn" id="phaseWaterPlus">+</button>
+      </div>
+      <div class="ql-supps" id="phaseSuppChips">
+        <button type="button" class="ql-chip" data-supp="creatine">Creat</button>
+        <button type="button" class="ql-chip" data-supp="vitaminD">Vit D</button>
+        <button type="button" class="ql-chip" data-supp="no2">NO2</button>
+        <button type="button" class="ql-chip" data-supp="psyllium">Psyllium</button>
+        <button type="button" class="ql-chip" data-supp="zinc">Zinc</button>
+        <button type="button" class="ql-chip" data-supp="prebiotic">Prebio</button>
+        <button type="button" class="ql-chip" data-supp="nac">NAC</button>
+      </div>
     </div>
 
     <div class="section deficit-breakdown">
@@ -8320,6 +8393,43 @@
         if (recText) recText.textContent = rec.text;
       }
 
+      // Pillar strip: sleep, water, supplements
+      const sleepHrs = Number(todayDaily['Hours of Sleep'] || 0);
+      const sleepGoal = Number(appSettings.sleepGoal) || 7;
+      const pSleep = document.getElementById('pillarSleep');
+      const pSleepVal = document.getElementById('pillarSleepVal');
+      if (pSleepVal) pSleepVal.textContent = sleepHrs ? `${sleepHrs.toFixed(1)}h` : '—';
+      setTileClass(pSleep, !sleepHrs ? null : sleepHrs >= sleepGoal ? 'on-track' : sleepHrs >= sleepGoal * 0.85 ? 'warn' : 'off-track');
+
+      const waterCount = Number(todayDaily['Water'] || 0);
+      const waterGoal = Number(appSettings.aguaGoal) || 8;
+      const pWater = document.getElementById('pillarWater');
+      const pWaterVal = document.getElementById('pillarWaterVal');
+      if (pWaterVal) pWaterVal.textContent = `${waterCount}/${waterGoal}`;
+      setTileClass(pWater, waterCount >= waterGoal ? 'on-track' : waterCount >= waterGoal * 0.6 ? 'warn' : 'off-track');
+
+      const suppAliases = [
+        ['Creatine Chews', 'Creatine'], ['Vitamin D'], ['NO2'],
+        ['Psyllium Husk', 'Psyllium'], ['Zinc'], ['Prebiotic'], ['NAC']
+      ];
+      const isTrue = v => v === true || v === 'TRUE' || v === 'true';
+      const suppsTaken = suppAliases.filter(keys => keys.some(k => isTrue(todayDaily[k]))).length;
+      const pSupps = document.getElementById('pillarSupps');
+      const pSuppsVal = document.getElementById('pillarSuppsVal');
+      if (pSuppsVal) pSuppsVal.textContent = `${suppsTaken}/7`;
+      setTileClass(pSupps, suppsTaken === 7 ? 'on-track' : suppsTaken >= 4 ? 'warn' : 'off-track');
+
+      // Quick-log row: reflect current water count and supplement states
+      const qWaterNow = document.getElementById('phaseWaterNow');
+      const qWaterGoal = document.getElementById('phaseWaterGoal');
+      if (qWaterNow) qWaterNow.textContent = waterCount;
+      if (qWaterGoal) qWaterGoal.textContent = waterGoal;
+      document.querySelectorAll('#phaseSuppChips .ql-chip').forEach(chip => {
+        const id = chip.dataset.supp;
+        const cb = document.getElementById(id);
+        chip.classList.toggle('active', !!(cb && cb.checked));
+      });
+
       // Breakdown
       const bdFood = document.getElementById('bdFood');
       const bdActive = document.getElementById('bdActive');
@@ -8340,6 +8450,48 @@
       showDeficitPage({ force: true });
     });
     document.getElementById('deficitMenuBtn')?.addEventListener('click', openNavDrawer);
+
+    // Quick-log water +/- — reuse the Log page's handlers so autosave fires,
+    // then update the visible count on the Phase page immediately.
+    function refreshPhaseWaterDisplay() {
+      const el = document.getElementById('aguaCount');
+      const now = el ? (parseInt(el.textContent) || 0) : 0;
+      const n = document.getElementById('phaseWaterNow');
+      if (n) n.textContent = now;
+      // Update the compact pillar + tile color without a full re-render
+      const goal = Number(appSettings.aguaGoal) || 8;
+      const pv = document.getElementById('pillarWaterVal');
+      if (pv) pv.textContent = `${now}/${goal}`;
+      setTileClass(document.getElementById('pillarWater'),
+        now >= goal ? 'on-track' : now >= goal * 0.6 ? 'warn' : 'off-track');
+    }
+    document.getElementById('phaseWaterPlus')?.addEventListener('click', () => {
+      if (typeof window.handleAguaPlus === 'function') window.handleAguaPlus();
+      refreshPhaseWaterDisplay();
+    });
+    document.getElementById('phaseWaterMinus')?.addEventListener('click', () => {
+      if (typeof window.handleAguaMinus === 'function') window.handleAguaMinus();
+      refreshPhaseWaterDisplay();
+    });
+
+    // Supplement chips: toggle the hidden Log checkbox + trigger autosave.
+    document.querySelectorAll('#phaseSuppChips .ql-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = chip.dataset.supp;
+        const cb = document.getElementById(id);
+        if (!cb) return;
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event('change', { bubbles: true }));
+        chip.classList.toggle('active', cb.checked);
+        if (typeof triggerSaveSoon === 'function') triggerSaveSoon();
+        // Refresh the Supps pillar count immediately
+        const activeCount = document.querySelectorAll('#phaseSuppChips .ql-chip.active').length;
+        const pv = document.getElementById('pillarSuppsVal');
+        if (pv) pv.textContent = `${activeCount}/7`;
+        setTileClass(document.getElementById('pillarSupps'),
+          activeCount === 7 ? 'on-track' : activeCount >= 4 ? 'warn' : 'off-track');
+      });
+    });
 
     // =============================================
     // CLOSE THE DAY MODAL
