@@ -4489,7 +4489,7 @@
     </div>
   </div>
 
-  <header class="header">
+  <header class="header" id="mainHeader">
     <div class="header-top">
       <div class="brand">
         <div class="logo">H</div>
@@ -8061,6 +8061,9 @@
 
     function navigateTo(page) {
       closeNavDrawer();
+      // Hide the top "Habits" header only on the Phase: Deficit page; it has its own header.
+      const mainHeader = document.getElementById('mainHeader');
+      if (mainHeader) mainHeader.style.display = (page === 'deficit') ? 'none' : '';
       if (page === 'deficit') {
         hideAllPages();
         showDeficitPage();
