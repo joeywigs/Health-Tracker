@@ -1,0 +1,24 @@
+{
+  "name": "drawer",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-02-06",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "drawer",
+      // Filled in by `wrangler d1 create drawer` — see README.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "write.hminv.com",
+      "custom_domain": true
+    }
+  ]
+}
