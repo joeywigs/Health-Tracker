@@ -1,0 +1,16 @@
+{
+  "name": "soccer-tracker",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-08",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "soccer",
+      "database_id": "252f3743-20d9-41e9-b56f-fd332d7c0f7c"
+    }
+  ]
+}
