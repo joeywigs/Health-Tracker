@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Soccer Tracker">
+  <defs><clipPath id="ball"><circle cx="256" cy="256" r="158.7"/></clipPath></defs>
+  <rect width="512" height="512" rx="112" fill="#0b1220"/>
+  <circle cx="256" cy="256" r="158.7" fill="#f2f6ff"/>
+  <g clip-path="url(#ball)" fill="#0b1220">
+    <polygon points="256.0,203.6 305.8,239.8 286.8,298.4 225.2,298.4 206.2,239.8"/>
+    <line x1="256.0" y1="203.6" x2="256.0" y2="151.2" stroke="#0b1220" stroke-width="19.0" stroke-linecap="round"/>
+    <polygon points="256.0,152.8 204.7,115.5 224.3,55.2 287.7,55.2 307.3,115.5"/>
+    <line x1="305.8" y1="239.8" x2="355.6" y2="223.6" stroke="#0b1220" stroke-width="19.0" stroke-linecap="round"/>
+    <polygon points="354.1,224.1 373.7,163.8 437.2,163.8 456.8,224.1 405.4,261.4"/>
+    <line x1="286.8" y1="298.4" x2="317.6" y2="340.7" stroke="#0b1220" stroke-width="19.0" stroke-linecap="round"/>
+    <polygon points="316.6,339.5 380.1,339.5 399.7,399.8 348.4,437.1 297.0,399.8"/>
+    <line x1="225.2" y1="298.4" x2="194.4" y2="340.7" stroke="#0b1220" stroke-width="19.0" stroke-linecap="round"/>
+    <polygon points="195.4,339.5 215.0,399.8 163.6,437.1 112.3,399.8 131.9,339.5"/>
+    <line x1="206.2" y1="239.8" x2="156.4" y2="223.6" stroke="#0b1220" stroke-width="19.0" stroke-linecap="round"/>
+    <polygon points="157.9,224.1 106.6,261.4 55.2,224.1 74.8,163.8 138.3,163.8"/>
+  </g>
+  <circle cx="256" cy="256" r="158.7" fill="none" stroke="#38bdf6" stroke-width="14.3"/>
+</svg>

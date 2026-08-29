@@ -19,22 +19,12 @@ Recovered from the live Cloudflare deployment on 2026-08-28:
 - `wrangler.jsonc` — reconstructed: worker name, D1 binding (`DB`), and the
   static assets binding (`ASSETS`) the code uses.
 
-## Missing: `public/` (front end)
+## Front end (`public/`)
 
-The front end (`public/index.html`, `public/app.js`, referenced by the schema
-comments) is served from the Worker's static assets storage, which offers no
-download API — so it could not be recovered remotely. To complete this repo,
-from a machine that can reach the site:
-
-```sh
-mkdir -p public
-curl -o public/index.html https://soccer.hminv.com/index.html
-curl -o public/app.js     https://soccer.hminv.com/app.js
-```
-
-(or copy the files from wherever the app was originally built). Until then,
-`wrangler deploy` from this folder would ship an empty assets directory —
-**don't deploy until `public/` is restored.**
+Recovered from the live site on 2026-08-29 after allowing soccer.hminv.com
+in the session's network policy: `index.html`, `app.js`, `app.css`, `sw.js`
+(service worker), `manifest.webmanifest`, and icons. This is the complete
+deployed asset set, so the repo now fully reproduces the live worker.
 
 ## API
 

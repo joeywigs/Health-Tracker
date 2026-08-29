@@ -1,0 +1,312 @@
+/* soccer.hminv.com — built for one hand, in the sun, on a sideline.
+   Dark base, high contrast, nothing smaller than 44px that you have to hit. */
+
+:root {
+  --bg:        #0b1220;
+  --surface:   #16203a;
+  --surface-2: #1e2b4a;
+  --line:      #2b3a5f;
+  --text:      #f2f6ff;
+  --muted:     #94a3c4;
+  --accent:    #3b82f6;
+  --us:        #38bdf8;
+  --them:      #fb923c;
+  --good:      #22c55e;
+  --bad:       #ef4444;
+  --radius:    14px;
+  --tap:       52px;
+  --safe-b:    env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  overscroll-behavior-y: contain;
+}
+
+body {
+  padding: env(safe-area-inset-top, 0px) 12px calc(24px + var(--safe-b));
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+
+/* ------------------------------------------------------------- layout -- */
+
+.screen[hidden] { display: none; }
+
+.app-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0 12px;
+  position: sticky; top: 0; z-index: 20;
+  /* Solid, not a fade — the stat buttons scroll underneath it and a gradient
+     lets them show through. */
+  background: var(--bg);
+}
+.app-title { flex: 1; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.icon-btn {
+  min-width: 44px; height: 44px; border-radius: 12px;
+  background: var(--surface); color: var(--text);
+  font-size: 22px; line-height: 1; display: grid; place-items: center;
+}
+.icon-btn:active { background: var(--surface-2); }
+.icon-btn-spacer { min-width: 44px; }
+
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.stack.sm { gap: 8px; }
+.row { display: flex; align-items: center; }
+.row.gap { gap: 10px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.grow { flex: 1; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.section-label {
+  margin: 6px 0 0; font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+.hint { font-size: 12px; color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.link-btn { color: var(--accent); font-size: 13px; font-weight: 600; padding: 6px; }
+
+/* ------------------------------------------------------------ buttons -- */
+
+.btn {
+  min-height: var(--tap); padding: 0 16px;
+  border-radius: 12px; font-weight: 650; font-size: 16px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line);
+  transition: transform .06s ease, background .12s ease;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); border-color: transparent; color: #fff; }
+.btn-danger  { background: var(--bad); border-color: transparent; color: #fff; }
+.btn-ghost   { background: transparent; }
+.btn-lg      { min-height: 60px; font-size: 18px; }
+.btn-mini    { min-height: 42px; font-size: 14px; padding: 0 10px; }
+.btn[disabled] { opacity: .4; }
+
+/* -------------------------------------------------------------- forms -- */
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field > span { font-size: 12px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.field input, .field select {
+  min-height: var(--tap); padding: 0 12px;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: 11px; width: 100%;
+}
+.field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* --------------------------------------------------------- home cards -- */
+
+.team-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.team-btn {
+  min-height: 96px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-size: 22px; font-weight: 750;
+}
+.team-btn:active { transform: scale(.98); }
+.team-btn .club { font-size: 12px; font-weight: 500; color: var(--muted); }
+.team-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.resume-card { border-color: var(--accent); }
+.resume-label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); font-weight: 700; }
+.resume-desc { margin: 4px 0 12px; font-size: 17px; font-weight: 600; }
+
+.game-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; min-height: var(--tap);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  width: 100%; text-align: left;
+}
+.game-row .gr-main { flex: 1; min-width: 0; }
+.game-row .gr-opp { font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.game-row .gr-meta { font-size: 12px; color: var(--muted); }
+.game-row .gr-score { font-variant-numeric: tabular-nums; font-weight: 750; font-size: 18px; }
+.gr-w { color: var(--good); } .gr-l { color: var(--bad); } .gr-d { color: var(--muted); }
+
+.empty { color: var(--muted); font-size: 14px; padding: 18px; text-align: center; }
+
+/* --------------------------------------------------------- lineup ----- */
+
+.lineup { padding: 6px; display: flex; flex-direction: column; }
+.lineup-row { display: flex; align-items: center; gap: 10px; padding: 6px 6px; border-bottom: 1px solid var(--line); }
+.lineup-row:last-child { border-bottom: 0; }
+.lineup-row .ln-num {
+  min-width: 34px; height: 34px; border-radius: 9px; background: var(--bg);
+  display: grid; place-items: center; font-weight: 750; font-variant-numeric: tabular-nums; font-size: 14px;
+}
+.lineup-row .ln-name { flex: 1; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg { display: flex; background: var(--bg); border-radius: 10px; padding: 2px; gap: 2px; }
+.seg button { min-height: 36px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 650; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.seg button[aria-pressed="true"][data-v="out"] { background: var(--bad); }
+.seg button[aria-pressed="true"][data-v="bench"] { background: var(--surface-2); color: var(--text); }
+
+/* ---------------------------------------------------------- scoreboard - */
+
+.game-screen { padding-bottom: 40px; }
+
+/* Sticks directly below the 66px header so the score and clock stay visible
+   while you scroll the stat buttons and event log. */
+.scoreboard { position: sticky; top: 66px; z-index: 15; box-shadow: 0 6px 16px var(--bg); }
+.score-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.score-side { text-align: center; min-width: 0; }
+.score-name {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .05em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#sb-us { color: var(--us); }
+#sb-them { color: var(--them); }
+.score-num { font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.score-mid { text-align: center; padding: 0 4px; }
+.clock {
+  font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em; line-height: 1.05;
+}
+.clock.running { color: var(--good); }
+.period { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+
+.controls { display: flex; gap: 8px; margin-top: 12px; }
+.keeper-line { margin-top: 10px; font-size: 12px; color: var(--muted); text-align: center; }
+
+/* ------------------------------------------------------------ columns -- */
+
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.column { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.col-head {
+  font-size: 13px; font-weight: 750; text-align: center; padding: 8px 6px;
+  border-radius: 10px; background: var(--surface); border: 1px solid var(--line);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#col-us .col-head { color: var(--us); border-color: color-mix(in srgb, var(--us) 40%, var(--line)); }
+#col-them .col-head { color: var(--them); border-color: color-mix(in srgb, var(--them) 40%, var(--line)); }
+
+.stat-grid { display: flex; flex-direction: column; gap: 8px; }
+.stat-btn {
+  min-height: 58px; border-radius: 12px; padding: 8px 10px;
+  background: var(--surface); border: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px;
+  text-align: left; transition: transform .06s ease;
+}
+.stat-btn:active { transform: scale(.96); background: var(--surface-2); }
+.stat-btn .sb-label { font-size: 14px; font-weight: 650; line-height: 1.15; }
+.stat-btn .sb-count {
+  font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums;
+  min-width: 26px; text-align: right; color: var(--muted);
+}
+.stat-btn.has .sb-count { color: var(--text); }
+#col-us .stat-btn.primary { border-color: color-mix(in srgb, var(--us) 45%, var(--line)); }
+#col-them .stat-btn.primary { border-color: color-mix(in srgb, var(--them) 45%, var(--line)); }
+.stat-btn.goal { background: color-mix(in srgb, var(--good) 16%, var(--surface)); border-color: var(--good); }
+
+.more-btn {
+  min-height: 40px; border-radius: 10px; font-size: 13px; font-weight: 650;
+  color: var(--muted); border: 1px dashed var(--line);
+}
+
+/* ---------------------------------------------------------- event log -- */
+
+.event-log { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.log-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 10px 12px; min-height: 46px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+}
+.log-row:active { background: var(--surface-2); }
+.log-row .lg-time {
+  font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700;
+  color: var(--muted); min-width: 62px;
+}
+.log-row .lg-text { flex: 1; font-size: 14px; min-width: 0; }
+.log-row .lg-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.log-row.us .lg-dot { background: var(--us); }
+.log-row.them .lg-dot { background: var(--them); }
+.log-row.marker { background: transparent; border-style: dashed; }
+.log-row.marker .lg-text { color: var(--muted); font-weight: 650; text-transform: uppercase; font-size: 12px; letter-spacing: .06em; }
+
+/* -------------------------------------------------------------- modal -- */
+
+.modal {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(4, 8, 18, .72);
+  display: flex; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.modal[hidden] { display: none; }
+.modal-sheet {
+  width: 100%; max-width: 560px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  padding: 14px 14px calc(18px + var(--safe-b));
+  max-height: 88vh; overflow-y: auto;
+  animation: sheet-up .16s ease-out;
+}
+@keyframes sheet-up { from { transform: translateY(14px); opacity: .6; } }
+.modal-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.modal-title { flex: 1; font-size: 17px; font-weight: 700; }
+.modal-body { display: flex; flex-direction: column; gap: 10px; }
+
+.num-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+@media (max-width: 380px) { .num-grid { grid-template-columns: repeat(3, 1fr); } }
+.num-btn {
+  min-height: 66px; border-radius: 12px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.num-btn:active { transform: scale(.95); background: var(--accent); }
+.num-btn .nb-num { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.num-btn .nb-name { font-size: 10px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.num-btn.keeper { border-color: var(--good); }
+
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.keypad button { min-height: 60px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: 22px; font-weight: 750; }
+.keypad button:active { background: var(--accent); }
+.keypad-display {
+  text-align: center; font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums;
+  padding: 8px; background: var(--bg); border-radius: 12px; min-height: 62px;
+}
+
+/* -------------------------------------------------------------- misc --- */
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + var(--safe-b)); z-index: 80;
+  background: var(--surface-2); border: 1px solid var(--line);
+  padding: 12px 18px; border-radius: 999px;
+  font-size: 14px; font-weight: 650; box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  animation: toast-in .14s ease-out;
+}
+.toast[hidden] { display: none; }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+.sync-pill {
+  position: fixed; top: calc(6px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 70;
+  font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+}
+.sync-pill[hidden] { display: none; }
+.sync-pill.offline { color: #fbbf24; border-color: #78500a; }
+
+table.box { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.box th, table.box td { padding: 7px 6px; text-align: right; border-bottom: 1px solid var(--line); }
+table.box th:first-child, table.box td:first-child { text-align: left; }
+table.box th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+table.box td { font-variant-numeric: tabular-nums; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* The goal branch of the shot modal — the one outcome worth finding fast. */
+.btn-goal { background: var(--good); border-color: transparent; color: #04140a; }

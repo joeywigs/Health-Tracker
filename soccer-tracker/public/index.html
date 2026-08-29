@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Soccer Tracker</title>
+<meta name="description" content="Live match stat tracking for Grey and Sloane.">
+<meta name="theme-color" content="#0b1220">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Soccer">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<div id="sync-pill" class="sync-pill" hidden></div>
+
+<!-- ────────────────────────────────────────────────────────────── HOME ── -->
+<section id="screen-home" class="screen">
+  <header class="app-header">
+    <h1 class="app-title">Soccer</h1>
+    <button class="icon-btn" data-go="settings" aria-label="Settings">&#9881;</button>
+  </header>
+
+  <div id="resume-card" class="card resume-card" hidden>
+    <div class="resume-label">Game in progress</div>
+    <div id="resume-desc" class="resume-desc"></div>
+    <div class="row gap">
+      <button class="btn btn-primary grow" id="btn-resume">Resume</button>
+      <button class="btn btn-ghost" id="btn-discard">Discard</button>
+    </div>
+  </div>
+
+  <div class="stack">
+    <h2 class="section-label">New game</h2>
+    <div class="team-picker" id="team-picker"></div>
+
+    <h2 class="section-label row-between">
+      <span>Recent games</span>
+      <button class="link-btn" data-go="history">All</button>
+    </h2>
+    <div id="recent-games" class="stack sm"></div>
+  </div>
+</section>
+
+<!-- ───────────────────────────────────────────────────────────── SETUP ── -->
+<section id="screen-setup" class="screen" hidden>
+  <header class="app-header">
+    <button class="icon-btn" data-go="home" aria-label="Back">&#8249;</button>
+    <h1 class="app-title" id="setup-title">New game</h1>
+    <span class="icon-btn-spacer"></span>
+  </header>
+
+  <div class="stack">
+    <div class="card stack sm">
+      <label class="field">
+        <span>Opponent</span>
+        <input id="f-opponent" type="text" autocomplete="off" placeholder="Riverside United">
+      </label>
+      <div class="row gap">
+        <label class="field grow">
+          <span>Half length (min)</span>
+          <input id="f-half" type="number" inputmode="numeric" min="1" max="60" value="25">
+        </label>
+        <label class="field grow">
+          <span>Home / Away</span>
+          <select id="f-homeaway">
+            <option value="home">Home</option>
+            <option value="away">Away</option>
+            <option value="neutral">Neutral</option>
+          </select>
+        </label>
+      </div>
+      <div class="row gap">
+        <label class="field grow">
+          <span>Type</span>
+          <select id="f-kind">
+            <option value="league">League</option>
+            <option value="tournament">Tournament</option>
+            <option value="friendly">Friendly</option>
+            <option value="scrimmage">Scrimmage</option>
+          </select>
+        </label>
+        <label class="field grow">
+          <span>Location</span>
+          <input id="f-location" type="text" autocomplete="off" placeholder="Field 4">
+        </label>
+      </div>
+    </div>
+
+    <h2 class="section-label row-between">
+      <span>Lineup</span>
+      <span class="hint" id="lineup-count"></span>
+    </h2>
+    <div class="card lineup" id="lineup-list"></div>
+    <p class="hint">
+      Starters give you minutes played. Tap <b>Out</b> for anyone who did not show up —
+      they are hidden from the in-game keypad.
+    </p>
+
+    <label class="field">
+      <span>Starting goalkeeper</span>
+      <select id="f-keeper"><option value="">— none —</option></select>
+    </label>
+
+    <button class="btn btn-primary btn-lg" id="btn-start-game">Start game</button>
+  </div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────────── GAME ── -->
+<section id="screen-game" class="screen game-screen" hidden>
+  <header class="app-header">
+    <button class="icon-btn" data-go="home" aria-label="Home">&#8249;</button>
+    <h1 class="app-title" id="game-title">Game</h1>
+    <button class="icon-btn" id="btn-undo" aria-label="Undo last event">&#8630;</button>
+  </header>
+
+  <div class="card scoreboard">
+    <div class="score-row">
+      <div class="score-side">
+        <div class="score-name" id="sb-us">Us</div>
+        <div class="score-num" id="sb-us-score">0</div>
+      </div>
+      <div class="score-mid">
+        <div class="clock" id="clock">00:00</div>
+        <div class="period" id="period-label">1st Half</div>
+      </div>
+      <div class="score-side">
+        <div class="score-name" id="sb-them">Them</div>
+        <div class="score-num" id="sb-them-score">0</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary grow" id="btn-play">Start</button>
+      <button class="btn btn-ghost" id="btn-half">Half</button>
+      <button class="btn btn-ghost" id="btn-end">End</button>
+    </div>
+    <div class="controls">
+      <button class="btn btn-mini grow" id="btn-sub">Sub / Keeper</button>
+    </div>
+    <div class="keeper-line" id="keeper-line"></div>
+  </div>
+
+  <div class="columns">
+    <div class="column" id="col-us">
+      <div class="col-head" id="col-us-head">Us</div>
+      <div class="stat-grid" data-side="us"></div>
+      <button class="more-btn" data-more="us">More&hellip;</button>
+    </div>
+    <div class="column" id="col-them">
+      <div class="col-head" id="col-them-head">Them</div>
+      <div class="stat-grid" data-side="them"></div>
+      <button class="more-btn" data-more="them">More&hellip;</button>
+    </div>
+  </div>
+
+  <h2 class="section-label row-between">
+    <span>Event log</span>
+    <span class="hint">tap to edit</span>
+  </h2>
+  <div id="event-log" class="event-log"></div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── SUMMARY ── -->
+<section id="screen-summary" class="screen" hidden>
+  <header class="app-header">
+    <button class="icon-btn" data-go="home" aria-label="Home">&#8249;</button>
+    <h1 class="app-title">Summary</h1>
+    <span class="icon-btn-spacer"></span>
+  </header>
+  <div id="summary-body" class="stack"></div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── HISTORY ── -->
+<section id="screen-history" class="screen" hidden>
+  <header class="app-header">
+    <button class="icon-btn" data-go="home" aria-label="Home">&#8249;</button>
+    <h1 class="app-title">All games</h1>
+    <span class="icon-btn-spacer"></span>
+  </header>
+  <div id="history-body" class="stack sm"></div>
+</section>
+
+<!-- ────────────────────────────────────────────────────────── SETTINGS ── -->
+<section id="screen-settings" class="screen" hidden>
+  <header class="app-header">
+    <button class="icon-btn" data-go="home" aria-label="Home">&#8249;</button>
+    <h1 class="app-title">Settings</h1>
+    <span class="icon-btn-spacer"></span>
+  </header>
+  <div id="settings-body" class="stack"></div>
+</section>
+
+<!-- ───────────────────────────────────────────────────────────── MODAL ── -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="icon-btn" id="modal-close" aria-label="Cancel">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
