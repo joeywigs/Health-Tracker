@@ -6,7 +6,7 @@
  *
  * Bump CACHE when you change any shell file.
  */
-const CACHE = 'soccer-shell-v1';
+const CACHE = 'soccer-shell-v2';
 const SHELL = [
   '/',
   '/index.html',

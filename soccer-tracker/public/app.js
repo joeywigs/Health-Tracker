@@ -54,6 +54,8 @@ const EVENT_TYPES = [
  *   Shot → who? → Saved       logs a shot on goal for the shooter
  *                             and a save for the other team's keeper
  *               → Goal        logs the goal, then asks for an assist
+ *               → Deflected   logs a shot on goal, a save for the keeper,
+ *                             and a corner kick back to the shooting team
  *               → Out         logs a shot off target for the shooter
  *                             and a goal kick to the other team
  *
@@ -408,6 +410,7 @@ function undoLast() {
 function groupLabel(events, lead) {
   const types = new Set(events.map((e) => e.type));
   if (types.has('goal')) return 'Goal';
+  if (types.has('corner') && types.has('save')) return 'Shot (deflected, corner)';
   if (types.has('shot_on') && types.has('save')) return 'Shot (goalie save)';
   if (types.has('shot_off')) return 'Shot (off target)';
   return TYPE_MAP[lead.type]?.label ?? lead.type;
@@ -700,19 +703,22 @@ async function logStat(side, key) {
 }
 
 /**
- * Ask who did it — our roster keypad, or a free-entry jersey number for the
- * opposition. Returns null if cancelled, or { player_id, player_number, label }
- * with everything null when "unknown" is chosen.
+ * Ask who did it — our roster keypad only. Opposition events carry no player
+ * attribution, so their side resolves immediately with no prompt: one less
+ * tap while the ball is still moving. Returns null if cancelled, or
+ * { player_id, player_number, label } with everything null when "unknown"
+ * is chosen.
  */
 async function askWho(side, prefix, opts = {}) {
   const blank = { player_id: null, player_number: null, label: '' };
+
+  if (side !== 'us') return blank;
+
   const byNumber = async () => {
     const n = await pickNumber(`${prefix}jersey #`, opts);
     if (n === null) return null;
     return n === 'none' ? blank : { player_id: null, player_number: n, label: `#${n}` };
   };
-
-  if (side !== 'us') return byNumber();
 
   const picked = await pickOurPlayer(`${prefix}who?`, opts);
   if (picked === null) return null;
@@ -722,8 +728,8 @@ async function askWho(side, prefix, opts = {}) {
 }
 
 /**
- * Assists are asked for on both sides — ours from the roster, theirs (and any
- * off-roster player of ours) as a typed jersey number.
+ * Assists come from our roster (off-roster players of ours as a typed jersey
+ * number). Opposition goals skip the question along with everything else.
  */
 async function askAssist(side, scorer) {
   const exclude = scorer?.player_id ? new Set([scorer.player_id]) : undefined;
@@ -733,11 +739,13 @@ async function askAssist(side, scorer) {
 /**
  * One tap covers a whole shot: who took it, then what happened to it.
  *
- *   Saved → shot on goal for the shooter + a save for the other keeper
- *   Goal  → the goal, then an optional assist
- *   Out   → shot off target + a goal kick to the other team
+ *   Saved     → shot on goal for the shooter + a save for the other keeper
+ *   Goal      → the goal, then an optional assist
+ *   Out       → shot off target + a goal kick to the other team
+ *   Deflected → shot on goal + a save for the keeper who tipped it
+ *               + a corner kick back to the shooting team
  *
- * The two events a shot produces share a group_id so undo, edit, and the log
+ * The events a shot produces share a group_id so undo, edit, and the log
  * treat them as the single thing they are.
  */
 async function logShot(side) {
@@ -769,6 +777,12 @@ async function logShot(side) {
     const keeper = other === 'us' ? currentKeeper() : null;
     pushEvent({ side: other, type: 'save', player_id: keeper, group_id: group });
     toast(keeper ? `Saved by ${playerLabel(keeper)}` : `Shot saved${suffix}`);
+  } else if (outcome === 'deflect') {
+    pushEvent({ ...shooter, type: 'shot_on' });
+    const keeper = other === 'us' ? currentKeeper() : null;
+    pushEvent({ side: other, type: 'save', player_id: keeper, group_id: group });
+    pushEvent({ side, type: 'corner', group_id: group });
+    toast(`Deflected${suffix} · corner kick`);
   } else {
     pushEvent({ ...shooter, type: 'shot_off' });
     pushEvent({ side: other, type: 'goal_kick', group_id: group });
@@ -777,11 +791,12 @@ async function logShot(side) {
   renderGame();
 }
 
-/** Saved / Goal / Out. Returns null if dismissed — nothing is logged. */
+/** Saved / Goal / Deflected / Out. Returns null if dismissed — nothing is logged. */
 function pickShotOutcome(side, who) {
   const g = state.game;
-  const otherName =
-    side === 'us' ? (g.opponent || 'them') : (teamById(g.team_id)?.label || 'us');
+  const ourName = teamById(g.team_id)?.label || 'us';
+  const shooterName = side === 'us' ? ourName : (g.opponent || 'them');
+  const otherName = side === 'us' ? (g.opponent || 'them') : ourName;
 
   return openModal(who ? `Shot — ${who}` : 'Shot', (body, done) => {
     const mk = (label, value, cls) => {
@@ -794,6 +809,7 @@ function pickShotOutcome(side, who) {
     body.append(
       mk('Goalie Save', 'save', ''),
       mk('Goal', 'goal', 'btn-goal'),
+      mk(`Deflected out — corner to ${shooterName}`, 'deflect', ''),
       mk(`Out — goal kick to ${otherName}`, 'out', 'btn-ghost')
     );
   });
@@ -1145,7 +1161,7 @@ function renderEventLog() {
     const e = grp.lead;
     const row = document.createElement('button');
     const marker = !!MARKERS[e.type];
-    row.className = `log-row ${e.side}${marker ? ' marker' : ''}`;
+    row.className = `log-row ${dotSide(grp)}${marker ? ' marker' : ''}`;
     row.innerHTML =
       `<span class="lg-time">H${e.period} ${mmss(e.clock_ms)}</span>` +
       (marker ? '' : '<span class="lg-dot"></span>') +
@@ -1153,6 +1169,20 @@ function renderEventLog() {
     row.onclick = () => editEvent(e);
     log.append(row);
   }
+}
+
+/**
+ * The dot on a log row is colored by whoever comes away with the ball, not by
+ * who acted. For a grouped shot that is the restart event's side: a save or a
+ * goal kick belongs to the defending team, a corner off a deflection goes back
+ * to the team that took the shot. Ungrouped events keep their own side.
+ */
+function dotSide(grp) {
+  // A deflection logs both a save and the corner; the corner is the restart.
+  const restart =
+    grp.events.find((e) => e.type === 'corner') ??
+    grp.events.find((e) => e.type === 'save' || e.type === 'goal_kick');
+  return (restart ?? grp.lead).side;
 }
 
 /**
@@ -1182,6 +1212,10 @@ function groupText(grp) {
   const who = leadKey ? ` — ${whoLabel(leadKey)}` : '';
 
   if (types.has('goal')) return eventText(lead);
+  if (types.has('corner') && types.has('save')) {
+    const keeper = events.find((e) => e.type === 'save')?.player_id;
+    return `Shot deflected out${who}${keeper ? ` (${playerLabel(keeper)})` : ''} · corner`;
+  }
   if (types.has('save')) {
     const keeper = events.find((e) => e.type === 'save')?.player_id;
     return `Shot saved${who}${keeper ? ` (${playerLabel(keeper)})` : ''}`;
@@ -1201,7 +1235,7 @@ async function editEvent(e) {
     };
     if (!MARKERS[e.type]) {
       body.append(mk(e.side === 'us' ? 'Change player' : 'Change jersey #', 'player'));
-      if (TYPE_MAP[e.type]?.assist) body.append(mk('Change assist', 'assist'));
+      if (e.side === 'us' && TYPE_MAP[e.type]?.assist) body.append(mk('Change assist', 'assist'));
       body.append(mk('Adjust time', 'time'));
       // Switching sides on a paired event would split the pair across teams.
       if (!e.group_id) body.append(mk('Switch side', 'side'));
@@ -1214,8 +1248,15 @@ async function editEvent(e) {
     return toast(n > 1 ? `Deleted (${n} entries)` : 'Deleted');
   }
   if (action === 'player') {
-    const who = await askWho(e.side, 'Change — ');
-    if (who) updateEvent(e, { player_id: who.player_id, player_number: who.player_number });
+    if (e.side === 'us') {
+      const who = await askWho(e.side, 'Change — ');
+      if (who) updateEvent(e, { player_id: who.player_id, player_number: who.player_number });
+    } else {
+      // askWho never prompts for the opposition now, so the deliberate
+      // "attach a jersey number afterwards" path asks for it directly.
+      const n = await pickNumber('Change — jersey #');
+      if (n !== null) updateEvent(e, { player_id: null, player_number: n === 'none' ? null : n });
+    }
   }
   if (action === 'assist') {
     const assist = await askAssist(e.side, null);
